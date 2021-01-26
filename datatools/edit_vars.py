@@ -17,9 +17,8 @@ import os
 
 from picotui.dialogs import *
 
-import datatools.tui.picotui_patch
-
-picotui_patch.patch_picotui()
+from datatools.tui.picotui_patch import patch_picotui
+patch_picotui()
 from datatools.tui.picotui_util import *
 
 
