@@ -1,5 +1,6 @@
 import typing
 from collections import defaultdict
+from datatools.util.logging import debug
 
 
 class ItemTransitionsSummary:

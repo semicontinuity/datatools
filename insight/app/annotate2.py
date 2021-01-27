@@ -1,18 +1,19 @@
+import json
+import sys
 import typing
 from collections import defaultdict
 from typing import Dict, Set, List, Tuple, Container, Generator, Iterable
 
-import pandas as pd
-import sys, json
-
 import insight.logic.transitions2
+import pandas as pd
+from datatools.util.logging import debug
 from insight.logic.transitions import Transitions, pruned
 from insight.tiered_data_frame import TieredDataFrame
 from insight.util.itertools import matching_sub_sequences, collapse_repeats
 
 
 def main_for_json(base_folder: str, out_resource_name: str):
-    print('Loading data...')
+    debug('Loading data...')
     data = json.load(sys.stdin)
 
     tdf = tdf_from_aggregated_json(data, base_folder, out_resource_name)
@@ -20,7 +21,7 @@ def main_for_json(base_folder: str, out_resource_name: str):
     annotate(tdf)
     tweak_schema(tdf)
 
-    print('Saving annotated data...')
+    debug('Saving annotated data...')
     tdf.save_as(out_resource_name)
 
 
@@ -72,16 +73,16 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
 
 
 def main_for_tsv(base_folder: str, in_resource_name: str, out_resource_name: str):
-    print('Loading data...')
+    debug('Loading data...')
     tdf = TieredDataFrame(base_folder, in_resource_name)
-    print('done')
+    debug('done')
 
     annotate(tdf)
     tweak_schema(tdf)
 
-    print('Saving annotated data...')
+    debug('Saving annotated data...')
     tdf.save_as(out_resource_name)
-    print('done')
+    debug('done')
 
 
 def annotate(tdf):
@@ -90,14 +91,14 @@ def annotate(tdf):
 
 
 def tweak_schema(tdf):
-    print('-------------------------------------------------------------')
-    print('Schema')
-    print(tdf.schema_tiers[0])
-    print('Schema')
-    print(tdf.schema_tiers[1])
-    print('Schema')
-    print(tdf.schema_tiers[2])
-    print('-------------------------------------------------------------')
+    debug('-------------------------------------------------------------')
+    debug('Schema')
+    debug(tdf.schema_tiers[0])
+    debug('Schema')
+    debug(tdf.schema_tiers[1])
+    debug('Schema')
+    debug(tdf.schema_tiers[2])
+    debug('-------------------------------------------------------------')
 
     # hack: modify 'rid' column
     # tdf.schema_tiers[1][2]['name'] = 'message'
@@ -113,19 +114,19 @@ def tweak_schema(tdf):
 
 
 def annotate_group(tg_row, tg_tdf):
-    print('-------------------------------------------------------------')
-    print('Processing')
-    print('%s' % tg_row)
-    print('-------------------------------------------------------------')
+    debug('-------------------------------------------------------------')
+    debug('Processing')
+    debug('%s' % tg_row)
+    debug('-------------------------------------------------------------')
     # singletons = compute_singletons(tg_tdf)
     singletons = compute_singletons_allow_runs(tg_tdf)
-    print('Analyzing transitions')
+    debug('Analyzing transitions')
     transitions = Transitions(singletons)
     for tx_keys, tx_tdf in tg_tdf:
         with transitions as tx:
             for index, row in tx_tdf.node_df.iterrows():
                 tx(row['hash'])
-    print('Analyzing transitions (2)')
+    debug('Analyzing transitions (2)')
     transitions_2 = insight.logic.transitions2.Transitions()
     for tx_keys, tx_tdf in tg_tdf:
         with transitions_2 as tx:
@@ -134,30 +135,30 @@ def annotate_group(tg_row, tg_tdf):
     milestones: Dict[str, Dict[str, int]] = pruned(transitions.singleton_transitions)
     item_occurs_in_transactions, milestones_in_transactions = occurrences(tg_tdf, milestones)
     transaction_codes: List[str] = [hash_code_hex8(hash(tuple(e))) for e in milestones_in_transactions]
-    print('Attaching column "custom"')
+    debug('Attaching column "custom"')
     tg_tdf.node_df['custom'] = transaction_codes
     # non_milestone_transitions = compute_non_milestone_transitions(tg_tdf, milestones)
     # non_milestone_strings: typing.Set[typing.Tuple[str]] = contiguous_strings(non_milestone_transitions)
     # chains: typing.Set[typing.Tuple[str]] = insight.logic.transitions2.chains(transitions_2.summary)
-    print('Computing chains')
+    debug('Computing chains')
     # non_milestone_strings: typing.Set[typing.Tuple[str]] = insight.logic.transitions2.chains(transitions_2.summary)
     transition_cliques: typing.Dict[str, typing.Set[str]] = insight.logic.transitions2.infer_transition_cliques(
         transitions_2.summary)
     # non_milestone_strings: typing.Set[typing.Tuple[str]] = insight.logic.transitions2.infer_transition_cliques_tuples(transitions_2.summary)
-    # print(non_milestone_strings)
-    print('Computing non-milestone codes and feature codes')
+    # debug(non_milestone_strings)
+    debug('Computing non-milestone codes and feature codes')
     non_milestone_codes = {}
     transition_cliques_values = {frozenset(e) for e in transition_cliques.values()}
     for clique in set(transition_cliques_values):
         non_milestone_string_code = hash_code_hex8(hash(frozenset(clique)))
-        print(non_milestone_string_code, clique)
+        debug(non_milestone_string_code, clique)
         for item in clique:
             non_milestone_codes[item] = non_milestone_string_code
-    print('Computing co-occurrence codes')
+    debug('Computing co-occurrence codes')
     co_occurrence_codes: Dict[str, str] = {
         k: hash_code_hex8(hash(tuple(v))) for k, v in item_occurs_in_transactions.items()
     }
-    print('Attaching column "milestones"')
+    debug('Attaching column "milestones"')
     tg_tdf.node_df['milestones'] = [','.join(code for code in (co_occurrence_codes.get(i) for i in e))
                                     for e in milestones_in_transactions]
 
@@ -197,9 +198,9 @@ def annotate_group(tg_row, tg_tdf):
         else:
             active_chain_state = active_chain_states[chain_type_id] + 1
             length = len(transition_cliques[item])
-            # print(transition_cliques[item], length, active_chain_state)
+            # debug(transition_cliques[item], length, active_chain_state)
             if active_chain_state == length:
-                # print('DEL')
+                # debug('DEL')
                 del active_chain_ids2[chain_type_id]
                 del active_chain_states[chain_type_id]
                 return chain_type_id, current_chain_id, False, True
@@ -219,32 +220,32 @@ def annotate_group(tg_row, tg_tdf):
 
     def compute_active_chain_nestedness(tx_tdf):
         nonlocal active_chain_nestedness
-        # print('=========================')
+        # debug('=========================')
         nestedness: int = -1  # Running gauge; incremented when a chain starts, decremented when finished.
         for index, row in tx_tdf.node_df.iterrows():
             features = code2(row)
 
             current_chain_id = features[1]
             if not current_chain_id:
-                # print(row['hash'], nestedness)
+                # debug(row['hash'], nestedness)
                 continue
 
             if features[2]:
-                # print('++')
+                # debug('++')
                 nestedness += 1
 
-            # print(row['hash'], nestedness, current_chain_id)
+            # debug(row['hash'], nestedness, current_chain_id)
             chain_nestedness = active_chain_nestedness.get(current_chain_id)
-            # print(chain_nestedness)
+            # debug(chain_nestedness)
             if chain_nestedness:
                 new_chain_nestedness = min(chain_nestedness, nestedness)
                 if new_chain_nestedness != chain_nestedness:
                     active_chain_nestedness[current_chain_id] = new_chain_nestedness
-                    # print(current_chain_code, '->', new_chain_nestedness)
+                    # debug(current_chain_code, '->', new_chain_nestedness)
             else:
                 active_chain_nestedness[current_chain_id] = nestedness
             if features[3]:
-                # print('--')
+                # debug('--')
                 nestedness -= 1
 
     def chain_nestedness2_debug(row) -> int:
@@ -260,7 +261,7 @@ def annotate_group(tg_row, tg_tdf):
             active_nestedness -= 1
         return result
 
-    print('Attaching annotation columns')
+    debug('Attaching annotation columns')
     for tx_keys, tx_tdf in tg_tdf:
         tx_tdf.node_df['s'] = tx_tdf.node_df.apply(lambda r: '1' if r['hash'] in singletons else 0, axis=1)
         tx_tdf.node_df['xhash'] = tx_tdf.node_df.apply(item_code, axis=1)
@@ -268,26 +269,26 @@ def annotate_group(tg_row, tg_tdf):
 
         active_chain_traversal_reset()
         active_chain_nestedness = dict()
-        print('Compute active chain nestedness')
+        debug('Compute active chain nestedness')
         compute_active_chain_nestedness(tx_tdf)
 
-        print('Attaching "feature"')
+        debug('Attaching "feature"')
         active_chain_traversal_reset()
         tx_tdf.node_df['feature'] = tx_tdf.node_df.apply(feature_code2, axis=1)
 
-        print('Attaching "break"')
+        debug('Attaching "break"')
         tx_tdf.node_df['break'] = compute_break_flags(tx_tdf, milestones)
 
-        print('Attaching "chain"')
+        debug('Attaching "chain"')
         active_chain_traversal_reset()
         tx_tdf.node_df['chain'] = tx_tdf.node_df.apply(chain_code2, axis=1)
 
-        print('Attaching "nestedness"')
+        debug('Attaching "nestedness"')
         active_chain_traversal_reset()
-        # print('=========================')
+        # debug('=========================')
         # for k, v in active_chain_nestedness.items():
-        #     print(k, v)
-        # print('=========================')
+        #     debug(k, v)
+        # debug('=========================')
         tx_tdf.node_df['nestedness'] = tx_tdf.node_df.apply(chain_nestedness2_debug, axis=1)
 
 
@@ -299,16 +300,16 @@ def compute_singletons(tg_tdf):
 
 
 def compute_singletons_allow_runs(tg_tdf):
-    print(f'Computing singletons; data length={len(tg_tdf)}')
+    debug(f'Computing singletons; data length={len(tg_tdf)}')
     singletons: Set[str] = set()
     failed_singletons: Set[str] = set()
     for tx_keys, tx_tdf in tg_tdf:
-        print('-------------------------------------------------------------')
-        print('tx_keys')
-        print(tx_keys)
-        print('tx_tdf')
-        print(tx_tdf)
-        print('-------------------------------------------------------------')
+        debug('-------------------------------------------------------------')
+        debug('tx_keys')
+        debug(tx_keys)
+        debug('tx_tdf')
+        debug(tx_tdf)
+        debug('-------------------------------------------------------------')
 
         seen_items: Set[str] = set()
         for item in collapse_repeats(traverse_tx_items(tx_tdf)):
@@ -377,7 +378,7 @@ def compute_non_milestone_transitions(tg_tdf: Iterable[Tuple[pd.Series, TieredDa
     a set of preceding items within non-milestone sequences,
     and a set of items that follow within non-milestone sequences.
     """
-    print('Computing non-milestone transitions')
+    debug('Computing non-milestone transitions')
     result = defaultdict(lambda: (set(), set()))
     for tx_keys, tx_tdf in tg_tdf:
         for sub_sequence in traverse_tx_non_milestone_strings(tx_tdf, milestones):
@@ -395,7 +396,7 @@ def compute_non_milestone_transitions(tg_tdf: Iterable[Tuple[pd.Series, TieredDa
 
 def contiguous_strings(transitions: Dict[str, Tuple[Set[str], Set[str]]]) -> typing.Set[typing.Tuple[str]]:
     items = transitions.items()
-    print(f'Computing contiguous strings, items db: {len(items)} entries')
+    debug(f'Computing contiguous strings, items db: {len(items)} entries')
     result = set()
     for item, in_and_out_links in items:
         if not item:

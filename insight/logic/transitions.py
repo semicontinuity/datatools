@@ -1,5 +1,6 @@
 import typing
 from typing import Dict
+from datatools.util.logging import debug
 
 
 class Transitions:
@@ -160,7 +161,7 @@ def pruned(singleton_transitions_graph: Dict[str, Dict[str, int]]) -> Dict[str, 
 
 def prune(singleton_transitions_graph: Dict[str, Dict[str, int]], result: Dict[str, Dict[str, int]]) -> None:
     items = singleton_transitions_graph.items()
-    print(f'Pruning graph, {len(items)} nodes')
+    debug(f'Pruning graph, {len(items)} nodes')
     for source, edges in items:
         new_edges: Dict[str, int] = {}
         bidi_edges: int = 0
