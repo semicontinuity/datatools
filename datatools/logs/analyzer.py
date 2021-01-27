@@ -8,16 +8,22 @@ from pathlib import Path
 from typing import Tuple, Any
 from insight.tiered_data_frame import TieredDataFrame, dmd_as_tiered_schema
 import pandas as pd
-
-if len(sys.argv) < 2:
-    print('Data root not set', file=sys.stderr)
-    sys.exit(1)
-dataset_root = sys.argv[1]
+import sys
+from insight.app.annotate2 import tdf_from_aggregated_json, annotate, tweak_schema
 
 static_root = os.getenv('INSIGHT_PATH') + '/src/main/web/semicontinuity/insight/web'
 if static_root is None:
     print('View root not set', file=sys.stderr)
     sys.exit(1)
+
+print('Loading data...', file=sys.stderr)
+data = json.load(sys.stdin)
+tdf = tdf_from_aggregated_json(data, '.', '-')
+print('done', file=sys.stderr)
+
+annotate(tdf)
+tweak_schema(tdf)
+print('done', file=sys.stderr)
 
 
 class Server(BaseHTTPRequestHandler):
@@ -32,7 +38,9 @@ class Server(BaseHTTPRequestHandler):
         if self.path.startswith("/insight/view") or self.path == "/favicon.ico":
             return self.handle_static()
         elif self.path.startswith("/insight/data"):
-            df = self.load_tdf()
+            resource = self.path[len("/insight/data/"):].split('?')[0]
+            resource_parts = resource.split('/')
+            df = tdf.resolve_df(resource_parts[1:])
             j = df.to_json(orient='records')
             return 200, 'application/json', j.encode('utf-8')
         else:
@@ -44,13 +52,16 @@ class Server(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         print(f'OPTIONS {self.path}', file=sys.stderr)
-        base_folder, resource, tier_schema = self.metadata()
+        resource = self.path[len("/insight/data/"):].split('?')[0]
+        resource_parts = resource.split('/')
+        tier_schema = tdf.schema_tiers[len(resource_parts) - 1]
         self.respond(200, 'application/javascript', json.dumps(tier_schema).encode('utf-8'))
 
     def load_tdf(self):
-        base_folder, resource, tier_schema = self.metadata()
+
         column_names = [e['name'] for e in tier_schema]
         file = base_folder + '/' + resource + '.tsv'
+
         return pd.read_csv(
             file, header=None, names=column_names, index_col=False,
             sep='\t'
@@ -59,10 +70,11 @@ class Server(BaseHTTPRequestHandler):
     def metadata(self):
         resource = self.path[len("/insight/data/"):].split('?')[0]
         resource_parts = resource.split('/')
-        base_folder, resource_name = f'{dataset_root}', resource_parts[0]
+        base_folder, resource_name = '.', resource_parts[0]
         tiered_schema = dmd_as_tiered_schema(base_folder, resource_name)
-        tier_schema = tiered_schema[len(resource_parts) - 1]
-        return base_folder, resource, tier_schema
+        num_tiers = len(resource_parts)
+        tier_schema = tiered_schema[num_tiers - 1]
+        return base_folder, resource, tier_schema, resource_parts
 
     def node_column_names(self):
         return [e['name'] for e in self.schema_tier]
@@ -105,14 +117,12 @@ class Server(BaseHTTPRequestHandler):
 HOST_NAME = 'localhost'
 PORT_NUMBER = 8000
 
-if __name__ == '__main__':
-    httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
+httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
 
-    if len(sys.argv) >= 3:
-        resource_name = sys.argv[2]
-        print(f'http://{HOST_NAME}:{PORT_NUMBER}/insight/view/index.html#{{"url":"tdf:.ext","prefix":"{resource_name}"}}', flush=True)
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    httpd.server_close()
+print('Ready', file=sys.stderr)
+print(f'http://{HOST_NAME}:{PORT_NUMBER}/insight/view/index.html#{{"url":"tdf:.ext","prefix":"log"}}', flush=True)
+try:
+    httpd.serve_forever()
+except KeyboardInterrupt:
+    pass
+httpd.server_close()

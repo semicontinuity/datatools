@@ -15,10 +15,19 @@ def main_for_json(base_folder: str, out_resource_name: str):
     print('Loading data...')
     data = json.load(sys.stdin)
 
+    tdf = tdf_from_aggregated_json(data, base_folder, out_resource_name)
+
+    annotate(tdf)
+    tweak_schema(tdf)
+
+    print('Saving annotated data...')
+    tdf.save_as(out_resource_name)
+
+
+def tdf_from_aggregated_json(data, base_folder, out_resource_name):
     tg_data = []
     leaves = []
     i: int = 0
-
     root_column_names = {}
     leaf_column_names = {}
     for super_record in data:
@@ -28,13 +37,11 @@ def main_for_json(base_folder: str, out_resource_name: str):
         for leaf_record in super_record['_']:
             for lk in leaf_record:
                 leaf_column_names[lk] = None
-
     schema_tiers = [
         [{"name": "tg", "renderer": "generic"}],
         [{"name": k, "renderer": "generic"} for k in root_column_names],
         [{"name": k, "renderer": "message" if k == "message" else "generic"} for k in leaf_column_names]
     ]
-
     for super_record in data:
         tg_data.append({k: v for k, v in super_record.items() if k != '_'})
 
@@ -47,7 +54,6 @@ def main_for_json(base_folder: str, out_resource_name: str):
                 base_folder, entry_name, schema_tiers[2:], pd.DataFrame.from_records(leaf), []
             )
         )
-
     tg_tdf = TieredDataFrame(
         base_folder,
         '00000000',
@@ -55,7 +61,6 @@ def main_for_json(base_folder: str, out_resource_name: str):
         pd.DataFrame.from_records(tg_data),
         leaves
     )
-
     tdf = TieredDataFrame(
         base_folder,
         out_resource_name,
@@ -63,13 +68,7 @@ def main_for_json(base_folder: str, out_resource_name: str):
         pd.DataFrame.from_records([{'tg': 'all'}]),
         [tg_tdf]
     )
-
-
-    annotate(tdf)
-    tweak_schema(tdf)
-
-    print('Saving annotated data...')
-    tdf.save_as(out_resource_name)
+    return tdf
 
 
 def main_for_tsv(base_folder: str, in_resource_name: str, out_resource_name: str):

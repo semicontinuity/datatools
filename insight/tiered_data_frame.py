@@ -85,6 +85,12 @@ class TieredDataFrame:
     def node_column_names(self):
         return [e['name'] for e in self.schema_tiers[0]]
 
+    def resolve_df(self, path: List[str]):
+        if len(path) == 0:
+            return self.node_df
+        index = int(path[0], 16)
+        return self.leaves[index].resolve_df(path[1:])
+
     def __len__(self):
         return len(self.node_df)
 
