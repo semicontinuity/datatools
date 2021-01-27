@@ -86,10 +86,12 @@ def compute_run_columns() -> List[str]:
     ]
 
 
-def aggregate_by(run_columns):
+def compute_group_runs_and_median_by(run_columns):
+    debug(f'Computing group runs by {run_columns}')
     result = []
     run_dict = None
     run_values = None
+    run_lengths = []
     all_j = load_data()
     for j in all_j:
         row_run_dict = {}
@@ -104,6 +106,7 @@ def aggregate_by(run_columns):
         if row_run_dict != run_dict:
             if run_dict is not None:
                 run_dict['_'] = run_values
+                run_lengths.append(len(run_values))
                 result.append(run_dict)
             run_dict = row_run_dict
             run_values = []
@@ -111,14 +114,20 @@ def aggregate_by(run_columns):
         run_values.append(row_values)
     if len(run_values) > 0:
         run_dict['_'] = run_values
+        run_lengths.append(len(run_values))
         result.append(run_dict)
-    return result
+    median_run_length = median(run_lengths)
+    debug(f'Median run length: {median_run_length}')
+    return result, median_run_length
+
+
+def compute_group_runs_by(run_columns):
+    return compute_group_runs_and_median_by(run_columns)[0]
 
 
 def aggregate_runs() -> List[Dict]:
-    all_data = load_data()
     run_columns: List[str] = compute_run_columns()
-    return aggregate_by(run_columns, all_data)
+    return compute_group_runs_by(run_columns)
 
 
 def compute_all_column_names() -> Set[str]:
@@ -275,17 +284,23 @@ def compute_column_families(all_column_names) -> Optional[List]:
 
 def auto_aggregate_by_groups(agg_groups):
     """ Quick-and-dirty, inefficient multi-group aggregation """
+    debug(f'Automatically computing group runs by {agg_groups}')
     data = load_data()
     if len(agg_groups) == 0:
         return data
     leading_columns = [c for g in agg_groups for c in g]
-    aggregated = aggregate_by(leading_columns)
+    leading_columns_group_run_lengths = { c: compute_group_runs_and_median_by([c])[1] for c in leading_columns }
+    leading_columns.sort(key=leading_columns_group_run_lengths.get)
+    leading_columns.reverse()
+    debug(f'Column names, sorted by run lengths: {leading_columns}')
 
-    run_lengths = [len(group['_']) for group in aggregated]
-    med = median(run_lengths)
-    if med < SUPPORT_THRESHOLD:
-        debug(med)
-        return auto_aggregate_by_groups(agg_groups[0:-1])
+    return auto_aggregate_by_groups0(leading_columns)
+
+
+def auto_aggregate_by_groups0(leading_columns):
+    aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns)
+    if median_run_length < SUPPORT_THRESHOLD:
+        return auto_aggregate_by_groups0(leading_columns[0:-1])
     return aggregated
 
 
@@ -334,6 +349,8 @@ def run():
         return auto_aggregation_groups()
     elif len(sys.argv) == 3 and sys.argv[1] == "auto_aggregate_by_groups":
         return auto_aggregate_by_groups(json.loads(sys.argv[2]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "group_runs_by":
+        return compute_group_runs_by(json.loads(sys.argv[2]))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
         return auto_aggregate()
 
