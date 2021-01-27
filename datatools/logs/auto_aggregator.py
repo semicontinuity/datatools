@@ -22,7 +22,7 @@ from statistics import median
 from types import GeneratorType
 from typing import Iterable, Dict, List, Set, Hashable, Any, Optional
 
-from datatools.util.graph_util import ConnectedComponents, transitive_reduction, node_to_depth, roots
+from datatools.util.graph_util import ConnectedComponents, transitive_reduction, node_to_depth, roots_and_leaves, reachable_from
 from datatools.json.util import to_jsonisable, is_primitive
 from datatools.util.logging import debug, traced
 
@@ -142,14 +142,14 @@ def compute_all_column_names() -> Set[str]:
 
 def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
     lengths = {column: 0 for column in all_column_names}
-    result = defaultdict(list)
+    runs = defaultdict(list)
     prev_j = None
 
-    def compare(current):
+    def compare(current, prev_j):
         for column in all_column_names:
             length = lengths[column] + 1
             if current.get(column) != prev_j.get(column):
-                result[column].append(length)
+                runs[column].append(length)
                 length = 0
             lengths[column] = length
 
@@ -157,11 +157,16 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
     j = None
     for j in all_data:
         if prev_j is not None:
-            compare(j)
+            compare(j, prev_j)
         prev_j = j
 
-    compare(j)
-    return { column: median(lengths) for column, lengths in result.items() }
+    compare(j, prev_j)
+
+    result = {column: median(lengths) for column, lengths in runs.items()}
+    for c in all_column_names:
+        if c not in result: # no changes detected => value is constant
+            result[c] = len(all_data)
+    return result
 
 
 def compute_value_relations():
@@ -256,32 +261,46 @@ def column_relations_digraph_pruned():
 @traced('column_families')
 def compute_column_families(all_column_names) -> Optional[List]:
     pruned = column_relations_digraph_pruned()
+    debug(f'all_column_names: {all_column_names}')
     run_lengths: Dict[str, int] = compute_median_column_value_run_lengths(all_column_names)
+    debug(f'Run lengths: {run_lengths}')
 
-    non_trivial_roots, trivial_roots = roots(pruned)
+    non_trivial_roots, trivial_roots, leaves = roots_and_leaves(pruned)
     debug(f'Non-trivial roots: {non_trivial_roots}')
     debug(f'Trivial roots: {trivial_roots}')
-    if len(non_trivial_roots) > 0:
+    leaves -= trivial_roots
+    debug(f'Non-trivial leaves: {leaves}')
+    if len(leaves) > 0:
         # choose root with maximum median run length
-        chosen_root = max(non_trivial_roots, key=lambda root: run_lengths.get(root[0]))
+        chosen_leaf = max(leaves, key=lambda leaf: run_lengths.get(leaf[0]))
+        debug(f'Chosen leaf: {chosen_leaf}')
+        connected = set()
+        for root in non_trivial_roots:
+            subtree = reachable_from([root], pruned)
+            if chosen_leaf in subtree:
+                connected = connected.union(subtree)
+        connected = { item for item in connected if run_lengths.get(item[0], 0) >= SUPPORT_THRESHOLD}
+        debug(f'connected: {connected}')
+        return list(connected)
     elif len(trivial_roots) > 0:
         chosen_root = max(trivial_roots, key=len)   # questionable
+        return [chosen_root]
     else:
         debug(f'Cannot choose root')
         return None
-    debug(f'Chosen root: {chosen_root}')
-
-    depth_to_nodes = defaultdict(list)
-
-    for columns_tuple, depth in node_to_depth(pruned, chosen_root).items():
-        depth_to_nodes[depth].extend(columns_tuple)
-
-    result = []
-    trivial_columns = [e for root in trivial_roots for e in root]
-    if trivial_columns:
-        result.append(trivial_columns)
-    result += list(depth_to_nodes.values())
-    return result
+    # debug(f'Chosen root: {chosen_root}')
+    #
+    # depth_to_nodes = defaultdict(list)
+    #
+    # for columns_tuple, depth in node_to_depth(pruned, chosen_root).items():
+    #     depth_to_nodes[depth].extend(columns_tuple)
+    #
+    # result = []
+    # trivial_columns = [e for root in trivial_roots for e in root]
+    # if trivial_columns:
+    #     result.append(trivial_columns)
+    # result += list(depth_to_nodes.values())
+    # return result
 
 
 def auto_aggregate_by_groups(agg_groups):
@@ -313,13 +332,13 @@ def auto_aggregation_groups() -> Optional[List]:
     if column_families is None or len(column_families) <= 1:
         debug('No auto-aggregation groups')
         return None
-    agg_groups = [f for f in reversed(column_families)][:-1]
+    agg_groups = list(column_families)[1:].reverse()
     debug(f'Auto-aggregation groups: {agg_groups}')
     return agg_groups
 
 
 def auto_aggregate() -> List[Dict]:
-    return auto_aggregate_by_groups(auto_aggregation_groups())
+    return auto_aggregate_by_groups(compute_column_families(compute_all_column_names()))
 
 
 def run():
