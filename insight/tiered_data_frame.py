@@ -9,6 +9,8 @@ import pandas as pd
 
 class TieredDataFrame:
 
+    schema_tiers: List
+
     def __init__(self, base_folder, name, schema_tiers=None, node_df=None, leaves=None):
         self.base_folder = base_folder
         self.name = name
@@ -95,7 +97,7 @@ class TieredDataFrame:
         return len(self.node_df)
 
 
-def dmd_as_tiered_schema(base_folder: str, resource_name: str):
+def dmd_as_tiered_schema(base_folder: str, resource_name: str) -> List:
     with open(base_folder + '/' + resource_name + '.dmd') as f:
         pmd_contents = json.load(f)
     return [e['columns'] for e in pmd_contents['tiers']]

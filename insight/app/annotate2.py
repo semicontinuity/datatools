@@ -41,7 +41,7 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
     schema_tiers = [
         [{"name": "tg", "renderer": "generic"}],
         [{"name": k, "renderer": "generic"} for k in root_column_names],
-        [{"name": k, "renderer": "message" if k == "message" else "generic"} for k in leaf_column_names]
+        [{"name": k, "renderer": "generic"} for k in leaf_column_names]
     ]
     for super_record in data:
         tg_data.append({k: v for k, v in super_record.items() if k != '_'})
@@ -90,7 +90,7 @@ def annotate(tdf):
         annotate_group(tg_row, tg_tdf)
 
 
-def tweak_schema(tdf):
+def tweak_schema(tdf, columns_settings=None):
     debug('-------------------------------------------------------------')
     debug('Schema')
     debug(tdf.schema_tiers[0])
@@ -99,6 +99,9 @@ def tweak_schema(tdf):
     debug('Schema')
     debug(tdf.schema_tiers[2])
     debug('-------------------------------------------------------------')
+
+    if columns_settings:
+        tdf.schema_tiers[2] = tweak(tdf.schema_tiers[2], columns_settings)
 
     # hack: modify 'rid' column
     # tdf.schema_tiers[1][2]['name'] = 'message'
@@ -113,11 +116,19 @@ def tweak_schema(tdf):
     tdf.append_column(2, {'name': 'nestedness', 'renderer': 'generic'})
 
 
+def tweak(schema_tier: List, columns_settings=None):
+    result = []
+    for column_metadata in schema_tier:
+        name = column_metadata['name']
+        override = columns_settings.get(name)
+        if override is not None:
+            column_metadata = columns_settings[name]
+            column_metadata['name'] = name
+        result.append(column_metadata)
+    return result
+
+
 def annotate_group(tg_row, tg_tdf):
-    debug('-------------------------------------------------------------')
-    debug('Processing')
-    debug('%s' % tg_row)
-    debug('-------------------------------------------------------------')
     # singletons = compute_singletons(tg_tdf)
     singletons = compute_singletons_allow_runs(tg_tdf)
     debug('Analyzing transitions')

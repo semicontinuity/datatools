@@ -22,7 +22,7 @@ tdf = tdf_from_aggregated_json(data, '.', '-')
 print('done', file=sys.stderr)
 
 annotate(tdf)
-tweak_schema(tdf)
+tweak_schema(tdf, json.loads(sys.argv[1]))  # columns_settings
 print('done', file=sys.stderr)
 
 
