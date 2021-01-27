@@ -104,6 +104,7 @@ def compute_group_runs_and_median_by(run_columns):
                 row_values[column] = value
 
         if row_run_dict != run_dict:
+            # debug(f'Change: {row_run_dict} {run_dict}')
             if run_dict is not None:
                 run_dict['_'] = run_values
                 run_lengths.append(len(run_values))
@@ -153,6 +154,7 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
             lengths[column] = length
 
     all_data = load_data()
+    j = None
     for j in all_data:
         if prev_j is not None:
             compare(j)
@@ -286,7 +288,7 @@ def auto_aggregate_by_groups(agg_groups):
     """ Quick-and-dirty, inefficient multi-group aggregation """
     debug(f'Automatically computing group runs by {agg_groups}')
     data = load_data()
-    if len(agg_groups) == 0:
+    if agg_groups is None or len(agg_groups) == 0:
         return data
     leading_columns = [c for g in agg_groups for c in g]
     leading_columns_group_run_lengths = { c: compute_group_runs_and_median_by([c])[1] for c in leading_columns }
