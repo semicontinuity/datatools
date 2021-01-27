@@ -22,7 +22,7 @@ from statistics import median
 from types import GeneratorType
 from typing import Iterable, Dict, List, Set, Hashable, Any, Optional
 
-from datatools.util.graph_util import ConnectedComponents, transitive_reduction, node_to_depth, roots_and_leaves, reachable_from
+from datatools.util.graph_util import ConnectedComponents, transitive_reduction, roots_and_leaves, reachable_from
 from datatools.json.util import to_jsonisable, is_primitive
 from datatools.util.logging import debug, traced
 
@@ -35,29 +35,29 @@ def run_once(f):
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
             wrapper.has_run = True
-            wrapper.result = f(*args, **kwargs)
-        return wrapper.result
+            wrapper.cached_result = f(*args, **kwargs)
+        return wrapper.cached_result
     wrapper.has_run = False
     return wrapper
 
 
 @dataclass
 class Stat:
-    values: Dict[Hashable, int] # number of occurrences by value
+    values: Dict[Hashable, int]     # number of occurrences by value
     median_support: int = 0
     is_run: bool = True
 
 
 @run_once
 def load_data(lines):
-    return [json.loads(l) for l in lines]
+    return [json.loads(line) for line in lines]
 
 
 def compute_stats() -> Dict[str, Stat]:
     print(file=sys.stderr)
     print("compute_stats", file=sys.stderr)
     prev_j = None
-    column2stat: Dict[str, Stat] = defaultdict(lambda : Stat(defaultdict(int)))
+    column2stat: Dict[str, Stat] = defaultdict(lambda: Stat(defaultdict(int)))
     all_data = load_data()
     for j in all_data:
         for column, value in j.items():
@@ -66,8 +66,7 @@ def compute_stats() -> Dict[str, Stat]:
                 if stat.is_run:
                     if value in stat.values:
                         if prev_j[column] != value:
-                            print(f"Repeat detected in column {column}: prev row contains {prev_j[column]}, this one {value}", file=sys.stderr)
-                            stat.is_run = False # repeated
+                            stat.is_run = False     # repeated
                     stat.values[value] += 1
 
         prev_j = j
@@ -145,10 +144,10 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
     runs = defaultdict(list)
     prev_j = None
 
-    def compare(current, prev_j):
+    def compare(current, prev):
         for column in all_column_names:
             length = lengths[column] + 1
-            if current.get(column) != prev_j.get(column):
+            if current.get(column) != prev.get(column):
                 runs[column].append(length)
                 length = 0
             lengths[column] = length
@@ -164,7 +163,7 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
 
     result = {column: median(lengths) for column, lengths in runs.items()}
     for c in all_column_names:
-        if c not in result: # no changes detected => value is constant
+        if c not in result:     # no changes detected => value is constant
             result[c] = len(all_data)
     return result
 
@@ -181,7 +180,8 @@ def compute_value_relations():
                 continue
             for column_b in all_column_names:
                 value_b = j.get(column_b)
-                if column_a == column_b: continue
+                if column_a == column_b:
+                    continue
 
                 value_a_relations = value_relations[column_a][value_a]
                 some_value_b = value_a_relations[column_b]
@@ -214,7 +214,8 @@ def column_relations_graph():
     relations: Dict = compute_column_relations()
     g = {}
     for column_a, column_a_relations in relations.items():
-        if column_a in IGNORED_COLUMNS: continue
+        if column_a in IGNORED_COLUMNS:
+            continue
         g[column_a] = adj = {}
         for column_b, is_direct in column_a_relations.items():
             if is_direct:
@@ -279,7 +280,7 @@ def compute_column_families(all_column_names) -> Optional[List]:
             subtree = reachable_from([root], pruned)
             if chosen_leaf in subtree:
                 connected = connected.union(subtree)
-        connected = { item for item in connected if run_lengths.get(item[0], 0) >= SUPPORT_THRESHOLD}
+        connected = {item for item in connected if run_lengths.get(item[0], 0) >= SUPPORT_THRESHOLD}
         debug(f'connected: {connected}')
         return list(connected)
     elif len(trivial_roots) > 0:
@@ -310,7 +311,7 @@ def auto_aggregate_by_groups(agg_groups):
     if agg_groups is None or len(agg_groups) == 0:
         return data
     leading_columns = [c for g in agg_groups for c in g]
-    leading_columns_group_run_lengths = { c: compute_group_runs_and_median_by([c])[1] for c in leading_columns }
+    leading_columns_group_run_lengths = {c: compute_group_runs_and_median_by([c])[1] for c in leading_columns}
     leading_columns.sort(key=leading_columns_group_run_lengths.get)
     leading_columns.reverse()
     debug(f'Column names, sorted by run lengths: {leading_columns}')
@@ -332,7 +333,7 @@ def auto_aggregation_groups() -> Optional[List]:
     if column_families is None or len(column_families) <= 1:
         debug('No auto-aggregation groups')
         return None
-    agg_groups = list(column_families)[1:].reverse()
+    agg_groups = list(reversed(column_families[1:]))
     debug(f'Auto-aggregation groups: {agg_groups}')
     return agg_groups
 
@@ -379,11 +380,11 @@ def run():
 if __name__ == "__main__":
     load_data(sys.stdin.read().splitlines())
 
-    result = run()
-    if result is not None:
-        if isinstance(result, GeneratorType):
-            for o in result:
+    output = run()
+    if output is not None:
+        if isinstance(output, GeneratorType):
+            for o in output:
                 json.dump(o, fp=sys.stdout)
                 print()
         else:
-            json.dump(result, fp=sys.stdout)
+            json.dump(output, fp=sys.stdout)

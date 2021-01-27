@@ -84,7 +84,7 @@ def node_to_depth(g: Dict[Hashable, Any], node: Hashable):
     return depths
 
 
-def roots_and_leaves(g: Dict[Hashable, Any]) -> Tuple[Set, Set]:
+def roots_and_leaves(g: Dict[Hashable, Any]) -> Tuple[Set, Set, Set]:
     """
     For DAG, find non-trivial (i.e., with outgoing edges) roots (i.e., nodes with no incoming edges) and trivial roots
     """
