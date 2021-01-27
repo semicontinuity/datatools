@@ -16,7 +16,7 @@ def main_for_json(base_folder: str, out_resource_name: str):
     debug('Loading data...')
     data = json.load(sys.stdin)
 
-    tdf = tdf_from_aggregated_json(data, base_folder, out_resource_name)
+    tdf, analyse_column_present = tdf_from_aggregated_json(data, base_folder, out_resource_name)
 
     annotate(tdf)
     tweak_schema(tdf)
@@ -43,6 +43,7 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
         [{"name": k, "renderer": "generic"} for k in root_column_names],
         [{"name": k, "renderer": "generic"} for k in leaf_column_names]
     ]
+    analyse_column_present = True
     for super_record in data:
         tg_data.append({k: v for k, v in super_record.items() if k != '_'})
 
@@ -50,9 +51,12 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
         entry_name = "%08X" % i
         i = i + 1
 
+        leaf_df = pd.DataFrame.from_records(leaf)
+        if 'hash' not in leaf_df:
+            analyse_column_present = False
         leaves.append(
             TieredDataFrame(
-                base_folder, entry_name, schema_tiers[2:], pd.DataFrame.from_records(leaf), []
+                base_folder, entry_name, schema_tiers[2:], leaf_df, []
             )
         )
     tg_tdf = TieredDataFrame(
@@ -69,7 +73,7 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
         pd.DataFrame.from_records([{'tg': 'all'}]),
         [tg_tdf]
     )
-    return tdf
+    return tdf, analyse_column_present
 
 
 def main_for_tsv(base_folder: str, in_resource_name: str, out_resource_name: str):
@@ -86,8 +90,10 @@ def main_for_tsv(base_folder: str, in_resource_name: str, out_resource_name: str
 
 
 def annotate(tdf):
+    debug('Annotating')
     for tg_row, tg_tdf in tdf:
         annotate_group(tg_row, tg_tdf)
+    debug('done')
 
 
 def tweak_schema(tdf, columns_settings=None):
@@ -108,6 +114,7 @@ def tweak_schema(tdf, columns_settings=None):
     # tdf.schema_tiers[1][2]['renderer'] = 'message'
     tdf.append_column(1, {'name': 'xhash', 'renderer': 'generic', 'hidden': 'true'})  # column that holds color
     tdf.append_column(1, {'name': 'milestones', 'renderer': 'striped'})
+
     tdf.append_column(2, {'name': 's', 'renderer': 'hashHighlightedLiteralValue'})
     tdf.append_column(2, {'name': 'xhash', 'renderer': 'generic', 'hidden': 'true'})
     tdf.append_column(2, {'name': 'feature', 'renderer': 'feature', 'hidden': 'true'})

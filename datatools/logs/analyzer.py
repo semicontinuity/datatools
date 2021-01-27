@@ -1,29 +1,30 @@
+import json
 import os
 import sys
-import time
-import json
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from pathlib import Path
 from typing import Tuple, Any
-from insight.tiered_data_frame import TieredDataFrame, dmd_as_tiered_schema
+from datatools.util.logging import debug
+
 import pandas as pd
-import sys
+
 from insight.app.annotate2 import tdf_from_aggregated_json, annotate, tweak_schema
+from insight.tiered_data_frame import dmd_as_tiered_schema
 
 static_root = os.getenv('INSIGHT_PATH') + '/src/main/web/semicontinuity/insight/web'
 if static_root is None:
-    print('View root not set', file=sys.stderr)
+    debug('View root not set')
     sys.exit(1)
 
-print('Loading data...', file=sys.stderr)
+debug('Loading data...')
 data = json.load(sys.stdin)
-tdf = tdf_from_aggregated_json(data, '.', '-')
-print('done', file=sys.stderr)
+tdf, analyse_column_present = tdf_from_aggregated_json(data, '.', '-')
+debug('done')
 
-annotate(tdf)
-tweak_schema(tdf, json.loads(sys.argv[1]))  # columns_settings
-print('done', file=sys.stderr)
+if analyse_column_present:
+    annotate(tdf)
+    tweak_schema(tdf, json.loads(sys.argv[1]))  # columns_settings
 
 
 class Server(BaseHTTPRequestHandler):
@@ -34,7 +35,7 @@ class Server(BaseHTTPRequestHandler):
         self.respond(*self.handle_GET())
 
     def handle_GET(self):
-        print(f'GET {self.path}', file=sys.stderr)
+        debug(f'GET {self.path}', file=sys.stderr)
         if self.path.startswith("/insight/view") or self.path == "/favicon.ico":
             return self.handle_static()
         elif self.path.startswith("/insight/data"):
@@ -46,12 +47,11 @@ class Server(BaseHTTPRequestHandler):
         else:
             return 404, 'text/plain', bytes(self.path, 'utf-8')
 
-
     def do_POST(self):
         return
 
     def do_OPTIONS(self):
-        print(f'OPTIONS {self.path}', file=sys.stderr)
+        debug(f'OPTIONS {self.path}')
         resource = self.path[len("/insight/data/"):].split('?')[0]
         resource_parts = resource.split('/')
         tier_schema = tdf.schema_tiers[len(resource_parts) - 1]
@@ -79,7 +79,6 @@ class Server(BaseHTTPRequestHandler):
     def node_column_names(self):
         return [e['name'] for e in self.schema_tier]
 
-
     def content_type_by_path(self, path) -> str:
         if path.endswith('.html'):
             return 'text/html'
@@ -101,7 +100,7 @@ class Server(BaseHTTPRequestHandler):
             status, content_type, content = 404, 'text/plain', bytes(self.path, 'utf-8')
 
     def handle_static(self) -> Tuple[int, str, Any]:
-        print(self.path)
+        debug(self.path)
         if self.path == "/favicon.ico":
             return self.serve_file(self.path)
         else:
@@ -119,7 +118,7 @@ PORT_NUMBER = 8000
 
 httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
 
-print('Ready', file=sys.stderr)
+debug('Ready')
 print(f'http://{HOST_NAME}:{PORT_NUMBER}/insight/view/index.html#{{"url":"tdf:.ext","prefix":"log"}}', flush=True)
 try:
     httpd.serve_forever()
