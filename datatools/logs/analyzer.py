@@ -5,10 +5,8 @@ from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from pathlib import Path
 from typing import Tuple, Any
+
 from datatools.util.logging import debug
-
-import pandas as pd
-
 from insight.app.annotate2 import tdf_from_aggregated_json, annotate, tweak_schema
 from insight.tiered_data_frame import dmd_as_tiered_schema
 
@@ -57,16 +55,6 @@ class Server(BaseHTTPRequestHandler):
         tier_schema = tdf.schema_tiers[len(resource_parts) - 1]
         self.respond(200, 'application/javascript', json.dumps(tier_schema).encode('utf-8'))
 
-    def load_tdf(self):
-
-        column_names = [e['name'] for e in tier_schema]
-        file = base_folder + '/' + resource + '.tsv'
-
-        return pd.read_csv(
-            file, header=None, names=column_names, index_col=False,
-            sep='\t'
-        )
-
     def metadata(self):
         resource = self.path[len("/insight/data/"):].split('?')[0]
         resource_parts = resource.split('/')
@@ -76,10 +64,8 @@ class Server(BaseHTTPRequestHandler):
         tier_schema = tiered_schema[num_tiers - 1]
         return base_folder, resource, tier_schema, resource_parts
 
-    def node_column_names(self):
-        return [e['name'] for e in self.schema_tier]
-
-    def content_type_by_path(self, path) -> str:
+    @staticmethod
+    def content_type_by_path(path) -> str:
         if path.endswith('.html'):
             return 'text/html'
         elif path.endswith('.css'):
@@ -91,13 +77,12 @@ class Server(BaseHTTPRequestHandler):
         else:
             return 'application/octet-stream'
 
-    def serve_file(self, localpath):
-        filepath = f'{static_root}{localpath}'
+    def serve_file(self, local_path):
+        filepath = f'{static_root}{local_path}'
         if Path(filepath).is_file():
-            data = open(filepath, mode='rb').read()
-            return 200, self.content_type_by_path(self.path), data
+            return 200, self.content_type_by_path(self.path), open(filepath, mode='rb').read()
         else:
-            status, content_type, content = 404, 'text/plain', bytes(self.path, 'utf-8')
+            return 404, 'text/plain', bytes(self.path, 'utf-8')
 
     def handle_static(self) -> Tuple[int, str, Any]:
         debug(self.path)

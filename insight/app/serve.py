@@ -1,13 +1,14 @@
+import json
 import os
 import sys
-import time
-import json
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from pathlib import Path
 from typing import Tuple, Any
-from insight.tiered_data_frame import TieredDataFrame, dmd_as_tiered_schema
+
 import pandas as pd
+
+from insight.tiered_data_frame import dmd_as_tiered_schema
 
 if len(sys.argv) < 2:
     print('Data root not set', file=sys.stderr)
@@ -38,7 +39,6 @@ class Server(BaseHTTPRequestHandler):
         else:
             return 404, 'text/plain', bytes(self.path, 'utf-8')
 
-
     def do_POST(self):
         return
 
@@ -64,11 +64,8 @@ class Server(BaseHTTPRequestHandler):
         tier_schema = tiered_schema[len(resource_parts) - 1]
         return base_folder, resource, tier_schema
 
-    def node_column_names(self):
-        return [e['name'] for e in self.schema_tier]
-
-
-    def content_type_by_path(self, path) -> str:
+    @staticmethod
+    def content_type_by_path(path) -> str:
         if path.endswith('.html'):
             return 'text/html'
         elif path.endswith('.css'):
@@ -80,13 +77,13 @@ class Server(BaseHTTPRequestHandler):
         else:
             return 'application/octet-stream'
 
-    def serve_file(self, localpath):
-        filepath = f'{static_root}{localpath}'
+    def serve_file(self, local_path):
+        filepath = f'{static_root}{local_path}'
         if Path(filepath).is_file():
             data = open(filepath, mode='rb').read()
             return 200, self.content_type_by_path(self.path), data
         else:
-            status, content_type, content = 404, 'text/plain', bytes(self.path, 'utf-8')
+            return 404, 'text/plain', bytes(self.path, 'utf-8')
 
     def handle_static(self) -> Tuple[int, str, Any]:
         print(self.path)
@@ -109,8 +106,10 @@ if __name__ == '__main__':
     httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
 
     if len(sys.argv) >= 3:
-        resource_name = sys.argv[2]
-        print(f'http://{HOST_NAME}:{PORT_NUMBER}/insight/view/index.html#{{"url":"tdf:.ext","prefix":"{resource_name}"}}', flush=True)
+        dataset_name = sys.argv[2]
+        print(
+            f'http://{HOST_NAME}:{PORT_NUMBER}/insight/view/index.html#{{"url":"tdf:.ext","prefix":"{dataset_name}"}}',
+            flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
