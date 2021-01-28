@@ -27,14 +27,14 @@ from typing import Dict
 
 FD_TUI = 103
 
-FD_METADATA_IN = 4
-FD_METADATA_OUT = 5
+FD_METADATA_IN = 104
+FD_METADATA_OUT = 105
 
-FD_PRESENTATION_IN = 6
-FD_PRESENTATION_OUT = 7
+FD_PRESENTATION_IN = 106
+FD_PRESENTATION_OUT = 107
 
-FD_STATE_IN = 8
-FD_STATE_OUT = 9
+FD_STATE_IN = 108
+FD_STATE_OUT = 109
 
 COLORING_NONE = "none"
 COLORING_HASH_ALL = "hash-all"
@@ -49,8 +49,7 @@ from picotui.editor import Editor
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.select_json_app_exit_codes_mapping import *
-from datatools.json.coloring import hash_code, hash_to_rgb
-from datatools.tui.ansi_util import ansi_foreground_escape_code, ansi_background_escape_code
+from datatools.tui.coloring import ansi_foreground_escape_code, ansi_background_escape_code, hash_code, hash_to_rgb
 
 
 @dataclass
