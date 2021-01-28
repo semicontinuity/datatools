@@ -39,7 +39,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from types import GeneratorType
-from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable
+from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any
 
 from datatools.json.util import to_jsonisable
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
@@ -197,21 +197,6 @@ def refine_buckets(data: Iterable[List[str]]) -> Dict[Tuple[str, ...], List[str]
     return refined_buckets
 
 
-def clean_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]:
-    if len(lines) == 1:
-        return lines[0],
-
-    # collapse successive wildcards
-    out_pattern = []
-    prev_token = ''
-    for token in in_pattern:
-        if token is None and prev_token is None:
-            continue
-        out_pattern.append(token)
-        prev_token = token
-    return tuple(out_pattern)
-
-
 def bucketize(lines) -> Dict[Tuple[str, ...], List[str]]:
     debug(f"Computing buckets for {len(lines)} lines")
     selected = compute_selected(compute_stats(lines))
@@ -262,6 +247,57 @@ def annotate_lines(group_field: Optional[str], classify_field: str, result_field
         yield j
 
 
+def clean_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]:
+    if len(lines) == 1:
+        return lines[0],
+
+    # collapse successive wildcards
+    out_pattern = []
+    prev_token = ''
+    for token in in_pattern:
+        if token is None and prev_token is None:
+            continue
+        out_pattern.append(token)
+        prev_token = token
+    return tuple(out_pattern)
+
+
+def pack_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]:
+    if len(lines) == 1:
+        return lines[0],
+
+    # collapse successive wildcards and text
+    out_pattern = []
+    text = ''
+    in_wildcard = False
+
+    for token in in_pattern:
+        if token is None:   # wildcard token
+            if in_wildcard:
+                pass
+            else:
+                in_wildcard = True
+                if text != '':
+                    out_pattern.append(text)
+                text = ''
+        else:               # text token
+            if in_wildcard:
+                out_pattern.append(None)
+                in_wildcard = False
+            text += token
+
+    if text != '':
+        out_pattern.append(text)
+    if in_wildcard:
+        out_pattern.append(None)
+
+    return tuple(out_pattern)
+
+
+def with_packed_patterns(buckets: Dict[Tuple[str, ...], Any]) -> Dict[Tuple[str, ...], Any]:
+    return {pack_pattern(k, v): v for k, v in buckets.items()}
+
+
 def pattern_and_args(s, token_set):
     pattern = []
     args = []
@@ -305,11 +341,11 @@ def run():
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
         return compute_stats(load_lines())
     elif len(sys.argv) == 2 and sys.argv[1] == "initial_buckets":
-        return to_jsonisable(bucketize(load_lines()))
+        return to_jsonisable(with_packed_patterns(bucketize(load_lines())))
     elif len(sys.argv) == 2 and sys.argv[1] == "initial_refined_buckets":
-        return to_jsonisable(initial_refined_buckets(load_lines()))
+        return to_jsonisable(with_packed_patterns(initial_refined_buckets(load_lines())))
     elif len(sys.argv) == 2 and sys.argv[1] == "buckets":
-        return to_jsonisable(make_buckets(load_lines()))
+        return to_jsonisable(with_packed_patterns(make_buckets(load_lines())))
     elif len(sys.argv) == 2 and sys.argv[1] == "annotate_tokens":
         return annotate_tokens()
     elif (len(sys.argv) == 5 or len(sys.argv) == 4) and sys.argv[1] == "annotate_lines":
