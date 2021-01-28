@@ -141,13 +141,7 @@ def tokenize(lines):
 
 
 def make_buckets(strings) -> Dict[Tuple[str, ...], List[str]]:
-    buckets = bucketize(strings)
-    debug("Initial refinement of buckets")
-    refined_buckets: Dict[Tuple[str, ...], List[str]] = refine_buckets(buckets.values())
-    debug("Completed initial refinement of buckets!")
-    if len(refined_buckets) == 1:
-        debug("Got only 1 initial refined bucket")
-        return refined_buckets
+    refined_buckets = initial_refined_buckets(strings)
 
     # Perform analysis and synthesis: find similar buckets, merge them, and re-do bucketing.
     debug("Making super-buckets")
@@ -158,6 +152,17 @@ def make_buckets(strings) -> Dict[Tuple[str, ...], List[str]]:
     refined2 = refine_buckets(refined1.values())
     debug("done")
     return refined2
+
+
+def initial_refined_buckets(strings):
+    buckets = bucketize(strings)
+    debug("Initial refinement of buckets")
+    refined_buckets: Dict[Tuple[str, ...], List[str]] = refine_buckets(buckets.values())
+    debug("Completed initial refinement of buckets!")
+    if len(refined_buckets) == 1:
+        debug("Got only 1 initial refined bucket")
+        return refined_buckets
+    return refined_buckets
 
 
 def make_super_buckets(refined_buckets: Dict[Tuple[str, ...], List[str]]):
@@ -200,7 +205,7 @@ def clean_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, .
     out_pattern = []
     prev_token = ''
     for token in in_pattern:
-        if token is None and token == prev_token:
+        if token is None and prev_token is None:
             continue
         out_pattern.append(token)
         prev_token = token
@@ -301,6 +306,8 @@ def run():
         return compute_stats(load_lines())
     elif len(sys.argv) == 2 and sys.argv[1] == "initial_buckets":
         return to_jsonisable(bucketize(load_lines()))
+    elif len(sys.argv) == 2 and sys.argv[1] == "initial_refined_buckets":
+        return to_jsonisable(initial_refined_buckets(load_lines()))
     elif len(sys.argv) == 2 and sys.argv[1] == "buckets":
         return to_jsonisable(make_buckets(load_lines()))
     elif len(sys.argv) == 2 and sys.argv[1] == "annotate_tokens":

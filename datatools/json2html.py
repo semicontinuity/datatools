@@ -102,6 +102,11 @@ class ArrayNode:
         return self.html_numbered_table()
 
     def html_numbered_table(self):
+        return self.html_numbered_table_plain() \
+            if len(self.records) <= 7 and len(str(self.records)) < 1000 \
+            else self.html_numbered_table_collapsed()
+
+    def html_numbered_table_plain(self):
         s = '<table class="a">'
         for pos in range(len(self.records)):
             value = self.records[pos]
@@ -109,6 +114,27 @@ class ArrayNode:
             s += th(str(pos + 1)) + '\n'
             s += td_value("a_v", value)
             s += '</tr>\n'
+        s += '</table>'
+        return s
+
+    def html_numbered_table_collapsed(self):
+        s = '<table class="a">'
+        s += '<thead>'
+        s += '<tr>'
+        s += th('#', attrs=' onclick="toggle(this)"')
+        s += th(f'{len(self.records)} items')
+        s += '</tr>'
+        s += '</thead>'
+
+        s += '<tbody class="collapsed">'
+        for pos in range(len(self.records)):
+            value = self.records[pos]
+            s += '<tr>\n'
+            s += th(str(pos + 1)) + '\n'
+            s += td_value("a_v", value)
+            s += '</tr>\n'
+        s += '<tbody>'
+
         s += '</table>'
         return s
 
