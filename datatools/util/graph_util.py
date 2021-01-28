@@ -1,11 +1,14 @@
 from collections import defaultdict
 from typing import *
 
+from datatools.util.logging import debug
+
 
 def compute_weights_graph(
         nodes: List[Hashable],
         weight_f: Callable[[Hashable, Hashable], float]) -> Dict[Hashable, Dict[Hashable, float]]:
 
+    debug(f"Computing weights graph, length:{len(nodes)}")
     graph = defaultdict(dict)
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
@@ -18,7 +21,6 @@ def compute_weights_graph(
 def discretize_graph(
         graph: Dict[Hashable, Dict[Hashable, float]],
         predicate: Callable[[float], bool]) -> Dict[Hashable, Dict[Hashable, float]]:
-
     return {k: [kk for kk, weight in v.items() if predicate(weight)] for k, v in graph.items()}
 
 

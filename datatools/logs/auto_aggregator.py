@@ -1,17 +1,26 @@
 """
-Utility to detect "runs" in columns of machine-generated table data (e.g. logs).
+Utility to auto-aggregate machine-generated table data (e.g. logs).
 
 E.g., given data:
 {"time":"00:10", "rid":"r101"}
 {"time":"00:12", "rid":"r101"}
+{"time":"00:14", "rid":"r101"}
+{"time":"00:16", "rid":"r101"}
 {"time":"00:12", "rid":"r102"}
+{"time":"00:15", "rid":"r102"}
+{"time":"00:20", "rid":"r102"}
 {"time":"00:59", "rid":"r102"}
 
-One can notice, that data in the column "rid" follows pattern of "runs".
-Formally, column values form a "run", if within a sub-list of rows these column values are the same,
-and this value does not occur outside of this run.
+One can notice, that data in the column "rid" has "runs".
+It is therefore possible to group these data by "rid", e.g. with "jq -s 'group_by(.rid)".
 
+This utility tries to auto-detect fields, by which data can be grouped, and group by these fields.
+Actually, not full aggregation is done, but only "group runs":
+that is, the order of data is not changed (important for logs).
 Only runs that have some minimum median length are considered.
+
+Usage: python3 -m datatools.logs.auto_aggregator auto_aggregate
+Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 """
 
 import json

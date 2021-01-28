@@ -6,8 +6,9 @@ Typically, messages in the log files are produced by substituting parameters in 
 {"time":"00:12", "message":"Client 102 logged out"}
 {"time":"00:59", "message":"Shutdown"}
 
-Here, 1st and second messages are quite similar, differing only in client id and action type.
-They can be thought of as instances of template "Client * logged out *".
+Here, 1st and 2nd messages are quite similar,
+with difference only in "client id" (101/102) and "action type" ("in"/"out").
+These messages can be thought of as instances of template "Client * logged out *".
 
 This code tries to group similar text values together in groups, and assign unique group ids to messages.
 (This process is referred to as "annotation").
@@ -27,18 +28,24 @@ Thus, it is helpful to pre-group all log lines, based on the value of "logger" f
 and classify messages inside these groups. This is much faster and more reliable.
 
 This module provides function to classify and annotate a field in json-lines data (pre-grouped by another field).
+
+Usage: python3 -m datatools.logs.text_classifier annotate_lines "message" "kind"
+(will classify the field "message" and produce the field "kind"; no pre-grouping)
+Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 """
+import json
+import re
+import sys
+from collections import defaultdict
+from dataclasses import dataclass
 from types import GeneratorType
 from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable
-import sys
-import re
-import json
-from dataclasses import dataclass, asdict
-from collections import defaultdict
+
+from datatools.json.util import to_jsonisable
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
-from datatools.util.logging import debug
 from datatools.util.infra import run_once
-from datatools.json.util import to_jsonisable, is_primitive
+from datatools.util.logging import debug
+
 
 @dataclass
 class Stat:
@@ -50,7 +57,7 @@ class Stat:
 
 
 def split(s: str):
-    tokens = re.split(r'(\s+|[;,=\)\(\]\[:])', s)
+    tokens = re.split(r'(\s+|[;,=)(\]\[:])', s)
     i = 0
     while i < len(tokens):
         token = tokens[i]
@@ -63,19 +70,22 @@ def split(s: str):
             if token2.isspace():
                 yield token + token2
             else:
-                if len(token) > 0: yield token
-                if len(token2) > 0: yield token2
+                if len(token) > 0:
+                    yield token
+                if len(token2) > 0:
+                    yield token2
         else:
-            if len(token) > 0: yield token
+            if len(token) > 0:
+                yield token
 
 
 def compute_stats(strings: List[str]) -> Iterator[Stat]:
     debug(f"Computing stats for {len(strings)} lines")
-    token2line = defaultdict(list)
+    token2lines = defaultdict(list)  # or better just set of line indices!
     for s in strings:
         token_set = {token for token in split(s)}
         for token in token_set:
-            token2line[token].append(s)
+            token2lines[token].append(s)
 
     f = token_counts(tokenize(strings))
 
@@ -83,27 +93,29 @@ def compute_stats(strings: List[str]) -> Iterator[Stat]:
     total_quality = 0
     total_support = 0
     for token, quality in f.items():
-        quality = len(token2line[token]) * len(token2line[token]) / quality
+        quality = len(token2lines[token]) * len(token2lines[token]) / quality
         token2quality[token] = quality
         total_quality += quality
-        total_support += len(token2line[token])
+        total_support += len(token2lines[token])
 
     total_count = 0
     for count in f.values():
         total_count += count
 
     limit = 0.5 * total_quality
-    sum = 0
+    total = 0
     prev_support = 0
     prev_quality = 0
     prev_selected = True
     i = 0
     for token, quality in sorted(token2quality.items(), key=lambda item: -item[1]):
-        count = f[token]
-        support = len(token2line[token])
-        selected = prev_selected and support > 1 and i < len(s) and (sum < limit or quality == prev_quality or support >= prev_support)
+        # count = f[token]
+        support = len(token2lines[token])
+        # and i < len(s)
+        selected = prev_selected and support > 1 and (
+                total < limit or quality == prev_quality or support >= prev_support)
 
-        sum += quality
+        total += quality
         prev_quality = quality
         prev_support = support
         prev_selected = selected
@@ -123,25 +135,9 @@ def compute_selected(stats: Iterable[Stat]) -> Set[str]:
     return {stat.value for stat in stats if stat.selected}
 
 
-def dict_to_jsons(d):
-    for value, count in d.items():
-        json.dump(asdict(Stat(count=count, value=value)), sys.stdout)
-        print()
-
-
-def stats():
-    lines = load_data()
-    for stat in compute_stats(lines):
-        yield asdict(stat)
-
-
 def tokenize(lines):
     for line in lines:
         yield from split(line)
-
-
-# def buckets():
-#     return {str(k): v for k, v in (make_buckets(load_data()).items())}
 
 
 def make_buckets(strings) -> Dict[Tuple[str, ...], List[str]]:
@@ -196,19 +192,19 @@ def refine_buckets(data: Iterable[List[str]]) -> Dict[Tuple[str, ...], List[str]
     return refined_buckets
 
 
-def clean_pattern(pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]:
+def clean_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]:
     if len(lines) == 1:
-        return (lines[0],)
+        return lines[0],
 
     # collapse successive wildcards
-    result = []
+    out_pattern = []
     prev_token = ''
-    for token in pattern:
+    for token in in_pattern:
         if token is None and token == prev_token:
             continue
-        result.append(token)
+        out_pattern.append(token)
         prev_token = token
-    return tuple(result)
+    return tuple(out_pattern)
 
 
 def bucketize(lines) -> Dict[Tuple[str, ...], List[str]]:
@@ -216,17 +212,17 @@ def bucketize(lines) -> Dict[Tuple[str, ...], List[str]]:
     selected = compute_selected(compute_stats(lines))
     pattern2buckets = defaultdict(list)
     for s in lines:
-        pattern2buckets[pattern(s, selected)].append(s)
+        pattern2buckets[pattern_tuple(s, selected)].append(s)
     debug(f"Computed buckets for {len(lines)} lines")
     return pattern2buckets
 
 
-def pattern(line, selected) -> Tuple[str, ...]:
+def pattern_tuple(line, selected) -> Tuple[str, ...]:
     return tuple(token if token in selected else None for token in split(line))
 
 
 def annotate_tokens():
-    lines = load_data()
+    lines = load_lines()
     selected = compute_selected(compute_stats(lines))
     for s in lines:
         yield do_annotate(s, selected)
@@ -238,11 +234,10 @@ def do_annotate(line, selected):
 
 def annotate_lines(group_field: Optional[str], classify_field: str, result_field):
     debug(f"Annotating; group_field={group_field}")
-    lines = load_data()
-    records = [json.loads(l1) for l1 in lines]
+    records = load_data()
     debug(f"Computing lookups")
     group_to_lookup: Dict[str, Dict[str, Tuple[str, ...]]] = compute_group_lookups(
-        records, group_field, classify_field, bucketize # make_buckets
+        records, group_field, classify_field, bucketize  # make_buckets
     )
     debug(f"done")
 
@@ -253,8 +248,7 @@ def annotate_lines(group_field: Optional[str], classify_field: str, result_field
         category = f'{hash(p) & 0xFFFFFFFF:02x}'
         j[result_field] = category
 
-        pattern, args, encoded_pattern = pattern_and_args(message, {token for token in p if token is not None})
-
+        # pattern, args, encoded_pattern = pattern_and_args(message, {token for token in p if token is not None})
         # j['message'] = encoded_pattern
         # j['message'] = pattern
         # j['args'] = args
@@ -293,7 +287,8 @@ def compute_group_lookups(records, group_field, classify_field, make_buckets_fun
 
     group_to_lookup = {}
     for group, indices_of_records_in_group in group_to_indices.items():
-        group_to_lookup[group] = invert(make_buckets_func([records[i][classify_field] for i in indices_of_records_in_group]))
+        group_to_lookup[group] = invert(
+            make_buckets_func([records[i][classify_field] for i in indices_of_records_in_group]))
     return group_to_lookup
 
 
@@ -303,16 +298,16 @@ def invert(bucket_data: Dict[Tuple[str, ...], List[str]]) -> Dict[str, Tuple[str
 
 def run():
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
-        return stats()
+        return compute_stats(load_lines())
     elif len(sys.argv) == 2 and sys.argv[1] == "initial_buckets":
-        return to_jsonisable(bucketize(load_data()))
+        return to_jsonisable(bucketize(load_lines()))
     elif len(sys.argv) == 2 and sys.argv[1] == "buckets":
-        return to_jsonisable(make_buckets(load_data()))
+        return to_jsonisable(make_buckets(load_lines()))
     elif len(sys.argv) == 2 and sys.argv[1] == "annotate_tokens":
         return annotate_tokens()
-    elif len(sys.argv) == 5 and sys.argv[1] == "annotate_lines":
+    elif (len(sys.argv) == 5 or len(sys.argv) == 4) and sys.argv[1] == "annotate_lines":
         return annotate_lines(
-            group_field=sys.argv[4] if sys.argv[4] != '' else None,
+            group_field=sys.argv[4] if len(sys.argv) == 5 else None,
             classify_field=sys.argv[2],
             result_field=sys.argv[3]
         )
@@ -320,6 +315,11 @@ def run():
 
 @run_once
 def load_data():
+    return [json.loads(l1) for l1 in load_lines()]
+
+
+@run_once
+def load_lines():
     return [line.rstrip('\n') for line in sys.stdin]
 
 
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     if result is not None:
         if isinstance(result, GeneratorType):
             for o in result:
-                json.dump(o, sys.stdout)
+                json.dump(to_jsonisable(o), sys.stdout)
                 print()
         else:
             json.dump(result, sys.stdout)
