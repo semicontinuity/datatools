@@ -237,9 +237,12 @@ def do_annotate(line, selected):
 
 
 def annotate_lines(group_field: Optional[str], classify_field: str, result_field):
+    debug(f"Annotating; group_field={group_field}")
     lines = load_data()
     records = [json.loads(l1) for l1 in lines]
-    group_to_lookup: Dict[str, Dict[str, Tuple[str, ...]]] = compute_group_lookups(records, group_field, classify_field)
+    group_to_lookup: Dict[str, Dict[str, Tuple[str, ...]]] = compute_group_lookups(
+        records, group_field, classify_field, bucketize # make_buckets
+    )
 
     for j in records:
         group = None if group_field is None else j[group_field]
@@ -248,11 +251,12 @@ def annotate_lines(group_field: Optional[str], classify_field: str, result_field
         category = f'{hash(p) & 0xFFFFFFFF:02x}'
         j[result_field] = category
 
-        pattern, args, encoded_pattern = pattern_and_args(message, { token for token in p if token is not None })
+        pattern, args, encoded_pattern = pattern_and_args(message, {token for token in p if token is not None})
 
         # j['message'] = encoded_pattern
-        j['message'] = pattern
-        j['args'] = args
+        # j['message'] = pattern
+        # j['args'] = args
+        # j['hash'] = category
 
         yield j
 
@@ -264,7 +268,6 @@ def pattern_and_args(s, token_set):
 
     # temp
     encoded_pattern = []
-    
 
     for token in split(s):
         if token in token_set:
@@ -280,15 +283,15 @@ def pattern_and_args(s, token_set):
     return (pattern, args, ''.join(encoded_pattern)) if real_pattern else (args, [], ''.join(args))
 
 
-def compute_group_lookups(records, group_field, classify_field):
+def compute_group_lookups(records, group_field, classify_field, make_buckets_func):
     group_to_indices = defaultdict(list)
     for i, j in enumerate(records):
         group = j[group_field] if group_field is not None else None
         group_to_indices[group].append(i)
 
     group_to_lookup = {}
-    for group, indices in group_to_indices.items():
-        group_to_lookup[group] = invert(make_buckets([records[i][classify_field] for i in indices]))
+    for group, indices_of_records_in_group in group_to_indices.items():
+        group_to_lookup[group] = invert(make_buckets_func([records[i][classify_field] for i in indices_of_records_in_group]))
     return group_to_lookup
 
 
