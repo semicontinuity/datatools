@@ -212,12 +212,12 @@ def clean_pattern(pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]
 
 
 def bucketize(lines) -> Dict[Tuple[str, ...], List[str]]:
-    debug("Computing initial buckets")
+    debug(f"Computing buckets for {len(lines)} lines")
     selected = compute_selected(compute_stats(lines))
     pattern2buckets = defaultdict(list)
     for s in lines:
         pattern2buckets[pattern(s, selected)].append(s)
-    debug("Computed initial buckets")
+    debug(f"Computed buckets for {len(lines)} lines")
     return pattern2buckets
 
 
@@ -240,9 +240,11 @@ def annotate_lines(group_field: Optional[str], classify_field: str, result_field
     debug(f"Annotating; group_field={group_field}")
     lines = load_data()
     records = [json.loads(l1) for l1 in lines]
+    debug(f"Computing lookups")
     group_to_lookup: Dict[str, Dict[str, Tuple[str, ...]]] = compute_group_lookups(
         records, group_field, classify_field, bucketize # make_buckets
     )
+    debug(f"done")
 
     for j in records:
         group = None if group_field is None else j[group_field]

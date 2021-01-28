@@ -2,8 +2,10 @@ from collections import defaultdict
 from typing import *
 
 
-def compute_weights_graph(nodes: List[Hashable], weight_f: Callable[[Hashable, Hashable], float]) -> Dict[
-    Hashable, Dict[Hashable, float]]:
+def compute_weights_graph(
+        nodes: List[Hashable],
+        weight_f: Callable[[Hashable, Hashable], float]) -> Dict[Hashable, Dict[Hashable, float]]:
+
     graph = defaultdict(dict)
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
@@ -13,8 +15,10 @@ def compute_weights_graph(nodes: List[Hashable], weight_f: Callable[[Hashable, H
     return graph
 
 
-def discretize_graph(graph: Dict[Hashable, Dict[Hashable, float]], predicate: Callable[[float], bool]) -> Dict[
-    Hashable, Dict[Hashable, float]]:
+def discretize_graph(
+        graph: Dict[Hashable, Dict[Hashable, float]],
+        predicate: Callable[[float], bool]) -> Dict[Hashable, Dict[Hashable, float]]:
+
     return {k: [kk for kk, weight in v.items() if predicate(weight)] for k, v in graph.items()}
 
 
@@ -35,27 +39,26 @@ def levenshtein_distance(s1, s2):
 
 
 class ConnectedComponents:
+    def __init__(self, adj: Dict[Hashable, Dict[Hashable, Hashable]]):
+        self.adj = adj
 
-	def __init__(self, adj: Dict[Hashable, Dict[Hashable, Hashable]]):
-		self.adj = adj
+    def dfs(self, vertices: List[Hashable], v: Hashable, visited: Set[Hashable]):
+        visited.add(v)
 
-	def dfs(self, vertices: List[Hashable], v: Hashable, visited: Set[Hashable]):
-		visited.add(v)
+        vertices.append(v)
+        for i in self.adj[v]:
+            if i not in visited:
+                vertices = self.dfs(vertices, i, visited)
+        return vertices
 
-		vertices.append(v)
-		for i in self.adj[v]:
-			if i not in visited:
-				vertices = self.dfs(vertices, i, visited)
-		return vertices
-
-	def compute(self) -> List[List[Hashable]]:
-		visited : Set[Hashable] = set()
-		result = []
-		for v in self.adj:
-			if v not in visited:
-				vertices = []
-				result.append(self.dfs(vertices, v, visited))
-		return result
+    def compute(self) -> List[List[Hashable]]:
+        visited: Set[Hashable] = set()
+        result = []
+        for v in self.adj:
+            if v not in visited:
+                vertices = []
+                result.append(self.dfs(vertices, v, visited))
+        return result
 
 
 def transitive_reduction(g: Dict):
