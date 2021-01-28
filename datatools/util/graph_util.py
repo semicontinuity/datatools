@@ -6,7 +6,7 @@ from datatools.util.logging import debug
 
 def compute_weights_graph(
         nodes: List[Hashable],
-        weight_f: Callable[[Hashable, Hashable], float]) -> Dict[Hashable, Dict[Hashable, float]]:
+        weight_f: Callable[[Any, Any], float]) -> Dict[Hashable, Dict[Hashable, float]]:
 
     debug(f"Computing weights graph, length:{len(nodes)}")
     graph = defaultdict(dict)
@@ -20,11 +20,11 @@ def compute_weights_graph(
 
 def discretize_graph(
         graph: Dict[Hashable, Dict[Hashable, float]],
-        predicate: Callable[[float], bool]) -> Dict[Hashable, Dict[Hashable, float]]:
+        predicate: Callable[[float], bool]) -> Dict[Hashable, List[Hashable]]:
     return {k: [kk for kk, weight in v.items() if predicate(weight)] for k, v in graph.items()}
 
 
-def levenshtein_distance(s1, s2):
+def levenshtein_distance(s1: Sequence, s2: Sequence):
     if len(s1) > len(s2):
         s1, s2 = s2, s1
 
@@ -41,7 +41,7 @@ def levenshtein_distance(s1, s2):
 
 
 class ConnectedComponents:
-    def __init__(self, adj: Dict[Hashable, Dict[Hashable, Hashable]]):
+    def __init__(self, adj: Dict[Hashable, Sequence[Hashable]]):
         self.adj = adj
 
     def dfs(self, vertices: List[Hashable], v: Hashable, visited: Set[Hashable]):

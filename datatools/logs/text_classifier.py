@@ -39,7 +39,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from types import GeneratorType
-from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any
+from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any, Sequence
 
 from datatools.json.util import to_jsonisable
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
@@ -167,12 +167,23 @@ def initial_refined_buckets(strings):
 
 def make_super_buckets(refined_buckets: Dict[Tuple[str, ...], List[str]]):
     debug("Computing buckets similarity graph")
-    buckets_similarity_graph: Dict[Hashable, Dict[Hashable, Hashable]] = discretize_graph(
+    nodes = list(refined_buckets.keys())
+    # debug()
+    # debug(nodes)
+    # debug()
+
+    def normalized_levenstein_distance_metric(n1: Sequence, n2: Sequence) -> float:
+        return 2.0 * levenshtein_distance(n1, n2) / (len(n1) + len(n2))
+
+    def small_normalized_levenstein_distance_metric(d: float) -> bool:
+        return d <= 0.5
+
+    buckets_similarity_graph: Dict[Hashable, List[Hashable]] = discretize_graph(
         compute_weights_graph(
-            list(refined_buckets.keys()),
-            lambda n1, n2: 2.0 * levenshtein_distance(n1, n2) / (len(n1) + len(n2))
+            nodes,
+            normalized_levenstein_distance_metric
         ),
-        lambda weight: weight <= 0.5
+        small_normalized_levenstein_distance_metric
     )
     debug("Computed buckets similarity graph")
 
@@ -227,7 +238,7 @@ def annotate_lines(group_field: Optional[str], classify_field: str, result_field
     records = load_data()
     debug(f"Computing lookups")
     group_to_lookup: Dict[str, Dict[str, Tuple[str, ...]]] = compute_group_lookups(
-        records, group_field, classify_field, bucketize  # make_buckets
+        records, group_field, classify_field, make_buckets  # bucketize  # make_buckets
     )
     debug(f"done")
 
