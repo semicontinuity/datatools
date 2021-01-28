@@ -75,17 +75,18 @@ def transitive_reduction(g: Dict):
 def node_to_depth(g: Dict[Hashable, Any], node: Hashable):
     """ for DAG """
 
-    def node_to_depth0(g: Dict[Hashable, Any], node: Hashable, depth: int, depths: Dict[Hashable, int]):
-        adj = g[node]
-        known_depth: int = depths.get(node)
+    depths: Dict[Hashable, int] = {}
+
+    def node_to_depth0(a_node: Hashable, depth: int):
+        adj = g[a_node]
+        known_depth: int = depths.get(a_node)
         if known_depth is None or depth > known_depth:
-            depths[node] = depth
+            depths[a_node] = depth
 
         for adj_node in adj:
-            node_to_depth0(g, adj_node, depth + 1, depths)
+            node_to_depth0(adj_node, depth + 1)
 
-    depths = {}
-    node_to_depth0(g, node, 0, depths)
+    node_to_depth0(node, 0)
     return depths
 
 
@@ -95,23 +96,23 @@ def roots_and_leaves(g: Dict[Hashable, Any]) -> Tuple[Set, Set, Set]:
     """
     non_trivial = set()
     trivial = set()
-    leafs = set()
+    leaves = set()
 
     for node, adj in g.items():
         if len(adj) > 0:
             non_trivial.add(node)
         else:
             trivial.add(node)
-            leafs.add(node)
+            leaves.add(node)
 
     for node, adj in g.items():
         if len(adj) > 0:
-            leafs.discard(node)
+            leaves.discard(node)
         for adj_node in adj:
             non_trivial.discard(adj_node)
             trivial.discard(adj_node)
 
-    return non_trivial, trivial, leafs
+    return non_trivial, trivial, leaves
 
 
 def reachable_from(roots: Iterable[Hashable], g: Dict[Hashable, Any], result: Set[Hashable] = None) -> Set[Hashable]:
