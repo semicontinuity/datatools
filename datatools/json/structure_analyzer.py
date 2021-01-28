@@ -1,40 +1,17 @@
-from typing import Dict, Optional, List, Any, Tuple, Hashable
 from collections import defaultdict
+from typing import Dict, Optional, List, Any, Tuple
 
 
-def array_descriptor_and_path_counts(array: List[Any]) -> Tuple[Optional[Dict[str, Any]], Dict[Tuple[str,...], int]]:
-    """ Returns None if some element of the array is not dict """
-    path_of_leaf_to_count = defaultdict(int)
-
-    def update_descriptor(d, obj, p):
-        if type(obj) is not dict:
-            path_of_leaf_to_count[tuple(p)] += 1
-            return None
-        for name, value in obj.items():
-            field_descriptor = d.get(name)
-            if name in d and field_descriptor is None:
-                # field is banned (seen as not containing an object before)
-                path_of_leaf_to_count[tuple(p + [name])] += 1
-                continue
-
-            if field_descriptor is None:
-                field_descriptor = {}  # first time seen
-
-            d[name] = update_descriptor(field_descriptor, value, p + [name])
-        return d
-
-    descriptor: Dict = {}
-    path = []
-
-    for item in array:
-        descriptor = update_descriptor(descriptor, item, path)
-        if descriptor is None:   # obj is not dict
-            return None, path_of_leaf_to_count
-    return descriptor, path_of_leaf_to_count
+def array_descriptor_and_path_counts(obj: List[Any]) -> Tuple[Optional[Dict[str, Any]], Dict[Tuple[str, ...], int]]:
+    return values_descriptor_and_path_counts(obj)
 
 
 def obj_descriptor_and_path_counts(obj: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], Dict[Tuple[str, ...], int]]:
-    """ Returns None if some value in the obj is not dict """
+    return values_descriptor_and_path_counts(obj.values())
+
+
+def values_descriptor_and_path_counts(values):
+    """ Returns None if some child value is not dict """
     path_of_leaf_to_count = defaultdict(int)
 
     def update_descriptor(d, obj, p):
@@ -56,15 +33,14 @@ def obj_descriptor_and_path_counts(obj: Dict[str, Any]) -> Tuple[Optional[Dict[s
 
     descriptor: Dict = {}
     path = []
-
-    for key, item in obj.items(): #
+    for item in values:
         descriptor = update_descriptor(descriptor, item, path)
-        if descriptor is None:   # obj is not dict
+        if descriptor is None:
             return None, path_of_leaf_to_count
     return descriptor, path_of_leaf_to_count
 
 
-def prune_sparse_leaves(descriptor: Dict[str, Any], path_of_leaf_to_count: Dict[Tuple[str,...], int], length: int):
+def prune_sparse_leaves(descriptor: Dict[str, Any], path_of_leaf_to_count: Dict[Tuple[str, ...], int], length: int):
     pruned = []
     for root, value_descriptor in descriptor.items():
         occupancies = [occupancy for column_id, occupancy in path_of_leaf_to_count.items() if column_id[0] == root]

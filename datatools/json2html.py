@@ -159,7 +159,6 @@ class ArrayOfNestableObjectsNode:
         else:
             s += '<tbody>'
 
-        i = 0
         for r in self.record_nodes:
             s += '<tr>\n'
 
@@ -184,7 +183,7 @@ def td_colored(attr, string_value, value):
         return '<td></td>\n'
     elif attr.is_colored(string_value):
         bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
-        return  td_value_with_color(bg, value) + '\n'
+        return td_value_with_color(bg, value) + '\n'
     else:
         return f'<td><span>\n{string_value}</span></td>\n'
 
@@ -228,7 +227,7 @@ def td_value_with_attr(attr, string_value, value):
         return '<td></td>\n'
     elif attr.is_colored(string_value):
         bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
-        return  td_value_with_color(bg, value) + '\n'
+        return td_value_with_color(bg, value) + '\n'
     else:
         return f'<td><span>\n{string_value}</span></td>\n'
 

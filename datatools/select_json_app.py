@@ -36,7 +36,6 @@ FD_PRESENTATION_OUT = 7
 FD_STATE_IN = 8
 FD_STATE_OUT = 9
 
-
 COLORING_NONE = "none"
 COLORING_HASH_ALL = "hash-all"
 COLORING_HASH_FREQUENT = "hash-frequent"
@@ -50,6 +49,8 @@ from picotui.editor import Editor
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.select_json_app_exit_codes_mapping import *
+from datatools.json.coloring import hash_code, hash_to_rgb
+from datatools.tui.ansi_util import ansi_foreground_escape_code, ansi_background_escape_code
 
 
 @dataclass
@@ -58,47 +59,13 @@ class Params:
     stream_mode: bool = None
     columns = {}
 
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-def hash_code(s):
-    """ Consistent hash """
-    hh = 0
-    for c in s:
-        hh = (31 * hh + ord(c)) % 4294967296
-    return hh
-
-
-def hash_to_rgb(h):
-    if h is None:
-        return 0, 0, 0
-
-    r6 = h % 2
-    h = (h - r6) // 2
-    g6 = h % 2
-    h = (h - g6) // 2
-    b6 = h % 2
-    h = (h - g6) // 2
-
-    r3 = h % 32
-    h = (h - r3) // 32
-    g3 = h % 32
-    h = (h - g3) // 32
-    b3 = h % 32
-
-    return r6 * 32 + r3 + 128, g6 * 32 + g3 + 128, b6 * 32 + b3 + 128
-
-
-def ansi_foreground_escape_code(r, g, b):
-    return "\x1b[38;2;" + str(r) + ';' + str(g) + ';' + str(b) + 'm'
-
-
-def ansi_background_escape_code(r, g, b):
-    return "\x1b[48;2;" + str(r) + ';' + str(g) + ';' + str(b) + 'm'
 
 
 def decode_rgb(s):
     return int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16)
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -162,13 +129,10 @@ THEMES = {
 
 COLORS = THEMES["dark"]
 
-
-
-
 P_FIRST = 0
-P_NONE  = 1
-P_STOP  = 2
-P_LAST  = 3
+P_NONE = 1
+P_STOP = 2
+P_LAST = 3
 
 KIND_SINGLE = 0
 KIND_DOUBLE = 1
@@ -179,28 +143,28 @@ CHARS = [
     # vertical: single, horizontal: single
     [
         b'\xe2\x94\x8c', b'\xe2\x94\x80', b'\xe2\x94\xac', b'\xe2\x94\x90',
-        b'\xe2\x94\x82', b' ',            b'\xe2\x94\x82', b'\xe2\x94\x82',
+        b'\xe2\x94\x82', b' ', b'\xe2\x94\x82', b'\xe2\x94\x82',
         b'\xe2\x94\x9c', b'\xe2\x94\x80', b'\xe2\x94\xbc', b'\xe2\x94\xa4',
         b'\xe2\x94\x94', b'\xe2\x94\x80', b'\xe2\x94\xb4', b'\xe2\x94\x98'
     ],
     # vertical: single, horizontal: double
     [
         b'\xe2\x95\x92', b'\xe2\x95\x90', b'\xe2\x95\xa4', b'\xe2\x95\x95',
-        b'\xe2\x94\x82', b' ',            b'\xe2\x94\x82', b'\xe2\x94\x82',
+        b'\xe2\x94\x82', b' ', b'\xe2\x94\x82', b'\xe2\x94\x82',
         b'\xe2\x95\x9e', b'\xe2\x95\x90', b'\xe2\x95\xaa', b'\xe2\x95\xa1',
         b'\xe2\x95\x98', b'\xe2\x95\x90', b'\xe2\x95\xa7', b'\xe2\x95\x9b'
     ],
     # vertical: double, horizontal: single
     [
         b'\xe2\x95\x93', b'\xe2\x94\x80', b'\xe2\x95\xa5', b'\xe2\x95\xa6',
-        b'\xe2\x95\x91', b' ',            b'\xe2\x95\x91', b'\xe2\x95\x91',
+        b'\xe2\x95\x91', b' ', b'\xe2\x95\x91', b'\xe2\x95\x91',
         b'\xe2\x95\x9f', b'\xe2\x94\x80', b'\xe2\x95\xab', b'\xe2\x95\xa2',
         b'\xe2\x95\x99', b'\xe2\x94\x80', b'\xe2\x95\xa8', b'\xe2\x95\x9c'
     ],
     # vertical: double, horizontal: double
     [
         b'\xe2\x95\x94', b'\xe2\x95\x90', b'\xe2\x95\xa6', b'\xe2\x95\x97',
-        b'\xe2\x95\x91', b' ',            b'\xe2\x95\x91', b'\xe2\x95\x91',
+        b'\xe2\x95\x91', b' ', b'\xe2\x95\x91', b'\xe2\x95\x91',
         b'\xe2\x95\xa0', b'\xe2\x95\x90', b'\xe2\x95\xac', b'\xe2\x95\xa3',
         b'\xe2\x95\x9a', b'\xe2\x95\x90', b'\xe2\x95\xa9', b'\xe2\x95\x9d'
     ]
@@ -377,7 +341,8 @@ class WGrid(Editor):
 
             column_width = self.column_widths[c]
             if row_items:
-                text, text_len, attrs = render(row_items, c, self.column_keys, self.columns, self.compute_cell_attrs, column_width, is_under_cursor)
+                text, text_len, attrs = render(row_items, c, self.column_keys, self.columns, self.compute_cell_attrs,
+                                               column_width, is_under_cursor)
                 self.set_colors(*attrs)
                 if centered:
                     column_width = column_width
@@ -402,7 +367,7 @@ class WGrid(Editor):
         if key == KEY_DOWN:
             if self.cur_line + 1 != self.total_lines:
                 self.cur_line += 1
-                if self.cur_line >= self.top_line + self.height - 3:    # cursor went beyond visible area
+                if self.cur_line >= self.top_line + self.height - 3:  # cursor went beyond visible area
                     self.top_line += 1
                     self.redraw_lines(self.top_line, content_height)
                     # scroll_region(2, 2 + content_height - 2)
@@ -413,7 +378,7 @@ class WGrid(Editor):
         elif key == KEY_UP:
             if self.cur_line > 0:
                 self.cur_line -= 1
-                if self.cur_line < self.top_line:   # cursor went beyond visible area
+                if self.cur_line < self.top_line:  # cursor went beyond visible area
                     self.top_line = self.cur_line
                     self.redraw_lines(self.top_line, content_height)
                     # scroll_region(3, 3 + content_height - 2)
@@ -422,18 +387,19 @@ class WGrid(Editor):
                 else:
                     self.redraw_lines(self.cur_line, 2)
         elif key == KEY_PGDN:
-            if self.cur_line + 1 != self.total_lines:   # if not on the very last line
+            if self.cur_line + 1 != self.total_lines:  # if not on the very last line
                 remains = self.total_lines - (self.top_line + content_height)
                 if 0 < remains:
                     delta = min(remains, content_height)
                     self.top_line += delta
-                    self.cur_line = min(self.cur_line + delta, self.total_lines - 1) if delta > 0 else self.total_lines - 1
+                    self.cur_line = min(self.cur_line + delta,
+                                        self.total_lines - 1) if delta > 0 else self.total_lines - 1
                     self.redraw_lines(self.top_line, content_height)
-                else: # everything must be visible already; must move cursor to the last line
+                else:  # everything must be visible already; must move cursor to the last line
                     self.cur_line = self.total_lines - 1
                     self.redraw_lines(self.top_line, content_height)
         elif key == KEY_PGUP:
-            if self.cur_line > 0:   # if not on the very first line
+            if self.cur_line > 0:  # if not on the very first line
                 delta = min(self.top_line, content_height)
                 self.top_line -= delta
                 self.cur_line = max(self.cur_line - delta, 0) if delta > 0 else 0
@@ -463,7 +429,6 @@ column_is_complex = defaultdict(bool)
 unique_column_values = defaultdict(set)
 max_column_widths = defaultdict(int)
 
-
 orig_data = []
 
 
@@ -474,14 +439,14 @@ def pick_displayed_columns(screen_width):
     screen_width -= 1
 
     for k, v in max_column_widths.items():
-      if 0 < v <= screen_width - 1 and not column_is_complex[k]:
-        result.append(k)
-        screen_width -= (v + 1)
+        if 0 < v <= screen_width - 1 and not column_is_complex[k]:
+            result.append(k)
+            screen_width -= (v + 1)
 
     for k, v in max_column_widths.items():
-      if 0 < v <= screen_width - 1 and column_is_complex[k]:
-        result.append(k)
-        screen_width -= (v + 1)
+        if 0 < v <= screen_width - 1 and column_is_complex[k]:
+            result.append(k)
+            screen_width -= (v + 1)
 
     return result
 
@@ -549,7 +514,8 @@ def compute_cell_attrs(column_index, text):
     color = column_colorings[column_index] if column_index < len(column_colorings) else COLORING_NONE
 
     text_colors = COLORS[ColorKey.TEXT]
-    if color == COLORING_NONE or (color == COLORING_HASH_FREQUENT and column_attrs[column_keys[column_index]].value_stats[text] <= 1):
+    if color == COLORING_NONE or (
+            color == COLORING_HASH_FREQUENT and column_attrs[column_keys[column_index]].value_stats[text] <= 1):
         return text_colors
 
     fg = hash_to_rgb(hash_code(text))
@@ -579,7 +545,8 @@ def run(params, state):
         compute_column_colorings(column_keys)
 
         global g
-        g = WGrid(params.title, screen_size[0], screen_size[1], column_titles, column_widths, compute_cell_attrs, params.columns, column_keys)
+        g = WGrid(params.title, screen_size[0], screen_size[1], column_titles, column_widths, compute_cell_attrs,
+                  params.columns, column_keys)
         g.set_lines(orig_data)
 
         top_line = state["top_line"]

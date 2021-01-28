@@ -10,9 +10,10 @@ Example JSONs:
 [ {"key":["A","X"], "value":[{"key":"B"}] } ]
 """
 
-import sys
 import json
-from graphviz import Digraph, Graph
+import sys
+
+from graphviz import Digraph
 
 
 def label(node):
@@ -23,14 +24,14 @@ def label(node):
 
 
 # perhaps, can also support plain list of edges, like [["A", "B"], ["B", "C"]]
-def adj_lists_to_graph(l):
+def adj_lists_to_graph(adj_list_records):
     g = Digraph(node_attr={'shape': 'record'}, graph_attr={"concentrate": "true"})
 
-    for record in l:
+    for record in adj_list_records:
         node = record['key']
         g.node(str(node), label(node))
 
-    for record in l:
+    for record in adj_list_records:
         node = record['key']
         adj = record['value']
         for target_record in adj:

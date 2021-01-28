@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass, dataclass
+from dataclasses import is_dataclass
 
 
 def is_primitive(obj):

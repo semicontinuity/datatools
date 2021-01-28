@@ -11,13 +11,14 @@
 # or json, if environment variable OF set to "json"
 
 
-import sys
 import json
 import os
+import sys
 
 from picotui.dialogs import *
 
 from datatools.tui.picotui_patch import patch_picotui
+
 patch_picotui()
 from datatools.tui.picotui_util import *
 
