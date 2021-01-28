@@ -25,20 +25,11 @@ from typing import Iterable, Dict, List, Set, Hashable, Any, Optional
 from datatools.util.graph_util import ConnectedComponents, transitive_reduction, roots_and_leaves, reachable_from
 from datatools.json.util import to_jsonisable, is_primitive
 from datatools.util.logging import debug, traced
+from datatools.util.infra import run_once
 
 SUPPORT_THRESHOLD = 4
 IGNORED_COLUMNS = ["datetime", "message", "hash", "logger", "level"]
 MULTI_VALUE_MARKER = ()
-
-
-def run_once(f):
-    def wrapper(*args, **kwargs):
-        if not wrapper.has_run:
-            wrapper.has_run = True
-            wrapper.cached_result = f(*args, **kwargs)
-        return wrapper.cached_result
-    wrapper.has_run = False
-    return wrapper
 
 
 @dataclass
