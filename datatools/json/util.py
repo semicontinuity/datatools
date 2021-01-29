@@ -7,10 +7,12 @@ def is_primitive(obj):
 
 def to_jsonisable(obj):
     if is_dataclass(obj):
-        return obj.__dict__
+        return to_jsonisable(obj.__dict__)
     elif isinstance(obj, dict):
         if all((is_primitive(key) for key in obj)):
-            return obj
+            return {
+                key: to_jsonisable(value) for key, value in obj.items()
+            }
         else:
             return [
                 {"key": to_jsonisable(key), "value": to_jsonisable(value)} for key, value in obj.items()
@@ -19,6 +21,8 @@ def to_jsonisable(obj):
         return to_jsonisable(list(obj))
     elif isinstance(obj, list):
         return [to_jsonisable(e) for e in obj]
+    elif isinstance(obj, bytearray):
+        return [e for e in obj]
     else:
         return obj
 

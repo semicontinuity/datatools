@@ -39,7 +39,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from types import GeneratorType
-from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any, Sequence
+from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any, Sequence, Sized
 
 from datatools.json.util import to_jsonisable
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
@@ -56,7 +56,7 @@ class Stat:
     selected: bool
 
 
-def split(s: str):
+def tokenize(s: str):
     tokens = re.split(r'(\s+|[;,=)(\]\[:])', s)
     i = 0
     while i < len(tokens):
@@ -83,11 +83,11 @@ def compute_stats(strings: List[str]) -> Iterator[Stat]:
     debug(f"Computing stats for {len(strings)} lines")
     token2lines = defaultdict(list)  # or better just set of line indices!
     for s in strings:
-        token_set = {token for token in split(s)}
+        token_set = {token for token in tokenize(s)}
         for token in token_set:
             token2lines[token].append(s)
 
-    f = token_counts(tokenize(strings))
+    f = token_counts(tokenize_lines(strings))
 
     token2quality = {}
     total_quality = 0
@@ -135,9 +135,9 @@ def compute_selected(stats: Iterable[Stat]) -> Set[str]:
     return {stat.value for stat in stats if stat.selected}
 
 
-def tokenize(lines):
+def tokenize_lines(lines):
     for line in lines:
-        yield from split(line)
+        yield from tokenize(line)
 
 
 def make_buckets(strings) -> Dict[Tuple[str, ...], List[str]]:
@@ -172,6 +172,12 @@ def make_super_buckets(refined_buckets: Dict[Tuple[str, ...], List[str]]):
     # debug(nodes)
     # debug()
 
+    def new_metric(n1: Sequence, n2: Sequence) -> float:
+        n1_set = set(n1)
+        n2_set = set(n2)
+        common = n1_set & n2_set
+        return 0.0 if list(i for i in n1 if i in common) == list(i for i in n2 if i in common) else 1.0
+
     def normalized_levenstein_distance_metric(n1: Sequence, n2: Sequence) -> float:
         return 2.0 * levenshtein_distance(n1, n2) / (len(n1) + len(n2))
 
@@ -181,7 +187,7 @@ def make_super_buckets(refined_buckets: Dict[Tuple[str, ...], List[str]]):
     buckets_similarity_graph: Dict[Hashable, List[Hashable]] = discretize_graph(
         compute_weights_graph(
             nodes,
-            normalized_levenstein_distance_metric
+            new_metric
         ),
         small_normalized_levenstein_distance_metric
     )
@@ -219,7 +225,7 @@ def bucketize(lines) -> Dict[Tuple[str, ...], List[str]]:
 
 
 def pattern_tuple(line, selected) -> Tuple[str, ...]:
-    return tuple(token if token in selected else None for token in split(line))
+    return tuple(token if token in selected else None for token in tokenize(line))
 
 
 def annotate_tokens():
@@ -230,7 +236,7 @@ def annotate_tokens():
 
 
 def do_annotate(line, selected):
-    return [{"token": token, "selected": token in selected} for token in split(line)]
+    return [{"token": token, "selected": token in selected} for token in tokenize(line)]
 
 
 def annotate_lines(group_field: Optional[str], classify_field: str, result_field):
@@ -238,7 +244,9 @@ def annotate_lines(group_field: Optional[str], classify_field: str, result_field
     records = load_data()
     debug(f"Computing lookups")
     group_to_lookup: Dict[str, Dict[str, Tuple[str, ...]]] = compute_group_lookups(
-        records, group_field, classify_field, make_buckets  # bucketize  # make_buckets
+        records, group_field, classify_field,
+        bucketize
+        # make_buckets
     )
     debug(f"done")
 
@@ -273,7 +281,7 @@ def clean_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, .
     return tuple(out_pattern)
 
 
-def pack_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]:
+def pack_pattern(in_pattern: Tuple[str, ...], lines: Sequence[str]) -> Tuple[str, ...]:
     if len(lines) == 1:
         return lines[0],
 
@@ -317,7 +325,7 @@ def pattern_and_args(s, token_set):
     # temp
     encoded_pattern = []
 
-    for token in split(s):
+    for token in tokenize(s):
         if token in token_set:
             encoded_pattern.append(token)
             
