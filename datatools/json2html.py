@@ -58,6 +58,9 @@ class PageNode:
                '.a { width: 100%;}\n' + \
                '.ae { display: inline-block;}\n' + \
                '.index {border: solid 1px darkcyan; color: darkcyan;}\n' + \
+               'div.regular>span.header    {display: none;}\n' + \
+               'div.collapsed2>span.header {display: block; font-weight: bold; background: lightgray; border: solid 1px darkgray;}\n' + \
+               'div.collapsed2>span.ae {display: none;}\n' + \
                '.none {background: darkgray;}\n' + \
                'span {padding-left: 0.25em; padding-right: 0.25em;}\n' + \
                '//td {border: solid 1px #CCC; padding-left: 0.25em; padding-right: 0.25em;}\n' + \
@@ -87,9 +90,23 @@ class PageNode:
                '        classes.add(className);' + \
                '    }' + \
                '  }' + \
+               '  function toggleClass2(element, class1, class2) {' + \
+               '    const classes = element.classList;' + \
+               '    if (classes.contains(class1)) {' + \
+               '        classes.remove(class1);' + \
+               '        classes.add(class2);' + \
+               '    } else {' + \
+               '        classes.remove(class2);' + \
+               '        classes.add(class1);' + \
+               '    }' + \
+               '  }' + \
                '  function toggle(e) { ' \
                '    const tb = e.parentElement.parentElement.parentElement.getElementsByTagName("tbody")[0];' \
                '    toggleClass(tb, "collapsed");' \
+               '  }\n' + \
+               '  function toggle2(e, tagName) { ' \
+               '    while (e.tagName !== tagName) e = e.parentElement;' \
+               '    toggleClass2(e, "collapsed2", "regular");' \
                '  }\n' + \
                '</script>\n' + \
                '</head>\n' + \
@@ -106,15 +123,16 @@ class ArrayNode:
         return self.html_numbered_table()
 
     def html_numbered_table(self):
-        if all((is_primitive(record) for record in self.records)) and len(str(self.records)) < 500:
-            return self.html_spans_table()
+        if all((is_primitive(record) for record in self.records)):
+            return self.html_spans_table('regular' if len(self.records) < 150 else 'collapsed2')
         elif len(self.records) > 7 or len(str(self.records)) >= 250:
             return self.html_numbered_table_collapsed()
         else:
             return self.html_numbered_table_plain()
 
-    def html_spans_table(self):
-        s = '<div class="a">'
+    def html_spans_table(self, clazz):
+        s = f'<div class="a {clazz}" onclick="toggle2(this, \'DIV\')">'
+        s += f'<span class="header">{len(self.records)} items</span>'
         for pos in range(len(self.records)):
             value = self.records[pos]
             s += array_entry(pos + 1, value)
