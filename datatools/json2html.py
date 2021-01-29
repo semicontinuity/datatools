@@ -6,6 +6,7 @@ from json import JSONDecodeError
 
 from datatools.json.coloring import *
 from datatools.json.structure_analyzer import *
+from datatools.json.util import is_primitive
 
 DEBUG = os.getenv('DEBUG')
 
@@ -54,7 +55,10 @@ class PageNode:
                'thead {border: solid 1px darkgray;}\n' + \
                'table {border-collapse: collapse; padding: 0;}\n' + \
                'table.ov { width:100%; }\n' + \
-               'table.a { width: 100%;}\n' + \
+               '.a { width: 100%;}\n' + \
+               '.ae { display: inline-block;}\n' + \
+               '.index {border: solid 1px darkcyan; color: darkcyan;}\n' + \
+               '.none {background: darkgray;}\n' + \
                'span {padding-left: 0.25em; padding-right: 0.25em;}\n' + \
                '//td {border: solid 1px #CCC; padding-left: 0.25em; padding-right: 0.25em;}\n' + \
                'table.aon th {border: solid 1px darkgrey; }\n' + \
@@ -102,9 +106,20 @@ class ArrayNode:
         return self.html_numbered_table()
 
     def html_numbered_table(self):
-        return self.html_numbered_table_plain() \
-            if len(self.records) <= 7 and len(str(self.records)) < 1000 \
-            else self.html_numbered_table_collapsed()
+        if all((is_primitive(record) for record in self.records)) and len(str(self.records)) < 500:
+            return self.html_spans_table()
+        elif len(self.records) > 7 or len(str(self.records)) >= 250:
+            return self.html_numbered_table_collapsed()
+        else:
+            return self.html_numbered_table_plain()
+
+    def html_spans_table(self):
+        s = '<div class="a">'
+        for pos in range(len(self.records)):
+            value = self.records[pos]
+            s += array_entry(pos + 1, value)
+        s += '</div>'
+        return s
 
     def html_numbered_table_plain(self):
         s = '<table class="a">'
@@ -204,16 +219,6 @@ class ArrayOfNestableObjectsNode:
         return s
 
 
-def td_colored(attr, string_value, value):
-    if value is None:
-        return '<td></td>\n'
-    elif attr.is_colored(string_value):
-        bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
-        return td_value_with_color(bg, value) + '\n'
-    else:
-        return f'<td><span>\n{string_value}</span></td>\n'
-
-
 class ObjectNode:
     def __init__(self, j, vertical, parent):
         self.parent = parent
@@ -248,6 +253,16 @@ class ObjectNode:
                             for key, value in self.fields.items()]) + '</table>\n'
 
 
+def td_colored(attr, string_value, value):
+    if value is None:
+        return '<td></td>\n'
+    elif attr.is_colored(string_value):
+        bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
+        return td_value_with_color(bg, value) + '\n'
+    else:
+        return f'<td><span>\n{string_value}</span></td>\n'
+
+
 def td_value_with_attr(attr, string_value, value):
     if value is None:
         return '<td></td>\n'
@@ -259,7 +274,7 @@ def td_value_with_attr(attr, string_value, value):
 
 
 def td_value(clazz, value):
-    leaf = is_primitive_type(value)
+    leaf = is_primitive(value)
     data_type = f'{type(value).__name__}' if leaf else ''
     s = f'<td class="{clazz} {data_type}">'
     s += value_str(value, leaf)
@@ -268,7 +283,7 @@ def td_value(clazz, value):
 
 
 def td_value_with_color(bg, value):
-    leaf = is_primitive_type(value)
+    leaf = is_primitive(value)
     clazz = f'{type(value).__name__}' if leaf else ''
     color = f'style="background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};"' if bg is not None else ''
     s = f'<td class="{clazz}" {color}>'
@@ -289,8 +304,25 @@ def th(s, clazz=None, colspan=None, rowspan=None, attrs=None):
     return f'<th{attrs}><span>{s}</span></th>'
 
 
-def value_str(value, leaf):
-    return f'<span>{"" if value is None else str(value)}</span>' if leaf else f'{"" if value is None else str(value)}'
+def value_str(value: Optional[Any], leaf: bool):
+    return span(value) if leaf else text(value)
+
+
+def array_entry(i: int, contents: Optional[Any]):
+    return span(index(i) + span(contents, clazz='none' if contents is None else None), clazz='ae')
+
+
+def index(contents: Optional[Any]):
+    return f'<span class="index">{text(contents)}</span>'
+
+
+def span(contents: Optional[Any], clazz=None):
+    attrs = f' class="{clazz}"' if clazz is not None else ''
+    return f'<span{attrs}>{text(contents)}</span>'
+
+
+def text(contents: Optional[Any]):
+    return "" if contents is None else str(contents)
 
 
 def node(j, parent):
