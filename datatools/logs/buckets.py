@@ -32,13 +32,16 @@ class Bucket:
     def __getitem__(self, item):
         return self.strings[item]
 
+    def trim(self):
+        return None
+
 
 def annotate_tokens():
     bucket = Bucket(load_lines())
     return bucket.matches
 
 
-def tokenize_bucket_string(s) -> Sequence[Hashable]:
+def tokenize_string(s) -> Sequence[Hashable]:
     return tuple(token for token in tokenize(s))
 
 
@@ -53,7 +56,7 @@ def trim_bucket(bucket) -> Bucket:
 def trimmed_buckets_matches():
     initial_buckets = bucketize(load_lines())
     buckets = {
-        k: Bucket([tokenize_bucket_string(s) for s in bucket_strings]) for k, bucket_strings in initial_buckets.items()
+        k: Bucket([tokenize_string(s) for s in bucket_strings]) for k, bucket_strings in initial_buckets.items()
     }
     trimmed = {k: trim_bucket(v) for k, v in buckets.items()}
     # matches = {k: v.matches for k, v in trimmed.items()}

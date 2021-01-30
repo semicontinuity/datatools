@@ -79,7 +79,7 @@ def tokenize(s: str):
                 yield token
 
 
-def compute_stats(strings: List[str]) -> Iterator[Stat]:
+def compute_stats(strings: Sequence[str]) -> Iterator[Stat]:
     debug(f"Computing stats for {len(strings)} lines")
     token2lines = defaultdict(list)  # or better just set of line indices!
     for s in strings:
@@ -214,18 +214,14 @@ def refine_buckets(data: Iterable[List[str]]) -> Dict[Tuple[str, ...], List[str]
     return refined_buckets
 
 
-def bucketize(lines) -> Dict[Tuple[str, ...], List[str]]:
-    debug(f"Computing buckets for {len(lines)} lines")
-    selected = compute_selected(compute_stats(lines))
-    pattern2buckets = defaultdict(list)
-    for s in lines:
-        pattern2buckets[pattern_tuple(s, selected)].append(s)
-    debug(f"Computed buckets for {len(lines)} lines")
-    return pattern2buckets
-
-
-def pattern_tuple(line, selected) -> Tuple[str, ...]:
-    return tuple(token if token in selected else None for token in tokenize(line))
+def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], List[str]]:
+    debug(f"Computing buckets for {len(strings)} strings")
+    selected: Set[str] = compute_selected(compute_stats(strings))
+    pattern_to_bucket_strings: Dict[Tuple[str, ...], List[str]] = defaultdict(list)
+    for s in strings:
+        pattern_to_bucket_strings[collapse_successive_wildcards(pattern_iterable(s, selected))].append(s)
+    debug(f"Computed buckets for {len(strings)} strings")
+    return pattern_to_bucket_strings
 
 
 def annotate_tokens():
@@ -266,11 +262,19 @@ def annotate_lines(group_field: Optional[str], classify_field: str, result_field
         yield j
 
 
-def clean_pattern(in_pattern: Tuple[str, ...], lines: List[str]) -> Tuple[str, ...]:
-    if len(lines) == 1:
-        return lines[0],
+def pattern_iterable(string, selected) -> Iterable[str]:
+    return (token if token in selected else None for token in tokenize(string))
+
+
+def clean_pattern(in_pattern: Iterable[str], strings: Sequence[str]) -> Tuple[str, ...]:
+    if len(strings) == 1:
+        return strings[0],
 
     # collapse successive wildcards
+    return collapse_successive_wildcards(in_pattern)
+
+
+def collapse_successive_wildcards(in_pattern: Iterable[str]) -> Tuple[str, ...]:
     out_pattern = []
     prev_token = ''
     for token in in_pattern:
