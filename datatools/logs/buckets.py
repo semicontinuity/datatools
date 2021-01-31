@@ -13,8 +13,8 @@ from datatools.util.logging import debug
 
 @dataclass
 class Bucket:
-    pattern: Tuple[str, ...]
-    pattern_alignment_offsets: List[int]
+    pattern: List[Hashable]
+    milestone_count: int
     tokenized_strings: List[Sequence[Hashable]]
     alignment_offsets: List[List[int]]
     offsets_from: Sequence[int]
@@ -26,13 +26,12 @@ class Bucket:
     def __init__(
             self,
             pattern,
-            pattern_alignment_offsets,
+            milestone_count,
             tokenized_strings=None,
             offsets_from=None, offsets_to=None, matches=None, trimmed_from=False, trimmed_to=False):
 
         self.pattern = pattern
-        self.pattern_alignment_offsets = pattern_alignment_offsets
-        self.alignment_offsets = [[] for _ in range(len(pattern_alignment_offsets))]
+        self.alignment_offsets = [[] for _ in range(milestone_count)]
         self.tokenized_strings = tokenized_strings if tokenized_strings is not None else []
         # self.offsets_from = offsets_from if offsets_from is not None else (0,) * len(self.tokenized_strings)
         # self.offsets_to = offsets_to if offsets_to is not None else tuple(len(s) for s in self.tokenized_strings)
@@ -51,11 +50,34 @@ class Bucket:
     def __getitem__(self, item):
         return self.tokenized_strings[item]
 
-    def trim_left(self, column: int):
-        if column + 1 < len(self.alignment_offsets):
-            token = self.scan_column(self.alignment_offsets[column], 1, self.alignment_offsets[column + 1])
-            if token is not None:
-                self.alignment_offsets.insert(column + 1, self.fill_column(self.alignment_offsets[column], 1, token))
+    def trim(self):
+        i = -1
+        i_offset = -1
+        j = -1
+        j_offset = -1
+        # milesoffset = -1
+        debug('pattern length', len(self.pattern))
+        while True:
+            while True:
+                j += 1
+                if j >= len(self.pattern):
+                    break
+                if self.pattern[j] is not None:
+                    j_offset += 1
+                    break
+            if j >= len(self.pattern):
+                break
+            # found milestone
+
+            if i >= 0 and j > i + 1:
+                # debug('scan', i_offset)
+                token = self.scan_column(self.alignment_offsets[i_offset], 1, self.alignment_offsets[j_offset])
+                if token is not None:
+                    self.alignment_offsets.insert(i_offset + 1, Bucket.fill_column(self.alignment_offsets[i_offset], 1))
+                    # self.pattern.insert(i + 1, token)
+
+            i = j
+            i_offset = j_offset
 
     def scan_column(self, ref_column: Iterable[int], shift: int, limit_column: Iterable[int]) -> Optional[Hashable]:
         result = None
@@ -73,13 +95,8 @@ class Bucket:
                     return None
         return result
 
-    def fill_column(self, ref_column: Iterable[int], shift: int, token: Hashable):
-        result = []
-        # for i, offset in enumerate(ref_column):
-        # for offset in ref_column:
-        #     offset += shift
-        #     result.append(offset + shift)
-        # return result
+    @staticmethod
+    def fill_column(ref_column: Iterable[int], shift: int):
         return [offset + shift for offset in ref_column]
 
 
@@ -103,13 +120,14 @@ def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], Bucket]:
         tokens = [token for token in tokenize(s)]
         raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokens, selected)
         pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
-        bucket = pattern_to_buckets.get(pattern)
+        pattern_tuple = tuple(pattern)
+        bucket = pattern_to_buckets.get(pattern_tuple)
         if bucket is None:
-            pattern_to_buckets[pattern] = bucket = Bucket(pattern, pattern_milestone_offsets)
+            pattern_to_buckets[pattern_tuple] = bucket = Bucket(pattern, len(pattern_milestone_offsets))
         bucket.append(tokens, milestone_offsets)
 
     for bucket in pattern_to_buckets.values():
-        bucket.trim_left(0)
+        bucket.trim()
 
     debug(f"Computed buckets for {len(strings)} strings")
     return pattern_to_buckets
