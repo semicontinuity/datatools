@@ -73,7 +73,7 @@ class PageNode:
                'th.ov_th {border-right: solid 2px darkgrey; }\n' + \
                '//tr:nth-child(odd)  td.index {background: #CCC;}\n' + \
                '//tr:nth-child(even) td.index {background: #BBB;}\n' + \
-               'td.a_v {width:100%;}\n' + \
+               '//td.a_v {width:100%;}\n' + \
                'td.ov_v {width:100%;}\n' + \
                '.int {color: darkred;}\n' + \
                '.float {color: darkred;}\n' + \
@@ -112,6 +112,35 @@ class PageNode:
                '</head>\n' + \
                f'<body><main>\n\n{str(self.root)}\n\n</main></body>\n' \
                '</html>\n'
+
+
+class MatrixNode:
+    def __init__(self, j, parent, width):
+        self.data = j
+        self.parent = parent
+        self.width = width
+
+    def __str__(self):
+        s = '<table class="m">'
+        s += '<thead>'
+        s += '<tr>'
+        s += th('#', attrs=' onclick="toggle(this)"')
+        for i in range(self.width):
+            s += th(str(i + 1))
+        s += '</tr>'
+        s += '</thead>'
+
+        s += '<tbody class="collapsed">'
+        for y, sub_j in enumerate(self.data):
+            s += '<tr>\n'
+            s += th(str(y + 1)) + '\n'
+            for cell in sub_j:
+                s += td_value("a_v", cell)
+            s += '</tr>\n'
+        s += '<tbody>'
+
+        s += '</table>'
+        return s
 
 
 class ArrayNode:
@@ -379,7 +408,8 @@ def node(j, parent):
                 array_node.record_nodes.append(record_node)
             return array_node
         else:
-            return ArrayNode(j, parent)
+            width = array_is_matrix(j)
+            return MatrixNode(j, parent, width) if width is not None else ArrayNode(j, parent)
     else:
         return j
 

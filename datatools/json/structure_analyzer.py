@@ -1,5 +1,20 @@
 from collections import defaultdict
 from typing import Dict, Optional, List, Any, Tuple
+from datatools.json.util import is_primitive
+
+
+def array_is_matrix(array: List[Any]) -> Optional[int]:
+    width = None
+    for row in array:
+        if not isinstance(row, list) or not all((is_primitive(cell) for cell in row)):
+            return None
+        row_width = len(row)
+        if width is None:
+            width = row_width
+        else:
+            if width != row_width:
+                return None
+    return width
 
 
 def array_descriptor_and_path_counts(obj: List[Any]) -> Tuple[Optional[Dict[str, Any]], Dict[Tuple[str, ...], int]]:
