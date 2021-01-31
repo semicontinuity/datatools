@@ -61,6 +61,7 @@ class PageNode:
                'div.regular>span.header    {display: none;}\n' + \
                'div.collapsed2>span.header {display: block; font-weight: bold; background: lightgray; border: solid 1px darkgray;}\n' + \
                'div.collapsed2>span.ae {display: none;}\n' + \
+               'div.collapsed2>table {display: none;}\n' + \
                '.none {background: darkgray;}\n' + \
                'span {padding-left: 0.25em; padding-right: 0.25em;}\n' + \
                '//td {border: solid 1px #CCC; padding-left: 0.25em; padding-right: 0.25em;}\n' + \
@@ -121,16 +122,22 @@ class MatrixNode:
         self.width = width
 
     def __str__(self):
-        s = '<table class="m">'
+        clazz = "collapsed2"
+        s = f'<div class="a {clazz}" onclick="toggle2(this, \'DIV\')">'
+        s += f'<span class="header">Matrix {len(self.data)} x {self.width}</span>'
+
+        s += '<table class="m">'
         s += '<thead>'
         s += '<tr>'
-        s += th('#', attrs=' onclick="toggle(this)"')
+        # s += th('#', attrs=' onclick="toggle(this)"')
+        s += th('#')
         for i in range(self.width):
             s += th(str(i + 1))
         s += '</tr>'
         s += '</thead>'
 
-        s += '<tbody class="collapsed">'
+        # s += '<tbody class="collapsed">'
+        s += '<tbody>'
         for y, sub_j in enumerate(self.data):
             s += '<tr>\n'
             s += th(str(y + 1)) + '\n'
@@ -140,6 +147,8 @@ class MatrixNode:
         s += '<tbody>'
 
         s += '</table>'
+
+        s += '</div>'
         return s
 
 
