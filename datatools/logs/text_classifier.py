@@ -219,7 +219,7 @@ def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], List[str]]:
     selected: Set[str] = compute_selected(compute_stats(strings))
     pattern_to_bucket_strings: Dict[Tuple[str, ...], List[str]] = defaultdict(list)
     for s in strings:
-        pattern_to_bucket_strings[collapse_successive_wildcards(pattern_iterable(s, selected))].append(s)
+        pattern_to_bucket_strings[collapse_successive_wildcards(pattern_iterable(s, selected))[0]].append(s)
     debug(f"Computed buckets for {len(strings)} strings")
     return pattern_to_bucket_strings
 
@@ -271,18 +271,23 @@ def clean_pattern(in_pattern: Iterable[str], strings: Sequence[str]) -> Tuple[st
         return strings[0],
 
     # collapse successive wildcards
-    return collapse_successive_wildcards(in_pattern)
+    return collapse_successive_wildcards(in_pattern)[0]
 
 
-def collapse_successive_wildcards(in_pattern: Iterable[str]) -> Tuple[str, ...]:
+def collapse_successive_wildcards(in_pattern: Iterable[str]) -> Tuple[Tuple[str, ...], Any]:
     out_pattern = []
+    milestone_offsets = []
     prev_token = ''
+    i = 0
     for token in in_pattern:
         if token is None and prev_token is None:
             continue
         out_pattern.append(token)
+        if token is not None:
+            milestone_offsets.append(i)
+        i += 1
         prev_token = token
-    return tuple(out_pattern)
+    return tuple(out_pattern), milestone_offsets
 
 
 def pack_pattern(in_pattern: Tuple[str, ...], lines: Sequence[str]) -> Tuple[str, ...]:

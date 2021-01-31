@@ -14,8 +14,9 @@ from datatools.util.logging import debug
 @dataclass
 class Bucket:
     pattern: Tuple[str, ...]
+    pattern_alignment_offsets: List[int]
     tokenized_strings: List[Sequence[Hashable]]
-    alignment_offsets: Optional[List[List[int]]]
+    alignment_offsets: List[List[int]]
     offsets_from: Sequence[int]
     offsets_to: Sequence[int]
     matches: Sequence[bytearray]  # every byte corresponds to a token in "strings"; 0=no match; 1=match
@@ -25,12 +26,13 @@ class Bucket:
     def __init__(
             self,
             pattern,
-            milestone_count,
+            pattern_alignment_offsets,
             tokenized_strings=None,
             offsets_from=None, offsets_to=None, matches=None, trimmed_from=False, trimmed_to=False):
 
         self.pattern = pattern
-        self.alignment_offsets = [[] for _ in range(milestone_count)]
+        self.pattern_alignment_offsets = pattern_alignment_offsets
+        self.alignment_offsets = [[] for _ in range(len(pattern_alignment_offsets))]
         self.tokenized_strings = tokenized_strings if tokenized_strings is not None else []
         # self.offsets_from = offsets_from if offsets_from is not None else (0,) * len(self.tokenized_strings)
         # self.offsets_to = offsets_to if offsets_to is not None else tuple(len(s) for s in self.tokenized_strings)
@@ -99,11 +101,11 @@ def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], Bucket]:
     pattern_to_buckets: Dict[Tuple[str, ...], Bucket] = {}
     for s in strings:
         tokens = [token for token in tokenize(s)]
-        raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets((tokens), selected)
-        pattern = collapse_successive_wildcards(raw_pattern)
+        raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokens, selected)
+        pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
         bucket = pattern_to_buckets.get(pattern)
         if bucket is None:
-            pattern_to_buckets[pattern] = bucket = Bucket(pattern, len(milestone_offsets))
+            pattern_to_buckets[pattern] = bucket = Bucket(pattern, pattern_milestone_offsets)
         bucket.append(tokens, milestone_offsets)
 
     for bucket in pattern_to_buckets.values():
@@ -132,7 +134,7 @@ def trimmed_buckets_matches():
     # }
     # trimmed = {k: trim_bucket(v) for k, v in buckets.items()}
     # matches = {k: v.matches for k, v in trimmed.items()}
-    return initial_buckets.values()
+    return [bucket for bucket in initial_buckets.values()]
     # return trimmed
     # return with_packed_patterns(trimmed)
 
