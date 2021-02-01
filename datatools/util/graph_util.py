@@ -5,16 +5,21 @@ from datatools.util.logging import debug
 
 
 def compute_weights_graph(
-        nodes: List[Hashable],
-        weight_f: Callable[[Any, Any], float]) -> Dict[Hashable, Dict[Hashable, float]]:
+        elements: List[Hashable],
+        weight_f: Callable[[Any, Any], float],
+        node_f: Callable[[Any], Hashable]) -> Dict[Hashable, Dict[Hashable, float]]:
 
-    debug(f"Computing weights graph, length:{len(nodes)}")
+    debug(f"Computing weights graph, number of nodes: {len(elements)}")
     graph = defaultdict(dict)
-    for i in range(len(nodes)):
-        for j in range(i + 1, len(nodes)):
-            weight = weight_f(nodes[i], nodes[j])
-            graph[nodes[i]][nodes[j]] = weight
-            graph[nodes[j]][nodes[i]] = weight
+    for i in range(len(elements)):
+        for j in range(i + 1, len(elements)):
+            weight = weight_f(elements[i], elements[j])
+            if weight is None:
+                continue
+            node_i = node_f(elements[i])
+            node_j = node_f(elements[j])
+            graph[node_i][node_j] = weight
+            graph[node_j][node_i] = weight
     return graph
 
 
@@ -61,6 +66,10 @@ class ConnectedComponents:
                 vertices = []
                 result.append(self.dfs(vertices, v, visited))
         return result
+
+
+def connected_components(adj: Dict[Hashable, Sequence[Hashable]]) -> List[List[Hashable]]:
+    return ConnectedComponents(adj).compute()
 
 
 def transitive_reduction(g: Dict):
@@ -126,3 +135,21 @@ def reachable_from(roots: Iterable[Hashable], g: Dict[Hashable, Any], result: Se
         reachable_from(g[node], g, result)
 
     return result
+
+
+def lcs(s1, s2):
+    m = len(s1)
+    n = len(s2)
+
+    l = [[None] * (n + 1) for i in range(m + 1)]
+
+    for i in range(m + 1):
+        for j in range(n + 1):
+            if i == 0 or j == 0:
+                l[i][j] = 0
+            elif s1[i - 1] == s2[j - 1]:
+                l[i][j] = l[i - 1][j - 1] + 1
+            else:
+                l[i][j] = max(l[i - 1][j], l[i][j - 1])
+
+    return l[m][n]

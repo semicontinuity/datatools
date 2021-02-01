@@ -39,7 +39,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from types import GeneratorType
-from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any, Sequence, Sized
+from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any, Sequence
 
 from datatools.json.util import to_jsonisable
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
@@ -124,7 +124,52 @@ def compute_stats(strings: Sequence[str]) -> Iterator[Stat]:
         yield Stat(value=token, quality=quality, count=f[token], support=support, selected=selected)
 
 
-def token_counts(tokens):
+def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> Iterator[Stat]:
+    debug(f"Computing stats for {len(tokenized_strings)} lines")
+    token2lines = defaultdict(list)  # or better just set of line indices!
+    for tokenized_string in tokenized_strings:
+        token_set = set(tokenized_string)
+        for token in token_set:
+            token2lines[token].append(tokenized_string)
+
+    f = token_counts((token for tokenized_string in tokenized_strings for token in tokenized_string))
+
+    token2quality = {}
+    total_quality = 0
+    total_support = 0
+    for token, quality in f.items():
+        quality = len(token2lines[token]) * len(token2lines[token]) / quality
+        token2quality[token] = quality
+        total_quality += quality
+        total_support += len(token2lines[token])
+
+    total_count = 0
+    for count in f.values():
+        total_count += count
+
+    limit = 0.5 * total_quality
+    total = 0
+    prev_support = 0
+    prev_quality = 0
+    prev_selected = True
+    i = 0
+    for token, quality in sorted(token2quality.items(), key=lambda item: -item[1]):
+        # count = f[token]
+        support = len(token2lines[token])
+        # and i < len(s)
+        selected = prev_selected and support > 1 and (
+                total < limit or quality == prev_quality or support >= prev_support)
+
+        total += quality
+        prev_quality = quality
+        prev_support = support
+        prev_selected = selected
+        i += 1
+
+        yield Stat(value=token, quality=quality, count=f[token], support=support, selected=selected)
+
+
+def token_counts(tokens: Iterable[Hashable]):
     d = defaultdict(int)
     for token in tokens:
         d[token] += 1
@@ -187,7 +232,8 @@ def make_super_buckets(refined_buckets: Dict[Tuple[str, ...], List[str]]):
     buckets_similarity_graph: Dict[Hashable, List[Hashable]] = discretize_graph(
         compute_weights_graph(
             nodes,
-            new_metric
+            new_metric,
+            lambda n: n
         ),
         small_normalized_levenstein_distance_metric
     )

@@ -6,7 +6,8 @@ from typing import *
 
 from datatools.json.util import to_jsonisable
 from datatools.logs.text_classifier import collapse_successive_wildcards
-from datatools.logs.text_classifier import tokenize, compute_selected, compute_stats
+from datatools.logs.text_classifier import tokenize, compute_selected, compute_stats_for_tokenized
+from datatools.util.graph_util import compute_weights_graph, levenshtein_distance, connected_components, lcs
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
 
@@ -62,6 +63,7 @@ class Bucket:
                 j += 1
                 if j >= len(self.pattern):
                     break
+                debug('j', j, self.pattern[j])
                 if self.pattern[j] is not None:
                     j_offset += 1
                     break
@@ -69,12 +71,21 @@ class Bucket:
                 break
             # found milestone
 
-            if i >= 0 and j > i + 1:
-                # debug('scan', i_offset)
-                token = self.scan_column(self.alignment_offsets[i_offset], 1, self.alignment_offsets[j_offset])
-                if token is not None:
+            if i >= 0 and i + 1 < j:
+                i += 1  # at the start of wildcard area
+                while True:
+                # while False:
+                    debug('scan columns', i_offset, j_offset)
+                    token = self.scan_column(self.alignment_offsets[i_offset], 1, self.alignment_offsets[j_offset])
+                    if token is None:
+                        break
+                    self.pattern.insert(i, token)
+                    i += 1
                     self.alignment_offsets.insert(i_offset + 1, Bucket.fill_column(self.alignment_offsets[i_offset], 1))
-                    # self.pattern.insert(i + 1, token)
+                    # i_offset += 1
+                    # j_offset += 1
+                if i == j:
+                    del self.pattern[j]
 
             i = j
             i_offset = j_offset
@@ -113,11 +124,14 @@ def raw_pattern_and_milestone_offsets(tokens: Iterable[str], selected: Set[str])
 
 
 def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], Bucket]:
-    debug(f"Computing buckets for {len(strings)} strings")
-    selected: Set[str] = compute_selected(compute_stats(strings))
-    pattern_to_buckets: Dict[Tuple[str, ...], Bucket] = {}
-    for s in strings:
-        tokens = [token for token in tokenize(s)]
+    return bucketize_into({}, [[token for token in tokenize(s)] for s in strings])
+
+
+def bucketize_into(pattern_to_buckets, tokenized_strings):
+    debug(f"Computing buckets for {len(tokenized_strings)} strings")
+    selected: Set[str] = compute_selected(compute_stats_for_tokenized(tokenized_strings))
+    for tokens in tokenized_strings:
+
         raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokens, selected)
         pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
         pattern_tuple = tuple(pattern)
@@ -125,11 +139,9 @@ def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], Bucket]:
         if bucket is None:
             pattern_to_buckets[pattern_tuple] = bucket = Bucket(pattern, len(pattern_milestone_offsets))
         bucket.append(tokens, milestone_offsets)
-
-    for bucket in pattern_to_buckets.values():
-        bucket.trim()
-
-    debug(f"Computed buckets for {len(strings)} strings")
+    # for bucket in pattern_to_buckets.values():
+    #     bucket.trim()
+    debug(f"Computed buckets for {len(tokenized_strings)} strings")
     return pattern_to_buckets
 
 
@@ -157,16 +169,80 @@ def trimmed_buckets_matches():
     # return with_packed_patterns(trimmed)
 
 
+def bucket_similarities(buckets, threshold) -> Dict[Hashable, Dict[Hashable, Any]]:
+    def similarity_metric(b1: Bucket, b2: Bucket) -> float:
+        s1 = b1.tokenized_strings[0]
+        s2 = b2.tokenized_strings[0]
+        # debug(f's1={s1} s2={s2}')
+        # debug()
+        # common = lcs(s1, s2)
+        # d = (len(s1) - common) / len(s1) * (len(s2) - common) / len(s2)
+        d = levenshtein_distance(s1, s2) / min(len(s1), len(s2))
+        # if d:
+        #     debug(f's1={s1} s2={s2}')
+        #     debug()
+        # r = None if d < threshold else d
+        r = None if d > threshold else d
+        return r
+
+    return compute_weights_graph(
+        buckets,
+        similarity_metric,
+        lambda b: tuple(b.pattern)
+    )
+
+
+def merged_buckets():
+    buckets: Dict[Tuple[Hashable, ...], Bucket] = bucketize(load_lines())
+    debug("Computed initial buckets")
+    # merge_similar_buckets(buckets, 0.1)
+    # merge_similar_buckets(buckets, 0.2)
+    # merge_similar_buckets(buckets, 0.3)
+    # merge_similar_buckets(buckets, 0.6)
+    merge_similar_buckets(buckets, 0.8)
+    merge_similar_buckets(buckets, 0.66)
+    merge_similar_buckets(buckets, 0.5)
+    merge_similar_buckets(buckets, 0.33)
+    return [bucket for bucket in buckets.values()]
+
+
+def merge_similar_buckets(buckets, threshold):
+    similarities: Dict[Hashable, Dict[Hashable, Any]] = bucket_similarities(list(buckets.values()), threshold)
+    debug("Computing connected components of buckets similarity graph")
+    similar_buckets_list: List[List[Hashable]] = connected_components(similarities)
+    debug(f"Computed {len(similar_buckets_list)} connected components of buckets similarity graph")
+    for similar_buckets in similar_buckets_list:
+        strings = []
+        for similar_bucket in similar_buckets:
+            strings.extend(buckets.get(similar_bucket).tokenized_strings)
+            del buckets[similar_bucket]
+        bucketize_into(buckets, strings)
+
+
 def run():
     if len(sys.argv) == 2 and sys.argv[1] == "trimmed_buckets_matches":
         return trimmed_buckets_matches()
+    elif len(sys.argv) == 2 and sys.argv[1] == "bucket_similarities":
+        buckets = bucketize(load_lines())
+        pattern_to_index = {pattern: i for i, pattern in enumerate(buckets)}
+        similarities = bucket_similarities([bucket for bucket in buckets.values()], 0.66)
+
+        similarities_of_indices = {}
+        for pattern, similar in similarities.items():
+            similarities_of_indices[pattern_to_index[pattern]] = tuple([pattern_to_index[p] for p in similar])
+        return similarities_of_indices
+    elif len(sys.argv) == 2 and sys.argv[1] == "merged_buckets":
+        return merged_buckets()
     else:
         return None
 
 
 @run_once
 def load_lines():
-    return [line.rstrip('\n') for line in sys.stdin]
+    debug("Loading data")
+    lines = [line.rstrip('\n') for line in sys.stdin]
+    debug("done")
+    return lines
 
 
 if __name__ == "__main__":
