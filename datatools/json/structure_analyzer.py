@@ -62,7 +62,7 @@ def prune_sparse_leaves(descriptor: Dict[str, Any], path_of_leaf_to_count: Dict[
         if len(occupancies) == 0:
             continue
         min_column_occupancy = min(occupancies)
-        if min_column_occupancy < 0.5 * length:
+        if min_column_occupancy <= 0.5 * length:    # or better, compute total occupancy
             pruned.append(root)
     for root in pruned:
         descriptor[root] = None
@@ -78,17 +78,6 @@ def compute_paths_of_leaves(descriptor, path: List[str] = None) -> List[Tuple[st
         else:
             result += compute_paths_of_leaves(value_descriptor, path + [name])
     return result
-
-
-def child_by_path(value, path):
-    for name in path:
-        if value is None:
-            return None
-        if type(value) is dict:
-            value = value.get(name)
-        else:
-            value = value.fields.get(name)  # hack (ObjectNode)
-    return value
 
 
 def number_of_columns(descriptor: Optional[Dict[str, Any]]):

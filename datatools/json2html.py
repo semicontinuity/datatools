@@ -153,9 +153,9 @@ class MatrixNode:
 
 
 class ArrayNode:
-    def __init__(self, j, parent):
+    def __init__(self, j, parent, in_array_of_nestable_obj: bool):
         self.parent = parent
-        self.records = [node(subj, self) for subj in j]
+        self.records = [node(subj, self, in_array_of_nestable_obj) for subj in j]
 
     def __str__(self):
         return self.html_numbered_table()
@@ -276,9 +276,9 @@ class ArrayOfNestableObjectsNode:
 
 
 class ObjectNode:
-    def __init__(self, j, vertical, parent):
+    def __init__(self, j, vertical, parent, in_array_of_nestable_obj: bool):
         self.parent = parent
-        self.fields = {key: node(subj, self) for key, subj in j.items()}
+        self.fields = {key: node(subj, self, in_array_of_nestable_obj) for key, subj in j.items()}
         self.vertical = vertical
 
     def __str__(self):
@@ -381,7 +381,8 @@ def text(contents: Optional[Any]):
     return "" if contents is None else str(contents)
 
 
-def node(j, parent):
+def node(j, parent, in_array_of_nestable_obj: bool):
+    # replace with path_in_array_of_nestable_obj: when exhausted, allow again
     if type(j) is dict:
         descriptor, path_of_leaf_to_count = obj_descriptor_and_path_counts(j)
         if descriptor is not None:
@@ -389,20 +390,20 @@ def node(j, parent):
                 descriptor = None
             else:
                 prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
-        if descriptor is None:
-            return ObjectNode(j, True, parent)
+        if descriptor is None or in_array_of_nestable_obj:
+            return ObjectNode(j, True, parent, in_array_of_nestable_obj)
         else:
             # dict, where all entries have the same structure, i.e., array-like dict
             dict_node = ArrayOfNestableObjectsNode(parent, j.values(), descriptor)
             dict_node.record_nodes = []
             for key, sub_j in j.items():
-                record_node = {name: node(value, dict_node) for name, value in sub_j.items()}
+                record_node = {name: node(value, dict_node, True) for name, value in sub_j.items()}
                 record_node['#'] = key
                 dict_node.record_nodes.append(record_node)
             return dict_node
     elif type(j) is list:
         descriptor, path_of_leaf_to_count = array_descriptor_and_path_counts(j)
-        if descriptor is not None:
+        if descriptor is not None and not in_array_of_nestable_obj:
             # if len(j) == 1:
             #     return ObjectNode(j[0], True, parent)
             # else:
@@ -412,15 +413,39 @@ def node(j, parent):
             array_node = ArrayOfNestableObjectsNode(parent, j, descriptor)
             array_node.record_nodes = []
             for i, sub_j in enumerate(j):
-                record_node = {name: node(value, array_node) for name, value in sub_j.items()}
+                record_node = {name: node(value, array_node, True) for name, value in sub_j.items()}
                 record_node['#'] = str(i)
                 array_node.record_nodes.append(record_node)
             return array_node
         else:
             width = array_is_matrix(j)
-            return MatrixNode(j, parent, width) if width is not None else ArrayNode(j, parent)
+            return MatrixNode(j, parent, width) if width is not None else ArrayNode(j, parent, in_array_of_nestable_obj)
     else:
         return j
+
+
+def child_by_path(value, path):
+    root_value = value
+    for name in path:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            value = value.get(name)
+            if isinstance(value, ArrayOfNestableObjectsNode):
+                pass
+        elif isinstance(value, ArrayOfNestableObjectsNode):
+            print(f"path: {path}, value: ${value.record_nodes}", file=sys.stderr)
+
+            # for item in value.record_nodes:     # ok?
+            #     if item.get('#') ==
+            value = '<unknown>'
+            # value = value.get(name)
+        elif isinstance(value, ObjectNode):
+            value = value.fields.get(name)  # hack (ObjectNode)
+        else:
+            print(f"path: {path}, value: ${type(value)}", file=sys.stderr)
+            raise ValueError
+    return value
 
 
 def main():
@@ -437,7 +462,7 @@ def main():
     else:
         j = json.load(sys.stdin)
 
-    print(PageNode(node(j, None), presentation.get("title", "")))
+    print(PageNode(node(j, None, False), presentation.get("title", "")))
 
 
 if __name__ == "__main__":
