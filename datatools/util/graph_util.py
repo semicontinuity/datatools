@@ -10,7 +10,8 @@ def compute_weights_graph(
         node_f: Callable[[Any], Hashable]) -> Dict[Hashable, Dict[Hashable, float]]:
 
     debug(f"Computing weights graph, number of nodes: {len(elements)}")
-    graph = defaultdict(dict)
+    graph = {node_f(element): {} for element in elements}
+
     for i in range(len(elements)):
         for j in range(i + 1, len(elements)):
             weight = weight_f(elements[i], elements[j])

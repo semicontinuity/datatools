@@ -1,0 +1,97 @@
+from typing import *
+
+import mmh3
+
+
+def seq_sim_hash(tokenized_string: Sequence[AnyStr]):
+    def append(vector: List[int], h_bytes: AnyStr, count):
+        i = 0
+        for h_byte in h_bytes:
+            mask = 1
+            for bit in range(8):
+                vector[i] += count if h_byte & mask != 0 else -count
+                mask <<= 1
+                i += 1
+
+    def binarize(vector: List[int]) -> AnyStr:
+        vector_offset = 0
+        result_offset = 0
+        result = bytearray(16)
+        for offset in range(16):
+            mask = 1
+            hash_byte = 0
+
+            for bit in range(8):
+                hash_byte |= mask if vector[vector_offset] > 0 else 0
+                mask <<= 1
+                vector_offset += 1
+
+            result[result_offset] = hash_byte
+            result_offset += 1
+
+        return result
+
+    length = len(tokenized_string)
+    if length == 0:
+        return mmh3.hash_bytes('')
+    elif length == 1:
+        hash_bytes = mmh3.hash_bytes('')
+        return hash_bytes, hash_bytes
+    elif length == 3:
+        # Special case: if common approach is used, then hash of the middle element is ignored:
+        # first element hash has weight 2, middle element hash has weight 1, thus, first element always dominates.
+        # Thus, as an exception, put all elements with the same weight.
+        vector1 = [0] * 16 * 8
+        vector2 = [0] * 16 * 8
+        hash_bytes0 = mmh3.hash_bytes(tokenized_string[0])
+        hash_bytes1 = mmh3.hash_bytes(tokenized_string[1])
+        hash_bytes2 = mmh3.hash_bytes(tokenized_string[2])
+        append(vector1, hash_bytes0, 1)
+        append(vector1, hash_bytes1, 1)
+        append(vector2, hash_bytes1, 1)
+        append(vector2, hash_bytes2, 1)
+        return binarize(vector1), binarize(vector2)
+    else:
+        vector1 = [0] * 16 * 8
+        vector2 = [0] * 16 * 8
+        for i in range(length):
+            token = tokenized_string[i]
+            hash_bytes = mmh3.hash_bytes(token)
+            count_after = length - 1 - i
+            if count_after > 0:
+                append(vector1, hash_bytes, count_after)
+            count_before = i
+            if count_before > 0:
+                # append(vector2, hash_bytes, log2(count_before))
+                append(vector2, hash_bytes, count_before)
+        return binarize(vector1), binarize(vector2)
+
+
+# use int.bit_count() from python 3.10+
+BIT_COUNTS = (b'\x00\x01\x01\x02\x01\x02\x02\x03\x01\x02\x02\x03\x02\x03\x03\x04'
+          b'\x01\x02\x02\x03\x02\x03\x03\x04\x02\x03\x03\x04\x03\x04\x04\x05'
+          b'\x01\x02\x02\x03\x02\x03\x03\x04\x02\x03\x03\x04\x03\x04\x04\x05'
+          b'\x02\x03\x03\x04\x03\x04\x04\x05\x03\x04\x04\x05\x04\x05\x05\x06'
+          b'\x01\x02\x02\x03\x02\x03\x03\x04\x02\x03\x03\x04\x03\x04\x04\x05'
+          b'\x02\x03\x03\x04\x03\x04\x04\x05\x03\x04\x04\x05\x04\x05\x05\x06'
+          b'\x02\x03\x03\x04\x03\x04\x04\x05\x03\x04\x04\x05\x04\x05\x05\x06'
+          b'\x03\x04\x04\x05\x04\x05\x05\x06\x04\x05\x05\x06\x05\x06\x06\x07'
+          b'\x01\x02\x02\x03\x02\x03\x03\x04\x02\x03\x03\x04\x03\x04\x04\x05'
+          b'\x02\x03\x03\x04\x03\x04\x04\x05\x03\x04\x04\x05\x04\x05\x05\x06'
+          b'\x02\x03\x03\x04\x03\x04\x04\x05\x03\x04\x04\x05\x04\x05\x05\x06'
+          b'\x03\x04\x04\x05\x04\x05\x05\x06\x04\x05\x05\x06\x05\x06\x06\x07'
+          b'\x02\x03\x03\x04\x03\x04\x04\x05\x03\x04\x04\x05\x04\x05\x05\x06'
+          b'\x03\x04\x04\x05\x04\x05\x05\x06\x04\x05\x05\x06\x05\x06\x06\x07'
+          b'\x03\x04\x04\x05\x04\x05\x05\x06\x04\x05\x05\x06\x05\x06\x06\x07'
+          b'\x04\x05\x05\x06\x05\x06\x06\x07\x05\x06\x06\x07\x06\x07\x07\x08')
+
+
+def hamming_distance(s1: AnyStr, s2: AnyStr):
+    result = 0
+    for i in range(len(s1)):
+        result += BIT_COUNTS[s1[i] ^ s2[i]]
+    return result
+
+
+def seq_sim_hash_hamming_distance(s1: Tuple[AnyStr, AnyStr], s2: Tuple[AnyStr, AnyStr]):
+    return hamming_distance(s1[0], s2[0]) + hamming_distance(s1[1], s2[1])

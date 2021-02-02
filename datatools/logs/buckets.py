@@ -7,40 +7,34 @@ from typing import *
 from datatools.json.util import to_jsonisable
 from datatools.logs.text_classifier import collapse_successive_wildcards
 from datatools.logs.text_classifier import tokenize, compute_selected, compute_stats_for_tokenized
-from datatools.util.graph_util import compute_weights_graph, levenshtein_distance, connected_components, lcs
+from datatools.util.graph_util import compute_weights_graph, connected_components
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
+from datatools.util.sequence_hash import seq_sim_hash, hamming_distance
 
 
 @dataclass
 class Bucket:
+    hash1: AnyStr
+    hash2: AnyStr
     pattern: List[Hashable]
     milestone_count: int
     tokenized_strings: List[Sequence[Hashable]]
     alignment_offsets: List[List[int]]
-    offsets_from: Sequence[int]
-    offsets_to: Sequence[int]
-    matches: Sequence[bytearray]  # every byte corresponds to a token in "strings"; 0=no match; 1=match
-    trimmed_from: bool
-    trimmed_to: bool
 
     def __init__(
             self,
             pattern,
             milestone_count,
-            tokenized_strings=None,
-            offsets_from=None, offsets_to=None, matches=None, trimmed_from=False, trimmed_to=False):
+            tokenized_strings=None):
 
         self.pattern = pattern
         self.alignment_offsets = [[] for _ in range(milestone_count)]
         self.tokenized_strings = tokenized_strings if tokenized_strings is not None else []
-        # self.offsets_from = offsets_from if offsets_from is not None else (0,) * len(self.tokenized_strings)
-        # self.offsets_to = offsets_to if offsets_to is not None else tuple(len(s) for s in self.tokenized_strings)
-        # self.matches = matches if matches is not None else [bytearray(len(s)) for s in self.tokenized_strings]
-        # self.trimmed_from = trimmed_from
-        # self.trimmed_to = trimmed_to
 
     def append(self, tokenized_string: Sequence[Hashable], milestone_offsets: List[int]):
+        if len(self.tokenized_strings) == 0:
+            self.hash1, self.hash2 = seq_sim_hash(tokenized_string)
         self.tokenized_strings.append(tokenized_string)
         for i in range(len(self.alignment_offsets)):
             self.alignment_offsets[i].append(milestone_offsets[i])
@@ -171,13 +165,16 @@ def trimmed_buckets_matches():
 
 def bucket_similarities(buckets, threshold) -> Dict[Hashable, Dict[Hashable, Any]]:
     def similarity_metric(b1: Bucket, b2: Bucket) -> float:
-        s1 = b1.tokenized_strings[0]
-        s2 = b2.tokenized_strings[0]
+        # s1 = b1.tokenized_strings[0]
+        # s2 = b2.tokenized_strings[0]
         # debug(f's1={s1} s2={s2}')
         # debug()
         # common = lcs(s1, s2)
         # d = (len(s1) - common) / len(s1) * (len(s2) - common) / len(s2)
-        d = levenshtein_distance(s1, s2) / min(len(s1), len(s2))
+        # d = levenshtein_distance(s1, s2) / min(len(s1), len(s2))
+        d = hamming_distance(b1.hash1, b2.hash1) + hamming_distance(b1.hash2, b2.hash2)
+        # debug(d)
+
         # if d:
         #     debug(f's1={s1} s2={s2}')
         #     debug()
@@ -195,15 +192,21 @@ def bucket_similarities(buckets, threshold) -> Dict[Hashable, Dict[Hashable, Any
 def merged_buckets():
     buckets: Dict[Tuple[Hashable, ...], Bucket] = bucketize(load_lines())
     debug("Computed initial buckets")
-    # merge_similar_buckets(buckets, 0.1)
-    # merge_similar_buckets(buckets, 0.2)
-    # merge_similar_buckets(buckets, 0.3)
-    # merge_similar_buckets(buckets, 0.6)
-    merge_similar_buckets(buckets, 0.8)
-    merge_similar_buckets(buckets, 0.66)
-    merge_similar_buckets(buckets, 0.5)
-    merge_similar_buckets(buckets, 0.33)
+    buckets = repeatedly_merge_buckets(buckets)
     return [bucket for bucket in buckets.values()]
+
+
+def repeatedly_merge_buckets(buckets):
+    buckets = merge_similar_buckets(buckets, 74)
+    buckets = merge_similar_buckets(buckets, 64)
+    buckets = merge_similar_buckets(buckets, 52)
+    buckets = merge_similar_buckets(buckets, 40)
+    buckets = merge_similar_buckets(buckets, 30)
+    buckets = merge_similar_buckets(buckets, 20)
+    buckets = merge_similar_buckets(buckets, 10)
+    buckets = merge_similar_buckets(buckets, 5)
+    buckets = merge_similar_buckets(buckets, 1)
+    return buckets
 
 
 def merge_similar_buckets(buckets, threshold):
@@ -211,12 +214,14 @@ def merge_similar_buckets(buckets, threshold):
     debug("Computing connected components of buckets similarity graph")
     similar_buckets_list: List[List[Hashable]] = connected_components(similarities)
     debug(f"Computed {len(similar_buckets_list)} connected components of buckets similarity graph")
+    new_buckets = {}
     for similar_buckets in similar_buckets_list:
         strings = []
         for similar_bucket in similar_buckets:
             strings.extend(buckets.get(similar_bucket).tokenized_strings)
             del buckets[similar_bucket]
-        bucketize_into(buckets, strings)
+        bucketize_into(new_buckets, strings)    # TODO: as optimization, bucketize only dirty buckets
+    return new_buckets
 
 
 def run():
@@ -225,12 +230,12 @@ def run():
     elif len(sys.argv) == 2 and sys.argv[1] == "bucket_similarities":
         buckets = bucketize(load_lines())
         pattern_to_index = {pattern: i for i, pattern in enumerate(buckets)}
-        similarities = bucket_similarities([bucket for bucket in buckets.values()], 0.66)
+        similarities = bucket_similarities([bucket for bucket in buckets.values()], 20)
 
-        similarities_of_indices = {}
+        bucket_index_to_similarities = {}
         for pattern, similar in similarities.items():
-            similarities_of_indices[pattern_to_index[pattern]] = tuple([pattern_to_index[p] for p in similar])
-        return similarities_of_indices
+            bucket_index_to_similarities[pattern_to_index[pattern]] = tuple([pattern_to_index[p] for p in similar])
+        return bucket_index_to_similarities
     elif len(sys.argv) == 2 and sys.argv[1] == "merged_buckets":
         return merged_buckets()
     else:
