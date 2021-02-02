@@ -54,17 +54,19 @@ class PageNode:
                'main {display: inline-flex; border-left: solid 2px darkgrey; border-right: solid 2px darkgrey;}\n' + \
                'thead {border: solid 1px darkgray;}\n' + \
                'table {border-collapse: collapse; padding: 0;}\n' + \
-               'table.ov { width:100%; }\n' + \
-               '.a { width: 100%;}\n' + \
+               '//table.ov { width:100%; }\n' + \
+               '//.a { width: 100%;}\n' + \
                '.ae { display: inline-block;}\n' + \
                '.index {border: solid 1px darkcyan; color: darkcyan;}\n' + \
                'div.regular>span.header    {display: none;}\n' + \
                'div.collapsed2>span.header {display: block; font-weight: bold; background: lightgray; border: solid 1px darkgray;}\n' + \
                'div.collapsed2>span.ae {display: none;}\n' + \
                'div.collapsed2>table {display: none;}\n' + \
+               'tr.collapsed2>td {display: none;}\n' + \
                '.none {background: darkgray;}\n' + \
                'span {padding-left: 0.25em; padding-right: 0.25em;}\n' + \
                '//td {border: solid 1px #CCC; padding-left: 0.25em; padding-right: 0.25em;}\n' + \
+               'th.a {background: lightgray; }\n' + \
                'table.aon th {border: solid 1px darkgrey; }\n' + \
                'table.aon td {border: solid 1px darkgrey; }\n' + \
                'table.aohwno th {border: solid 1px darkgrey; }\n' + \
@@ -75,7 +77,7 @@ class PageNode:
                '//tr:nth-child(odd)  td.index {background: #CCC;}\n' + \
                '//tr:nth-child(even) td.index {background: #BBB;}\n' + \
                '//td.a_v {width:100%;}\n' + \
-               'td.ov_v {width:100%;}\n' + \
+               '//td.ov_v {width:100%;}\n' + \
                '.int {color: darkred;}\n' + \
                '.float {color: darkred;}\n' + \
                '.str {color: navy;}\n' + \
@@ -182,7 +184,7 @@ class ArrayNode:
         for pos in range(len(self.records)):
             value = self.records[pos]
             s += '<tr>\n'
-            s += th(str(pos + 1)) + '\n'
+            s += th(str(pos + 1), clazz='a') + '\n'
             s += td_value("a_v", value)
             s += '</tr>\n'
         s += '</table>'
@@ -251,7 +253,7 @@ class ArrayOfNestableObjectsNode:
             s += '</tr>'
         s += '</thead>'
 
-        if len(self.record_nodes) > 1 and self.parent:
+        if self.parent and (len(self.record_nodes) > 5 or len(str(self.record_nodes)) > 1000):
             s += '<tbody class="collapsed">'
         else:
             s += '<tbody>'
@@ -291,7 +293,7 @@ class ObjectNode:
             s += th(key)
         s += '</thead>'
         s += '<tr>\n'
-        for key, value in self.fields.items():
+        for value in self.fields.values():
             s += '<td>\n'
             if value is not None:
                 s += str(value)
@@ -389,8 +391,8 @@ def node(j, parent, in_array_of_nestable_obj: bool):
             if len(j) == 1:
                 descriptor = None
             else:
-                prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
-        if descriptor is None or in_array_of_nestable_obj:
+                descriptor = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
+        if descriptor is None or in_array_of_nestable_obj or len(j) <= 1:
             return ObjectNode(j, True, parent, in_array_of_nestable_obj)
         else:
             # dict, where all entries have the same structure, i.e., array-like dict
@@ -404,12 +406,8 @@ def node(j, parent, in_array_of_nestable_obj: bool):
     elif type(j) is list:
         descriptor, path_of_leaf_to_count = array_descriptor_and_path_counts(j)
         if descriptor is not None and not in_array_of_nestable_obj:
-            # if len(j) == 1:
-            #     return ObjectNode(j[0], True, parent)
-            # else:
-            #     prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
-            #     return ArrayOfNestableObjectsNode(parent, j, descriptor, compute_paths_of_leaves(descriptor))
-            prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
+            descriptor = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
+        if descriptor is not None and not in_array_of_nestable_obj and len(j) > 1:
             array_node = ArrayOfNestableObjectsNode(parent, j, descriptor)
             array_node.record_nodes = []
             for i, sub_j in enumerate(j):
@@ -425,21 +423,11 @@ def node(j, parent, in_array_of_nestable_obj: bool):
 
 
 def child_by_path(value, path):
-    root_value = value
     for name in path:
         if value is None:
             return None
         if isinstance(value, dict):
             value = value.get(name)
-            if isinstance(value, ArrayOfNestableObjectsNode):
-                pass
-        elif isinstance(value, ArrayOfNestableObjectsNode):
-            print(f"path: {path}, value: ${value.record_nodes}", file=sys.stderr)
-
-            # for item in value.record_nodes:     # ok?
-            #     if item.get('#') ==
-            value = '<unknown>'
-            # value = value.get(name)
         elif isinstance(value, ObjectNode):
             value = value.fields.get(name)  # hack (ObjectNode)
         else:
