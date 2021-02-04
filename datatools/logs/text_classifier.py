@@ -125,7 +125,8 @@ def compute_stats(strings: Sequence[str]) -> Iterator[Stat]:
 
 
 def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> Iterator[Stat]:
-    debug(f"Computing stats for {len(tokenized_strings)} lines")
+    size = len(tokenized_strings)
+    debug(f"Computing stats for {size} lines")
     token2lines = defaultdict(list)  # or better just set of line indices!
     for tokenized_string in tokenized_strings:
         token_set = set(tokenized_string)
@@ -136,16 +137,16 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
 
     token2quality = {}
     total_quality = 0
-    total_support = 0
+    # total_support = 0
     for token, quality in f.items():
         quality = len(token2lines[token]) * len(token2lines[token]) / quality
         token2quality[token] = quality
         total_quality += quality
-        total_support += len(token2lines[token])
+        # total_support += len(token2lines[token])
 
-    total_count = 0
-    for count in f.values():
-        total_count += count
+    # total_count = 0
+    # for count in f.values():
+    #     total_count += count
 
     limit = 0.5 * total_quality
     total = 0
@@ -158,7 +159,8 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
         support = len(token2lines[token])
         # and i < len(s)
         selected = prev_selected and support > 1 and (
-                total < limit or quality == prev_quality or support >= prev_support)
+                # total < limit or quality == prev_quality or support >= prev_support)
+                total < limit or support == size)
 
         total += quality
         prev_quality = quality
@@ -185,8 +187,8 @@ def tokenize_lines(lines):
         yield from tokenize(line)
 
 
-def make_buckets(strings) -> Dict[Tuple[str, ...], List[str]]:
-    refined_buckets = initial_refined_buckets(strings)
+def make_buckets(tokenized_strings) -> Dict[Tuple[str, ...], List[str]]:
+    refined_buckets = initial_refined_buckets(tokenized_strings)
 
     # Perform analysis and synthesis: find similar buckets, merge them, and re-do bucketing.
     debug("Making super-buckets")
@@ -199,8 +201,8 @@ def make_buckets(strings) -> Dict[Tuple[str, ...], List[str]]:
     return refined2
 
 
-def initial_refined_buckets(strings):
-    buckets = bucketize(strings)
+def initial_refined_buckets(tokenized_strings):
+    buckets = bucketize(tokenized_strings)
     debug("Initial refinement of buckets")
     refined_buckets: Dict[Tuple[str, ...], List[str]] = refine_buckets(buckets.values())
     debug("Completed initial refinement of buckets!")
@@ -260,62 +262,44 @@ def refine_buckets(data: Iterable[List[str]]) -> Dict[Tuple[str, ...], List[str]
     return refined_buckets
 
 
-def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], List[str]]:
-    debug(f"Computing buckets for {len(strings)} strings")
-    selected: Set[str] = compute_selected(compute_stats(strings))
-    pattern_to_bucket_strings: Dict[Tuple[str, ...], List[str]] = defaultdict(list)
-    for s in strings:
-        pattern = collapse_successive_wildcards(pattern_iterable(s, selected))[0]
-        pattern_to_bucket_strings[tuple(pattern)].append(s)
-    debug(f"Computed buckets for {len(strings)} strings")
-    return pattern_to_bucket_strings
+def bucketize(tokenized_strings) -> Dict[Tuple[str, ...], List[str]]:
+    debug(f"Computing buckets for {len(tokenized_strings)} strings")
+    selected: Set[str] = compute_selected(compute_stats_for_tokenized(tokenized_strings))
+    pattern_to_tokenized_strings: Dict[Tuple[str, ...], List[str]] = defaultdict(list)
+    for tokenized_string in tokenized_strings:
+        raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokenized_string, selected)
+        pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
+        pattern_to_tokenized_strings[tuple(pattern)].append(tokenized_string)
+    debug(f"Computed buckets for {len(tokenized_strings)} strings")
+    return pattern_to_tokenized_strings
 
 
-def annotate_tokens():
-    lines = load_lines()
-    selected = compute_selected(compute_stats(lines))
-    for s in lines:
-        yield do_annotate(s, selected)
+def grouped_data(data, group_field: str):
+    group_to_group_data: Dict[str, List[Any]] = defaultdict(list)
+    for record in data:
+        group_to_group_data[record[group_field]].append(record)
+    return group_to_group_data
 
 
-def do_annotate(line, selected):
-    return [{"token": token, "selected": token in selected} for token in tokenize(line)]
-
-
-def annotate_lines(group_field: Optional[str], classify_field: str, result_field):
-    debug(f"Annotating; group_field={group_field}")
-    records = load_data()
-    debug(f"Computing lookups")
-    group_to_lookup: Dict[str, Dict[str, Tuple[str, ...]]] = compute_group_lookups(
-        records, group_field, classify_field,
-        bucketize
-        # make_buckets
-    )
-    debug(f"done")
-
-    for j in records:
-        group = None if group_field is None else j[group_field]
-        message = j[classify_field]
-        p = group_to_lookup[group][message]
-        category = f'{hash(p) & 0xFFFFFFFF:02x}'
-        j[result_field] = category
-
-        # pattern, args, encoded_pattern = pattern_and_args(message, {token for token in p if token is not None})
-        # j['message'] = encoded_pattern
-        # j['message'] = pattern
-        # j['args'] = args
-        # j['hash'] = category
-
-        yield j
+def raw_pattern_and_milestone_offsets(tokens: Iterable[str], selected: Set[str]) -> Tuple[List[str], List[int]]:
+    raw_pattern = []
+    milestone_offsets = []
+    for offset, token in enumerate(tokens):
+        if token in selected:
+            raw_pattern.append(token)
+            milestone_offsets.append(offset)
+        else:
+            raw_pattern.append(None)
+    return raw_pattern, milestone_offsets
 
 
 def pattern_iterable(string, selected) -> Iterable[str]:
     return (token if token in selected else None for token in tokenize(string))
 
 
-def clean_pattern(in_pattern: Iterable[str], strings: Sequence[str]) -> Tuple[str, ...]:
-    if len(strings) == 1:
-        return strings[0],
+def clean_pattern(in_pattern: Iterable[str], tokenized_strings: Sequence[Sequence[str]]) -> Tuple[str, ...]:
+    if len(tokenized_strings) == 1:
+        return tuple(tokenized_strings[0])
 
     return tuple(collapse_successive_wildcards(in_pattern)[0])
 
@@ -338,7 +322,7 @@ def collapse_successive_wildcards(in_pattern: Iterable[str]) -> Tuple[List[str],
 
 def pack_pattern(in_pattern: Tuple[str, ...], lines: Sequence[str]) -> Tuple[str, ...]:
     if len(lines) == 1:
-        return lines[0],
+        return tuple(lines[0])
 
     # collapse successive wildcards and text
     out_pattern = []
@@ -408,31 +392,54 @@ def compute_group_lookups(records, group_field, classify_field, make_buckets_fun
 
 
 def invert(bucket_data: Dict[Tuple[str, ...], List[str]]) -> Dict[str, Tuple[str, ...]]:
-    return {s: bucket_pattern for bucket_pattern, bucket_contents in bucket_data.items() for s in bucket_contents}
+    return {tuple(s): bucket_pattern for bucket_pattern, bucket_contents in bucket_data.items() for s in bucket_contents}
 
 
 def run():
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
-        return compute_stats(load_lines())
+        return compute_stats_for_tokenized(load_tokenized_strings())
     elif len(sys.argv) == 2 and sys.argv[1] == "initial_buckets":
-        return to_jsonisable(with_packed_patterns(bucketize(load_lines())))
+        return to_jsonisable(with_packed_patterns(bucketize(load_tokenized_strings())))
     elif len(sys.argv) == 2 and sys.argv[1] == "initial_refined_buckets":
-        return to_jsonisable(with_packed_patterns(initial_refined_buckets(load_lines())))
+        return to_jsonisable(with_packed_patterns(initial_refined_buckets(load_tokenized_strings())))
     elif len(sys.argv) == 2 and sys.argv[1] == "buckets":
-        return to_jsonisable(with_packed_patterns(make_buckets(load_lines())))
-    elif len(sys.argv) == 2 and sys.argv[1] == "annotate_tokens":
-        return annotate_tokens()
+        return to_jsonisable(with_packed_patterns(make_buckets(load_tokenized_strings())))
     elif (len(sys.argv) == 5 or len(sys.argv) == 4) and sys.argv[1] == "annotate_lines":
-        return annotate_lines(
-            group_field=sys.argv[4] if len(sys.argv) == 5 else None,
-            classify_field=sys.argv[2],
-            result_field=sys.argv[3]
-        )
+        group_field = sys.argv[4] if len(sys.argv) == 5 else None
+        data = load_data()
+        data_groups = {None: data if group_field is None else grouped_data(data, group_field)}
+
+        for group_id, group_data in data_groups.items():
+            argv_ = sys.argv[2]
+            sys_argv_ = sys.argv[3]
+            annotate_lines(group_data, classify_field=argv_, result_field=sys_argv_)
+
+        return data
+
+
+def annotate_lines(records: Sequence[Any], classify_field: str, result_field: str):
+    debug(f"Annotating")
+    classified_fields = [j[classify_field] for j in records]
+    tokenized_strings = [[token for token in tokenize(s)] for s in classified_fields]
+
+    buckets = make_buckets(tokenized_strings)
+    group_to_lookup = invert(buckets)
+
+    for record in records:
+        message = record[classify_field]
+        p = group_to_lookup[tuple(token for token in tokenize(message))]
+        category = f'{hash(p) & 0xFFFFFFFF:02x}'
+        record[result_field] = category
+
+
+@run_once
+def load_tokenized_strings():
+    return [[token for token in tokenize(s)] for s in load_lines()]
 
 
 @run_once
 def load_data():
-    return [json.loads(l1) for l1 in load_lines()]
+    return [json.loads(line) for line in sys.stdin]
 
 
 @run_once

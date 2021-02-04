@@ -6,7 +6,7 @@ from typing import *
 
 from datatools.json.util import to_jsonisable
 from datatools.logs.text_classifier import collapse_successive_wildcards
-from datatools.logs.text_classifier import tokenize, compute_selected, compute_stats_for_tokenized
+from datatools.logs.text_classifier import tokenize, compute_selected, compute_stats_for_tokenized, raw_pattern_and_milestone_offsets
 from datatools.util.graph_util import compute_weights_graph, connected_components
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
@@ -105,27 +105,14 @@ class Bucket:
         return [offset + shift for offset in ref_column]
 
 
-def raw_pattern_and_milestone_offsets(tokens: Iterable[str], selected: Set[str]) -> Tuple[List[str], List[int]]:
-    raw_pattern = []
-    milestone_offsets = []
-    for offset, token in enumerate(tokens):
-        if token in selected:
-            raw_pattern.append(token)
-            milestone_offsets.append(offset)
-        else:
-            raw_pattern.append(None)
-    return raw_pattern, milestone_offsets
-
-
-def bucketize(strings: Sequence[str]) -> Dict[Tuple[str, ...], Bucket]:
-    return bucketize_into({}, [[token for token in tokenize(s)] for s in strings])
+def initial_buckets() -> Dict[Tuple[str, ...], Bucket]:
+    return bucketize_into({}, load_tokenized_strings())
 
 
 def bucketize_into(pattern_to_buckets, tokenized_strings):
     debug(f"Computing buckets for {len(tokenized_strings)} strings")
     selected: Set[str] = compute_selected(compute_stats_for_tokenized(tokenized_strings))
     for tokens in tokenized_strings:
-
         raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokens, selected)
         pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
         pattern_tuple = tuple(pattern)
@@ -152,15 +139,7 @@ def trim_bucket(bucket) -> Bucket:
 
 
 def trimmed_buckets_matches():
-    initial_buckets = bucketize(load_lines())
-    # buckets = {
-    #     k: Bucket([tokenize_string(s) for s in bucket_strings]) for k, bucket_strings in initial_buckets.items()
-    # }
-    # trimmed = {k: trim_bucket(v) for k, v in buckets.items()}
-    # matches = {k: v.matches for k, v in trimmed.items()}
-    return [bucket for bucket in initial_buckets.values()]
-    # return trimmed
-    # return with_packed_patterns(trimmed)
+    return [bucket for bucket in initial_buckets().values()]
 
 
 def bucket_similarities(buckets, threshold) -> Dict[Hashable, Dict[Hashable, Any]]:
@@ -190,7 +169,7 @@ def bucket_similarities(buckets, threshold) -> Dict[Hashable, Dict[Hashable, Any
 
 
 def merged_buckets():
-    buckets: Dict[Tuple[Hashable, ...], Bucket] = bucketize(load_lines())
+    buckets: Dict[Tuple[Hashable, ...], Bucket] = initial_buckets()
     debug("Computed initial buckets")
     buckets = repeatedly_merge_buckets(buckets)
     return [bucket for bucket in buckets.values()]
@@ -228,7 +207,7 @@ def run():
     if len(sys.argv) == 2 and sys.argv[1] == "trimmed_buckets_matches":
         return trimmed_buckets_matches()
     elif len(sys.argv) == 2 and sys.argv[1] == "bucket_similarities":
-        buckets = bucketize(load_lines())
+        buckets = initial_buckets()
         pattern_to_index = {pattern: i for i, pattern in enumerate(buckets)}
         similarities = bucket_similarities([bucket for bucket in buckets.values()], 20)
 
@@ -240,6 +219,11 @@ def run():
         return merged_buckets()
     else:
         return None
+
+
+@run_once
+def load_tokenized_strings():
+    return [[token for token in tokenize(s)] for s in load_lines()]
 
 
 @run_once
