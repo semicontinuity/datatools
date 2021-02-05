@@ -3,34 +3,53 @@ from typing import *
 import mmh3
 
 
+def add_hash_to_vector(h_bytes: AnyStr, vector: List[int], count=1):
+    i = 0
+    for h_byte in h_bytes:
+        mask = 1
+        for bit in range(8):
+            vector[i] += count if h_byte & mask != 0 else -count
+            mask <<= 1
+            i += 1
+
+
+def binarize_vector_to_hash(vector: List[int]) -> AnyStr:
+    vector_offset = 0
+    result_offset = 0
+    result = bytearray(16)
+    for offset in range(16):
+        mask = 1
+        hash_byte = 0
+
+        for bit in range(8):
+            hash_byte |= mask if vector[vector_offset] > 0 else 0
+            mask <<= 1
+            vector_offset += 1
+
+        result[result_offset] = hash_byte
+        result_offset += 1
+
+    return result
+
+
+def mean_square_hamming_distance(centroid_hash: AnyStr, hashes: Iterable[AnyStr]):
+    result: int = 0
+    n: int = 0
+    for h_bytes in hashes:
+        d = hamming_distance(centroid_hash, h_bytes)
+        result += d * d
+        n += 1
+    return 0 if n == 0 else result / n
+
+
+def centroid(hashes: Iterable[AnyStr]):
+    vector = [0] * 16 * 8
+    for h_bytes in hashes:
+        add_hash_to_vector(h_bytes, vector)
+    return binarize_vector_to_hash(vector)
+
+
 def seq_sim_hash(tokenized_string: Sequence[AnyStr]):
-    def append(vector: List[int], h_bytes: AnyStr, count):
-        i = 0
-        for h_byte in h_bytes:
-            mask = 1
-            for bit in range(8):
-                vector[i] += count if h_byte & mask != 0 else -count
-                mask <<= 1
-                i += 1
-
-    def binarize(vector: List[int]) -> AnyStr:
-        vector_offset = 0
-        result_offset = 0
-        result = bytearray(16)
-        for offset in range(16):
-            mask = 1
-            hash_byte = 0
-
-            for bit in range(8):
-                hash_byte |= mask if vector[vector_offset] > 0 else 0
-                mask <<= 1
-                vector_offset += 1
-
-            result[result_offset] = hash_byte
-            result_offset += 1
-
-        return result
-
     length = len(tokenized_string)
     if length == 0:
         return mmh3.hash_bytes('')
@@ -46,11 +65,11 @@ def seq_sim_hash(tokenized_string: Sequence[AnyStr]):
         hash_bytes0 = mmh3.hash_bytes(tokenized_string[0])
         hash_bytes1 = mmh3.hash_bytes(tokenized_string[1])
         hash_bytes2 = mmh3.hash_bytes(tokenized_string[2])
-        append(vector1, hash_bytes0, 1)
-        append(vector1, hash_bytes1, 1)
-        append(vector2, hash_bytes1, 1)
-        append(vector2, hash_bytes2, 1)
-        return binarize(vector1), binarize(vector2)
+        add_hash_to_vector(hash_bytes0, vector1, 1)
+        add_hash_to_vector(hash_bytes1, vector1, 1)
+        add_hash_to_vector(hash_bytes1, vector2, 1)
+        add_hash_to_vector(hash_bytes2, vector2, 1)
+        return binarize_vector_to_hash(vector1), binarize_vector_to_hash(vector2)
     else:
         vector1 = [0] * 16 * 8
         vector2 = [0] * 16 * 8
@@ -59,12 +78,12 @@ def seq_sim_hash(tokenized_string: Sequence[AnyStr]):
             hash_bytes = mmh3.hash_bytes(token)
             count_after = length - 1 - i
             if count_after > 0:
-                append(vector1, hash_bytes, count_after)
+                add_hash_to_vector(hash_bytes, vector1, count_after)
             count_before = i
             if count_before > 0:
                 # append(vector2, hash_bytes, log2(count_before))
-                append(vector2, hash_bytes, count_before)
-        return binarize(vector1), binarize(vector2)
+                add_hash_to_vector(hash_bytes, vector2, count_before)
+        return binarize_vector_to_hash(vector1), binarize_vector_to_hash(vector2)
 
 
 # use int.bit_count() from python 3.10+
