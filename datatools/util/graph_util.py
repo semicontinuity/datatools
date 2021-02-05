@@ -19,7 +19,7 @@ def compute_weights_graph(
 
 def compute_mutual_weights_iter(
         elements: List[Hashable],
-        weight_f: Callable[[Any, Any], float],
+        weight_f: Callable[[Any, Any], Optional[float]],
         node_f: Callable[[Any], Hashable]):
 
     debug(f"Computing weights, number of elements: {len(elements)}")
