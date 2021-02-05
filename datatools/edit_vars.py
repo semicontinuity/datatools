@@ -75,8 +75,8 @@ def fill(vars):
         entries = {}
         for i, param in enumerate(vars):
             d.add(2, i + 1, param)
-            entry = WTextEntry(20, str(vars.get(param)) or "")
-            d.add(longest + 3, i + 1, entry)
+            entry = WTextEntry(50, str(vars.get(param)) or "")
+            d.add(x=longest + 3, y=i + 1, widget=entry)
             entries[param] = entry
 
         add_ok_cancel_buttons(d)
@@ -87,13 +87,13 @@ def fill(vars):
             return {key: entry.get_cur_line() for key, entry in entries.items()}
 
 
-def main(vars):
-    filled = fill(vars)
+def main(variables):
+    filled = fill(variables)
 
     if not filled:
         sys.exit(1)
 
-    output(filled, vars)
+    output(filled, variables)
 
 
 def output(filled, params):

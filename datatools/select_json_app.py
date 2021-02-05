@@ -23,7 +23,7 @@ import os.path
 import signal
 from json import JSONDecodeError
 
-from typing import Dict
+from typing import Dict, List, Any
 
 FD_TUI = 103
 
@@ -46,6 +46,7 @@ from math import sqrt
 from dataclasses import dataclass
 from picotui.editor import Editor
 
+from datatools.util.logging import debug
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.select_json_app_exit_codes_mapping import *
@@ -222,7 +223,7 @@ class WGrid(Editor):
         self.compute_cell_attrs = compute_cell_attrs
         self.title = title
         self.column_titles = column_titles
-        self.column_widths = self.compute_column_widths(column_widths)
+        self.column_widths = [] if len(column_titles) == 0 else self.compute_column_widths(column_widths)
         self.columns = columns
         self.column_keys = column_keys
 
@@ -242,8 +243,7 @@ class WGrid(Editor):
             Screen.wr(ansi_foreground_escape_code(c[0], c[1], c[2]))
             Screen.wr(ansi_background_escape_code(c[3], c[4], c[5]))
 
-    def compute_column_widths(self, column_widths):
-        assert len(column_widths) > 0
+    def compute_column_widths(self, column_widths) -> List[Any]:
         total_width = sum(column_widths)
         budget_width = self.width - 1 - len(column_widths) - total_width
         assert budget_width >= 0
@@ -524,7 +524,7 @@ def compute_cell_attrs(column_index, text):
 g = None
 
 
-def run(params, state):
+def run(state, presentation):
     s = Screen()
     try:
         cursor_position_save()
@@ -544,8 +544,8 @@ def run(params, state):
         compute_column_colorings(column_keys)
 
         global g
-        g = WGrid(params.title, screen_size[0], screen_size[1], column_titles, column_widths, compute_cell_attrs,
-                  params.columns, column_keys)
+        g = WGrid(presentation["title"], screen_size[0], screen_size[1], column_titles, column_widths, compute_cell_attrs,
+                  presentation["columns"], column_keys)
         g.set_lines(orig_data)
 
         top_line = state["top_line"]
@@ -572,7 +572,7 @@ def run(params, state):
 
 
 def load_data(params):
-    global orig_data
+    orig_data = []
     if params.stream_mode:
         while True:
             line = sys.stdin.readline()
@@ -580,22 +580,22 @@ def load_data(params):
                 break
             j = json.loads(line)
             orig_data.append(j)
+        return orig_data
     else:
         input = sys.stdin.read()
         try:
-            orig_data = json.loads(input)
+            return json.loads(input)
         except JSONDecodeError as e:
             print("Cannot decode JSON", file=sys.stderr)
             print(e, file=sys.stderr)
             print(input, file=sys.stderr)
             sys.exit(255)
 
-    analyze_data(orig_data, params)
-
 
 def read_fd_or_default(fd, default):
     try:
         with os.fdopen(fd, 'r') as f:
+            debug(f'Reading from FD {fd}')
             return json.load(f)
     except Exception:
         return default
@@ -634,32 +634,34 @@ def parse_args(argv, presentation):
             params.columns = json.loads(sys.argv[a])
         a += 1
 
-    if params.title: presentation["title"] = params.title
-    if params.columns: presentation["columns"] = params.columns
+    if params.title is not None:
+        presentation["title"] = params.title
+    if params.columns is not None:
+        presentation["columns"] = params.columns
     return params
 
 
-if __name__ == "__main__":
+def main():
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
-
     params = parse_args(sys.argv, presentation)
     fd_tui = FD_TUI if fd_exists(FD_TUI) else 2
     patch_picotui(fd_tui, fd_tui)
-
-    load_data(params)
+    global orig_data
+    orig_data = load_data(params)
+    analyze_data(orig_data, params)
     signal.signal(signal.SIGWINCH, handle_sigwinch)
-    exit_code, state = run(params, state)
-
+    exit_code, state = run(state, presentation)
     write_fd_or_pass(FD_STATE_OUT, state)
     write_fd_or_pass(FD_PRESENTATION_OUT, presentation)
-
     if exit_code < 120:
         if (exit_code // EXIT_CODE_SHIFT) & 1 == 1:
             print(json.dumps(orig_data))
             sys.exit(exit_code)
-
     if exit_code != EXIT_CODE_ESCAPE:
         print(json.dumps(orig_data[state["cur_line"]]))
-
     sys.exit(exit_code)
+
+
+if __name__ == "__main__":
+    main()
