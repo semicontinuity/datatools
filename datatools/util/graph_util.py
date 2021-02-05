@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import *
 
 from datatools.util.logging import debug
@@ -9,19 +8,28 @@ def compute_weights_graph(
         weight_f: Callable[[Any, Any], float],
         node_f: Callable[[Any], Hashable]) -> Dict[Hashable, Dict[Hashable, float]]:
 
-    debug(f"Computing weights graph, number of nodes: {len(elements)}")
     graph = {node_f(element): {} for element in elements}
+
+    for n_i, n_j, w in compute_mutual_weights_iter(elements, weight_f, node_f):
+        graph[n_i][n_j] = w
+        graph[n_j][n_i] = w
+
+    return graph
+
+
+def compute_mutual_weights_iter(
+        elements: List[Hashable],
+        weight_f: Callable[[Any, Any], float],
+        node_f: Callable[[Any], Hashable]):
+
+    debug(f"Computing weights, number of elements: {len(elements)}")
 
     for i in range(len(elements)):
         for j in range(i + 1, len(elements)):
             weight = weight_f(elements[i], elements[j])
             if weight is None:
                 continue
-            node_i = node_f(elements[i])
-            node_j = node_f(elements[j])
-            graph[node_i][node_j] = weight
-            graph[node_j][node_i] = weight
-    return graph
+            yield node_f(elements[i]), node_f(elements[j]), weight
 
 
 def discretize_graph(
