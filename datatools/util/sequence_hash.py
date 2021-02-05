@@ -1,3 +1,4 @@
+from math import sqrt
 from typing import *
 
 import mmh3
@@ -32,7 +33,7 @@ def binarize_vector_to_hash(vector: List[float]) -> AnyStr:
     return result
 
 
-def mean_square_hamming_distance(centroid_hash: AnyStr, hashes: Iterable[AnyStr]):
+def mean_squared_hamming_distance(centroid_hash: AnyStr, hashes: Iterable[AnyStr]):
     result: int = 0
     n: int = 0
     for h_bytes in hashes:
