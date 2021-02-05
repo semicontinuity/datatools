@@ -3,17 +3,17 @@ from typing import *
 import mmh3
 
 
-def add_hash_to_vector(h_bytes: AnyStr, vector: List[int], count=1):
+def add_hash_to_vector(h_bytes: AnyStr, vector: List[float], weight: float = 1):
     i = 0
     for h_byte in h_bytes:
         mask = 1
         for bit in range(8):
-            vector[i] += count if h_byte & mask != 0 else -count
+            vector[i] += weight if h_byte & mask != 0 else -weight
             mask <<= 1
             i += 1
 
 
-def binarize_vector_to_hash(vector: List[int]) -> AnyStr:
+def binarize_vector_to_hash(vector: List[float]) -> AnyStr:
     vector_offset = 0
     result_offset = 0
     result = bytearray(16)
@@ -49,7 +49,7 @@ def centroid(hashes: Iterable[AnyStr]):
     return binarize_vector_to_hash(vector)
 
 
-def seq_sim_hash(tokenized_string: Sequence[AnyStr]):
+def seq_sim_hash(tokenized_string: Sequence[AnyStr], token_weight: Callable[[AnyStr], float] = lambda token: 1):
     length = len(tokenized_string)
     if length == 0:
         return mmh3.hash_bytes('')
@@ -63,12 +63,15 @@ def seq_sim_hash(tokenized_string: Sequence[AnyStr]):
         vector1 = [0] * 16 * 8
         vector2 = [0] * 16 * 8
         hash_bytes0 = mmh3.hash_bytes(tokenized_string[0])
+        token_weight0 = token_weight(tokenized_string[0])
         hash_bytes1 = mmh3.hash_bytes(tokenized_string[1])
+        token_weight1 = token_weight(tokenized_string[1])
         hash_bytes2 = mmh3.hash_bytes(tokenized_string[2])
-        add_hash_to_vector(hash_bytes0, vector1, 1)
-        add_hash_to_vector(hash_bytes1, vector1, 1)
-        add_hash_to_vector(hash_bytes1, vector2, 1)
-        add_hash_to_vector(hash_bytes2, vector2, 1)
+        token_weight2 = token_weight(tokenized_string[2])
+        add_hash_to_vector(hash_bytes0, vector1, token_weight0)
+        add_hash_to_vector(hash_bytes1, vector1, token_weight1)
+        add_hash_to_vector(hash_bytes1, vector2, token_weight1)
+        add_hash_to_vector(hash_bytes2, vector2, token_weight2)
         return binarize_vector_to_hash(vector1), binarize_vector_to_hash(vector2)
     else:
         vector1 = [0] * 16 * 8
@@ -76,13 +79,13 @@ def seq_sim_hash(tokenized_string: Sequence[AnyStr]):
         for i in range(length):
             token = tokenized_string[i]
             hash_bytes = mmh3.hash_bytes(token)
+            weight = token_weight(token)
             count_after = length - 1 - i
             if count_after > 0:
-                add_hash_to_vector(hash_bytes, vector1, count_after)
+                add_hash_to_vector(hash_bytes, vector1, count_after * weight)
             count_before = i
             if count_before > 0:
-                # append(vector2, hash_bytes, log2(count_before))
-                add_hash_to_vector(hash_bytes, vector2, count_before)
+                add_hash_to_vector(hash_bytes, vector2, count_before * weight)
         return binarize_vector_to_hash(vector1), binarize_vector_to_hash(vector2)
 
 

@@ -50,7 +50,7 @@ from datatools.util.logging import debug
 @dataclass
 class Stat:
     token: str
-    quality: int
+    quality: float
     count: int
     support: int
     selected: bool
@@ -87,19 +87,19 @@ def compute_stats(strings: Sequence[str]) -> Iterator[Stat]:
         for token in token_set:
             token2lines[token].append(s)
 
-    f = token_counts(tokenize_lines(strings))
+    token_counts: Dict[Hashable, int] = compute_token_counts(tokenize_lines(strings))
 
     token2quality = {}
     total_quality = 0
     total_support = 0
-    for token, quality in f.items():
-        quality = len(token2lines[token]) * len(token2lines[token]) / quality
+    for token, count in token_counts.items():
+        quality = len(token2lines[token]) * len(token2lines[token]) / count
         token2quality[token] = quality
         total_quality += quality
         total_support += len(token2lines[token])
 
     total_count = 0
-    for count in f.values():
+    for count in token_counts.values():
         total_count += count
 
     limit = 0.5 * total_quality
@@ -121,7 +121,7 @@ def compute_stats(strings: Sequence[str]) -> Iterator[Stat]:
         prev_selected = selected
         i += 1
 
-        yield Stat(token=token, quality=quality, count=f[token], support=support, selected=selected)
+        yield Stat(token=token, quality=quality, count=token_counts[token], support=support, selected=selected)
 
 
 def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> Iterator[Stat]:
@@ -133,7 +133,7 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
         for token in token_set:
             token2lines[token].append(tokenized_string)
 
-    f = token_counts((token for tokenized_string in tokenized_strings for token in tokenized_string))
+    f = compute_token_counts((token for tokenized_string in tokenized_strings for token in tokenized_string))
 
     token2quality = {}
     total_quality = 0
@@ -171,11 +171,11 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
         yield Stat(token=token, quality=quality, count=f[token], support=support, selected=selected)
 
 
-def token_counts(tokens: Iterable[Hashable]):
+def compute_token_counts(tokens: Iterable[Hashable]) -> Dict[Hashable, int]:
     d = defaultdict(int)
     for token in tokens:
         d[token] += 1
-    return {k: v for k, v in sorted(d.items(), key=lambda item: -item[1])}
+    return {token: count for token, count in sorted(d.items(), key=lambda item: -item[1])}
 
 
 def compute_selected(stats: Iterable[Stat]) -> Set[str]:

@@ -127,9 +127,10 @@ class Bucket:
 def scatter_into(pattern_to_buckets, tokenized_strings):
     debug(f"Computing buckets for {len(tokenized_strings)} strings")
     stats = list(compute_stats_for_tokenized(tokenized_strings))
+    token_to_quality = {stat.token: stat.quality for stat in stats}
     selected: Set[str] = compute_selected(stats)
     for tokens in tokenized_strings:
-        sim_hash = seq_sim_hash(tokens)
+        sim_hash = seq_sim_hash(tokens, token_to_quality.get)
         raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokens, selected)
         pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
         pattern_tuple = tuple(pattern)
