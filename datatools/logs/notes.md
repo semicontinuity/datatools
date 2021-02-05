@@ -7,3 +7,6 @@
 * apply TF/IDF, seems similar to noise factor
 
 * use FP-tree?
+
+* when scattering, route by SeqSimHash (weighted how?), not by extracted pattern
+* for centroid, compute SeqSimHash of extracted pattern?
