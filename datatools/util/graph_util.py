@@ -5,7 +5,7 @@ from datatools.util.logging import debug
 
 def compute_weights_graph(
         elements: List[Hashable],
-        weight_f: Callable[[Any, Any], float],
+        weight_f: Callable[[Any, Any], Optional[float]],
         node_f: Callable[[Any], Hashable]) -> Dict[Hashable, Dict[Hashable, float]]:
 
     graph = {node_f(element): {} for element in elements}
@@ -18,7 +18,7 @@ def compute_weights_graph(
 
 
 def compute_mutual_weights_iter(
-        elements: List[Hashable],
+        elements: List[Any],
         weight_f: Callable[[Any, Any], Optional[float]],
         node_f: Callable[[Any], Hashable]):
 

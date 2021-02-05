@@ -175,12 +175,20 @@ def compute_clusters2():
     buckets_dict = {}
     scatter_into(buckets_dict, buckets_dict, load_tokenized_strings())
 
-    compute_nearest_neighbor_d(buckets_dict)
-    buckets = [bucket for bucket in buckets_dict.values()]
-    # return buckets
-    return list(compute_mutual_weights_iter(
-        buckets, buckets_distance_less_than(2 * 128), lambda b: tuple(b.pattern))
-    )
+    similarity_metric = buckets_overlap()
+    compute_nearest_neighbor_d(buckets_dict, similarity_metric)
+    # buckets = [bucket for bucket in buckets_dict.values()]
+
+    # similarities = bucket_similarities(buckets, similarity_metric)
+    # similar_buckets_pattern_list: List[List[Hashable]] = connected_components(similarities)
+    # return similar_buckets_pattern_list
+
+    buckets_dict = gather_and_scatter(buckets_dict, similarity_metric)
+    compute_nearest_neighbor_d(buckets_dict, similarity_metric)
+
+    return buckets_dict
+
+    # return similarities
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -194,28 +202,28 @@ def compute_clusters():
     return [bucket for bucket in buckets_dict.values()]
 
 
-def repeatedly_clusterize(buckets: Dict):
+def repeatedly_clusterize(buckets_dict: Dict):
     for threshold in [74, 52, 30, 15, 7, 1]:
-        buckets = gather_and_scatter(buckets, threshold)
-    compute_nearest_neighbor_d(buckets)
-    return buckets
+        buckets_dict = gather_and_scatter(buckets_dict, buckets_distance_less_than(threshold))
+    compute_nearest_neighbor_d(buckets_dict, buckets_distance_less_than(2 * 128))
+    return buckets_dict
 
 
-def compute_nearest_neighbor_d(buckets: Dict):
+def compute_nearest_neighbor_d(buckets: Dict, similarity_metric: Callable[[Any, Any], Optional[float]]):
     debug("Computing bucket centroids")
     for bucket in buckets.values():
         bucket.compute_centroid_hashes()
     debug("Computed bucket centroids")
     similarities: Dict[Hashable, Dict[Hashable, Any]] = bucket_similarities(
         list(buckets.values()),
-        buckets_distance_less_than(2 * 128)                
+        similarity_metric
     )
     for pattern, similar in similarities.items():
         if len(similar) > 0:
             buckets[pattern].nearest_neighbor_d = min(similar.values())
 
 
-def gather_and_scatter(buckets_dict, threshold) -> Dict:
+def gather_and_scatter(buckets_dict, similarity_metric: Callable[[Any, Any], Optional[float]]) -> Dict:
 
     debug("Computing bucket centroids")
     for bucket in buckets_dict.values():
@@ -223,7 +231,7 @@ def gather_and_scatter(buckets_dict, threshold) -> Dict:
     debug("Computed bucket centroids")
 
     similarities: Dict[Hashable, Dict[Hashable, Any]] = bucket_similarities(
-        list(buckets_dict.values()), buckets_distance_less_than(threshold)
+        list(buckets_dict.values()), similarity_metric
     )
     buckets_dict, crude_buckets = gather(buckets_dict, similarities)
     for crude_bucket in crude_buckets:
@@ -279,6 +287,17 @@ def buckets_distance_less_than(threshold):
         d2 = hamming_distance(b1.centroid_hash[1], b2.centroid_hash[1])
         d = sqrt(d1 * d1 + d2 * d2)
         return d if d < threshold else None
+    return similarity_metric
+
+
+def buckets_overlap():
+    def similarity_metric(b1: Bucket, b2: Bucket) -> Optional[float]:
+        d1 = hamming_distance(b1.centroid_hash[0], b2.centroid_hash[0])
+        d2 = hamming_distance(b1.centroid_hash[1], b2.centroid_hash[1])
+        cluster_d = sqrt(d1 * d1 + d2 * d2)
+        ref_d = 2.0 * (b1.centroid_hash_rmsd + b2.centroid_hash_rmsd)
+
+        return None if ref_d < cluster_d else ref_d / cluster_d
     return similarity_metric
 
 
