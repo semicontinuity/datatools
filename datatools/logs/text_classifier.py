@@ -39,7 +39,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from types import GeneratorType
-from typing import Tuple, Iterable, Iterator, Set, Dict, List, Optional, Hashable, Any, Sequence
+from typing import Tuple, Iterable, Iterator, Set, Dict, List, Hashable, Any, Sequence
 
 from datatools.json.util import to_jsonisable
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
@@ -49,7 +49,7 @@ from datatools.util.logging import debug
 
 @dataclass
 class Stat:
-    value: str
+    token: str
     quality: int
     count: int
     support: int
@@ -121,7 +121,7 @@ def compute_stats(strings: Sequence[str]) -> Iterator[Stat]:
         prev_selected = selected
         i += 1
 
-        yield Stat(value=token, quality=quality, count=f[token], support=support, selected=selected)
+        yield Stat(token=token, quality=quality, count=f[token], support=support, selected=selected)
 
 
 def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> Iterator[Stat]:
@@ -168,7 +168,7 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
         prev_selected = selected
         i += 1
 
-        yield Stat(value=token, quality=quality, count=f[token], support=support, selected=selected)
+        yield Stat(token=token, quality=quality, count=f[token], support=support, selected=selected)
 
 
 def token_counts(tokens: Iterable[Hashable]):
@@ -179,7 +179,7 @@ def token_counts(tokens: Iterable[Hashable]):
 
 
 def compute_selected(stats: Iterable[Stat]) -> Set[str]:
-    return {stat.value for stat in stats if stat.selected}
+    return {stat.token for stat in stats if stat.selected}
 
 
 def tokenize_lines(lines):

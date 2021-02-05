@@ -19,7 +19,7 @@ def to_jsonisable(obj):
             ]
     elif isinstance(obj, set):
         return to_jsonisable(list(obj))
-    elif isinstance(obj, list):
+    elif isinstance(obj, list) or isinstance(obj, tuple):
         return [to_jsonisable(e) for e in obj]
     elif isinstance(obj, bytearray):
         return [e for e in obj]

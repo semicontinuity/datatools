@@ -16,15 +16,17 @@ from datatools.util.sequence_hash import seq_sim_hash, hamming_distance, centroi
 @dataclass
 class Bucket:
     pattern: List[Hashable]
-    centroid_hash1: AnyStr
-    centroid_hash2: AnyStr
+    centroid_hash: Tuple[AnyStr, AnyStr]
+    # centroid_hash1: AnyStr
+    # centroid_hash2: AnyStr
     centroid_hash1_d: float
     centroid_hash2_d: float
     milestone_count: int
     tokenized_strings: List[Sequence[Hashable]]
     alignment_offsets: List[List[int]]
-    hash1_values: List[AnyStr]
-    hash2_values: List[AnyStr]
+    # hash1_values: List[AnyStr]
+    # hash2_values: List[AnyStr]
+    hash_values: Tuple[List[AnyStr], List[AnyStr]]
 
     def __init__(
             self,
@@ -35,19 +37,22 @@ class Bucket:
         self.pattern = pattern
         self.alignment_offsets = [[] for _ in range(milestone_count)]
         self.tokenized_strings = tokenized_strings if tokenized_strings is not None else []
-        self.hash1_values = []
-        self.hash2_values = []
+        # self.hash1_values = []
+        # self.hash2_values = []
+        self.hash_values = [], []
 
     def compute_centroid_hashes(self):
-        self.centroid_hash1 = centroid(self.hash1_values)
-        self.centroid_hash1_d = mean_square_hamming_distance(self.centroid_hash1, self.hash1_values)
-        self.centroid_hash2 = centroid(self.hash2_values)
-        self.centroid_hash2_d = mean_square_hamming_distance(self.centroid_hash2, self.hash2_values)
+        self.centroid_hash = centroid(self.hash_values[0]), centroid(self.hash_values[1])
+        self.centroid_hash1_d = mean_square_hamming_distance(self.centroid_hash[0], self.hash_values[0])
+        self.centroid_hash2_d = mean_square_hamming_distance(self.centroid_hash[1], self.hash_values[1])
 
-    def append(self, tokenized_string: Sequence[Hashable], milestone_offsets: List[int]):
-        hash1, hash2 = seq_sim_hash(tokenized_string)
-        self.hash1_values.append(hash1)
-        self.hash2_values.append(hash2)
+    def append(self, tokenized_string: Sequence[Hashable], milestone_offsets: List[int], hash_tuple: Tuple[AnyStr, AnyStr]):
+        # hash1, hash2 =
+        self.hash_values[0].append(hash_tuple[0])
+        self.hash_values[1].append(hash_tuple[1])
+        # self.hash_values.append(hash_tuple)
+        # self.hash1_values.append(hash1)
+        # self.hash2_values.append(hash2)
 
         self.tokenized_strings.append(tokenized_string)
         for i in range(len(self.alignment_offsets)):
@@ -121,15 +126,17 @@ class Bucket:
 
 def scatter_into(pattern_to_buckets, tokenized_strings):
     debug(f"Computing buckets for {len(tokenized_strings)} strings")
-    selected: Set[str] = compute_selected(compute_stats_for_tokenized(tokenized_strings))
+    stats = list(compute_stats_for_tokenized(tokenized_strings))
+    selected: Set[str] = compute_selected(stats)
     for tokens in tokenized_strings:
+        sim_hash = seq_sim_hash(tokens)
         raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokens, selected)
         pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
         pattern_tuple = tuple(pattern)
         bucket = pattern_to_buckets.get(pattern_tuple)
         if bucket is None:
             pattern_to_buckets[pattern_tuple] = bucket = Bucket(pattern, len(pattern_milestone_offsets))
-        bucket.append(tokens, milestone_offsets)
+        bucket.append(tokens, milestone_offsets, sim_hash)
     debug(f"Computed buckets for {len(tokenized_strings)} strings")
 
     debug("Computing bucket centroids")
@@ -165,7 +172,7 @@ def bucket_similarities(buckets, threshold) -> Dict[Hashable, Dict[Hashable, Any
         # common = lcs(s1, s2)
         # d = (len(s1) - common) / len(s1) * (len(s2) - common) / len(s2)
         # d = levenshtein_distance(s1, s2) / min(len(s1), len(s2))
-        d = hamming_distance(b1.centroid_hash1, b2.centroid_hash1) + hamming_distance(b1.centroid_hash2, b2.centroid_hash2)
+        d = hamming_distance(b1.centroid_hash[0], b2.centroid_hash[0]) + hamming_distance(b1.centroid_hash[1], b2.centroid_hash[1])
         # debug(d)
 
         # if d:
