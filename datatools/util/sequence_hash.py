@@ -17,14 +17,16 @@ def add_hash_to_vector(h_bytes: AnyStr, vector: List[float], weight: float = 1):
 
 
 def add_hash_tuple_to_vector(h_tuple: Tuple[int, int], vector: List[float], weight: float = 1):
-    i = 0
+    add_int_hash_to_vector(h_tuple[0], vector, 0, weight)
+    add_int_hash_to_vector(h_tuple[1], vector, 64, weight)
 
-    for h in h_tuple:
-        mask = 1
-        for bit in range(64):
-            vector[i] += weight if h & mask != 0 else -weight
-            mask <<= 1
-            i += 1
+
+def add_int_hash_to_vector(int_hash, vector, offset, weight):
+    mask = 1
+    for bit in range(64):
+        vector[offset] += weight if int_hash & mask != 0 else -weight
+        mask <<= 1
+        offset += 1
 
 
 def binarize_vector_to_hash(vector: List[float]) -> AnyStr:
@@ -47,7 +49,7 @@ def binarize_vector_to_hash(vector: List[float]) -> AnyStr:
     return result
 
 
-def binarize_vector_part_to_hash(vector: List[float], vector_offset: int) -> int:
+def binarize_vector_part_to_int_hash(vector: List[float], vector_offset: int) -> int:
     result: int = 0
     mask = 1
 
@@ -60,7 +62,7 @@ def binarize_vector_part_to_hash(vector: List[float], vector_offset: int) -> int
 
 
 def binarize_vector_to_hash_tuple(vector: List[float]) -> Tuple[int, int]:
-    return binarize_vector_part_to_hash(vector, 0), binarize_vector_part_to_hash(vector, 64)
+    return binarize_vector_part_to_int_hash(vector, 0), binarize_vector_part_to_int_hash(vector, 64)
 
 
 def mean_squared_hamming_distance(centroid_hash: AnyStr, hashes: Iterable[AnyStr]):
@@ -73,11 +75,18 @@ def mean_squared_hamming_distance(centroid_hash: AnyStr, hashes: Iterable[AnyStr
     return 0 if n == 0 else result / n
 
 
-def centroid(hashes: Iterable[AnyStr]):
+def centroid(hashes: Iterable[AnyStr]) -> AnyStr:
     vector = [0] * 16 * 8
     for h_bytes in hashes:
         add_hash_to_vector(h_bytes, vector)
     return binarize_vector_to_hash(vector)
+
+
+def centroid_for_int_hashes(hashes: Iterable[int]) -> int:
+    vector = [0] * 64
+    for int_hash in hashes:
+        add_int_hash_to_vector(int_hash, vector, 0, 1)
+    return binarize_vector_part_to_int_hash(vector, 0)
 
 
 def seq_sim_hash(tokenized_string: Sequence[AnyStr], token_weight: Callable[[AnyStr], float] = lambda token: 1) -> \

@@ -19,7 +19,9 @@ from datatools.util.sequence_hash import seq_sim_hash, hamming_distance, centroi
 class Bucket:
     pattern: List[Hashable]
     tokenized_strings: List[Sequence[Hashable]]
+    # hashes: Tuple[List[AnyStr], List[AnyStr]]
     hashes: Tuple[List[AnyStr], List[AnyStr]]
+    # hashes_centroid: Tuple[AnyStr, AnyStr]
     hashes_centroid: Tuple[AnyStr, AnyStr]
     hashes_rmsd: float
     nearest_neighbor_d: float
