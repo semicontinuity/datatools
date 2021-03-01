@@ -544,7 +544,7 @@ def run(state, presentation):
         compute_column_colorings(column_keys)
 
         global g
-        g = WGrid(presentation["title"], screen_size[0], screen_size[1], column_titles, column_widths, compute_cell_attrs,
+        g = WGrid(presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, compute_cell_attrs,
                   presentation["columns"], column_keys)
         g.set_lines(orig_data)
 

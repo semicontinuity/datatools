@@ -64,7 +64,7 @@ class PageNode:
                'div.collapsed2>table {display: none;}\n' + \
                'tr.collapsed2>td {display: none;}\n' + \
                '.none {background: darkgray;}\n' + \
-               'span {padding-left: 0.25em; padding-right: 0.25em;}\n' + \
+               'span {padding-left: 0.25em; padding-right: 0.25em; white-space-pre;}\n' + \
                '//td {border: solid 1px #CCC; padding-left: 0.25em; padding-right: 0.25em;}\n' + \
                'th.a {background: lightgray; }\n' + \
                'table.aon th {border: solid 1px darkgrey; }\n' + \
