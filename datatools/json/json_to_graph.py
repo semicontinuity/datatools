@@ -24,8 +24,8 @@ def label(node):
 
 
 # perhaps, can also support plain list of edges, like [["A", "B"], ["B", "C"]]
-def adj_lists_to_graph(adj_list_records):
-    g = Digraph(node_attr={'shape': 'record'}, graph_attr={"concentrate": "true"})
+def adj_lists_to_graph(adj_list_records, **kwargs):
+    g = Digraph(**kwargs)
 
     for record in adj_list_records:
         node = record['key']
@@ -41,9 +41,8 @@ def adj_lists_to_graph(adj_list_records):
     return g
 
 
-def adj_dict_to_graph(d):
-    g = Digraph(graph_attr={"concentrate": "true"})
-    g.attr('node', shape='box', style='filled', color='wheat')
+def adj_dict_to_graph(d, **kwargs):
+    g = Digraph(**kwargs)
 
     for node in d:
         g.node(str(node), label(node))
@@ -55,6 +54,10 @@ def adj_dict_to_graph(d):
         elif type(adj) is dict:
             for target_node, value in adj.items():
                 g.edge(str(node), str(target_node), None if value is None else str(value))
+        elif type(adj) is str:
+            g.edge(str(node), str(adj))
+        elif adj is None:
+            pass
         else:
             raise ValueError
 
@@ -62,13 +65,15 @@ def adj_dict_to_graph(d):
 
 
 def to_graph(o):
+    attr = {"node_attr": {'height': '0'}, "graph_attr": {"concentrate": "true"}}
+
     if type(o) is list:
-        return adj_lists_to_graph(o)
+        return adj_lists_to_graph(o, **attr)
     if type(o) is dict:
-        return adj_dict_to_graph(o)
+        return adj_dict_to_graph(o, **attr)
     else:
         raise ValueError()
 
 
 if __name__ == "__main__":
-    sys.stdout.buffer.write(to_graph(json.load(sys.stdin)).pipe(format='dot'))
+    sys.stdout.buffer.write(str(to_graph(json.load(sys.stdin)).source).encode('utf-8'))
