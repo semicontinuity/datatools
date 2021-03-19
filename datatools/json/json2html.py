@@ -83,6 +83,26 @@ th.ov_th {border-right: solid 2px darkgrey; }
 .bool {color: darkgreen; padding-left: 0.25em; padding-right: 0.25em;}
 
 .collapsed {display: none;}
+
+.overlay {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    background-color: rgba(255, 255, 255, 1);
+    overflow-x: hidden;
+    transition: 0.2s;
+}
+
+.overlay-content {
+    background: #FFFFF0;
+    white-space: pre;
+    position: relative;
+    width: 100%;
+}
+
 </style>
 
 <script>
@@ -112,17 +132,24 @@ function toggle2(e, tagName) {
   while (e.tagName !== tagName) e = e.parentElement;
   toggleClass2(e, "collapsed2", "regular");
 }
+function initOverlay() { overlay = document.getElementById("overlay"); }
+function openOverlay() { overlay.style.width = "100%"; }
+function closeOverlay() { overlay.style.width = "0%"; }
 </script>
 
 </head>
 
-<body><main>
+<body>
 
-
+<main>
 $view
+</main>
 
+<div id="overlay" class="overlay" onclick="closeOverlay()">
+    <div class="overlay-content"></div>
+</div>
 
-</main></body>
+</body>
 </html>""")
 
     def __init__(self, root, title):
@@ -160,7 +187,7 @@ class MatrixNode:
             s += '<tr>\n'
             s += th(str(y + 1)) + '\n'
             for cell in sub_j:
-                s += td_value("a_v", cell)
+                s += td_value(cell, "a_v")
             s += '</tr>\n'
         s += '<tbody>'
 
@@ -201,7 +228,7 @@ class ArrayNode:
             value = self.records[pos]
             s += '<tr>\n'
             s += th(str(pos + 1), clazz='a') + '\n'
-            s += td_value("a_v", value)
+            s += td_value(value, "a_v")
             s += '</tr>\n'
         s += '</table>'
         return s
@@ -220,7 +247,7 @@ class ArrayNode:
             value = self.records[pos]
             s += '<tr>\n'
             s += th(str(pos + 1)) + '\n'
-            s += td_value("a_v", value)
+            s += td_value(value, "a_v")
             s += '</tr>\n'
         s += '<tbody>'
 
@@ -320,21 +347,12 @@ class ObjectNode:
 
     def vertical_html(self):
         return '<table class="ov">\n' \
-               + '\n'.join(['<tr>\n'
-                            + th(key, 'ov_th') + '\n'
-                            + td_value("ov_v", value) + '\n'
-                            + '</tr>\n'
+               + '\n'.join([self.vertical_html_tr(key, value)
                             for key, value in self.fields.items()]) + '</table>\n'
 
-
-def td_colored(attr, string_value, value):
-    if value is None:
-        return '<td></td>\n'
-    elif attr.is_colored(string_value):
-        bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
-        return td_value_with_color(bg, value) + '\n'
-    else:
-        return f'<td><span>\n{string_value}</span></td>\n'
+    @staticmethod
+    def vertical_html_tr(key, value):
+        return '<tr>\n' + th(key, 'ov_th') + '\n' + td_value(value, "ov_v") + '\n' + '</tr>\n'
 
 
 def td_value_with_attr(attr, string_value, value):
@@ -342,28 +360,35 @@ def td_value_with_attr(attr, string_value, value):
         return '<td></td>\n'
     elif attr.is_colored(string_value):
         bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
-        return td_value_with_color(bg, value) + '\n'
+        return td_value_with_color(value, bg) + '\n'
     else:
         return f'<td><span>\n{string_value}</span></td>\n'
 
 
-def td_value(clazz, value):
+def td_value(value, clazz):
     leaf = is_primitive(value)
     data_type = f'{type(value).__name__}' if leaf else ''
-    s = f'<td class="{clazz} {data_type}">'
+    s = f'<td {list_attr("class", clazz, data_type)}>'
     s += value_str(value, leaf)
     s += '</td>'
     return s
 
 
-def td_value_with_color(bg, value):
+def td_value_with_color(value, bg):
+    return td_value_with_style(value, f'style="background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};"' if bg is not None else '')
+
+
+def td_value_with_style(value, style_attr):
     leaf = is_primitive(value)
-    clazz = f'{type(value).__name__}' if leaf else ''
-    color = f'style="background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};"' if bg is not None else ''
-    s = f'<td class="{clazz}" {color}>'
+    data_type = f'{type(value).__name__}' if leaf else ''
+    s = f'<td class="{data_type}" {style_attr}>'
     s += value_str(value, leaf)
     s += '</td>'
     return s
+
+
+def list_attr(attr, *values):
+    return f" {attr}='" + " ".join(values) + "'" if len(values) > 0 else ""
 
 
 def th(s, clazz=None, colspan=None, rowspan=None, attrs=None):
