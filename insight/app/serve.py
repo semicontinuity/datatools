@@ -44,11 +44,11 @@ class Server(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         print(f'OPTIONS {self.path}', file=sys.stderr)
-        base_folder, resource, tier_schema = self.metadata()
+        base_folder, resource, tier_schema = self.request_parts()
         self.respond(200, 'application/javascript', json.dumps(tier_schema).encode('utf-8'))
 
     def load_tdf(self):
-        base_folder, resource, tier_schema = self.metadata()
+        base_folder, resource, tier_schema = self.request_parts()
         column_names = [e['name'] for e in tier_schema]
         file = base_folder + '/' + resource + '.tsv'
         return pd.read_csv(
@@ -56,7 +56,7 @@ class Server(BaseHTTPRequestHandler):
             sep='\t'
         )
 
-    def metadata(self):
+    def request_parts(self):
         resource = self.path[len("/insight/data/"):].split('?')[0]
         resource_parts = resource.split('/')
         base_folder, resource_name = f'{dataset_root}', resource_parts[0]
