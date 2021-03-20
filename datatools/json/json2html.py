@@ -375,29 +375,19 @@ def td_value(value, clazz):
     return s
 
 
-def td_value_with_color(value, bg):
-    # leaf = is_primitive(value)
-    # data_type = f'{type(value).__name__}' if leaf else None
-    # return Element(
-    #     'td',
-    #     value_e(value, leaf),
-    #     clazz=data_type,
-    #     style=f"#{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};" if bg is not None else None
-    # ).__str__()
-    return td_value_with_style(value, f'style="background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};"' if bg is not None else '')
-
-
-def td_value_with_style(value, style_attr):
-    leaf = is_primitive(value)
-    data_type = f'{type(value).__name__}' if leaf else ''
-    s = f'<td class="{data_type}" {style_attr}>'
-    s += value_str(value, leaf)
-    s += '</td>'
-    return s
-
-
 def list_attr(attr, *values):
     return f" {attr}='" + " ".join(values) + "'" if len(values) > 0 else ""
+
+
+def td_value_with_color(value, bg):
+    leaf = is_primitive(value)
+    data_type = f'{type(value).__name__}' if leaf else None
+    return Element(
+        'td',
+        value_e(value, leaf),
+        clazz=data_type,
+        style=f"background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};" if bg is not None else None
+    ).__str__()
 
 
 def th(s, clazz=None, colspan=None, rowspan=None, attrs=None):
