@@ -4,6 +4,7 @@ import os
 import sys
 from json import JSONDecodeError
 from string import Template
+from typing import Iterable, Union
 
 from datatools.json.coloring import *
 from datatools.json.structure_analyzer import *
@@ -375,6 +376,14 @@ def td_value(value, clazz):
 
 
 def td_value_with_color(value, bg):
+    # leaf = is_primitive(value)
+    # data_type = f'{type(value).__name__}' if leaf else None
+    # return Element(
+    #     'td',
+    #     value_e(value, leaf),
+    #     clazz=data_type,
+    #     style=f"#{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};" if bg is not None else None
+    # ).__str__()
     return td_value_with_style(value, f'style="background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};"' if bg is not None else '')
 
 
@@ -407,17 +416,29 @@ def value_str(value: Optional[Any], leaf: bool):
     return span(value) if leaf else text(value)
 
 
+def value_e(value: Optional[Any], leaf: bool):
+    return span0(value) if leaf else text(value)
+
+
 def array_entry(i: int, contents: Optional[Any]):
-    return span(index(i) + span(contents, clazz='none' if contents is None else None), clazz='ae')
+    # return span(index(i) + span(contents, clazz='none' if contents is None else None), clazz='ae')
+    return span0(
+        index(i),
+        span0(contents, clazz='none' if contents is None else None), clazz='ae').__str__()
 
 
 def index(contents: Optional[Any]):
-    return f'<span class="index">{text(contents)}</span>'
+    # return f'<span class="index">{text(contents)}</span>'
+    return span0(contents, clazz='index')
 
 
-def span(contents: Optional[Any], clazz=None):
-    attrs = f' class="{clazz}"' if clazz is not None else ''
-    return f'<span{attrs}>{text(contents)}</span>'
+def span(*contents, clazz=None):
+    return str(Element('span', *contents, clazz=clazz))
+    # return str(span0(contents, clazz=clazz))
+
+
+def span0(*contents, **attrs):
+    return Element('span', *contents, **attrs)
 
 
 def text(contents: Optional[Any]):
@@ -475,6 +496,35 @@ def child_by_path(value, path):
             print(f"path: {path}, value: ${type(value)}", file=sys.stderr)
             raise ValueError
     return value
+
+
+class Element:
+    tag: str
+    contents: Iterable[Any]
+    attrs: Dict[str, Union[str, Iterable[str]]]
+
+    def __init__(self, tag, *contents, **attrs):
+        self.tag = tag
+        self.contents = contents
+        self.attrs = attrs
+
+    def __str__(self):
+        separator = '\n' if self.contents else ''
+        attrs_str = self.attrs_str()
+        open_tag = f'<{self.tag}{" " + attrs_str if attrs_str else ""}>'
+        close_tag = f'</{self.tag}>'
+        return open_tag + separator.join(str(element) for element in self.contents if element is not None) + close_tag
+
+    def attrs_str(self):
+        return ' '.join((
+            f'{k if k != "clazz" else "class"}="{Element.attr_value_str(v)}"'
+            for k, v in self.attrs.items()
+            if v is not None
+        ))
+
+    @staticmethod
+    def attr_value_str(v: Union[str, Iterable[str]]):
+        return v if type(v) is str else ' '.join((item for item in v if item is not None))
 
 
 def main():
