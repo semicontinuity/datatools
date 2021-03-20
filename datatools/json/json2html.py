@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# Long lists are collapsed by default, set env variable V=1 to suppress.
+
 import json
 import os
 import random
@@ -23,6 +26,7 @@ FD_STATE_IN = 108
 FD_STATE_OUT = 109
 
 long_texts = {}
+verbose = False
 
 
 def random_id(size, chars=ascii_lowercase + digits):
@@ -315,7 +319,7 @@ class ArrayOfNestableObjectsNode:
             s += '</tr>'
         s += '</thead>'
 
-        if self.parent and (len(self.record_nodes) > 5 or len(str(self.record_nodes)) > 1000):
+        if not verbose and self.parent and (len(self.record_nodes) > 7 or len(str(self.record_nodes)) > 1024):
             s += '<tbody class="collapsed">'
         else:
             s += '<tbody>'
@@ -543,6 +547,9 @@ class Element:
 def main():
     if os.environ.get("PIPE_HEADERS_IN"):
         print("Head", file=sys.stderr)
+    if os.environ.get("V") == "1":
+        global verbose
+        verbose = True
 
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
 
