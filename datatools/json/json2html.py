@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import json
 import os
+import random
 import sys
 from json import JSONDecodeError
-from string import Template
+from string import Template, ascii_lowercase, digits
 from typing import Iterable, Union
 
 from datatools.json.coloring import *
@@ -11,7 +12,6 @@ from datatools.json.structure_analyzer import *
 from datatools.json.util import is_primitive
 
 DEBUG = os.getenv('DEBUG')
-
 
 FD_METADATA_IN = 104
 FD_METADATA_OUT = 105
@@ -21,6 +21,12 @@ FD_PRESENTATION_OUT = 107
 
 FD_STATE_IN = 108
 FD_STATE_OUT = 109
+
+long_texts = {}
+
+
+def random_id(size, chars=ascii_lowercase + digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 
 def read_fd_or_default(fd, default):
@@ -84,6 +90,7 @@ th.ov_th {border-right: solid 2px darkgrey; }
 .bool {color: darkgreen; padding-left: 0.25em; padding-right: 0.25em;}
 
 .collapsed {display: none;}
+.button {background: wheat; border: solid 1px gray;}
 
 .overlay {
     height: 100%;
@@ -94,7 +101,7 @@ th.ov_th {border-right: solid 2px darkgrey; }
     top: 0;
     background-color: rgba(255, 255, 255, 1);
     overflow-x: hidden;
-    transition: 0.2s;
+    transition: 0.25s;
 }
 
 .overlay-content {
@@ -133,22 +140,29 @@ function toggle2(e, tagName) {
   while (e.tagName !== tagName) e = e.parentElement;
   toggleClass2(e, "collapsed2", "regular");
 }
-function initOverlay() { overlay = document.getElementById("overlay"); }
-function openOverlay() { overlay.style.width = "100%"; }
-function closeOverlay() { overlay.style.width = "0%"; }
+
+function _(id) { return document.getElementById(id); }
+function openOverlay(text_id) {
+  _('overlay-content').innerText = _(text_id).content.textContent;
+  _('overlay').style.width = "100%";
+  _('main').style.display="none";
+}
+function closeOverlay() { _('overlay').style.width = "0%"; _('main').style.display=""; }
 </script>
 
 </head>
 
 <body>
 
-<main>
+<main id="main">
 $view
 </main>
 
-<div id="overlay" class="overlay" onclick="closeOverlay()">
-    <div class="overlay-content"></div>
+<div id="overlay" class="overlay" onclick="closeOverlay()" onkeypress="closeOverlay()">
+    <div id="overlay-content" class="overlay-content"></div>
 </div>
+
+$long_texts
 
 </body>
 </html>""")
@@ -158,7 +172,11 @@ $view
         self.title = title
 
     def __str__(self):
-        return self.html_template.substitute(title=self.title, view=str(self.root))
+        return self.html_template.substitute(
+            title=self.title,
+            view=str(self.root),
+            long_texts="\n".join(f'<template id="{k}">{v}</template>' for k, v in long_texts.items())
+        )
 
 
 class MatrixNode:
@@ -428,7 +446,12 @@ def span(*contents, clazz=None):
 
 
 def span0(*contents, **attrs):
-    return Element('span', *contents, **attrs)
+    if len(contents) == 1 and type(contents[0]) is str and len(contents[0]) > 1024:
+        text_id = random_id(8)
+        long_texts[text_id] = contents[0]
+        return Element('span', '...', data_text=str(contents[0]), onclick=f'openOverlay("{text_id}")', clazz='button')
+    else:
+        return Element('span', *contents, **attrs)
 
 
 def text(contents: Optional[Any]):
@@ -507,7 +530,7 @@ class Element:
 
     def attrs_str(self):
         return ' '.join((
-            f'{k if k != "clazz" else "class"}="{Element.attr_value_str(v)}"'
+            f"{k if k != 'clazz' else 'class'}='{Element.attr_value_str(v)}'"
             for k, v in self.attrs.items()
             if v is not None
         ))
