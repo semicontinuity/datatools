@@ -11,6 +11,8 @@ from insight.logic.transitions import Transitions, pruned
 from insight.tiered_data_frame import TieredDataFrame
 from insight.util.itertools import matching_sub_sequences, collapse_repeats
 
+MSG_KIND_COLUMN = 'hash'
+
 
 def main_for_json(base_folder: str, out_resource_name: str):
     debug('Loading data...')
@@ -26,6 +28,9 @@ def main_for_json(base_folder: str, out_resource_name: str):
 
 
 def tdf_from_aggregated_json(data, base_folder, out_resource_name):
+    """
+    returns analyse_column_present==True if MSG_KIND_COLUMN column is present in the dataset
+    """
     tg_data = []
     leaves = []
     i: int = 0
@@ -52,7 +57,7 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
         i = i + 1
 
         leaf_df = pd.DataFrame.from_records(leaf)
-        if 'hash' not in leaf_df:
+        if MSG_KIND_COLUMN not in leaf_df:
             analyse_column_present = False
         leaves.append(
             TieredDataFrame(
@@ -98,12 +103,17 @@ def annotate(tdf):
 
 def tweak_schema(tdf, columns_settings=None):
     debug('-------------------------------------------------------------')
-    debug('Schema')
+    debug('Tweaking schema')
+    debug('')
+    debug('Schema tier 0')
     debug(tdf.schema_tiers[0])
-    debug('Schema')
+    debug('Schema tier 1')
     debug(tdf.schema_tiers[1])
-    debug('Schema')
+    debug('Schema tier 2')
     debug(tdf.schema_tiers[2])
+    debug('')
+    debug('Tweaks:')
+    debug(columns_settings)
     debug('-------------------------------------------------------------')
 
     if columns_settings:
@@ -121,6 +131,17 @@ def tweak_schema(tdf, columns_settings=None):
     tdf.append_column(2, {'name': 'break', 'renderer': 'hashHighlightedLiteralValue', 'hidden': 'true'})
     tdf.append_column(2, {'name': 'chain', 'renderer': 'generic'})
     tdf.append_column(2, {'name': 'nestedness', 'renderer': 'generic'})
+    debug('-------------------------------------------------------------')
+    debug('Tweaked schema')
+    debug('')
+    debug('Schema tier 0')
+    debug(tdf.schema_tiers[0])
+    debug('Schema tier 1')
+    debug(tdf.schema_tiers[1])
+    debug('Schema tier 2')
+    debug(tdf.schema_tiers[2])
+    debug('-------------------------------------------------------------')
+
 
 
 def tweak(schema_tier: List, columns_settings=None):
@@ -143,13 +164,13 @@ def annotate_group(tg_row, tg_tdf):
     for tx_keys, tx_tdf in tg_tdf:
         with transitions as tx:
             for index, row in tx_tdf.node_df.iterrows():
-                tx(row['hash'])
+                tx(row[MSG_KIND_COLUMN])
     debug('Analyzing transitions (2)')
     transitions_2 = insight.logic.transitions2.Transitions()
     for tx_keys, tx_tdf in tg_tdf:
         with transitions_2 as tx:
             for index, row in tx_tdf.node_df.iterrows():
-                tx(row['hash'])
+                tx(row[MSG_KIND_COLUMN])
     milestones: Dict[str, Dict[str, int]] = pruned(transitions.singleton_transitions)
     item_occurs_in_transactions, milestones_in_transactions = occurrences(tg_tdf, milestones)
     transaction_codes: List[str] = [hash_code_hex8(hash(tuple(e))) for e in milestones_in_transactions]
@@ -181,7 +202,7 @@ def annotate_group(tg_row, tg_tdf):
                                     for e in milestones_in_transactions]
 
     def item_code(r) -> str:
-        i = r['hash']
+        i = r[MSG_KIND_COLUMN]
         return co_occurrence_codes.get(i) or non_milestone_codes.get(i) or "FFFFFFFF"
 
     active_chain_counter2: int
@@ -202,7 +223,7 @@ def annotate_group(tg_row, tg_tdf):
         :return: Tuple[chain type: str, chain id: str, chain started: bool, chain finished: bool]
         """
         nonlocal active_chain_counter2
-        item = row['hash']
+        item = row[MSG_KIND_COLUMN]
         chain_type_id: str = non_milestone_codes.get(item)
         if not chain_type_id: return None, None, False, False
 
@@ -281,7 +302,7 @@ def annotate_group(tg_row, tg_tdf):
 
     debug('Attaching annotation columns')
     for tx_keys, tx_tdf in tg_tdf:
-        tx_tdf.node_df['s'] = tx_tdf.node_df.apply(lambda r: '1' if r['hash'] in singletons else 0, axis=1)
+        tx_tdf.node_df['s'] = tx_tdf.node_df.apply(lambda r: '1' if r[MSG_KIND_COLUMN] in singletons else 0, axis=1)
         tx_tdf.node_df['xhash'] = tx_tdf.node_df.apply(item_code, axis=1)
         # tx_tdf.node_df['feature'] = tx_tdf.node_df.apply(lambda r: feature_codes.get(r['hash'], '*'), axis=1)
 
@@ -312,8 +333,8 @@ def annotate_group(tg_row, tg_tdf):
 
 def compute_singletons(tg_tdf):
     data = tg_tdf.as_data_frame()
-    occurrences_of_item = data.groupby(['thread', 'host', 'rid', 'hash'])['hash'].size()
-    max_occurrences_of_item = occurrences_of_item.groupby(['hash']).max()
+    occurrences_of_item = data.groupby(['thread', 'host', 'rid', MSG_KIND_COLUMN])[MSG_KIND_COLUMN].size()
+    max_occurrences_of_item = occurrences_of_item.groupby([MSG_KIND_COLUMN]).max()
     return frozenset(max_occurrences_of_item[max_occurrences_of_item == 1].index)
 
 
@@ -345,7 +366,7 @@ def compute_break_flags(tx_tdf, milestones):
     previous_item = None
     rule_flags = Transitions.FLAG_ADJACENT | Transitions.FLAG_NON_ADJACENT
     for index, row in tx_tdf.node_df.iterrows():
-        item = row['hash']
+        item = row[MSG_KIND_COLUMN]
         value = '0'
         if previous_item:
             previous_item_transitions: Dict[str, int] = milestones.get(previous_item)
@@ -361,7 +382,7 @@ def compute_break_flags(tx_tdf, milestones):
 def compute_milestones_color_list(tx_tdf, milestones):
     result = []
     for index, row in tx_tdf.node_df.iterrows():
-        item = row['hash']
+        item = row[MSG_KIND_COLUMN]
         if item in milestones:
             result.append(item[2:])
     return ','.join(result)
@@ -376,7 +397,7 @@ def occurrences(tg_tdf: TieredDataFrame, milestones: Container[str]) -> Tuple[Di
         milestones_in_transactions.append(milestones_in_transaction)
 
         for index, row in tx_tdf.node_df.iterrows():
-            item = row['hash']
+            item = row[MSG_KIND_COLUMN]
             if item in milestones:
                 milestones_in_transaction.append(item)
                 occurs_in = item_occurs_in_transactions.get(item)
@@ -458,7 +479,7 @@ def traverse_tx_non_milestone_strings(tx_tdf: TieredDataFrame, milestones: Conta
 
 def traverse_tx_items(tx_tdf: TieredDataFrame) -> Generator[str, None, None]:
     for index, row in tx_tdf.node_df.iterrows():
-        yield row['hash']
+        yield row[MSG_KIND_COLUMN]
 
 
 def hash_code_hex8(python_hash_code):
@@ -469,6 +490,6 @@ def hash_code_hex8(python_hash_code):
 
 if __name__ == "__main__":
     if not sys.stdin.isatty():
-        main_for_json(sys.argv[1], sys.argv[2])
+        main_for_json(base_folder=sys.argv[1], out_resource_name=sys.argv[2])
     else:
         main_for_tsv(sys.argv[1], sys.argv[2], sys.argv[3])

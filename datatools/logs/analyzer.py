@@ -17,7 +17,7 @@ if static_root is None:
 
 debug('Loading data...')
 data = json.load(sys.stdin)
-tdf, analyse_column_present = tdf_from_aggregated_json(data, '.', '-')
+tdf, analyse_column_present = tdf_from_aggregated_json(data, base_folder='.', out_resource_name='-')
 debug('done')
 
 if analyse_column_present:
@@ -33,7 +33,7 @@ class Server(BaseHTTPRequestHandler):
         self.respond(*self.handle_GET())
 
     def handle_GET(self):
-        debug(f'GET {self.path}', file=sys.stderr)
+        debug(f'GET {self.path}')
         if self.path.startswith("/insight/view") or self.path == "/favicon.ico":
             return self.handle_static()
         elif self.path.startswith("/insight/data"):

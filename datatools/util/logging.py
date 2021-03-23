@@ -8,7 +8,7 @@ TRACE_FILE = os.fdopen(102, 'w') if TRACE_FD_OPEN else sys.stderr
 
 
 def stderr_print(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+    print(*args, **kwargs, file=sys.stderr)
 
 
 def debug(*args, **kwargs):
