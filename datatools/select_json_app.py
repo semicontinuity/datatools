@@ -218,6 +218,8 @@ def draw_grid(left, top, w, h, top_kind, bottom_kind, left_kind, right_kind, h_s
 
 
 class WGrid(Editor):
+    search_str: str = ""
+
     def __init__(self, title, width, height, column_titles, column_widths, compute_cell_attrs, columns, column_keys):
         super().__init__(0, 0, width, height)
         self.compute_cell_attrs = compute_cell_attrs
@@ -409,6 +411,25 @@ class WGrid(Editor):
     def handle_edit_key(self, key):
         if key in KEYS_TO_EXIT_CODES:
             return key
+        elif type(key) is bytes:
+            self.search_str += key.decode("utf-8")
+            line = self.search()
+            if line is not None:
+                content_height = self.height - 3
+                if line >= self.top_line + content_height:
+                    delta = line - self.cur_line
+                    self.top_line += delta
+                self.cur_line = line
+                self.redraw_lines(self.top_line, content_height)
+
+    def search(self):
+        line = self.cur_line
+        while line < self.total_lines:
+            for k, v in orig_data[line].items():
+                if str(v).find(self.search_str) >= 0:
+                    return line
+            line += 1
+        return None
 
 
 import sys
