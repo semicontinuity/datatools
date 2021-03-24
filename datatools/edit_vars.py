@@ -76,6 +76,7 @@ def fill(vars):
         for i, param in enumerate(vars):
             d.add(2, i + 1, param)
             entry = WTextEntry(50, str(vars.get(param)) or "")
+            entry.finish_dialog = ACTION_OK
             d.add(x=longest + 3, y=i + 1, widget=entry)
             entries[param] = entry
 
