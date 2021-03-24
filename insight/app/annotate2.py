@@ -143,17 +143,18 @@ def tweak_schema(tdf, columns_settings=None):
     debug('-------------------------------------------------------------')
 
 
-
 def tweak(schema_tier: List, columns_settings=None):
-    result = []
+    result_map = {}
+    for k, v in columns_settings.items():
+        v["name"] = k
+        result_map[k] = v
+
     for column_metadata in schema_tier:
         name = column_metadata['name']
-        override = columns_settings.get(name)
-        if override is not None:
-            column_metadata = columns_settings[name]
-            column_metadata['name'] = name
-        result.append(column_metadata)
-    return result
+        if name not in result_map:
+            result_map[name] = column_metadata
+
+    return list(result_map.values())
 
 
 def annotate_group(tg_row, tg_tdf):
