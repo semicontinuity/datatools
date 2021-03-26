@@ -191,7 +191,7 @@ class MatrixNode:
 
     def __str__(self):
         clazz = "collapsed2"
-        s = f'<div class="a {clazz}" onclick="toggle2(this, \'DIV\')">'
+        s = f'<div class="a {clazz}" onclick=\'toggle2(this, "DIV")\'>'
         s += f'<span class="header">Matrix {len(self.data)} x {self.width}</span>'
 
         s += '<table class="m">'
@@ -237,7 +237,7 @@ class ArrayNode:
             return self.html_numbered_table_plain()
 
     def html_spans_table(self, clazz):
-        s = f'<div class="a {clazz}" onclick="toggle2(this, \'DIV\')">'
+        s = f'<div class="a {clazz}" onclick=\'toggle2(this, "DIV")\'>'
         s += f'<span class="header">{len(self.records)} items</span>'
         for pos in range(len(self.records)):
             value = self.records[pos]
@@ -260,7 +260,7 @@ class ArrayNode:
         s = '<table class="a">'
         s += '<thead>'
         s += '<tr>'
-        s += th('#', attrs=' onclick="toggle(this)"')
+        s += th('#', onclick="toggle(this)")
         s += th(f'{len(self.records)} items')
         s += '</tr>'
         s += '</thead>'
@@ -308,7 +308,7 @@ class ArrayOfNestableObjectsNode:
             s += '<tr>'
 
             if level == 0:
-                s += th('#', rowspan=depth, attrs=' onclick="toggle(this)"')
+                s += th('#', rowspan=depth, onclick="toggle(this)")
 
             items = items_at_level(self.descriptor, level + 1)
             for name, value in items:
@@ -412,16 +412,15 @@ def td_value_with_color(value, bg):
     ).__str__()
 
 
-def th(s, clazz=None, colspan=None, rowspan=None, attrs=None):
-    if attrs is None:
-        attrs = ''
-    if clazz is not None:
-        attrs += f' class="{clazz}"'
-    if colspan is not None:
-        attrs += f' colspan="{colspan}"'
-    if rowspan is not None:
-        attrs += f' rowspan="{rowspan}"'
-    return f'<th{attrs}><span>{s}</span></th>'
+def th(s, clazz=None, colspan=None, rowspan=None, **attrs):
+    return Element(
+        'th',
+        Element('span', s),
+        clazz=clazz,
+        colspan=colspan,
+        rowspan=rowspan,
+        **attrs
+    ).__str__()
 
 
 def value_str(value: Optional[Any], leaf: bool):
@@ -433,20 +432,17 @@ def value_e(value: Optional[Any], leaf: bool):
 
 
 def array_entry(i: int, contents: Optional[Any]):
-    # return span(index(i) + span(contents, clazz='none' if contents is None else None), clazz='ae')
     return span0(
         index(i),
         span0(contents, clazz='none' if contents is None else None), clazz='ae').__str__()
 
 
 def index(contents: Optional[Any]):
-    # return f'<span class="index">{text(contents)}</span>'
     return span0(contents, clazz='index')
 
 
 def span(*contents, clazz=None):
     return str(Element('span', *contents, clazz=clazz))
-    # return str(span0(contents, clazz=clazz))
 
 
 def span0(*contents, **attrs):
@@ -532,6 +528,7 @@ class Element:
         close_tag = f'</{self.tag}>'
         return open_tag + separator.join(str(element) for element in self.contents if element is not None) + close_tag
 
+    # value in '', because inside can be yaml/json with "
     def attrs_str(self):
         return ' '.join((
             f"{k if k != 'clazz' else 'class'}='{Element.attr_value_str(v)}'"
@@ -541,7 +538,7 @@ class Element:
 
     @staticmethod
     def attr_value_str(v: Union[str, Iterable[str]]):
-        return v if type(v) is str else ' '.join((item for item in v if item is not None))
+        return str(v) if is_primitive(v) else ' '.join((item for item in v if item is not None))
 
 
 def main():
