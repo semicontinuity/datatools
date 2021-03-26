@@ -391,14 +391,11 @@ def td_value_with_attr(attr, string_value, value):
 def td_value(value, clazz):
     leaf = is_primitive(value)
     data_type = f'{type(value).__name__}' if leaf else ''
-    s = f'<td {list_attr("class", clazz, data_type)}>'
-    s += value_str(value, leaf)
-    s += '</td>'
-    return s
-
-
-def list_attr(attr, *values):
-    return f" {attr}='" + " ".join(values) + "'" if len(values) > 0 else ""
+    return Element(
+        'td',
+        value_str(value, leaf),
+        clazz=(clazz, data_type)
+    ).__str__()
 
 
 def td_value_with_color(value, bg):
