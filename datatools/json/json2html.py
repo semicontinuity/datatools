@@ -350,37 +350,35 @@ class ObjectNode:
         self.vertical = vertical
 
     def __str__(self):
-        return self.vertical_html() if self.vertical else self.horizontal_html()
+        return self.vertical_html().__str__() if self.vertical else self.horizontal_html().__str__()
 
     def horizontal_html(self):
-        s = '<table class="oh">\n'
-        s += '<thead>'
-        for key in self.fields:
-            s += th(key)
-        s += '</thead>'
-        s += '<tr>\n'
-        for value in self.fields.values():
-            s += '<td>\n'
-            if value is not None:
-                s += str(value)
-            s += '</td>\n'
-        s += '</tr>\n'
-        s += '\n</table>'
-        return s
+        return Element(
+            'table',
+            *[
+                Element(
+                    'thead',
+                    *[th0(key) for key in self.fields]
+                ),
+                Element(
+                    'tr',
+                    *[Element('td', value) for value in self.fields.values()]
+                )
+            ],
+            clazz="oh"
+        )
 
     def vertical_html(self):
-        return '<table class="ov">\n' \
-               + '\n'.join([self.vertical_html_tr(key, value)
-                            for key, value in self.fields.items()]) + '</table>\n'
+        return Element('table', *[self.vertical_html_tr(key, value) for key, value in self.fields.items()], clazz="ov")
 
     @staticmethod
     def vertical_html_tr(key, value):
-        return Element('tr', th0(key, 'ov_th'), td_value0(value, "ov_v")).__str__()
+        return Element('tr', th0(key, 'ov_th'), td_value0(value, "ov_v"))
 
 
 def td_value_with_attr(attr, string_value, value):
     if value is None:
-        return Element('td')
+        return Element('td').__str__()
     elif attr.is_colored(string_value):
         bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
         return td_value_with_color(value, bg) + '\n'
