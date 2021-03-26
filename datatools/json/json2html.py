@@ -210,7 +210,7 @@ class MatrixNode:
             s += '<tr>\n'
             s += th(str(y + 1)) + '\n'
             for cell in sub_j:
-                s += td_value(cell, "a_v")
+                s += td_value(cell, "a_v")  # all cells are primitives
             s += '</tr>\n'
         s += '<tbody>'
 
@@ -375,17 +375,17 @@ class ObjectNode:
 
     @staticmethod
     def vertical_html_tr(key, value):
-        return '<tr>\n' + th(key, 'ov_th') + '\n' + td_value(value, "ov_v") + '\n' + '</tr>\n'
+        return Element('tr', th0(key, 'ov_th'), td_value0(value, "ov_v")).__str__()
 
 
 def td_value_with_attr(attr, string_value, value):
     if value is None:
-        return '<td></td>\n'
+        return Element('td')
     elif attr.is_colored(string_value):
         bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
         return td_value_with_color(value, bg) + '\n'
     else:
-        return f'<td><span>\n{string_value}</span></td>\n'
+        return Element('td', span0(string_value),).__str__()
 
 
 def td_value(value, clazz):
@@ -396,6 +396,16 @@ def td_value(value, clazz):
         value_str(value, leaf),
         clazz=(clazz, data_type)
     ).__str__()
+
+
+def td_value0(value, clazz):
+    leaf = is_primitive(value)
+    data_type = f'{type(value).__name__}' if leaf else ''
+    return Element(
+        'td',
+        value_str(value, leaf),
+        clazz=(clazz, data_type)
+    )
 
 
 def td_value_with_color(value, bg):
@@ -418,6 +428,17 @@ def th(s, clazz=None, colspan=None, rowspan=None, **attrs):
         rowspan=rowspan,
         **attrs
     ).__str__()
+
+
+def th0(s, clazz=None, colspan=None, rowspan=None, **attrs):
+    return Element(
+        'th',
+        Element('span', s),
+        clazz=clazz,
+        colspan=colspan,
+        rowspan=rowspan,
+        **attrs
+    )
 
 
 def value_str(value: Optional[Any], leaf: bool):
