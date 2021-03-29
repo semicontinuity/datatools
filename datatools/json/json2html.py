@@ -226,11 +226,11 @@ class ArrayNode:
         self.records = [node(subj, self, in_array_of_nestable_obj) for subj in j]
 
     def __str__(self):
-        return self.html_numbered_table()
+        return self.html_numbered_table().__str__()
 
     def html_numbered_table(self):
         if all((is_primitive(record) for record in self.records)):
-            return self.html_spans_table('regular' if len(self.records) < 2 else 'collapsed2')
+            return self.html_spans_table('regular' if len(self.records) < 150 else 'collapsed2')
         elif len(self.records) > 7 or len(str(self.records)) >= 250:
             return self.html_numbered_table_collapsed()
         else:
@@ -244,7 +244,7 @@ class ArrayNode:
                 array_entry(pos + 1, self.records[pos]) for pos in range(len(self.records))
             ],
             clazz=("a", clazz), onclick="toggle2(this, 'DIV')"
-        ).__str__()
+        )
 
     def html_numbered_table_plain(self):
         return Element(
@@ -257,28 +257,30 @@ class ArrayNode:
                 for pos in range(len(self.records))
             ],
             clazz="a"
-        ).__str__()
+        )
 
     def html_numbered_table_collapsed(self):
-        s = '<table class="a">'
-        s += '<thead>'
-        s += '<tr>'
-        s += th('#', onclick="toggle(this)")
-        s += th(f'{len(self.records)} items')
-        s += '</tr>'
-        s += '</thead>'
-
-        s += '<tbody class="collapsed">'
-        for pos in range(len(self.records)):
-            value = self.records[pos]
-            s += '<tr>\n'
-            s += th(str(pos + 1)) + '\n'
-            s += td_value(value, "a_v")
-            s += '</tr>\n'
-        s += '<tbody>'
-
-        s += '</table>'
-        return s
+        return Element(
+            'table',
+            Element(
+                'thead',
+                th0('#', onclick="toggle(this)"),
+                th0(f'{len(self.records)} items')
+            ),
+            Element(
+                'tbody',
+                *[
+                    Element(
+                        'tr',
+                        th0(str(pos + 1)),
+                        td_value0(self.records[pos], "a_v")
+                    )
+                    for pos in range(len(self.records))
+                ],
+                clazz="collapsed"
+            ),
+            clazz="a"
+        )
 
 
 class ArrayOfNestableObjectsNode:
