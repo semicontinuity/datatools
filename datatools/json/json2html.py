@@ -318,25 +318,21 @@ class ArrayOfNestableObjectsNode:
             ]
         ).__str__()
 
-        if not verbose and self.parent and (len(self.record_nodes) > 7 or len(str(self.record_nodes)) > 1024):
-            s += '<tbody class="collapsed">'
-        else:
-            s += '<tbody>'
-
-        for r in self.record_nodes:
-            s += '<tr>\n'
-
-            # i += 1
-            # s += th(str(i)) + '\n'
-            s += th(r['#']) + '\n'
-
-            for leaf_path in self.paths_of_leaves:
-                value = child_by_path(r, leaf_path)
-                attr = self.column_id_to_attrs[leaf_path]
-                string_value = str(value) if value is not None else None
-                s += td_value_with_attr(attr, string_value, value)
-            s += '</tr>\n'
-        s += '</tbody>'
+        s += Element(
+            'tbody',
+            *[
+                Element(
+                    'tr',
+                    th0(r['#']),
+                    *[
+                        td_value_with_attr(self.column_id_to_attrs[leaf_path], child_by_path(r, leaf_path))
+                        for leaf_path in self.paths_of_leaves
+                    ]
+                )
+                for r in self.record_nodes
+            ],
+            clazz="collapsed" if not verbose and self.parent and (len(self.record_nodes) > 7 or len(str(self.record_nodes)) > 1024) else None
+        ).__str__()
 
         s += '\n</table>'
         return s
@@ -375,14 +371,15 @@ class ObjectNode:
         return Element('tr', th0(key, 'ov_th'), td_value0(value, "ov_v"))
 
 
-def td_value_with_attr(attr, string_value, value):
+def td_value_with_attr(attr, value):
+    string_value = str(value) if value is not None else None
     if value is None:
-        return Element('td').__str__()
+        return Element('td')
     elif attr.is_colored(string_value):
         bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
-        return td_value_with_color(value, bg) + '\n'
+        return td_value_with_color(value, bg)
     else:
-        return Element('td', span0(string_value),).__str__()
+        return Element('td', span0(string_value))
 
 
 def td_value(value, clazz):
@@ -413,7 +410,7 @@ def td_value_with_color(value, bg):
         value_e(value, leaf),
         clazz=data_type,
         style=f"background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};" if bg is not None else None
-    ).__str__()
+    )
 
 
 def th(s, clazz=None, colspan=None, rowspan=None, **attrs):
