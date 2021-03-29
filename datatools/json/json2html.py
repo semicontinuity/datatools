@@ -190,34 +190,37 @@ class MatrixNode:
         self.width = width
 
     def __str__(self):
-        clazz = "collapsed2"
-        s = f'<div class="a {clazz}" onclick=\'toggle2(this, "DIV")\'>'
-        s += f'<span class="header">Matrix {len(self.data)} x {self.width}</span>'
-
-        s += '<table class="m">'
-        s += '<thead>'
-        s += '<tr>'
-        # s += th('#', attrs=' onclick="toggle(this)"')
-        s += th('#')
-        for i in range(self.width):
-            s += th(str(i + 1))
-        s += '</tr>'
-        s += '</thead>'
-
-        # s += '<tbody class="collapsed">'
-        s += '<tbody>'
-        for y, sub_j in enumerate(self.data):
-            s += '<tr>\n'
-            s += th(str(y + 1)) + '\n'
-            for cell in sub_j:
-                s += td_value(cell, "a_v")  # all cells are primitives
-            s += '</tr>\n'
-        s += '<tbody>'
-
-        s += '</table>'
-
-        s += '</div>'
-        return s
+        return Element(
+            'div',
+            Element('span', f'Matrix {len(self.data)} x {self.width}', clazz='header'),
+            Element(
+                'table',
+                Element(
+                    'thead',
+                    Element(
+                        'tr',
+                        th0('#'),
+                        *[th0(str(i + 1)) for i in range(self.width)]
+                    )
+                ),
+                Element(
+                    'tbody',
+                    *[
+                        Element(
+                            'tr',
+                            th0(str(y + 1)),
+                            *[
+                                td_value(cell, "a_v")  # all cells are primitives
+                                for cell in sub_j
+                            ]
+                        )
+                        for y, sub_j in enumerate(self.data)
+                    ]
+                ),
+                clazz='m'
+            ),
+            clazz=('a', "collapsed2"), onclick='toggle2(this, "DIV")'
+        ).__str__()
 
 
 class ArrayNode:
