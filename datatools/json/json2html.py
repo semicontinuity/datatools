@@ -253,9 +253,10 @@ class ArrayNode:
         return Element(
             'table',
             *[
-                Element('tr',
-                        Element('th', pos + 1, clazz='a'),
-                        td_value0(self.records[pos], "a_v")
+                Element(
+                    'tr',
+                    Element('th', pos + 1, clazz='a'),
+                    td_value0(self.records[pos], "a_v")
                 )
                 for pos in range(len(self.records))
             ],
@@ -296,7 +297,7 @@ class ArrayOfNestableObjectsNode:
         self.descriptor = descriptor
         self.paths_of_leaves = compute_paths_of_leaves(descriptor)
         debug('compute_column_attrs')
-        self.column_id_to_attrs = {}
+        self.column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
 
         for column_id in self.paths_of_leaves:
             self.column_id_to_attrs[column_id] = compute_column_attrs(j, column_id, child_by_path)
@@ -516,7 +517,7 @@ def node(j, parent, in_array_of_nestable_obj: bool):
         return j
 
 
-def child_by_path(value, path):
+def child_by_path(value: Any, path: Tuple[str]) -> Any:
     for name in path:
         if value is None:
             return None

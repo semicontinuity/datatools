@@ -75,7 +75,7 @@ def compute_column_coloring(column_attr, row_count):
         return COLORING_NONE
 
 
-def compute_column_attrs(j, column_id, cell_value_function: Callable[[Any, Hashable], Any]):
+def compute_column_attrs(j, column_id: Hashable, cell_value_function: Callable[[Any, Any], Any]) -> ColumnAttrs:
     attr = ColumnAttrs(set(), defaultdict(int), {})
     for record in j:
         cell = cell_value_function(record, column_id)
@@ -97,7 +97,7 @@ def compute_column_attrs(j, column_id, cell_value_function: Callable[[Any, Hasha
     return attr
 
 
-def compute_cross_column_attrs(j, column_attrs_by_name, cell_value_function: Callable[[Any, Hashable], Any]):
+def compute_cross_column_attrs(j, column_attrs_by_name, cell_value_function: Callable[[Any, Any], Any]):
     indices2categories = defaultdict(list)
 
     for column_id, attr in column_attrs_by_name.items():
