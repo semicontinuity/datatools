@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Utility to convert directed graphs, specified in JSON, to dot format.
 

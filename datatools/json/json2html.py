@@ -303,21 +303,20 @@ class ArrayOfNestableObjectsNode:
 
         depth = depth_of(self.descriptor) - 1
 
-        s += '<thead>'
-        for level in range(depth):
-            s += '<tr>'
-
-            if level == 0:
-                s += th('#', rowspan=depth, onclick="toggle(this)")
-
-            items = items_at_level(self.descriptor, level + 1)
-            for name, value in items:
-                width = number_of_columns(value)
-                rowspan = 1 if value is not None else depth - level
-                # s += '<th rowspan="' + str(rowspan) + '" colspan="' + str(width) + '">' + name + '</th>'
-                s += th(name, rowspan=rowspan, colspan=width)
-            s += '</tr>'
-        s += '</thead>'
+        s += Element(
+            'thead',
+            *[
+                Element(
+                    'tr',
+                    th0('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
+                    *[
+                        th0(name, rowspan=1 if value is not None else depth - level, colspan=number_of_columns(value))
+                        for name, value in items_at_level(self.descriptor, level + 1)
+                    ]
+                )
+                for level in range(depth)
+            ]
+        ).__str__()
 
         if not verbose and self.parent and (len(self.record_nodes) > 7 or len(str(self.record_nodes)) > 1024):
             s += '<tbody class="collapsed">'
