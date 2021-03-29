@@ -299,43 +299,42 @@ class ArrayOfNestableObjectsNode:
         debug('done')
 
     def __str__(self):
-        s = '<table class="aohwno">'
-
         depth = depth_of(self.descriptor) - 1
-
-        s += Element(
-            'thead',
-            *[
-                Element(
-                    'tr',
-                    th0('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
-                    *[
-                        th0(name, rowspan=1 if value is not None else depth - level, colspan=number_of_columns(value))
-                        for name, value in items_at_level(self.descriptor, level + 1)
-                    ]
-                )
-                for level in range(depth)
-            ]
+        return Element(
+            'table',
+            Element(
+                'thead',
+                *[
+                    Element(
+                        'tr',
+                        th0('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
+                        *[
+                            th0(name, rowspan=1 if value is not None else depth - level,
+                                colspan=number_of_columns(value))
+                            for name, value in items_at_level(self.descriptor, level + 1)
+                        ]
+                    )
+                    for level in range(depth)
+                ]
+            ),
+            Element(
+                'tbody',
+                *[
+                    Element(
+                        'tr',
+                        th0(r['#']),
+                        *[
+                            td_value_with_attr(self.column_id_to_attrs[leaf_path], child_by_path(r, leaf_path))
+                            for leaf_path in self.paths_of_leaves
+                        ]
+                    )
+                    for r in self.record_nodes
+                ],
+                clazz="collapsed" if not verbose and self.parent and (
+                        len(self.record_nodes) > 7 or len(str(self.record_nodes)) > 1024) else None
+            ),
+            clazz="aohwno"
         ).__str__()
-
-        s += Element(
-            'tbody',
-            *[
-                Element(
-                    'tr',
-                    th0(r['#']),
-                    *[
-                        td_value_with_attr(self.column_id_to_attrs[leaf_path], child_by_path(r, leaf_path))
-                        for leaf_path in self.paths_of_leaves
-                    ]
-                )
-                for r in self.record_nodes
-            ],
-            clazz="collapsed" if not verbose and self.parent and (len(self.record_nodes) > 7 or len(str(self.record_nodes)) > 1024) else None
-        ).__str__()
-
-        s += '\n</table>'
-        return s
 
 
 class ObjectNode:
