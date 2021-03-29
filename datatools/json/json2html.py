@@ -8,11 +8,10 @@ import random
 import sys
 from json import JSONDecodeError
 from string import Template, ascii_lowercase, digits
-from typing import Iterable, Union
 
 from datatools.json.coloring import *
 from datatools.json.structure_analyzer import *
-from datatools.json.util import is_primitive
+from datatools.util.html_util import *
 
 DEBUG = os.getenv('DEBUG')
 
@@ -190,27 +189,21 @@ class MatrixNode:
         self.width = width
 
     def __str__(self):
-        return Element(
-            'div',
-            Element('span', f'Matrix {len(self.data)} x {self.width}', clazz='header'),
-            Element(
-                'table',
-                Element(
-                    'thead',
-                    Element(
-                        'tr',
-                        th0('#'),
-                        *[th0(str(i + 1)) for i in range(self.width)]
+        return div(
+            span(f'Matrix {len(self.data)} x {self.width}', clazz='header'),
+            table(
+                thead(
+                    tr(
+                        custom_th('#'),
+                        *[custom_th(str(i + 1)) for i in range(self.width)]
                     )
                 ),
-                Element(
-                    'tbody',
+                tbody(
                     *[
-                        Element(
-                            'tr',
-                            th0(str(y + 1)),
+                        tr(
+                            custom_th(str(y + 1)),
                             *[
-                                td_value(cell, "a_v")  # all cells are primitives
+                                td_value_with_color(cell, "a_v")  # all cells are primitives
                                 for cell in sub_j
                             ]
                         )
@@ -240,45 +233,40 @@ class ArrayNode:
             return self.html_numbered_table_plain()
 
     def html_spans_table(self, clazz):
-        return Element(
-            'div',
-            span0(f'{len(self.records)} items', clazz="header", onclick='toggle2(this, "DIV")'),
+        return div(
+            custom_span(f'{len(self.records)} items', clazz="header", onclick='toggle2(this, "DIV")'),
             *[
-                array_entry(pos + 1, self.records[pos]) for pos in range(len(self.records))
+                self.array_entry(pos + 1, self.records[pos]) for pos in range(len(self.records))
             ],
             clazz=("a", clazz), onclick="toggle2(this, 'DIV')"
         )
 
+    @staticmethod
+    def array_entry(i: int, contents: Optional[Any]):
+        return custom_span(
+            custom_span(i, clazz='index'),
+            custom_span(contents, clazz='none' if contents is None else None),
+            clazz='ae'
+        )
+
     def html_numbered_table_plain(self):
-        return Element(
-            'table',
+        return table(
             *[
-                Element(
-                    'tr',
-                    Element('th', pos + 1, clazz='a'),
-                    td_value0(self.records[pos], "a_v")
-                )
+                tr(Element('th', pos + 1, clazz='a'), td_value_with_color(self.records[pos], "a_v"))
                 for pos in range(len(self.records))
             ],
             clazz="a"
         )
 
     def html_numbered_table_collapsed(self):
-        return Element(
-            'table',
-            Element(
-                'thead',
-                th0('#', onclick="toggle(this)"),
-                th0(f'{len(self.records)} items')
+        return table(
+            thead(
+                custom_th('#', onclick="toggle(this)"),
+                custom_th(f'{len(self.records)} items')
             ),
-            Element(
-                'tbody',
+            tbody(
                 *[
-                    Element(
-                        'tr',
-                        th0(str(pos + 1)),
-                        td_value0(self.records[pos], "a_v")
-                    )
+                    tr(custom_th(str(pos + 1)), td_value_with_color(self.records[pos], "a_v"))
                     for pos in range(len(self.records))
                 ],
                 clazz="collapsed"
@@ -309,31 +297,28 @@ class ArrayOfNestableObjectsNode:
 
     def __str__(self):
         depth = depth_of(self.descriptor) - 1
-        return Element(
-            'table',
-            Element(
-                'thead',
+        return table(
+            thead(
                 *[
-                    Element(
-                        'tr',
-                        th0('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
+                    tr(
+                        custom_th('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
                         *[
-                            th0(name, rowspan=1 if value is not None else depth - level,
-                                colspan=number_of_columns(value))
+                            custom_th(
+                                name,
+                                rowspan=1 if value is not None else depth - level, colspan=number_of_columns(value)
+                            )
                             for name, value in items_at_level(self.descriptor, level + 1)
                         ]
                     )
                     for level in range(depth)
                 ]
             ),
-            Element(
-                'tbody',
+            tbody(
                 *[
-                    Element(
-                        'tr',
-                        th0(r['#']),
+                    tr(
+                        custom_th(r['#']),
                         *[
-                            td_value_with_attr(self.column_id_to_attrs[leaf_path], child_by_path(r, leaf_path))
+                            td_value_with_attrs(self.column_id_to_attrs[leaf_path], child_by_path(r, leaf_path))
                             for leaf_path in self.paths_of_leaves
                         ]
                     )
@@ -356,126 +341,63 @@ class ObjectNode:
         return self.vertical_html().__str__() if self.vertical else self.horizontal_html().__str__()
 
     def horizontal_html(self):
-        return Element(
-            'table',
+        return table(
             *[
-                Element(
-                    'thead',
-                    *[th0(key) for key in self.fields]
+                thead(
+                    *[custom_th(key) for key in self.fields]
                 ),
-                Element(
-                    'tr',
-                    *[Element('td', value) for value in self.fields.values()]
+                tr(
+                    *[td(value) for value in self.fields.values()]
                 )
             ],
             clazz="oh"
         )
 
     def vertical_html(self):
-        return Element('table', *[self.vertical_html_tr(key, value) for key, value in self.fields.items()], clazz="ov")
+        return table(*[self.vertical_html_tr(key, value) for key, value in self.fields.items()], clazz="ov")
 
     @staticmethod
     def vertical_html_tr(key, value):
-        return Element('tr', th0(key, 'ov_th'), td_value0(value, "ov_v"))
+        return tr(custom_th(key, clazz='ov_th'), td_value_with_color(value, "ov_v"))
 
 
-def td_value_with_attr(attr, value):
-    string_value = str(value) if value is not None else None
+def td_value_with_attrs(attrs, value):
     if value is None:
-        return Element('td')
-    elif attr.is_colored(string_value):
-        bg = hash_to_rgb(attr.value_hashes.get(string_value) or hash_code(string_value))
-        return td_value_with_color(value, bg)
+        return td()
+
+    string_value = str(value)
+    if attrs.is_colored(string_value):
+        bg = hash_to_rgb(attrs.value_hashes.get(string_value) or hash_code(string_value))
+        return td_value_with_color(value, bg=bg)
     else:
-        return Element('td', span0(string_value))
+        return td_value_with_color(value)
 
 
-def td_value(value, clazz):
-    leaf = is_primitive(value)
-    data_type = f'{type(value).__name__}' if leaf else ''
-    return Element(
-        'td',
-        value_str(value, leaf),
-        clazz=(clazz, data_type)
-    ).__str__()
-
-
-def td_value0(value, clazz):
-    leaf = is_primitive(value)
-    data_type = f'{type(value).__name__}' if leaf else ''
-    return Element(
-        'td',
-        value_str(value, leaf),
-        clazz=(clazz, data_type)
-    )
-
-
-def td_value_with_color(value, bg):
+def td_value_with_color(value, clazz=None, bg=None):
     leaf = is_primitive(value)
     data_type = f'{type(value).__name__}' if leaf else None
-    return Element(
-        'td',
+    return td(
         value_e(value, leaf),
-        clazz=data_type,
+        clazz=(clazz, data_type),
         style=f"background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};" if bg is not None else None
     )
 
 
-def th(s, clazz=None, colspan=None, rowspan=None, **attrs):
-    return Element(
-        'th',
-        Element('span', s),
-        clazz=clazz,
-        colspan=colspan,
-        rowspan=rowspan,
-        **attrs
-    ).__str__()
-
-
-def th0(s, clazz=None, colspan=None, rowspan=None, **attrs):
-    return Element(
-        'th',
-        Element('span', s),
-        clazz=clazz,
-        colspan=colspan,
-        rowspan=rowspan,
-        **attrs
-    )
-
-
-def value_str(value: Optional[Any], leaf: bool):
-    return span(value) if leaf else text(value)
+def custom_th(*contents, **attrs):
+    return th(span(*contents), **attrs)
 
 
 def value_e(value: Optional[Any], leaf: bool):
-    return span0(value) if leaf else text(value)
+    return custom_span(value) if leaf else ("" if value is None else str(value))
 
 
-def array_entry(i: int, contents: Optional[Any]):
-    return span0(
-        index(i),
-        span0(contents, clazz='none' if contents is None else None), clazz='ae').__str__()
-
-
-def index(contents: Optional[Any]):
-    return span0(contents, clazz='index')
-
-
-def span(*contents, clazz=None):
-    return str(Element('span', *contents, clazz=clazz))
-
-
-def span0(*contents, **attrs):
+def custom_span(*contents, **attrs):
     if len(contents) == 1 and type(contents[0]) is str and len(contents[0]) > 1024:
         text_id = random_id(8)
         long_texts[text_id] = contents[0]
-        return Element('span', '...', data_text=str(contents[0]), onclick=f'openOverlay("{text_id}")', clazz='button')
+        return span('...', data_text=str(contents[0]), onclick=f'openOverlay("{text_id}")', clazz='button')
     else:
-        return Element('span', *contents, **attrs)
-
-
-def text(contents: Optional[Any]):
-    return "" if contents is None else str(contents)
+        return span(*contents, **attrs)
 
 
 def node(j, parent, in_array_of_nestable_obj: bool):
@@ -529,36 +451,6 @@ def child_by_path(value: Any, path: Tuple[str]) -> Any:
             print(f"path: {path}, value: ${type(value)}", file=sys.stderr)
             raise ValueError
     return value
-
-
-class Element:
-    tag: str
-    contents: Iterable[Any]
-    attrs: Dict[str, Union[str, Iterable[str]]]
-
-    def __init__(self, tag, *contents, **attrs):
-        self.tag = tag
-        self.contents = contents
-        self.attrs = attrs
-
-    def __str__(self):
-        separator = '\n' if self.contents else ''
-        attrs_str = self.attrs_str()
-        open_tag = f'<{self.tag}{" " + attrs_str if attrs_str else ""}>'
-        close_tag = f'</{self.tag}>'
-        return open_tag + separator.join(str(element) for element in self.contents if element is not None) + close_tag
-
-    # value in '', because inside can be yaml/json with "
-    def attrs_str(self):
-        return ' '.join((
-            f"{k if k != 'clazz' else 'class'}='{Element.attr_value_str(v)}'"
-            for k, v in self.attrs.items()
-            if v is not None
-        ))
-
-    @staticmethod
-    def attr_value_str(v: Union[str, Iterable[str]]):
-        return str(v) if is_primitive(v) else ' '.join((item for item in v if item is not None))
 
 
 def main():
