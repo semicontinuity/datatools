@@ -65,7 +65,7 @@ thead {border: solid 1px darkgray;}
 table {border-collapse: collapse; padding: 0;}
 //table.ov { width:100%; }
 //.a { width: 100%;}
-.ae { display: inline-block;}
+.ae { display: inline-block; white-space: nowrap;}
 .index {border: solid 1px darkcyan; color: darkcyan;}
 div.regular>span.header    {display: none;}
 div.collapsed2>span.header {display: block; font-weight: bold; background: lightgray; border: solid 1px darkgray;}
@@ -230,20 +230,21 @@ class ArrayNode:
 
     def html_numbered_table(self):
         if all((is_primitive(record) for record in self.records)):
-            return self.html_spans_table('regular' if len(self.records) < 150 else 'collapsed2')
+            return self.html_spans_table('regular' if len(self.records) < 2 else 'collapsed2')
         elif len(self.records) > 7 or len(str(self.records)) >= 250:
             return self.html_numbered_table_collapsed()
         else:
             return self.html_numbered_table_plain()
 
     def html_spans_table(self, clazz):
-        s = f'<div class="a {clazz}" onclick=\'toggle2(this, "DIV")\'>'
-        s += f'<span class="header">{len(self.records)} items</span>'
-        for pos in range(len(self.records)):
-            value = self.records[pos]
-            s += array_entry(pos + 1, value)
-        s += '</div>'
-        return s
+        return Element(
+            'div',
+            span0(f'{len(self.records)} items', clazz="header", onclick='toggle2(this, "DIV")'),
+            *[
+                array_entry(pos + 1, self.records[pos]) for pos in range(len(self.records))
+            ],
+            clazz=("a", clazz), onclick="toggle2(this, 'DIV')"
+        ).__str__()
 
     def html_numbered_table_plain(self):
         s = '<table class="a">'
