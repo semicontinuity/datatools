@@ -247,15 +247,17 @@ class ArrayNode:
         ).__str__()
 
     def html_numbered_table_plain(self):
-        s = '<table class="a">'
-        for pos in range(len(self.records)):
-            value = self.records[pos]
-            s += '<tr>\n'
-            s += th(str(pos + 1), clazz='a') + '\n'
-            s += td_value(value, "a_v")
-            s += '</tr>\n'
-        s += '</table>'
-        return s
+        return Element(
+            'table',
+            *[
+                Element('tr',
+                        Element('th', pos + 1, clazz='a'),
+                        td_value0(self.records[pos], "a_v")
+                )
+                for pos in range(len(self.records))
+            ],
+            clazz="a"
+        ).__str__()
 
     def html_numbered_table_collapsed(self):
         s = '<table class="a">'
