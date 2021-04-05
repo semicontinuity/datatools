@@ -65,6 +65,19 @@ def screen_size_or_default(*args):
     return size
 
 
+def cursor_position():
+    wr(b"\x1b[6n")
+    import select
+    res = select.select([FD_IN], [], [], 0.05)[0]
+    if not res:
+        return None
+    s = os.read(FD_IN, 32)
+    i1 = s.rfind(b'[')
+    i2 = s.index(b';')
+    i3 = s.index(b'R')
+    return int(s[i1 + 1:i2]) - 1, int(s[i2 + 1:i3]) - 1
+
+
 def init_tty(*args):
     import tty, termios
     global ttyattr
