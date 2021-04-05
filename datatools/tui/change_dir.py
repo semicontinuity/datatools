@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from picotui.widgets import WListBox, Dialog, ACTION_CANCEL, ACTION_PREV, ACTION_NEXT, ACTION_OK
 
@@ -28,27 +28,77 @@ class FolderLists:
         self.root = root
         self.root_history = root_history
         self.lists = self.initial_lists(folder)
+        self.expand_lists()
 
-    def initial_lists(self, folder):
+    def initial_lists(self, folder) -> List[WListBox]:
         path = folder
         lists = []
         first = True
+        name = self.recall_chosen_name(folder)
         while True:
+            # print(path, name)
             a_list = self.make_list(path, 0)
             if a_list is not None:  # the deepest folder will not necessarily contain sub-folders
+                # print('got list')
+                # if a_list.choice is None:
+                #     a_list.choice = 0
+                # print('choice', a_list.choice)
+                # a_list.choice = self.index_of(name, a_list.items) or 0
+                # print('choice', a_list.choice, 'in', a_list.items)
+
+                a_list.folder = path
+
                 lists.append(a_list)
                 if first:
                     a_list.focus = True
                     first = False
+            # else:
+            #     print('list was none')
+
+            offset = path.rfind('/')
+            name = path[offset + 1:]
+            if a_list is not None:
+                a_list.name = name
+
             if path == self.root:
                 break
-            path = path[:path.rfind('/')]
+            path = path[:offset]
 
         lists = list(reversed(lists))
+
         for index, l in enumerate(lists):
+            # print(l.name, l.folder, l.items)
+
             l.index = index
+            if index == len(lists) - 1:
+                chosen_name = self.recall_chosen_name(l.folder)
+                # print(chosen_name)
+                l.cur_line = l.choice = self.index_of(chosen_name, l.items) or 0
+            else:
+                index__name = lists[index + 1].name
+                # print(index__name)
+                l.cur_line = l.choice = self.index_of(index__name, l.items) or 0
+            # print(l.choice)
+            # print()
 
         return lists
+
+    def expand_lists(self):
+        index = len(self.lists) - 1
+        while True:
+            path = self.node_path(index)
+            # print('check', index, path)
+            name = self.root_history.get(path)
+            if name is None:
+                # print('not in history')
+                break
+            # print('in history')
+            index += 1
+            a_list = self.make_list(path, index)
+            if a_list is None or a_list.choice is None:
+                # print('not adding')
+                break
+            self.lists.append(a_list)
 
     def is_empty(self):
         return len(self.lists) == 0
@@ -56,14 +106,15 @@ class FolderLists:
     def lists_in_path(self, index):
         return self.lists[: index + 1]
 
-    def node_path(self, index):
-        return self.root if index == 0 else self.child_path(index - 1)
+    def parent_path(self, index):
+        return self.root if index == 0 else self.node_path(index - 1)
 
-    def child_path(self, index):
+    def node_path(self, index):
         return self.root + '/' + '/'.join([l.content[l.choice] for l in self.lists_in_path(index)])
 
     def activate_sibling(self, index):
         self.lists = self.lists[: index + 1]
+        self.expand_lists()
 
     def try_go_in(self, index):
         if index != len(self.lists) - 1:
@@ -71,9 +122,11 @@ class FolderLists:
 
         self.memorize_choice_in_list(index)
 
-        new_list = self.make_list(self.child_path(index), index + 1)
+        new_list = self.make_list(self.node_path(index), index + 1)
         if new_list is None:
             return
+        if new_list.choice is None:
+            new_list.choice = 0
 
         self.lists.append(new_list)
         return True
@@ -81,7 +134,7 @@ class FolderLists:
     def memorize_choice_in_list(self, index):
         if index < 0:
             return
-        node_path = self.node_path(index)
+        node_path = self.parent_path(index)
         folder_name = self.lists[index].content[self.lists[index].choice]
         self.memorize(node_path, folder_name)
 
@@ -93,18 +146,23 @@ class FolderLists:
         box = WListBox(max(len(s) for s in contents), HEIGHT, contents)
         box.index = index
         box.folder = folder
-        choice = self.recall(folder, contents)
-        box.choice = 0 if choice is None else choice
-        box.cur_line = box.choice
+        choice = self.recall_choice(folder, contents)
+        box.cur_line = box.choice = 0 if choice is None else choice
         return box
 
-    def recall(self, folder, contents):
+    def recall_choice(self, folder, contents):
         if folder in self.root_history:
             last_name = self.root_history[folder]
             if last_name is not None:
-                for i, name in enumerate(contents):
-                    if last_name == name:
-                        return i
+                return self.index_of(last_name, contents)
+
+    def index_of(self, chosen_name, contents):
+        for i, name in enumerate(contents):
+            if chosen_name == name:
+                return i
+
+    def recall_chosen_name(self, folder):
+        return self.root_history.get(folder)
 
     def memorize(self, folder, name):
         self.root_history[folder] = name
@@ -184,7 +242,7 @@ class ChangeFoldersDialog(Dialog):
             w.redraw()
 
     def path(self):
-        return self.folder_lists.child_path(self.focus_idx)
+        return self.folder_lists.node_path(self.focus_idx)
 
 
 def run(folder_lists):
@@ -250,6 +308,9 @@ if __name__ == "__main__":
     root_history = history[root] if root in history else {}
 
     folder_lists = FolderLists(folder, root, root_history)
+    # print(folder_lists.lists)
+    # sys.exit(2)
+
     if folder_lists.is_empty():
         sys.exit(2)
 
