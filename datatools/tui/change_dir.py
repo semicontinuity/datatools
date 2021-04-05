@@ -1,3 +1,5 @@
+from typing import Optional
+
 from picotui.widgets import WListBox, Dialog, ACTION_CANCEL, ACTION_PREV, ACTION_NEXT, ACTION_OK
 
 from datatools.tui.picotui_patch import patch_picotui
@@ -22,11 +24,31 @@ def debug_print(*s):
 
 
 class FolderLists:
-    def __init__(self, root, root_history):
+    def __init__(self, folder, root, root_history):
         self.root = root
         self.root_history = root_history
-        root_list = self.make_list(self.root, 0)
-        self.lists = [root_list] if root_list is not None else []
+        self.lists = self.initial_lists(folder)
+
+    def initial_lists(self, folder):
+        path = folder
+        lists = []
+        first = True
+        while True:
+            a_list = self.make_list(path, 0)
+            if a_list is not None:  # the deepest folder will not necessarily contain sub-folders
+                lists.append(a_list)
+                if first:
+                    a_list.focus = True
+                    first = False
+            if path == self.root:
+                break
+            path = path[:path.rfind('/')]
+
+        lists = list(reversed(lists))
+        for index, l in enumerate(lists):
+            l.index = index
+
+        return lists
 
     def is_empty(self):
         return len(self.lists) == 0
@@ -47,9 +69,7 @@ class FolderLists:
         if index != len(self.lists) - 1:
             return
 
-        node_path = self.node_path(index)
-        folder_name = self.lists[index].content[self.lists[index].choice]
-        self.memorize(node_path, folder_name)
+        self.memorize_choice_in_list(index)
 
         new_list = self.make_list(self.child_path(index), index + 1)
         if new_list is None:
@@ -58,7 +78,14 @@ class FolderLists:
         self.lists.append(new_list)
         return True
 
-    def make_list(self, folder, index: int):
+    def memorize_choice_in_list(self, index):
+        if index < 0:
+            return
+        node_path = self.node_path(index)
+        folder_name = self.lists[index].content[self.lists[index].choice]
+        self.memorize(node_path, folder_name)
+
+    def make_list(self, folder, index: int) -> Optional[WListBox]:
         contents = [name for name in sorted(os.listdir(folder)) if
                     os.path.isdir(folder + '/' + name) and not name.startswith('.')]
         if len(contents) == 0:
@@ -66,7 +93,6 @@ class FolderLists:
         box = WListBox(max(len(s) for s in contents), HEIGHT, contents)
         box.index = index
         box.folder = folder
-
         choice = self.recall(folder, contents)
         box.choice = 0 if choice is None else choice
         box.cur_line = box.choice
@@ -95,9 +121,12 @@ class ChangeFoldersDialog(Dialog):
     def replace_folders(self):
         self.childs = []
         child_x = 0
-        for child in self.folder_lists.lists:
+        for i, child in enumerate(self.folder_lists.lists):
             self.add(child_x, 0, child)
             child_x += child.width + 1
+            if child.focus:
+                self.focus_w = child
+                self.focus_idx = i
 
     def handle_mouse(self, x, y):
         pass
@@ -108,8 +137,8 @@ class ChangeFoldersDialog(Dialog):
         if key == KEY_ESC and self.finish_on_esc:
             return ACTION_CANCEL
         if key == KEY_RIGHT:
-            if self.focus_w.index == len(self.folder_lists.lists) - 1:
-                if self.folder_lists.try_go_in(self.focus_w.index):
+            if self.focus_idx == len(self.folder_lists.lists) - 1:
+                if self.folder_lists.try_go_in(self.focus_idx):
                     self.replace_folders()
                     self.redraw()
                     self.move_focus(1)
@@ -120,8 +149,7 @@ class ChangeFoldersDialog(Dialog):
                 self.move_focus(-1)
         elif self.focus_w:
             if key == KEY_ENTER:
-                # if self.focus_w.finish_dialog is not False:
-                #     return self.focus_w.finish_dialog
+                self.folder_lists.memorize_choice_in_list(self.focus_idx)
                 return ACTION_OK
 
             choice_before = self.focus_w.choice
@@ -129,7 +157,7 @@ class ChangeFoldersDialog(Dialog):
             choice_after = self.focus_w.choice
 
             if choice_before != choice_after:
-                self.folder_lists.activate_sibling(self.focus_w.index)
+                self.folder_lists.activate_sibling(self.focus_idx)
                 self.replace_folders()
                 self.redraw()
 
@@ -159,7 +187,7 @@ class ChangeFoldersDialog(Dialog):
         return self.folder_lists.child_path(self.focus_idx)
 
 
-def run(root, root_history):
+def run(folder_lists):
     v = None
     try:
         cursor_position_save()
@@ -168,10 +196,6 @@ def run(root, root_history):
 
         screen_width, screen_height = Screen.screen_size()
         cursor_y, cursor_x = cursor_position()
-
-        folder_lists = FolderLists(root, root_history)
-        if folder_lists.is_empty():
-            return None
 
         v = ChangeFoldersDialog(screen_width, HEIGHT, 0, cursor_y, folder_lists)
         if v.loop() == ACTION_OK:
@@ -208,23 +232,29 @@ def history_file():
     return os.getenv("HOME") + "/.fndr_history"
 
 
-def find_root(history):
-    path = os.getenv('PWD')
+def find_root_for(folder, roots):
+    path = folder
     while True:
-        if str(path) in history:
+        if path in roots:
             return str(path)
-        if str(path) == '/' or str(path) == '':
-            return None
+        if path == '/' or path == '' or path.startswith('.'):
+            return folder
         i = path.rfind('/')
         path = path[:i]
 
 
 if __name__ == "__main__":
     history = load_history()
-    root = find_root(history) or os.getenv('PWD')
-    # debug_print(root)
+    folder = os.getenv('PWD')
+    root = find_root_for(folder, history)
     root_history = history[root] if root in history else {}
-    r = run(root, root_history)
+
+    folder_lists = FolderLists(folder, root, root_history)
+    if folder_lists.is_empty():
+        sys.exit(2)
+
+    r = run(folder_lists)
+
     save_history(history)
     if r is None:
         sys.exit(1)
