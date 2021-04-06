@@ -14,7 +14,6 @@ import sys
 import json
 
 screen = Screen()
-HEIGHT = 25
 
 
 def debug_print(*s):
@@ -120,7 +119,7 @@ class FolderLists:
                     os.path.isdir(folder + '/' + name) and not name.startswith('.')]
         if len(contents) == 0:
             return None
-        box = WListBox(max(len(s) for s in contents), HEIGHT, contents)
+        box = WListBox(max(len(s) for s in contents), len(contents), contents)
         box.index = index
         box.folder = folder
         choice = self.recall_choice(folder, contents)
@@ -149,17 +148,33 @@ class FolderLists:
 
 
 class ChangeFoldersDialog(Dialog):
-    def __init__(self, width, height, x, y, folder_lists: FolderLists):
+    def __init__(self, screen_height, width, height, x, y, folder_lists: FolderLists):
         super().__init__(0, 0, width, height)
+        self.screen_height = screen_height
         self.x = x
         self.y = y
         self.folder_lists = folder_lists
         self.replace_folders()
 
+    def request_height(self, h):
+        self.h = min(h, self.screen_height)
+        overshoot = max(self.y + self.h - self.screen_height, 0)
+
+        if overshoot > 0:
+            Screen.goto(0, self.screen_height - 1)
+            for _ in range(overshoot):
+                Screen.wr('\r\n')
+            self.y -= overshoot
+            self.replace_folders()
+
     def replace_folders(self):
         self.childs = []
         child_x = 0
+        max_child_h = max(len(child.items) for child in self.folder_lists.lists)
+        self.request_height(max_child_h)
+
         for i, child in enumerate(self.folder_lists.lists):
+            child.h = child.height = min(child.height, self.h)
             self.add(child_x, 0, child)
             child_x += child.width + 1
             if child.focus:
@@ -237,14 +252,13 @@ class ChangeFoldersDialog(Dialog):
 def run(folder_lists):
     v = None
     try:
-        cursor_position_save()
         Screen.init_tty()
         Screen.cursor(False)
 
         screen_width, screen_height = Screen.screen_size()
         cursor_y, cursor_x = cursor_position()
 
-        v = ChangeFoldersDialog(screen_width, HEIGHT, 0, cursor_y, folder_lists)
+        v = ChangeFoldersDialog(screen_height, screen_width, 0, 0, cursor_y, folder_lists)
         if v.loop() == ACTION_OK:
             return v.path()
         else:
@@ -253,10 +267,10 @@ def run(folder_lists):
         Screen.attr_reset()
         if v is not None:
             v.clear()
+            Screen.goto(0, v.y)
 
         Screen.cursor(True)
         Screen.deinit_tty()
-        cursor_position_restore()
 
 
 def load_history():
