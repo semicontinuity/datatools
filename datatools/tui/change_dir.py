@@ -208,6 +208,9 @@ class ChangeFoldersDialog(Dialog):
             self.focus_idx = self.folder_lists.index_of_last()
             self.change_focus(self.folder_lists.lists[self.focus_idx])
         elif self.focus_w:
+            if key == KEY_SHIFT_TAB:
+                self.focus_idx = -1
+                return ACTION_OK
             if key == KEY_TAB:
                 self.focus_idx = self.folder_lists.index_of_last()
             if key == KEY_ENTER or key == KEY_TAB:
@@ -247,7 +250,7 @@ class ChangeFoldersDialog(Dialog):
             w.redraw()
 
     def path(self):
-        return self.folder_lists.node_path(self.focus_idx)
+        return self.folder_lists.root if self.focus_idx < 0 else self.folder_lists.node_path(self.focus_idx)
 
 
 def run(folder_lists):
