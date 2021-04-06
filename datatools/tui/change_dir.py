@@ -34,26 +34,15 @@ class FolderLists:
         path = folder
         lists = []
         first = True
-        name = self.recall_chosen_name(folder)
         while True:
-            # print(path, name)
             a_list = self.make_list(path, 0)
             if a_list is not None:  # the deepest folder will not necessarily contain sub-folders
-                # print('got list')
-                # if a_list.choice is None:
-                #     a_list.choice = 0
-                # print('choice', a_list.choice)
-                # a_list.choice = self.index_of(name, a_list.items) or 0
-                # print('choice', a_list.choice, 'in', a_list.items)
-
                 a_list.folder = path
 
                 lists.append(a_list)
                 if first:
                     a_list.focus = True
                     first = False
-            # else:
-            #     print('list was none')
 
             offset = path.rfind('/')
             name = path[offset + 1:]
@@ -67,19 +56,13 @@ class FolderLists:
         lists = list(reversed(lists))
 
         for index, l in enumerate(lists):
-            # print(l.name, l.folder, l.items)
-
             l.index = index
             if index == len(lists) - 1:
                 chosen_name = self.recall_chosen_name(l.folder)
-                # print(chosen_name)
                 l.cur_line = l.choice = self.index_of(chosen_name, l.items) or 0
             else:
                 index__name = lists[index + 1].name
-                # print(index__name)
                 l.cur_line = l.choice = self.index_of(index__name, l.items) or 0
-            # print(l.choice)
-            # print()
 
         return lists
 
@@ -87,16 +70,12 @@ class FolderLists:
         index = len(self.lists) - 1
         while True:
             path = self.node_path(index)
-            # print('check', index, path)
             name = self.root_history.get(path)
             if name is None:
-                # print('not in history')
                 break
-            # print('in history')
             index += 1
             a_list = self.make_list(path, index)
             if a_list is None or a_list.choice is None:
-                # print('not adding')
                 break
             self.lists.append(a_list)
 
@@ -119,8 +98,6 @@ class FolderLists:
     def try_go_in(self, index):
         if index != len(self.lists) - 1:
             return
-
-        self.memorize_choice_in_list(index)
 
         new_list = self.make_list(self.node_path(index), index + 1)
         if new_list is None:
@@ -167,6 +144,9 @@ class FolderLists:
     def memorize(self, folder, name):
         self.root_history[folder] = name
 
+    def index_of_last(self):
+        return len(self.lists) - 1
+
 
 class ChangeFoldersDialog(Dialog):
     def __init__(self, width, height, x, y, folder_lists: FolderLists):
@@ -205,9 +185,18 @@ class ChangeFoldersDialog(Dialog):
         elif key == KEY_LEFT:
             if self.focus_w.index != 0:
                 self.move_focus(-1)
+        elif key == KEY_HOME:
+            self.focus_idx = 0
+            self.change_focus(self.folder_lists.lists[self.focus_idx])
+        elif key == KEY_END:
+            self.focus_idx = self.folder_lists.index_of_last()
+            self.change_focus(self.folder_lists.lists[self.focus_idx])
         elif self.focus_w:
-            if key == KEY_ENTER:
-                self.folder_lists.memorize_choice_in_list(self.focus_idx)
+            if key == KEY_TAB:
+                self.focus_idx = self.folder_lists.index_of_last()
+            if key == KEY_ENTER or key == KEY_TAB:
+                for i in range(0, self.focus_idx + 1):
+                    self.folder_lists.memorize_choice_in_list(i)
                 return ACTION_OK
 
             choice_before = self.focus_w.choice
@@ -308,9 +297,6 @@ if __name__ == "__main__":
     root_history = history[root] if root in history else {}
 
     folder_lists = FolderLists(folder, root, root_history)
-    # print(folder_lists.lists)
-    # sys.exit(2)
-
     if folder_lists.is_empty():
         sys.exit(2)
 
