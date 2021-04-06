@@ -168,6 +168,7 @@ class ChangeFoldersDialog(Dialog):
             self.replace_folders()
 
     def replace_folders(self):
+        self.clear()    # sometimes causes blinking; better to clear only bottom part of the view that won't be used
         self.childs = []
         child_x = 0
         max_child_h = max(len(child.items) for child in self.folder_lists.lists)
