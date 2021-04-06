@@ -26,6 +26,7 @@ class FolderLists:
     def __init__(self, folder, root, root_history):
         self.root = root
         self.root_history = root_history
+        self.visit_history = {}
         self.lists = self.initial_lists(folder)
         self.expand_lists()
 
@@ -69,7 +70,7 @@ class FolderLists:
         index = len(self.lists) - 1
         while True:
             path = self.node_path(index)
-            name = self.root_history.get(path)
+            name = self.recall_chosen_name(path)
             if name is None:
                 break
             index += 1
@@ -88,7 +89,8 @@ class FolderLists:
         return self.root if index == 0 else self.node_path(index - 1)
 
     def node_path(self, index):
-        return self.root + '/' + '/'.join([l.content[l.choice] for l in self.lists_in_path(index)])
+        root = self.root + '/' if self.root != '/' else '/'
+        return root + '/' + '/'.join([l.content[l.choice] for l in self.lists_in_path(index)])
 
     def activate_sibling(self, index):
         self.lists = self.lists[: index + 1]
@@ -98,6 +100,8 @@ class FolderLists:
         if index != len(self.lists) - 1:
             return
 
+        self.memorize_choice_in_list(self.visit_history, index)
+
         new_list = self.make_list(self.node_path(index), index + 1)
         if new_list is None:
             return
@@ -106,13 +110,6 @@ class FolderLists:
 
         self.lists.append(new_list)
         return True
-
-    def memorize_choice_in_list(self, index):
-        if index < 0:
-            return
-        node_path = self.parent_path(index)
-        folder_name = self.lists[index].content[self.lists[index].choice]
-        self.memorize(node_path, folder_name)
 
     def make_list(self, folder, index: int) -> Optional[WListBox]:
         contents = [name for name in sorted(os.listdir(folder)) if
@@ -127,8 +124,11 @@ class FolderLists:
         return box
 
     def recall_choice(self, folder, contents):
-        if folder in self.root_history:
-            last_name = self.root_history[folder]
+        return self.recall_choice_in(self.root_history, folder, contents) or self.recall_choice_in(self.visit_history, folder, contents)
+
+    def recall_choice_in(self, storage, folder, contents):
+        if folder in storage:
+            last_name = storage[folder]
             if last_name is not None:
                 return self.index_of(last_name, contents)
 
@@ -138,10 +138,17 @@ class FolderLists:
                 return i
 
     def recall_chosen_name(self, folder):
-        return self.root_history.get(folder)
+        return self.root_history.get(folder) or self.visit_history.get(folder)
 
-    def memorize(self, folder, name):
-        self.root_history[folder] = name
+    def memorize_choice_in_list(self, storage, index):
+        if index < 0:
+            return
+        node_path = self.parent_path(index)
+        folder_name = self.lists[index].content[self.lists[index].choice]
+        self.memorize_in(storage, node_path, folder_name)
+
+    def memorize_in(self, storage, folder, name):
+        storage[folder] = name
 
     def index_of_last(self):
         return len(self.lists) - 1
@@ -215,7 +222,7 @@ class ChangeFoldersDialog(Dialog):
                 self.focus_idx = self.folder_lists.index_of_last()
             if key == KEY_ENTER or key == KEY_TAB:
                 for i in range(0, self.focus_idx + 1):
-                    self.folder_lists.memorize_choice_in_list(i)
+                    self.folder_lists.memorize_choice_in_list(self.folder_lists.root_history, i)
                 return ACTION_OK
 
             choice_before = self.focus_w.choice
