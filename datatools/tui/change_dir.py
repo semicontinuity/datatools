@@ -90,7 +90,7 @@ class FolderLists:
 
     def node_path(self, index):
         root = self.root + '/' if self.root != '/' else '/'
-        return root + '/' + '/'.join([l.content[l.choice] for l in self.lists_in_path(index)])
+        return root + '/'.join([l.content[l.choice] for l in self.lists_in_path(index)])
 
     def activate_sibling(self, index):
         self.lists = self.lists[: index + 1]
@@ -175,11 +175,15 @@ class ChangeFoldersDialog(Dialog):
             self.replace_folders()
 
     def replace_folders(self):
-        self.clear()    # sometimes causes blinking; better to clear only bottom part of the view that won't be used
+        # self.clear()    # sometimes causes blinking; better to clear only bottom part of the view that won't be used
         self.childs = []
         child_x = 0
         max_child_h = max(len(child.items) for child in self.folder_lists.lists)
+
+        old_h = self.h
         self.request_height(max_child_h)
+        if old_h > self.h:
+            screen.clear_box(self.x, self.y + self.h, self.w, old_h - self.h)
 
         for i, child in enumerate(self.folder_lists.lists):
             child.h = child.height = min(child.height, self.h)
