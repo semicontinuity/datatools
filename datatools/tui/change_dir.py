@@ -313,8 +313,13 @@ def find_root_for(folder, roots):
     while True:
         if path in roots:
             return str(path)
-        if path == '/' or path == '' or path.startswith('.'):
-            return folder
+        if path == os.getenv('HOME') or path == '/' or path == '' or path.startswith('.'):
+            return path
+
+        contents = os.listdir(path)
+        if '.svn' in contents or '.git' in contents:
+            return path
+
         i = path.rfind('/')
         path = path[:i]
 
