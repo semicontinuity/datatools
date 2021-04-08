@@ -99,12 +99,11 @@ class Server(BaseHTTPRequestHandler):
 
 
 HOST_NAME = 'localhost'
-PORT_NUMBER = 8000
 
-httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
+httpd = HTTPServer((HOST_NAME, 0), Server)
 
 debug('Ready')
-print(f'http://{HOST_NAME}:{PORT_NUMBER}/insight/view/index.html#{{"url":"tdf:.ext","prefix":"log"}}', flush=True)
+print(f'http://{httpd.server_name}:{httpd.server_port}/insight/view/index.html#{{"url":"tdf:.ext","prefix":"log"}}', flush=True)
 try:
     httpd.serve_forever()
 except KeyboardInterrupt:
