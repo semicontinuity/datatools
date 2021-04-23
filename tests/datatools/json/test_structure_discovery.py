@@ -59,10 +59,8 @@ def test__object_descriptor__complex():
     ))
 
 
-def test__object_descriptor__array():
-    assert Discovery().object_descriptor(
-        [
-            [1, 2],
-            [3, 4],
-        ]
-    ) == ArrayDescriptor(ArrayDescriptor(PrimitiveDescriptor('int')))
+def test__object_descriptor__matrix():
+    descriptor = Discovery().object_descriptor([[1, 2, 3], [5, 6, 7], ])
+    assert descriptor == ArrayDescriptor(ArrayDescriptor(PrimitiveDescriptor('int')))
+    assert descriptor.length == 2
+    assert descriptor.array.length == 3
