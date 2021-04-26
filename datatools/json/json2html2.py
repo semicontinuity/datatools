@@ -17,7 +17,7 @@ def stderr_print(*args, **kwargs):
 
 class ListNode:
     def __init__(self, j, descriptor):
-        self.records = [node(j[index], descriptor.list[index]) for index in range(len(descriptor.list))]
+        self.records = [node(j[index], descriptor.item[index]) for index in range(len(descriptor.list))]
 
     def __str__(self):
         return self.html_numbered_table().__str__()
@@ -102,6 +102,40 @@ class ObjectNode:
         return tr(tk.custom_th(key, clazz='ov_th'), tk.td_value_with_color(value, "ov_v"))
 
 
+class MatrixNode:
+    def __init__(self, j, height, width):
+        self.data = j
+        self.height = height
+        self.width = width
+
+    def __str__(self):
+        return div(
+            span(f'Matrix {self.height} x {self.width}', clazz='header'),
+            table(
+                thead(
+                    tr(
+                        tk.custom_th('#'),
+                        *[tk.custom_th(str(i + 1)) for i in range(self.width)]
+                    )
+                ),
+                tbody(
+                    *[
+                        tr(
+                            tk.custom_th(str(y + 1)),
+                            *[
+                                tk.td_value_with_color(cell, "a_v")  # all cells are primitives
+                                for cell in sub_j
+                            ]
+                        )
+                        for y, sub_j in enumerate(self.data)
+                    ]
+                ),
+                clazz='m'
+            ),
+            clazz=('a', "collapsed2"), onclick='toggle2(this, "DIV")'
+        ).__str__()
+
+
 def node(j, descriptor):
     if descriptor.is_primitive():
         return str(j)
@@ -109,6 +143,15 @@ def node(j, descriptor):
         return ObjectNode(j, descriptor, True)
     elif descriptor.is_list():
         return ListNode(j, descriptor)
+    elif descriptor.is_array():
+        if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
+            return MatrixNode(j, descriptor.length, descriptor.item.length)
+
+        # if descriptor.item.is_dict():
+        #     return ListNode(j, descriptor)
+        # else:
+        #     return ListNode(j, descriptor)
+        pass
 
 
 def main():

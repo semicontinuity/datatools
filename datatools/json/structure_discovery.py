@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Dict
 
 
 @dataclass
@@ -58,21 +58,24 @@ class ListDescriptor(Descriptor):
 
 @dataclass
 class ArrayDescriptor(Descriptor):
-    array: Any
+    array: Descriptor
     length: Optional[int] = None
 
     def __eq__(self, o) -> bool:
         if type(o) is type(self):
-            return self.array == o.array
+            return self.item == o.item
         return False
 
+    @property
+    def item(self) -> Descriptor:
+        return self.array
+
     def merge_with(self, o) -> 'ArrayDescriptor':
-        return ArrayDescriptor(self.array, self.length if self.length == o.length else None)
+        return ArrayDescriptor(self.item, self.length if self.length == o.length else None)
 
     @staticmethod
-    def merge(items: List) -> Optional[object]:
-        if len(items) == 0:
-            return None
+    def merge(items: List) -> Descriptor:
+        assert len(items) > 0
 
         item0 = items[0]
         for i in items:
