@@ -89,15 +89,23 @@ class Discovery:
             raise AssertionError()
 
     def dict_descriptor(self, j):
-        return DictDescriptor({k: self.object_descriptor(v) for k, v in j.items()})
+        item_descriptors = [(k, self.object_descriptor(v)) for k, v in j.items()]
+        if len(item_descriptors) == 0:
+            return DictDescriptor({})
+
+        item0_descriptor = item_descriptors[0]
+        if all(i[1] == item0_descriptor[1] for i in item_descriptors):
+            return ArrayDescriptor(ArrayDescriptor.merge([i[1] for i in item_descriptors]), len(item_descriptors))
+        else:
+            return DictDescriptor({i[0]: i[1] for i in item_descriptors})
 
     def list_descriptor(self, j):
         item_descriptors: list = [self.object_descriptor(i) for i in j]
         if len(item_descriptors) == 0:
             return ListDescriptor([])
 
-        item_descriptor = item_descriptors[0]
-        if all(i == item_descriptor for i in item_descriptors):
+        item0_descriptor = item_descriptors[0]
+        if all(i == item0_descriptor for i in item_descriptors):
             return ArrayDescriptor(ArrayDescriptor.merge(item_descriptors), len(item_descriptors))
         else:
             return ListDescriptor(item_descriptors)

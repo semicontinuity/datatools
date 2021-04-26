@@ -42,6 +42,20 @@ def test__object_descriptor__table():
     ))
 
 
+def test__object_descriptor__table__qualified_rows():
+    assert Discovery().object_descriptor(
+        {
+            'key1': {'a': 1, 'b': True},
+            'key2': {'a': 1, 'b': True},
+        }
+    ) == ArrayDescriptor(DictDescriptor(
+        {
+            'a': PrimitiveDescriptor('int'),
+            'b': PrimitiveDescriptor('bool'),
+        }
+    ))
+
+
 def test__object_descriptor__complex():
     real = Discovery().object_descriptor(
         [{'kind': 'k1', '_': [{'date': '2021', 'rid': 'rid1'}, {'date': '2022', 'rid': 'rid2'}, ]},
