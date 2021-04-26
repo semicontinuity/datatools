@@ -1,5 +1,6 @@
 from typing import Iterable, Union, Any, Dict
 
+
 def table(*contents, **attrs):
     return Element('table', *contents, **attrs)
 
