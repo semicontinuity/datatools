@@ -3,7 +3,22 @@ from typing import Optional, List, Any, Dict
 
 
 @dataclass
-class PrimitiveDescriptor:
+class Descriptor:
+    def is_array(self) -> bool:
+        return type(self) is ArrayDescriptor
+
+    def is_list(self) -> bool:
+        return type(self) is ListDescriptor
+
+    def is_dict(self) -> bool:
+        return type(self) is DictDescriptor
+
+    def is_primitive(self) -> bool:
+        return type(self) is PrimitiveDescriptor
+
+
+@dataclass
+class PrimitiveDescriptor(Descriptor):
     primitive: str
 
     def __eq__(self, o) -> bool:
@@ -16,7 +31,7 @@ class PrimitiveDescriptor:
 
 
 @dataclass
-class DictDescriptor:
+class DictDescriptor(Descriptor):
     dict: Dict
 
     def __eq__(self, o) -> bool:
@@ -29,7 +44,7 @@ class DictDescriptor:
 
 
 @dataclass
-class ListDescriptor:
+class ListDescriptor(Descriptor):
     list: List
 
     def __eq__(self, o) -> bool:
@@ -42,7 +57,7 @@ class ListDescriptor:
 
 
 @dataclass
-class ArrayDescriptor:
+class ArrayDescriptor(Descriptor):
     array: Any
     length: Optional[int] = None
 
@@ -94,7 +109,7 @@ class Discovery:
             return DictDescriptor({})
 
         item0_descriptor = item_descriptors[0]
-        if all(i[1] == item0_descriptor[1] for i in item_descriptors):
+        if len(item_descriptors) > 1 and type(item0_descriptor[1]) is not PrimitiveDescriptor and all(i[1] == item0_descriptor[1] for i in item_descriptors):
             return ArrayDescriptor(ArrayDescriptor.merge([i[1] for i in item_descriptors]), len(item_descriptors))
         else:
             return DictDescriptor({i[0]: i[1] for i in item_descriptors})
