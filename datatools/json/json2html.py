@@ -56,13 +56,13 @@ class MatrixNode:
                 thead(
                     tr(
                         tk.custom_th('#'),
-                        *[tk.custom_th(str(i + 1)) for i in range(self.width)]
+                        *[tk.custom_th(str(i)) for i in range(self.width)]
                     )
                 ),
                 tbody(
                     *[
                         tr(
-                            tk.custom_th(str(y + 1)),
+                            tk.custom_th(str(y)),
                             *[
                                 tk.td_value_with_color(cell, "a_v")  # all cells are primitives
                                 for cell in sub_j
@@ -75,65 +75,6 @@ class MatrixNode:
             ),
             clazz=('a', "collapsed2"), onclick='toggle2(this, "DIV")'
         ).__str__()
-
-
-class ArrayNode:
-    def __init__(self, j, parent, in_array_of_nestable_obj: bool):
-        self.parent = parent
-        self.records = [node(subj, self, in_array_of_nestable_obj) for subj in j]
-
-    def __str__(self):
-        return self.html_numbered_table().__str__()
-
-    def html_numbered_table(self):
-        if all((is_primitive(record) for record in self.records)):
-            return self.html_spans_table('regular' if len(self.records) < 150 else 'collapsed2')
-        elif len(self.records) > 7 or len(str(self.records)) >= 250:
-            return self.html_numbered_table_collapsed()
-        else:
-            return self.html_numbered_table_plain()
-
-    def html_spans_table(self, clazz):
-        return div(
-            tk.custom_span(f'{len(self.records)} items', clazz="header", onclick='toggle2(this, "DIV")'),
-            *[
-                self.array_entry(pos + 1, self.records[pos]) for pos in range(len(self.records))
-            ],
-            clazz=("a", clazz), onclick="toggle2(this, 'DIV')"
-        )
-
-    @staticmethod
-    def array_entry(i: int, contents: Optional[Any]):
-        return tk.custom_span(
-            tk.custom_span(i, clazz='index'),
-            tk.custom_span(contents, clazz='none' if contents is None else None),
-            clazz='ae'
-        )
-
-    def html_numbered_table_plain(self):
-        return table(
-            *[
-                tr(Element('th', pos + 1, clazz='a'), tk.td_value_with_color(self.records[pos], "a_v"))
-                for pos in range(len(self.records))
-            ],
-            clazz="a"
-        )
-
-    def html_numbered_table_collapsed(self):
-        return table(
-            thead(
-                tk.custom_th('#', onclick="toggle(this)"),
-                tk.custom_th(f'{len(self.records)} items')
-            ),
-            tbody(
-                *[
-                    tr(tk.custom_th(str(pos + 1)), tk.td_value_with_color(self.records[pos], "a_v"))
-                    for pos in range(len(self.records))
-                ],
-                clazz="collapsed"
-            ),
-            clazz="a"
-        )
 
 
 class ArrayOfNestableObjectsNode:
@@ -231,7 +172,14 @@ def td_value_with_attrs(attrs, value):
         bg = hash_to_rgb(attrs.value_hashes.get(string_value) or hash_code(string_value))
         return tk.td_value_with_color(value, bg=bg)
     else:
-        return tk.td_value_with_color(value)
+        return tk.td_value_with_color(value, clazz='plain')
+
+
+def list_node(j, parent, in_array_of_nestable_obj: bool):
+    result = ListNode(None)
+    records = [node(subj, result, in_array_of_nestable_obj) for subj in j]
+    result.records = records
+    return result
 
 
 def node(j, parent, in_array_of_nestable_obj: bool):
@@ -268,7 +216,7 @@ def node(j, parent, in_array_of_nestable_obj: bool):
             return array_node
         else:
             width = array_is_matrix(j)
-            return MatrixNode(j, parent, width) if width is not None else ArrayNode(j, parent, in_array_of_nestable_obj)
+            return MatrixNode(j, parent, width) if width is not None else list_node(j, parent, in_array_of_nestable_obj)
     else:
         return j
 

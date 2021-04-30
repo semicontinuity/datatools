@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-
 from json import JSONDecodeError
 
 from datatools.json.json_viz_helper import *
 from datatools.json.structure_discovery import *
-from datatools.json.util import is_primitive
 from datatools.util.html_util import *
 
 tk = CustomHtmlToolkit()
@@ -15,62 +13,12 @@ def stderr_print(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-class ListNode:
-    def __init__(self, j, descriptor):
-        self.records = [node(j[index], descriptor.item[index]) for index in range(len(descriptor.list))]
+def list_of_single_record(element, element_descriptor):
+    return ListNode([node(element, element_descriptor)])
 
-    def __str__(self):
-        return self.html_numbered_table().__str__()
 
-    def html_numbered_table(self):
-        if all((is_primitive(record) for record in self.records)):
-            return self.html_spans_table('regular' if len(self.records) < 150 else 'collapsed2')
-        elif len(self.records) > 7 or len(str(self.records)) >= 250:
-            return self.html_numbered_table_collapsed()
-        else:
-            return self.html_numbered_table_plain()
-
-    def html_spans_table(self, clazz):
-        return div(
-            tk.custom_span(f'{len(self.records)} items', clazz="header", onclick='toggle2(this, "DIV")'),
-            *[
-                self.array_entry(pos + 1, self.records[pos]) for pos in range(len(self.records))
-            ],
-            clazz=("a", clazz), onclick="toggle2(this, 'DIV')"
-        )
-
-    @staticmethod
-    def array_entry(i: int, contents: Optional[Any]):
-        return tk.custom_span(
-            tk.custom_span(i, clazz='index'),
-            tk.custom_span(contents, clazz='none' if contents is None else None),
-            clazz='ae'
-        )
-
-    def html_numbered_table_plain(self):
-        return table(
-            *[
-                tr(Element('th', pos + 1, clazz='a'), tk.td_value_with_color(self.records[pos], "a_v"))
-                for pos in range(len(self.records))
-            ],
-            clazz="a"
-        )
-
-    def html_numbered_table_collapsed(self):
-        return table(
-            thead(
-                tk.custom_th('#', onclick="toggle(this)"),
-                tk.custom_th(f'{len(self.records)} items')
-            ),
-            tbody(
-                *[
-                    tr(tk.custom_th(str(pos + 1)), tk.td_value_with_color(self.records[pos], "a_v"))
-                    for pos in range(len(self.records))
-                ],
-                clazz="collapsed"
-            ),
-            clazz="a"
-        )
+def list_of_multi_record(j, descriptor):
+    return ListNode([node(j[index], descriptor.list[index]) for index in range(len(descriptor.list))])
 
 
 class ObjectNode:
@@ -115,13 +63,13 @@ class MatrixNode:
                 thead(
                     tr(
                         tk.custom_th('#'),
-                        *[tk.custom_th(str(i + 1)) for i in range(self.width)]
+                        *[tk.custom_th(str(i)) for i in range(self.width)]
                     )
                 ),
                 tbody(
                     *[
                         tr(
-                            tk.custom_th(str(y + 1)),
+                            tk.custom_th(str(y)),
                             *[
                                 tk.td_value_with_color(cell, "a_v")  # all cells are primitives
                                 for cell in sub_j
@@ -142,13 +90,12 @@ def node(j, descriptor):
     elif descriptor.is_dict():
         return ObjectNode(j, descriptor, True)
     elif descriptor.is_list():
-        return ListNode(j, descriptor)
+        return list_of_multi_record(j, descriptor)
+    elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
+        return list_of_single_record(j[0], descriptor.item)
     elif descriptor.is_array():
         if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
             return MatrixNode(j, descriptor.length, descriptor.item.length)
-
-        # if descriptor.item.is_dict():
-        #     return ListNode(j, descriptor)
         # else:
         #     return ListNode(j, descriptor)
         pass

@@ -64,8 +64,8 @@ def prune_sparse_leaves(descriptor: Dict[str, Any], path_of_leaf_to_count: Dict[
         min_column_occupancy = min(occupancies)
         if min_column_occupancy <= 0.5 * length:    # or better, compute total occupancy
             pruned.append(root)
-    for root in pruned:
-        del descriptor[root]
+    # for root in pruned:
+    #     del descriptor[root]
     return None if len(descriptor) == 0 else descriptor
 
 
