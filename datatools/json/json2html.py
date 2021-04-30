@@ -82,10 +82,11 @@ class ArrayOfNestableObjectsNode:
     paths_of_leaves: List[Tuple[str]]
     record_nodes: List[Dict[Hashable, Any]]
 
-    def __init__(self, parent, j, descriptor: Optional[Dict[str, Any]]):
+    def __init__(self, parent, j, descriptor: Optional[Dict[str, Any]], pruned=None):
         self.parent = parent
         self.descriptor = descriptor
         self.paths_of_leaves = compute_paths_of_leaves(descriptor)
+        self.pruned = pruned
         debug('compute_column_attrs')
         self.column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
 
@@ -110,7 +111,8 @@ class ArrayOfNestableObjectsNode:
                                 rowspan=1 if value is not None else depth - level, colspan=number_of_columns(value)
                             )
                             for name, value in items_at_level(self.descriptor, level + 1)
-                        ]
+                        ],
+                        tk.custom_th('-', rowspan=depth, onclick="toggle(this)") if len(self.pruned) > 0 and level == 0 else None,
                     )
                     for level in range(depth)
                 ]
@@ -122,7 +124,8 @@ class ArrayOfNestableObjectsNode:
                         *[
                             td_value_with_attrs(self.column_id_to_attrs[leaf_path], child_by_path(r, leaf_path))
                             for leaf_path in self.paths_of_leaves
-                        ]
+                        ],
+                        td(self.combo_cell(r)) if len(self.pruned) > 0 else None
                     )
                     for r in self.record_nodes
                 ],
@@ -131,6 +134,9 @@ class ArrayOfNestableObjectsNode:
             ),
             clazz="aohwno"
         ).__str__()
+
+    def combo_cell(self, record):
+        return ObjectNode({key: record[key] for key in self.pruned if key in record}, True, self, True)
 
 
 class ObjectNode:
@@ -183,6 +189,7 @@ def list_node(j, parent, in_array_of_nestable_obj: bool):
 
 
 def node(j, parent, in_array_of_nestable_obj: bool):
+    pruned = []
     # replace with path_in_array_of_nestable_obj: when exhausted, allow again
     if type(j) is dict:
         descriptor, path_of_leaf_to_count = obj_descriptor_and_path_counts(j)
@@ -190,7 +197,7 @@ def node(j, parent, in_array_of_nestable_obj: bool):
             if len(j) == 1:
                 descriptor = None
             else:
-                descriptor = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
+                descriptor, pruned = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
         if descriptor is None or in_array_of_nestable_obj or len(j) <= 1:
             return ObjectNode(j, True, parent, in_array_of_nestable_obj)
         else:
@@ -205,9 +212,9 @@ def node(j, parent, in_array_of_nestable_obj: bool):
     elif type(j) is list:
         descriptor, path_of_leaf_to_count = array_descriptor_and_path_counts(j)
         if descriptor is not None and not in_array_of_nestable_obj:
-            descriptor = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
+            descriptor, pruned = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
         if descriptor is not None and not in_array_of_nestable_obj and len(j) > 1:
-            array_node = ArrayOfNestableObjectsNode(parent, j, descriptor)
+            array_node = ArrayOfNestableObjectsNode(parent, j, descriptor, pruned)
             array_node.record_nodes = []
             for i, sub_j in enumerate(j):
                 record_node = {name: node(value, array_node, True) for name, value in sub_j.items()}

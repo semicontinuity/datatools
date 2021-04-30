@@ -34,7 +34,7 @@ class CustomHtmlToolkit:
         return self.custom_span(value) if leaf else ("" if value is None else str(value))
 
     def custom_span(self, *contents, **attrs):
-        if len(contents) == 1 and type(contents[0]) is str and len(contents[0]) > 80:
+        if len(contents) == 1 and type(contents[0]) is str and len(contents[0]) > 100:
             text_id = random_id(8)
             self.long_texts[text_id] = contents[0]
             return span('...', data_text=str(contents[0]), onclick=f'openOverlay("{text_id}")', clazz='button')
