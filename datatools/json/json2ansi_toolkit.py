@@ -1,11 +1,17 @@
 from datatools.util.table_util import *
 
 
-class ScreenBuffer:
+class TermBuffer:
     width: int
     height: int
     chars: List[bytearray]
     attrs: List[bytearray]
+
+    MASK_BOLD = 0x01
+    MASK_ITALIC = 0x02
+    MASK_FG_EMPHASIZED = 0x10
+    MASK_BG_EMPHASIZED = 0x20
+    MASK_OVERLINE = 0x80
 
     def __init__(self, width, height):
         self.width = width
@@ -23,20 +29,24 @@ class ScreenBuffer:
             i += 1
         return line
 
-    def draw_text(self, x: int, y: int, text: str):
-        line = self.chars[y]
-        i = 2 * x
+    def draw_text(self, x: int, y: int, text: str, mask: int = 0):
+        attr_line = self.attrs[y]
+        char_line = self.chars[y]
+        char_i = 2 * x
         for c in text:
-            code = ord(c)
-            line[i] = code & 0xff
-            i += 1
-            line[i] = (code >> 8) & 0xff
-            i += 1
+            attr_line[x] |= mask
+            x += 1
 
-    def draw_top_border(self, x: int, y: int, width: int):
+            code = ord(c)
+            char_line[char_i] = code & 0xff
+            char_i += 1
+            char_line[char_i] = (code >> 8) & 0xff
+            char_i += 1
+
+    def draw_mask(self, x: int, y: int, width: int, mask: int):
         line = self.attrs[y]
         for _ in range(width):
-            line[x] |= 0x80
+            line[x] |= mask
             x += 1
 
     def flush(self):
@@ -50,8 +60,23 @@ class ScreenBuffer:
                 if attr == 0:
                     s += c
                 else:
-                    s += '\x1b[53m' + c + '\x1b[0m'
+                    s += self.attr_to_ansi(attr) + c + '\x1b[0m'
             print(s)
+
+    def attr_to_ansi(self, attr):
+        codes = []
+        if attr & self.MASK_BOLD:
+            codes.append('1')
+        if attr & self.MASK_ITALIC:
+            codes.append('3')
+        if attr & self.MASK_BG_EMPHASIZED:
+            codes.append('48;5;237')
+        if attr & self.MASK_FG_EMPHASIZED:
+            codes.append('97')
+        if attr & self.MASK_OVERLINE:
+            codes.append('53')
+        return '\x1b[' + ';'.join(codes) + 'm'
+
 
 class AnsiToolkit:
     def page_node(self, j, descriptor):
@@ -71,7 +96,7 @@ class AnsiToolkit:
                 return self.matrix_node(j, descriptor)
 
     def primitive(self, j):
-        return PrimitiveNode(str(j))
+        return PrimitiveNode(j)
 
     def list_of_single_record(self, element, element_descriptor):
         pass
@@ -97,20 +122,21 @@ class PageNode:
 
     def paint(self):
         self.layout()
-        buffer = ScreenBuffer(self.root.width_cells, self.root.height_cells)
+        buffer = TermBuffer(self.root.width_cells, self.root.height_cells)
         self.root.paint(buffer)
         return buffer
 
 
 class TextCell(TableBlock):
-    def __init__(self, text):
+    def __init__(self, text, mask = 0):
         self.text = text
+        self.mask = mask
         self.width_cells = len(text) + 2
         self.height_cells = 1
 
     def paint(self, buffer):
-        buffer.draw_top_border(self.x_cells, self.y_cells, self.width_cells)
-        # buffer.draw_text(self.x_cells, self.y_cells, '▏')
+        buffer.draw_mask(self.x_cells, self.y_cells, self.width_cells, TermBuffer.MASK_OVERLINE | self.mask)
+        buffer.draw_text(self.x_cells, self.y_cells, '▏')
         buffer.draw_text(self.x_cells + 1, self.y_cells, self.text)
         # buffer.draw_text(self.x_cells + 1 + len(self.text), self.y_cells, '\u2E21')
         # buffer.draw_text(self.x_cells + 1 + len(self.text), self.y_cells, '\u23B9')
@@ -118,12 +144,12 @@ class TextCell(TableBlock):
 
 class HeaderNode(TextCell):
     def __init__(self, text):
-        super().__init__(text)
+        super().__init__(text, TermBuffer.MASK_FG_EMPHASIZED | TermBuffer.MASK_BG_EMPHASIZED | TermBuffer.MASK_BOLD)
 
 
 class PrimitiveNode(TextCell):
-    def __init__(self, text):
-        super().__init__(text)
+    def __init__(self, j):
+        super().__init__(str(j), 0 if type(j) is str else TermBuffer.MASK_BOLD)
 
 
 class HBox(TableHBox):
