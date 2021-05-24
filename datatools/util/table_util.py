@@ -78,6 +78,41 @@ class TableVBox(TableBlock):
             yield from child.traverse()
 
 
+class RegularTable(TableBlock):
+    rows: List[TableHBox]
+    widths: List[int]
+    heights: List[int]
+
+    def __init__(self, rows):
+        self.rows = rows
+        self.widths = [0] * max(len(row.contents) for row in rows)
+
+    def compute_geometry(self):
+        for row in self.rows:
+            row.compute_geometry()
+        self.height_cells = sum(child.height_cells for child in self.rows)
+
+        for row in self.rows:
+            for i in range(len(row.contents)):
+                self.widths[i] = max(self.widths[i], row.contents[i].width_cells)
+
+        for row in self.rows:
+            for i in range(len(row.contents)):
+                row.contents[i].width_cells = self.widths[i]
+
+        self.width_cells = sum(width for width in self.widths)
+
+    def compute_position(self, parent_x_cells, parent_y_cells):
+        super().compute_position(parent_x_cells, parent_y_cells)
+        y = parent_y_cells
+        for child in self.rows:
+            child.compute_position(parent_x_cells, y)
+            y += child.height_cells
+
+    def traverse(self):
+        for child in self.rows:
+            yield from child.traverse()
+
 class Table(TableBlock):
     contents: TableBlock
 

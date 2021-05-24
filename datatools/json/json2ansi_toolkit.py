@@ -138,8 +138,6 @@ class TextCell(TableBlock):
         buffer.draw_mask(self.x_cells, self.y_cells, self.width_cells, TermBuffer.MASK_OVERLINE | self.mask)
         buffer.draw_text(self.x_cells, self.y_cells, '▏')
         buffer.draw_text(self.x_cells + 1, self.y_cells, self.text)
-        # buffer.draw_text(self.x_cells + 1 + len(self.text), self.y_cells, '\u2E21')
-        # buffer.draw_text(self.x_cells + 1 + len(self.text), self.y_cells, '\u23B9')
 
 
 class HeaderNode(TextCell):
@@ -161,7 +159,7 @@ class HBox(TableHBox):
             item.paint(buffer)
 
 
-class ObjectNode(TableVBox):
+class ObjectNode(RegularTable):
     def __init__(self, j, descriptor, kit):
         super().__init__(
             [
@@ -173,5 +171,5 @@ class ObjectNode(TableVBox):
         )
 
     def paint(self, buffer):
-        for item in self.contents:
+        for item in self.rows:
             item.paint(buffer)
