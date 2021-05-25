@@ -85,7 +85,7 @@ class RegularTable(TableBlock):
 
     def __init__(self, rows):
         self.rows = rows
-        self.widths = [0] * max(len(row.contents) for row in rows)
+        self.widths = [0] * max((len(row.contents) for row in rows), default=0)
 
     def compute_geometry(self):
         for row in self.rows:
@@ -112,6 +112,7 @@ class RegularTable(TableBlock):
     def traverse(self):
         for child in self.rows:
             yield from child.traverse()
+
 
 class Table(TableBlock):
     contents: TableBlock

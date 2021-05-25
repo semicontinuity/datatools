@@ -1,3 +1,4 @@
+from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
 
@@ -66,10 +67,7 @@ class Buffer:
             for x in range(self.width):
                 c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
                 attr = self.attrs[y][x]
-                if attr == 0:
-                    s += c
-                else:
-                    s += self.attr_to_ansi(attr) + c + '\x1b[0m'
+                s += self.attr_to_ansi(attr) + c + '\x1b[0m'
             print(s)
 
     def attr_to_ansi(self, attr):
@@ -80,6 +78,8 @@ class Buffer:
             codes.append('3')
         if attr & self.MASK_BG_EMPHASIZED:
             codes.append('48;5;237')
+        else:
+            codes.append('40')
         if attr & self.MASK_FG_EMPHASIZED:
             codes.append('97')
         if attr & self.MASK_OVERLINE:
@@ -103,21 +103,28 @@ class AnsiToolkit:
         elif descriptor.is_array():
             if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
                 return self.matrix_node(j, descriptor)
+            else:
+                return self.array(j, descriptor)
+        else:
+            stderr_print(type(descriptor))
 
     def primitive(self, j):
         return PrimitiveNode(j)
 
     def list_of_single_record(self, element, element_descriptor):
-        pass
+        return self.object_node(element, element_descriptor)
 
     def list_of_multi_record(self, j, descriptor):
-        return EntriesNode(enumerate(j), descriptor, self)
+        return EntriesNode(enumerate(j), lambda key: descriptor.list[key], self, True)
+
+    def array(self, j, descriptor):
+        return EntriesNode(enumerate(j), lambda key: descriptor.item, self, True)
 
     def object_node(self, j, descriptor):
-        return EntriesNode(j.items(), descriptor, self)
+        return EntriesNode(j.items(), lambda key: descriptor.dict[key], self, False)
 
     def matrix_node(self, j, descriptor):
-        pass
+        stderr_print('matrix_node')
 
 
 class PageNode:
@@ -159,8 +166,15 @@ class TextCell(TableBlock):
 
 
 class HeaderNode(TextCell):
-    def __init__(self, text):
-        super().__init__(text, Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_BOLD)
+    def __init__(self, key, is_array):
+        super().__init__(str(key), self.attr_for(is_array))
+
+    @staticmethod
+    def attr_for(is_array):
+        if is_array:
+            return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_BOLD
+        else:
+            return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED
 
 
 class PrimitiveNode(TextCell):
@@ -175,7 +189,7 @@ class PrimitiveNode(TextCell):
         elif primitive_type is bool:
             return str(j).lower(), Buffer.MASK_ITALIC | Buffer.MASK_BOLD
         elif primitive_type is str:
-            return j, Buffer.MASK_NONE
+            return j if len(j) <= 33 else '...', Buffer.MASK_NONE
         else:
             return str(j), Buffer.MASK_BOLD
 
@@ -190,16 +204,24 @@ class HBox(TableHBox):
 
 
 class EntriesNode(RegularTable):
-    def __init__(self, entries, descriptor, kit):
+    def __init__(self, entries, descriptor_f, kit, is_array):
         super().__init__(
             [
                 HBox([
-                    HeaderNode(key), kit.node(subj, descriptor.dict[key])
+                    HeaderNode(key, is_array), kit.node(subj, descriptor_f(key))
                 ])
                 for key, subj in entries
             ]
         )
 
     def paint(self, buffer):
+        # top border (in case there is no contents that normally paints the border)
+        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+
+        # left border (in case there is no contents that normally paints the border)
+        for j in range(self.height_cells):
+            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+
+        # contents
         for item in self.rows:
             item.paint(buffer)
