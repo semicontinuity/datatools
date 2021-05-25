@@ -18,6 +18,8 @@ class HtmlToolkit:
         elif descriptor.is_array():
             if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
                 return self.matrix_node(j, descriptor)
+            # elif descriptor.item.is_dict() and descriptor.length is not None:
+            #     return self.uniform_table_node(j, descriptor.item)
 
     def primitive(self, j):
         return str(j)
@@ -33,6 +35,9 @@ class HtmlToolkit:
 
     def matrix_node(self, j, descriptor):
         return MatrixNode(j, descriptor.length, descriptor.item.length)
+
+    # def uniform_table_node(self, j, item_descriptor):
+    #     return UniformTableNode(j, item_descriptor, self)
 
 
 class ObjectNode:

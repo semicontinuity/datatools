@@ -1,4 +1,6 @@
-from datatools.json.structure_discovery import DictDescriptor
+from typing import Tuple, Any
+
+from datatools.json.structure_discovery import Descriptor, DictDescriptor, compute_paths_of_leaves
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
@@ -130,7 +132,8 @@ class AnsiToolkit:
         stderr_print('matrix_node')
 
     def uniform_table_node(self, j, item_descriptor):
-        return UniformTableNode(j, item_descriptor, self)
+        # return UniformTableNode(j, item_descriptor, self)
+        return ComplexTableNode(j, item_descriptor, self)
 
 
 class PageNode:
@@ -209,6 +212,15 @@ class HBox(TableHBox):
             item.paint(buffer)
 
 
+class VBox(TableVBox):
+    def __init__(self, contents):
+        super().__init__(contents)
+
+    def paint(self, buffer):
+        for item in self.contents:
+            item.paint(buffer)
+
+
 class EntriesNode(RegularTable):
     def __init__(self, entries, descriptor_f, kit, is_array):
         super().__init__(
@@ -251,6 +263,61 @@ class UniformTableNode(RegularTable):
                 for i, entry in enumerate(j)
             ]
         )
+
+    def paint(self, buffer):
+        # top border (in case there is no contents that normally paints the border)
+        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+
+        # left border (in case there is no contents that normally paints the border)
+        for j in range(self.height_cells):
+            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+
+        # contents
+        for item in self.rows:
+            item.paint(buffer)
+
+
+class ComplexTableNode(RegularTable):
+    def __init__(self, j, entry_descriptor: DictDescriptor, kit):
+        paths = compute_paths_of_leaves(entry_descriptor)
+        super().__init__(
+            [
+                HBox([HeaderNode('#', False), self.header_node_for_descriptor(entry_descriptor)])
+            ]
+            +
+            [
+                HBox(
+                    [HeaderNode(str(index), True)]
+                    +
+                    [kit.node(self.child_by_path(row, path), self.descriptor_by_path(entry_descriptor, path)) for path in paths]
+                ) for index, row in enumerate(j)
+            ]
+        )
+
+    def header_node_for_descriptor(self, descriptor: Descriptor, name=None):
+        if descriptor.is_dict():
+            if name is None:
+                return HBox([self.header_node_for_descriptor(d, name) for name, d in descriptor.dict.items()])
+            else:
+                return VBox([
+                    HeaderNode(name, False),
+                    HBox([self.header_node_for_descriptor(d, name) for name, d in descriptor.dict.items()])
+                ])
+        else:
+            return HeaderNode(name, False)
+
+    def child_by_path(self, value: Any, path: Tuple[str]) -> Any:
+        for name in path:
+            if value is None:
+                return None
+            if isinstance(value, dict):
+                value = value.get(name)
+        return value
+
+    def descriptor_by_path(self, d: Descriptor, path: Tuple[str]) -> Any:
+        for name in path:
+            d = d.dict[name]
+        return d
 
     def paint(self, buffer):
         # top border (in case there is no contents that normally paints the border)
