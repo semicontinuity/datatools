@@ -7,7 +7,10 @@ class TableBlock:
     width_cells: int
     height_cells: int
 
-    def compute_geometry(self):
+    def compute_width(self):
+        pass
+
+    def compute_height(self):
         pass
 
     def compute_position(self, parent_x_cells, parent_y_cells):
@@ -32,10 +35,14 @@ class TableHBox(TableBlock):
     def __init__(self, contents=None):
         self.contents = [] if contents is None else contents
 
-    def compute_geometry(self):
+    def compute_width(self):
         for child in self.contents:
-            child.compute_geometry()
+            child.compute_width()
         self.width_cells = sum(child.width_cells for child in self.contents)
+
+    def compute_height(self):
+        for child in self.contents:
+            child.compute_height()
         self.height_cells = max(child.height_cells for child in self.contents)
         for child in self.contents:
             child.height_cells = self.height_cells
@@ -58,10 +65,14 @@ class TableVBox(TableBlock):
     def __init__(self, contents=None):
         self.contents = [] if contents is None else contents
 
-    def compute_geometry(self):
+    def compute_width(self):
         for child in self.contents:
-            child.compute_geometry()
+            child.compute_width()
         self.width_cells = max(child.width_cells for child in self.contents)
+
+    def compute_height(self):
+        for child in self.contents:
+            child.compute_height()
         self.height_cells = sum(child.height_cells for child in self.contents)
         for child in self.contents:
             child.width_cells = self.width_cells
@@ -81,7 +92,6 @@ class TableVBox(TableBlock):
 class RegularTable(TableBlock):
     rows: List[TableHBox]
     widths: List[int]
-    heights: List[int]
 
     def __init__(self, rows : List):
         self.rows = rows
@@ -102,6 +112,25 @@ class RegularTable(TableBlock):
 
         self.width_cells = sum(width for width in self.widths)
 
+    def compute_width(self):
+        for row in self.rows:
+            row.compute_width()
+
+        for row in self.rows:
+            for i in range(len(row.contents)):
+                self.widths[i] = max(self.widths[i], row.contents[i].width_cells)
+
+        for row in self.rows:
+            for i in range(len(row.contents)):
+                row.contents[i].width_cells = self.widths[i]
+
+        self.width_cells = sum(width for width in self.widths)
+
+    def compute_height(self):
+        for row in self.rows:
+            row.compute_height()
+        self.height_cells = sum(child.height_cells for child in self.rows)
+
     def compute_position(self, parent_x_cells, parent_y_cells):
         super().compute_position(parent_x_cells, parent_y_cells)
         y = parent_y_cells
@@ -112,17 +141,3 @@ class RegularTable(TableBlock):
     def traverse(self):
         for child in self.rows:
             yield from child.traverse()
-
-
-class Table(TableBlock):
-    contents: TableBlock
-
-    def __init__(self, contents=None):
-        self.contents = contents
-
-    def layout(self):
-        self.contents.compute_geometry()
-        self.contents.compute_position(0, 0)
-
-    def traverse(self):
-        yield from self.contents.traverse()

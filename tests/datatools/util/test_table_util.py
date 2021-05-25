@@ -4,22 +4,11 @@ from datatools.json.util import to_jsonisable
 
 
 def test__table__layout__traverse():
-    table = Table(
-        TableHBox([
-            TableAutoSpan(),
-            TableVBox([
-                TableAutoSpan(),
-                TableHBox([
-                    TableAutoSpan(),
-                    TableAutoSpan(),
-                ])
-            ])
-        ])
-    )
-    table.layout()
+    h_box = TableHBox([TableAutoSpan(), TableVBox([TableAutoSpan(), TableHBox([TableAutoSpan(), TableAutoSpan(), ])])])
+    h_box.compute_geometry()
+    h_box.compute_position(0, 0)
 
-    assert json.loads(json.dumps(to_jsonisable(table))) == {
-        'contents': {
+    assert json.loads(json.dumps(to_jsonisable(h_box))) == {
             'height_cells': 2, 'width_cells': 3, 'x_cells': 0, 'y_cells': 0,
             'contents': [
                 {
@@ -40,9 +29,8 @@ def test__table__layout__traverse():
                 }
             ],
         }
-    }
 
-    assert json.loads(json.dumps(to_jsonisable(list(table.traverse())))) == [
+    assert json.loads(json.dumps(to_jsonisable(list(h_box.traverse())))) == [
         {'height_cells': 2, 'width_cells': 1, 'x_cells': 0, 'y_cells': 0},
         {'height_cells': 1, 'width_cells': 2, 'x_cells': 1, 'y_cells': 0},
         {'height_cells': 1, 'width_cells': 1, 'x_cells': 1, 'y_cells': 1},
@@ -51,7 +39,7 @@ def test__table__layout__traverse():
 
     from itertools import groupby
 
-    table_rows = [list(group_items) for key, group_items in groupby(table.traverse(), key=lambda i: i.y_cells)]
+    table_rows = [list(group_items) for key, group_items in groupby(h_box.traverse(), key=lambda i: i.y_cells)]
     assert json.loads(json.dumps(to_jsonisable(table_rows))) == [
         [
             {'height_cells': 2, 'width_cells': 1, 'x_cells': 0, 'y_cells': 0},

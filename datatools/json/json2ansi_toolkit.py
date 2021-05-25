@@ -132,8 +132,8 @@ class AnsiToolkit:
         stderr_print('matrix_node')
 
     def uniform_table_node(self, j, item_descriptor):
-        # return UniformTableNode(j, item_descriptor, self)
-        return ComplexTableNode(j, item_descriptor, self)
+        return UniformTableNode(j, item_descriptor, self)
+        # return ComplexTableNode(j, item_descriptor, self)
 
 
 class PageNode:
@@ -142,7 +142,8 @@ class PageNode:
         self.title = title
 
     def layout(self):
-        self.root.compute_geometry()
+        self.root.compute_width()
+        self.root.compute_height()
         self.root.compute_position(0, 0)
 
     def paint(self):
