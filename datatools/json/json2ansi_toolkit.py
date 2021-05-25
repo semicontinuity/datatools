@@ -7,6 +7,7 @@ class Buffer:
     chars: List[bytearray]
     attrs: List[bytearray]
 
+    MASK_NONE = 0x00
     MASK_BOLD = 0x01
     MASK_ITALIC = 0x02
     MASK_FG_EMPHASIZED = 0x10
@@ -110,10 +111,10 @@ class AnsiToolkit:
         pass
 
     def list_of_multi_record(self, j, descriptor):
-        pass
+        return EntriesNode(enumerate(j), descriptor, self)
 
     def object_node(self, j, descriptor):
-        return ObjectNode(j, descriptor, self)
+        return EntriesNode(j.items(), descriptor, self)
 
     def matrix_node(self, j, descriptor):
         pass
@@ -164,7 +165,19 @@ class HeaderNode(TextCell):
 
 class PrimitiveNode(TextCell):
     def __init__(self, j):
-        super().__init__(str(j), 0 if type(j) is str else Buffer.MASK_BOLD)
+        super().__init__(*self.text_and_mask_for(j))
+
+    @staticmethod
+    def text_and_mask_for(j):
+        primitive_type = type(j)
+        if primitive_type is type(None):
+            return 'null', Buffer.MASK_ITALIC
+        elif primitive_type is bool:
+            return str(j).lower(), Buffer.MASK_ITALIC | Buffer.MASK_BOLD
+        elif primitive_type is str:
+            return j, Buffer.MASK_NONE
+        else:
+            return str(j), Buffer.MASK_BOLD
 
 
 class HBox(TableHBox):
@@ -176,14 +189,14 @@ class HBox(TableHBox):
             item.paint(buffer)
 
 
-class ObjectNode(RegularTable):
-    def __init__(self, j, descriptor, kit):
+class EntriesNode(RegularTable):
+    def __init__(self, entries, descriptor, kit):
         super().__init__(
             [
                 HBox([
                     HeaderNode(key), kit.node(subj, descriptor.dict[key])
                 ])
-                for key, subj in j.items()
+                for key, subj in entries
             ]
         )
 
