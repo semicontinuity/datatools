@@ -21,7 +21,6 @@ def main():
     # print(json.dumps(to_jsonisable(page_node.root)))
 
 
-
 if __name__ == "__main__":
     # try:
         main()

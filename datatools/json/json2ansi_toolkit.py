@@ -1,7 +1,7 @@
 from datatools.util.table_util import *
 
 
-class TermBuffer:
+class Buffer:
     width: int
     height: int
     chars: List[bytearray]
@@ -19,7 +19,8 @@ class TermBuffer:
         self.chars = [self.spaces(width) for _ in range(height)]
         self.attrs = [bytearray(width) for _ in range(height)]
 
-    def spaces(self, width) -> bytearray:
+    @staticmethod
+    def spaces(width) -> bytearray:
         line = bytearray(2 * width)
         i = 0
         while i < width * 2:
@@ -42,6 +43,13 @@ class TermBuffer:
             char_i += 1
             char_line[char_i] = (code >> 8) & 0xff
             char_i += 1
+
+    def draw_attrs_box(self, x: int, y: int, width: int, height: int, mask: int):
+        for j in range(height):
+            line = self.attrs[y]
+            for i in range(width):
+                line[x + i] |= mask
+            y += 1
 
     def draw_mask(self, x: int, y: int, width: int, mask: int):
         line = self.attrs[y]
@@ -122,7 +130,7 @@ class PageNode:
 
     def paint(self):
         self.layout()
-        buffer = TermBuffer(self.root.width_cells, self.root.height_cells)
+        buffer = Buffer(self.root.width_cells, self.root.height_cells)
         self.root.paint(buffer)
         return buffer
 
@@ -135,19 +143,28 @@ class TextCell(TableBlock):
         self.height_cells = 1
 
     def paint(self, buffer):
-        buffer.draw_mask(self.x_cells, self.y_cells, self.width_cells, TermBuffer.MASK_OVERLINE | self.mask)
-        buffer.draw_text(self.x_cells, self.y_cells, '▏')
+        # background
+        if self.mask != 0:
+            buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, self.height_cells, self.mask)
+
+        # top border
+        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+
+        # left border
+        for j in range(self.height_cells):
+            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+
         buffer.draw_text(self.x_cells + 1, self.y_cells, self.text)
 
 
 class HeaderNode(TextCell):
     def __init__(self, text):
-        super().__init__(text, TermBuffer.MASK_FG_EMPHASIZED | TermBuffer.MASK_BG_EMPHASIZED | TermBuffer.MASK_BOLD)
+        super().__init__(text, Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_BOLD)
 
 
 class PrimitiveNode(TextCell):
     def __init__(self, j):
-        super().__init__(str(j), 0 if type(j) is str else TermBuffer.MASK_BOLD)
+        super().__init__(str(j), 0 if type(j) is str else Buffer.MASK_BOLD)
 
 
 class HBox(TableHBox):
