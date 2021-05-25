@@ -83,7 +83,7 @@ class RegularTable(TableBlock):
     widths: List[int]
     heights: List[int]
 
-    def __init__(self, rows):
+    def __init__(self, rows : List):
         self.rows = rows
         self.widths = [0] * max((len(row.contents) for row in rows), default=0)
 

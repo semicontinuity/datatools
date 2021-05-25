@@ -1,3 +1,4 @@
+from datatools.json.structure_discovery import DictDescriptor
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
@@ -103,6 +104,8 @@ class AnsiToolkit:
         elif descriptor.is_array():
             if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
                 return self.matrix_node(j, descriptor)
+            elif descriptor.item.is_dict() and descriptor.length is not None:
+                return self.uniform_table_node(j, descriptor.item)
             else:
                 return self.array(j, descriptor)
         else:
@@ -125,6 +128,9 @@ class AnsiToolkit:
 
     def matrix_node(self, j, descriptor):
         stderr_print('matrix_node')
+
+    def uniform_table_node(self, j, item_descriptor):
+        return UniformTableNode(j, item_descriptor, self)
 
 
 class PageNode:
@@ -211,6 +217,38 @@ class EntriesNode(RegularTable):
                     HeaderNode(key, is_array), kit.node(subj, descriptor_f(key))
                 ])
                 for key, subj in entries
+            ]
+        )
+
+    def paint(self, buffer):
+        # top border (in case there is no contents that normally paints the border)
+        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+
+        # left border (in case there is no contents that normally paints the border)
+        for j in range(self.height_cells):
+            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+
+        # contents
+        for item in self.rows:
+            item.paint(buffer)
+
+
+class UniformTableNode(RegularTable):
+    def __init__(self, j, entry_descriptor: DictDescriptor, kit):
+        super().__init__(
+            [
+                HBox(
+                    [HeaderNode('#', False)] +
+                    [HeaderNode(column_name, False) for column_name in entry_descriptor.dict]
+                )
+            ]
+            +
+            [
+                HBox(
+                    [HeaderNode(i, True)] +
+                    [kit.node(entry[col_name], col_desc) for col_name, col_desc in entry_descriptor.dict.items()]
+                )
+                for i, entry in enumerate(j)
             ]
         )
 
