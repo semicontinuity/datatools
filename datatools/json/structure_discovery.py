@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 
 
 @dataclass
@@ -130,6 +130,18 @@ class Discovery:
 
     def merge_descriptor(self, j):
         return DictDescriptor({k: self.object_descriptor(v) for k, v in j.items()})
+
+
+def compute_paths_of_leaves(descriptor: DictDescriptor, path: List[str] = None) -> List[Tuple[str]]:
+    if path is None:
+        path = []
+    result = []
+    for name, value_descriptor in descriptor.dict.items():
+        if value_descriptor.is_dict():
+            result += compute_paths_of_leaves(value_descriptor, path + [name])
+        else:
+            result.append(tuple(path + [name]))
+    return result
 
 
 if __name__ == "__main__":

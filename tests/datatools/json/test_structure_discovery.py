@@ -38,6 +38,22 @@ def test__object_descriptor__table():
     assert result.is_array()
 
 
+def test__object_descriptor__nested_table():
+    result = Discovery().object_descriptor(
+        [{'a': 1, 'b': {'b1': True, 'b2': 'x'}}, {'a': 2, 'b': {'b1': False, 'b2': 'y'}}]
+    )
+    assert result == ArrayDescriptor(DictDescriptor(
+        {
+            'a': PrimitiveDescriptor('int'),
+            'b': DictDescriptor({
+                'b1': PrimitiveDescriptor('bool'),
+                'b2': PrimitiveDescriptor('str'),
+            }),
+        }
+    ), length=2)
+    assert result.is_array()
+
+
 def test__object_descriptor__table__qualified_rows():
     result = Discovery().object_descriptor({'key1': {'a': 1, 'b': True}, 'key2': {'a': 1, 'b': True}, })
     assert result == ArrayDescriptor(DictDescriptor(
@@ -76,3 +92,20 @@ def test__object_descriptor__matrix():
     assert descriptor == ArrayDescriptor(ArrayDescriptor(PrimitiveDescriptor('int')))
     assert descriptor.length == 2
     assert descriptor.array.length == 3
+
+
+def test__compute_paths_of_leaves():
+    descriptor = DictDescriptor(
+        {
+            'a': PrimitiveDescriptor('int'),
+            'b': DictDescriptor({
+                'b1': PrimitiveDescriptor('bool'),
+                'b2': PrimitiveDescriptor('str'),
+            }),
+        }
+    )
+    assert compute_paths_of_leaves(descriptor) == [
+        ('a',),
+        ('b', 'b1'),
+        ('b', 'b2'),
+    ]
