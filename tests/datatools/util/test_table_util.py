@@ -5,7 +5,8 @@ from datatools.json.util import to_jsonisable
 
 def test__table__layout__traverse():
     h_box = TableHBox([TableAutoSpan(), TableVBox([TableAutoSpan(), TableHBox([TableAutoSpan(), TableAutoSpan(), ])])])
-    h_box.compute_geometry()
+    h_box.compute_width()
+    h_box.compute_height()
     h_box.compute_position(0, 0)
 
     assert json.loads(json.dumps(to_jsonisable(h_box))) == {

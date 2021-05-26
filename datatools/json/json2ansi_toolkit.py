@@ -1,93 +1,9 @@
-from typing import Tuple, Any
+from typing import Tuple, Any, Dict
 
 from datatools.json.structure_discovery import Descriptor, DictDescriptor, compute_paths_of_leaves
+from datatools.json.json2ansi_buffer import Buffer
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
-
-
-class Buffer:
-    width: int
-    height: int
-    chars: List[bytearray]
-    attrs: List[bytearray]
-
-    MASK_NONE = 0x00
-    MASK_BOLD = 0x01
-    MASK_ITALIC = 0x02
-    MASK_FG_EMPHASIZED = 0x10
-    MASK_BG_EMPHASIZED = 0x20
-    MASK_OVERLINE = 0x80
-
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.chars = [self.spaces(width) for _ in range(height)]
-        self.attrs = [bytearray(width) for _ in range(height)]
-
-    @staticmethod
-    def spaces(width) -> bytearray:
-        line = bytearray(2 * width)
-        i = 0
-        while i < width * 2:
-            line[i] = 32
-            i += 1
-            line[i] = 0
-            i += 1
-        return line
-
-    def draw_text(self, x: int, y: int, text: str, mask: int = 0):
-        attr_line = self.attrs[y]
-        char_line = self.chars[y]
-        char_i = 2 * x
-        for c in text:
-            attr_line[x] |= mask
-            x += 1
-
-            code = ord(c)
-            char_line[char_i] = code & 0xff
-            char_i += 1
-            char_line[char_i] = (code >> 8) & 0xff
-            char_i += 1
-
-    def draw_attrs_box(self, x: int, y: int, width: int, height: int, mask: int):
-        for j in range(height):
-            line = self.attrs[y]
-            for i in range(width):
-                line[x + i] |= mask
-            y += 1
-
-    def draw_mask(self, x: int, y: int, width: int, mask: int):
-        line = self.attrs[y]
-        for _ in range(width):
-            line[x] |= mask
-            x += 1
-
-    def flush(self):
-        for y in range(self.height):
-            # print(self.chars[y].decode('utf-16le'))
-
-            s = ''
-            for x in range(self.width):
-                c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
-                attr = self.attrs[y][x]
-                s += self.attr_to_ansi(attr) + c + '\x1b[0m'
-            print(s)
-
-    def attr_to_ansi(self, attr):
-        codes = []
-        if attr & self.MASK_BOLD:
-            codes.append('1')
-        if attr & self.MASK_ITALIC:
-            codes.append('3')
-        if attr & self.MASK_BG_EMPHASIZED:
-            codes.append('48;5;237')
-        else:
-            codes.append('40')
-        if attr & self.MASK_FG_EMPHASIZED:
-            codes.append('97')
-        if attr & self.MASK_OVERLINE:
-            codes.append('53')
-        return '\x1b[' + ';'.join(codes) + 'm'
 
 
 class AnsiToolkit:
@@ -98,18 +14,21 @@ class AnsiToolkit:
         if descriptor.is_primitive():
             return self.primitive(j)
         elif descriptor.is_dict():
-            return self.object_node(j, descriptor)
+            return self.object_node(j.items(), lambda key: descriptor.dict[key])
         elif descriptor.is_list():
             return self.list_of_multi_record(j, descriptor)
-        elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
-            return self.list_of_single_record(j[0], descriptor.item)
+        # elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
+        #     return self.list_of_single_record(j[0], descriptor.item)
         elif descriptor.is_array():
-            if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
-                return self.matrix_node(j, descriptor)
-            elif descriptor.item.is_dict() and descriptor.length is not None:
+            # if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
+            #     return self.matrix_node(j, descriptor)
+            if descriptor.item.is_dict() and descriptor.length is not None:
                 return self.uniform_table_node(j, descriptor.item)
             else:
-                return self.array(j, descriptor)
+                if type(j) is dict:
+                    return self.object_node(j.items(), lambda key: descriptor.item)
+                else:
+                    return self.array(j, descriptor)
         else:
             stderr_print(type(descriptor))
 
@@ -117,7 +36,7 @@ class AnsiToolkit:
         return PrimitiveNode(j)
 
     def list_of_single_record(self, element, element_descriptor):
-        return self.object_node(element, element_descriptor)
+        return self.object_node(element.items(), lambda key: element_descriptor.dict[key])
 
     def list_of_multi_record(self, j, descriptor):
         return EntriesNode(enumerate(j), lambda key: descriptor.list[key], self, True)
@@ -125,11 +44,11 @@ class AnsiToolkit:
     def array(self, j, descriptor):
         return EntriesNode(enumerate(j), lambda key: descriptor.item, self, True)
 
-    def object_node(self, j, descriptor):
-        return EntriesNode(j.items(), lambda key: descriptor.dict[key], self, False)
+    def object_node(self, items, descriptor_f):
+        return EntriesNode(items, descriptor_f, self, False)
 
     def matrix_node(self, j, descriptor):
-        stderr_print('matrix_node')
+        return self.array(j, descriptor)
 
     def uniform_table_node(self, j, item_descriptor):
         return UniformTableNode(j, item_descriptor, self)
@@ -199,7 +118,7 @@ class PrimitiveNode(TextCell):
         elif primitive_type is bool:
             return str(j).lower(), Buffer.MASK_ITALIC | Buffer.MASK_BOLD
         elif primitive_type is str:
-            return j if len(j) <= 33 else '...', Buffer.MASK_NONE
+            return j if len(j) <= 80 else '...', Buffer.MASK_NONE
         else:
             return str(j), Buffer.MASK_BOLD
 
