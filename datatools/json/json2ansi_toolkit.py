@@ -123,29 +123,6 @@ class PrimitiveNode(TextCell):
             return str(j), Buffer.MASK_BOLD
 
 
-class EntriesNode(RegularTable):
-    def __init__(self, entries, descriptor_f, kit, is_array):
-        super().__init__(
-            [
-                HBox([
-                    HeaderNode(key, is_array), kit.node(subj, descriptor_f(key))
-                ])
-                for key, subj in entries
-            ]
-        )
-
-    def paint(self, buffer):
-        # top border (in case there is no contents that normally paints the border)
-        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
-
-        # left border (in case there is no contents that normally paints the border)
-        for j in range(self.height):
-            buffer.draw_text(self.x, self.y + j, '▏')
-
-        # contents
-        super().paint(buffer)
-
-
 class CompositeTableNode(RegularTable):
     def __init__(self, rows: List):
         super().__init__(rows)
@@ -185,6 +162,18 @@ class CompositeTableNode(RegularTable):
         # left border (in case there is no contents that normally paints the border)
         for j in range(self.height):
             buffer.draw_text(self.x, self.y + j, '▏')
+
+
+class EntriesNode(CompositeTableNode):
+    def __init__(self, entries, descriptor_f, kit, is_array):
+        super().__init__(
+            [
+                HBox([
+                    HeaderNode(key, is_array), kit.node(subj, descriptor_f(key))
+                ])
+                for key, subj in entries
+            ]
+        )
 
 
 class UniformTableNode(CompositeTableNode):
