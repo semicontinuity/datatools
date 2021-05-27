@@ -57,6 +57,7 @@ class AnsiToolkit:
             HBox([self.node(entry[col_name], col_desc) for col_name, col_desc in item_descriptor.dict.items()])
             for i, entry in enumerate(j)
         ])
+        # return header_node_for_descriptor(item_descriptor, VBox, HBox)
         return ComplexTableNode(column_headers, row_headers, body)
         # return ComplexTableNode(j, item_descriptor, self)
 
@@ -208,7 +209,7 @@ class ComplexTableNode2(CompositeTableNode):
         paths = compute_paths_of_leaves(entry_descriptor)
         super().__init__(
             [
-                HBox([HeaderNode('#', False), self.header_node_for_descriptor(entry_descriptor)])
+                HBox([HeaderNode('#', False), header_node_for_descriptor(entry_descriptor)])
             ]
             +
             [
@@ -219,18 +220,6 @@ class ComplexTableNode2(CompositeTableNode):
                 ) for index, row in enumerate(j)
             ]
         )
-
-    def header_node_for_descriptor(self, descriptor: Descriptor, name=None):
-        if descriptor.is_dict():
-            if name is None:
-                return HBox([self.header_node_for_descriptor(d, name) for name, d in descriptor.dict.items()])
-            else:
-                return VBox([
-                    HeaderNode(name, False),
-                    HBox([self.header_node_for_descriptor(d, name) for name, d in descriptor.dict.items()])
-                ])
-        else:
-            return HeaderNode(name, False)
 
     def child_by_path(self, value: Any, path: Tuple[str]) -> Any:
         for name in path:
@@ -244,3 +233,30 @@ class ComplexTableNode2(CompositeTableNode):
         for name in path:
             d = d.dict[name]
         return d
+
+
+def header_node_for_descriptor(descriptor: DictDescriptor, composite_f, leaf_f, name=None):
+    if descriptor.is_dict():
+        if name is None:
+            return leaf_f(
+                [header_node_for_descriptor(d, composite_f, leaf_f, name) for name, d in descriptor.dict.items()]
+            )
+        else:
+            return composite_f([
+                HeaderNode(name, False),
+                HBox([header_node_for_descriptor(d, composite_f, leaf_f, name) for name, d in descriptor.dict.items()])
+            ])
+    else:
+        return HeaderNode(name, False)
+
+
+class NestedHeaders(Block):
+    def __init__(self, delegate):
+        super().__init__(
+            [
+                HBox([
+                    HeaderNode(key, is_array), kit.node(subj, descriptor_f(key))
+                ])
+                for key, subj in entries
+            ]
+        )

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 
 class Block:
@@ -44,6 +44,56 @@ class Container(Block):
     def __init__(self, contents=None):
         self.contents = [] if contents is None else contents
 
+    def compute_widths(self) -> List[int]:
+        for child in self.contents:
+            child.compute_width()
+        return [child.width for child in self.contents]
+
+    def compute_heights(self):
+        for child in self.contents:
+            child.compute_height()
+        return [child.height for child in self.contents]
+
+    def compute_width_as_max(self):
+        for child in self.contents:
+            child.compute_width()
+        self.width = max(child.width for child in self.contents)
+        for child in self.contents:
+            child.width = self.width
+
+    def compute_height_as_max(self):
+        for child in self.contents:
+            child.compute_height()
+        self.height = max(child.height for child in self.contents)
+        for child in self.contents:
+            child.height = self.height
+
+    def compute_width_as_sum(self):
+        self.width = sum(size for size in self.compute_widths())
+
+    def compute_height_as_sum(self):
+        self.height = sum(size for size in self.compute_heights())
+
+    def set_min_widths(self, sizes: List[int]):
+        for i in range(len(sizes)):
+            self.contents[i].width = max(self.contents[i].width, sizes[i])
+
+    def set_min_heights(self, heights: List[int]):
+        for i in range(len(heights)):
+            self.contents[i].height = max(self.contents[i].height, heights[i])
+
+    def layout_x(self, parent_x, parent_y):
+        x = parent_x
+        for child in self.contents:
+            child.compute_position(x, parent_y)
+            x += child.width
+
+    def layout_y(self, parent_x, parent_y):
+        y = parent_y
+        for child in self.contents:
+            child.compute_position(parent_x, y)
+            y += child.height
+
     def traverse(self):
         for child in self.contents:
             yield from child.traverse()
@@ -58,30 +108,14 @@ class HBox(Container):
         super(HBox, self).__init__(contents)
 
     def compute_width(self):
-        self.width = sum(size for size in self.compute_widths())
+        self.compute_width_as_sum()
 
     def compute_height(self):
-        for child in self.contents:
-            child.compute_height()
-        self.height = max(child.height for child in self.contents)
-        for child in self.contents:
-            child.height = self.height
-
-    def compute_widths(self):
-        for child in self.contents:
-            child.compute_width()
-        return [child.width for child in self.contents]
-
-    def set_min_widths(self, sizes: List[int]):
-        for i in range(len(sizes)):
-            self.contents[i].width = max(self.contents[i].width, sizes[i])
+        self.compute_height_as_max()
 
     def compute_position(self, parent_x, parent_y):
         super().compute_position(parent_x, parent_y)
-        x = parent_x
-        for child in self.contents:
-            child.compute_position(x, parent_y)
-            x += child.width
+        self.layout_x(parent_x, parent_y)
 
 
 class VBox(Container):
@@ -89,30 +123,39 @@ class VBox(Container):
         super(VBox, self).__init__(contents)
 
     def compute_width(self):
-        for child in self.contents:
-            child.compute_width()
-        self.width = max(child.width for child in self.contents)
-        for child in self.contents:
-            child.width = self.width
+        self.compute_width_as_max()
 
     def compute_height(self):
-        self.height = sum(size for size in self.compute_heights())
-
-    def compute_heights(self):
-        for child in self.contents:
-            child.compute_height()
-        return [child.height for child in self.contents]
-
-    def set_min_heights(self, heights: List[int]):
-        for i in range(len(heights)):
-            self.contents[i].height = max(self.contents[i].height, heights[i])
+        self.compute_height_as_sum()
 
     def compute_position(self, parent_x, parent_y):
         super().compute_position(parent_x, parent_y)
-        y = parent_y
-        for child in self.contents:
-            child.compute_position(parent_x, y)
-            y += child.height
+        self.layout_y(parent_x, parent_y)
+
+
+class Chain(Container):
+    def __init__(self, vertical: bool, contents=None):
+        super(Container, self).__init__(contents)
+        self.vertical = vertical
+
+    def compute_width(self):
+        if self.vertical:
+            self.compute_width_as_max()
+        else:
+            self.compute_width_as_sum()
+
+    def compute_height(self):
+        if self.vertical:
+            self.compute_height_as_sum()
+        else:
+            self.compute_height_as_max()
+
+    def compute_position(self, parent_x, parent_y):
+        super().compute_position(parent_x, parent_y)
+        if self.vertical:
+            self.layout_y(parent_x, parent_y)
+        else:
+            self.layout_x(parent_x, parent_y)
 
 
 class RegularTable(Container):
@@ -160,4 +203,3 @@ class RegularTable(Container):
         for child in self.contents:
             child.compute_position(parent_x, y)
             y += child.height
-
