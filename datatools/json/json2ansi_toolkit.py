@@ -51,7 +51,13 @@ class AnsiToolkit:
         return self.array(j, descriptor)
 
     def uniform_table_node(self, j, item_descriptor):
-        return UniformTableNode(j, item_descriptor, self)
+        column_headers = HBox([HeaderNode(column_name, False) for column_name in item_descriptor.dict])
+        row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
+        body = RegularTable([
+            HBox([self.node(entry[col_name], col_desc) for col_name, col_desc in item_descriptor.dict.items()])
+            for i, entry in enumerate(j)
+        ])
+        return UniformTableNode(column_headers, row_headers, body)
         # return ComplexTableNode(j, item_descriptor, self)
 
 
@@ -177,14 +183,8 @@ class EntriesNode(CompositeTableNode):
 
 
 class UniformTableNode(CompositeTableNode):
-    def __init__(self, j, entry_descriptor: DictDescriptor, kit):
+    def __init__(self, column_headers, row_headers, body: RegularTable):
         corner = HeaderNode('#', False)
-        column_headers = HBox([HeaderNode(column_name, False) for column_name in entry_descriptor.dict])
-        row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
-        body = RegularTable([
-            HBox([kit.node(entry[col_name], col_desc) for col_name, col_desc in entry_descriptor.dict.items()])
-            for i, entry in enumerate(j)
-        ])
 
         self.consolidate_min_widths(body, column_headers)
         self.consolidate_min_heights(body, row_headers)
