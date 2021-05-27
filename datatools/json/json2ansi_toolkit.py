@@ -51,15 +51,24 @@ class AnsiToolkit:
         return self.array(j, descriptor)
 
     def uniform_table_node(self, j, item_descriptor):
-        column_headers = HBox([HeaderNode(column_name, False) for column_name in item_descriptor.dict])
         row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
+
+        # column_headers = HBox([HeaderNode(column_name, False) for column_name in item_descriptor.dict])
+        # body = RegularTable([
+        #     HBox([self.node(entry[col_name], col_desc) for col_name, col_desc in item_descriptor.dict.items()])
+        #     for i, entry in enumerate(j)
+        # ])
+
+        column_headers = headers_node_for_descriptor(item_descriptor, False)
+        paths = compute_paths_of_leaves(item_descriptor)
         body = RegularTable([
-            HBox([self.node(entry[col_name], col_desc) for col_name, col_desc in item_descriptor.dict.items()])
-            for i, entry in enumerate(j)
+            HBox([
+                self.node(child_by_path(row, path), descriptor_by_path(item_descriptor, path)) for path in paths
+            ])
+            for index, row in enumerate(j)
         ])
-        # return header_node_for_descriptor(item_descriptor, True)
-        return ComplexTableNode(column_headers, row_headers, body)
-        # return ComplexTableNode(j, item_descriptor, self)
+
+        return ComplexTableNode(body, column_headers, row_headers)
 
 
 class PageNode:
@@ -184,7 +193,7 @@ class EntriesNode(CompositeTableNode):
 
 
 class ComplexTableNode(CompositeTableNode):
-    def __init__(self, column_headers, row_headers, body: RegularTable):
+    def __init__(self, body: RegularTable, column_headers, row_headers):
         corner = HeaderNode('#', False)
 
         self.consolidate_min_widths(body, column_headers)
@@ -204,57 +213,65 @@ class ComplexTableNode(CompositeTableNode):
         )
 
 
-class ComplexTableNode2(CompositeTableNode):
-    def __init__(self, j, entry_descriptor: DictDescriptor, kit):
-        paths = compute_paths_of_leaves(entry_descriptor)
-        super().__init__(
-            [
-                HBox([HeaderNode('#', False), header_node_for_descriptor(entry_descriptor)])
-            ]
-            +
-            [
-                HBox(
-                    [HeaderNode(str(index), True)]
-                    +
-                    [kit.node(self.child_by_path(row, path), self.descriptor_by_path(entry_descriptor, path)) for path in paths]
-                ) for index, row in enumerate(j)
-            ]
-        )
-
-    def child_by_path(self, value: Any, path: Tuple[str]) -> Any:
-        for name in path:
-            if value is None:
-                return None
-            if isinstance(value, dict):
-                value = value.get(name)
-        return value
-
-    def descriptor_by_path(self, d: Descriptor, path: Tuple[str]) -> Any:
-        for name in path:
-            d = d.dict[name]
-        return d
+def child_by_path(value: Any, path: Tuple[str]) -> Any:
+    for name in path:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            value = value.get(name)
+    return value
 
 
-def header_node_for_descriptor(descriptor: DictDescriptor, vertical: bool, name=None):
+def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Any:
+    for name in path:
+        d = d.dict[name]
+    return d
+
+
+def headers_node_for_descriptor(descriptor: DictDescriptor, vertical: bool, leaf_sink: List = None, name=None):
     if descriptor.is_dict():
         if name is None:
-            return (NestedRowHeaders if vertical else NestedColumnHeaders)(
-                [header_node_for_descriptor(d, vertical, name) for name, d in descriptor.dict.items()]
-            )
+            leaf_sink = leaf_sink if leaf_sink is not None else []
+            contents = [headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.dict.items()]
+            return (NestedRowHeaders if vertical else NestedColumnHeaders)(contents, leaf_sink)
         else:
             return (HBox if vertical else VBox)([
                 HeaderNode(name, False),
-                (VBox if vertical else HBox)([header_node_for_descriptor(d, vertical, name) for name, d in descriptor.dict.items()])
+                (VBox if vertical else HBox)([headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.dict.items()])
             ])
     else:
-        return HeaderNode(name, False)
+        leaf = HeaderNode(name, False)
+        leaf_sink.append(leaf)
+        return leaf
 
 
 class NestedColumnHeaders(HBox):
-    def __init__(self, contents):
+    leaves: List[Block]
+
+    def __init__(self, contents, leaves: List[Block]):
         super().__init__(contents)
+        self.leaves = leaves
+
+    def compute_widths(self) -> List[int]:
+        super(NestedColumnHeaders, self).compute_widths()
+        return [leaf.width for leaf in self.leaves]
+
+    def set_min_widths(self, sizes: List[int]):
+        for i in range(len(sizes)):
+            self.leaves[i].set_min_width(sizes[i])
 
 
 class NestedRowHeaders(VBox):
-    def __init__(self, contents):
+    leaves: List[Block]
+
+    def __init__(self, contents, leaves: List[Block]):
         super().__init__(contents)
+        self.leaves = leaves
+
+    def compute_widths(self) -> List[int]:
+        super(NestedRowHeaders, self).compute_widths()
+        return [leaf.width for leaf in self.leaves]
+
+    def set_min_heights(self, sizes: List[int]):
+        for i in range(len(sizes)):
+            self.leaves[i].set_min_height(sizes[i])
