@@ -57,7 +57,7 @@ class AnsiToolkit:
             HBox([self.node(entry[col_name], col_desc) for col_name, col_desc in item_descriptor.dict.items()])
             for i, entry in enumerate(j)
         ])
-        # return header_node_for_descriptor(item_descriptor, VBox, HBox)
+        # return header_node_for_descriptor(item_descriptor, True)
         return ComplexTableNode(column_headers, row_headers, body)
         # return ComplexTableNode(j, item_descriptor, self)
 
@@ -235,28 +235,26 @@ class ComplexTableNode2(CompositeTableNode):
         return d
 
 
-def header_node_for_descriptor(descriptor: DictDescriptor, composite_f, leaf_f, name=None):
+def header_node_for_descriptor(descriptor: DictDescriptor, vertical: bool, name=None):
     if descriptor.is_dict():
         if name is None:
-            return leaf_f(
-                [header_node_for_descriptor(d, composite_f, leaf_f, name) for name, d in descriptor.dict.items()]
+            return (NestedRowHeaders if vertical else NestedColumnHeaders)(
+                [header_node_for_descriptor(d, vertical, name) for name, d in descriptor.dict.items()]
             )
         else:
-            return composite_f([
+            return (HBox if vertical else VBox)([
                 HeaderNode(name, False),
-                HBox([header_node_for_descriptor(d, composite_f, leaf_f, name) for name, d in descriptor.dict.items()])
+                (VBox if vertical else HBox)([header_node_for_descriptor(d, vertical, name) for name, d in descriptor.dict.items()])
             ])
     else:
         return HeaderNode(name, False)
 
 
-class NestedHeaders(Block):
-    def __init__(self, delegate):
-        super().__init__(
-            [
-                HBox([
-                    HeaderNode(key, is_array), kit.node(subj, descriptor_f(key))
-                ])
-                for key, subj in entries
-            ]
-        )
+class NestedColumnHeaders(HBox):
+    def __init__(self, contents):
+        super().__init__(contents)
+
+
+class NestedRowHeaders(VBox):
+    def __init__(self, contents):
+        super().__init__(contents)
