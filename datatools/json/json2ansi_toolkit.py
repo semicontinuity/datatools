@@ -1,7 +1,8 @@
 from typing import Tuple, Any
 
 from datatools.json.json2ansi_buffer import Buffer
-from datatools.json.structure_discovery import Descriptor, DictDescriptor, compute_paths_of_leaves
+from datatools.json.structure_discovery import Descriptor, DictDescriptor, compute_column_paths, ArrayDescriptor, \
+    child_by_path, compute_row_paths
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
@@ -22,8 +23,11 @@ class AnsiToolkit:
         elif descriptor.is_array():
             # if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
             #     return self.matrix_node(j, descriptor)
+            if descriptor.item.is_array():
+                return self.uniform_table_node2(j, descriptor)
+
             if descriptor.item.is_dict() and descriptor.length is not None:
-                return self.uniform_table_node(j, descriptor.item)
+                return self.uniform_table_node(j, descriptor)
             else:
                 if type(j) is dict:
                     return self.object_node(j.items(), lambda key: descriptor.item)
@@ -50,25 +54,45 @@ class AnsiToolkit:
     def matrix_node(self, j, descriptor):
         return self.array(j, descriptor)
 
-    def uniform_table_node(self, j, item_descriptor):
-        row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
-
+    def uniform_table_node(self, j, descriptor):
+        item_descriptor = descriptor.item
         # column_headers = HBox([HeaderNode(column_name, False) for column_name in item_descriptor.dict])
         # body = RegularTable([
         #     HBox([self.node(entry[col_name], col_desc) for col_name, col_desc in item_descriptor.dict.items()])
         #     for i, entry in enumerate(j)
         # ])
 
-        column_headers = headers_node_for_descriptor(item_descriptor, False)
-        paths = compute_paths_of_leaves(item_descriptor)
+        row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
+        column_headers = column_headers_node_for_descriptor(item_descriptor, False)
+        paths = compute_column_paths(item_descriptor)
         body = RegularTable([
             HBox([
-                self.node(child_by_path(row, path), descriptor_by_path(item_descriptor, path)) for path in paths
+                self.node(child_by_path(row, path)[1], descriptor_by_path(item_descriptor, path)) for path in paths
             ])
             for index, row in enumerate(j)
         ])
 
         return ComplexTableNode(body, column_headers, row_headers)
+
+    def uniform_table_node2(self, j, descriptor: ArrayDescriptor):
+        row_paths = compute_row_paths(j ,descriptor)
+        item_descriptor = descriptor.inner_item()
+        paths = compute_column_paths(item_descriptor)
+
+        row_headers = row_headers_node_for_descriptor(j, descriptor, True)
+
+        body = RegularTable([
+            self.uniform_table_node2_tr(child_by_path(j, row_path)[1], item_descriptor, paths)
+            for row_path in row_paths
+        ])
+        column_headers = column_headers_node_for_descriptor(item_descriptor, False)
+        return ComplexTableNode(body, column_headers, row_headers)
+
+    def uniform_table_node2_tr(self, row, row_descriptor, column_paths):
+        return HBox([
+            self.node(child_by_path(row, path)[1], descriptor_by_path(row_descriptor, path))
+            for path in column_paths
+        ])
 
 
 class PageNode:
@@ -213,31 +237,37 @@ class ComplexTableNode(CompositeTableNode):
         )
 
 
-def child_by_path(value: Any, path: Tuple[str]) -> Any:
-    for name in path:
-        if value is None:
-            return None
-        if isinstance(value, dict):
-            value = value.get(name)
-    return value
-
-
 def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Any:
     for name in path:
         d = d.dict[name]
     return d
 
 
-def headers_node_for_descriptor(descriptor: DictDescriptor, vertical: bool, leaf_sink: List = None, name=None):
+def column_headers_node_for_descriptor(descriptor: DictDescriptor, vertical: bool, leaf_sink: List = None, name=None):
+    leaf_sink = leaf_sink if leaf_sink is not None else []
     if descriptor.is_dict():
+        nodes = [column_headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.dict.items()]
         if name is None:
-            leaf_sink = leaf_sink if leaf_sink is not None else []
-            contents = [headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.dict.items()]
-            return (NestedRowHeaders if vertical else NestedColumnHeaders)(contents, leaf_sink)
+            return (NestedRowHeaders if vertical else NestedColumnHeaders)(nodes, leaf_sink)
         else:
             return (HBox if vertical else VBox)([
-                HeaderNode(name, False),
-                (VBox if vertical else HBox)([headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.dict.items()])
+                HeaderNode(name, False), (VBox if vertical else HBox)(nodes)
+            ])
+    else:
+        leaf = HeaderNode(name, False)
+        leaf_sink.append(leaf)
+        return leaf
+
+
+def row_headers_node_for_descriptor(j, descriptor: ArrayDescriptor, vertical: bool, leaf_sink: List = None, name=None):
+    leaf_sink = leaf_sink if leaf_sink is not None else []
+    if descriptor.is_array():
+        nodes = [row_headers_node_for_descriptor(jj, descriptor.item, vertical, leaf_sink, name) for name, jj in descriptor.items(j)]
+        if name is None:
+            return (NestedRowHeaders if vertical else NestedColumnHeaders)(nodes, leaf_sink)
+        else:
+            return (HBox if vertical else VBox)([
+                HeaderNode(name, False), (VBox if vertical else HBox)(nodes)
             ])
     else:
         leaf = HeaderNode(name, False)

@@ -94,7 +94,7 @@ def test__object_descriptor__matrix():
     assert descriptor.array.length == 3
 
 
-def test__compute_paths_of_leaves():
+def test__compute_column_paths():
     descriptor = DictDescriptor(
         {
             'a': PrimitiveDescriptor('int'),
@@ -104,8 +104,29 @@ def test__compute_paths_of_leaves():
             }),
         }
     )
-    assert compute_paths_of_leaves(descriptor) == [
+    assert compute_column_paths(descriptor) == [
         ('a',),
         ('b', 'b1'),
         ('b', 'b2'),
     ]
+
+
+def test__compute_row_paths():
+    j = {
+        "input_parameters": [
+            {"name": "a", "type": "int"},
+            {"name": "b", "type": "int"}
+        ],
+        "output_parameters": [
+            {"name": "c", "type": "int"}
+        ]
+    }
+    descriptor = Discovery().object_descriptor(j)
+    assert compute_row_paths(j, descriptor) == [
+        ('input_parameters', 0),
+        ('input_parameters', 1),
+        ('output_parameters', 0)
+    ]
+    assert child_by_path(j, ('input_parameters', 0)) == (True, {"name": "a", "type": "int"})
+    assert child_by_path(j, ('input_parameters', 1)) == (True, {"name": "b", "type": "int"})
+    assert child_by_path(j, ('output_parameters', 0)) == (True, {"name": "c", "type": "int"})

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Hashable
 
 
 @dataclass
@@ -66,6 +66,9 @@ class ArrayDescriptor(Descriptor):
             return self.item == o.item
         return False
 
+    def inner_item(self) -> Descriptor:
+        return self.item.inner_item() if self.item.is_array() else self.item
+
     @property
     def item(self) -> Descriptor:
         return self.array
@@ -84,6 +87,10 @@ class ArrayDescriptor(Descriptor):
             item0 = item0.merge_with(i)
 
         return item0
+
+    @staticmethod
+    def items(j):
+        return j.items() if type(j) is dict else enumerate(j)
 
 
 class Discovery:
@@ -132,16 +139,49 @@ class Discovery:
         return DictDescriptor({k: self.object_descriptor(v) for k, v in j.items()})
 
 
-def compute_paths_of_leaves(descriptor: DictDescriptor, path: List[str] = None) -> List[Tuple[str]]:
-    if path is None:
-        path = []
+def compute_column_paths(descriptor: DictDescriptor) -> List[Tuple[str]]:
     result = []
-    for name, value_descriptor in descriptor.dict.items():
-        if value_descriptor.is_dict():
-            result += compute_paths_of_leaves(value_descriptor, path + [name])
-        else:
-            result.append(tuple(path + [name]))
+    compute_column_paths0(descriptor, [], result)
     return result
+
+
+def compute_column_paths0(descriptor: DictDescriptor, path: List[str], result: List[Tuple[str]]):
+    for name, value_descriptor in descriptor.dict.items():
+        child_path = path + [name]
+        if value_descriptor.is_dict():
+            compute_column_paths0(value_descriptor, child_path, result)
+        else:
+            result.append(tuple(child_path))
+
+
+def compute_row_paths(j, descriptor: ArrayDescriptor) -> List[Tuple[str]]:
+    result = []
+    compute_row_paths0(j, descriptor, [], result)
+    return result
+
+
+def compute_row_paths0(j, descriptor: ArrayDescriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
+    for key, value in descriptor.items(j):
+        child_path = path + [key]
+        if descriptor.item.is_array():
+            compute_row_paths0(value, descriptor.item, child_path, result)
+        else:
+            result.append(tuple(child_path))
+
+
+def child_by_path(value, path: Tuple[Hashable, ...]) -> Tuple[bool, Optional[Hashable]]:
+    for key in path:
+        if value is None:
+            return False, None
+        if isinstance(value, dict):
+            if key in value:
+                value = value.get(key)
+            else:
+                return False, None
+        else:
+            if 0 <= key < len(value):
+                value = value[key]
+    return True, value
 
 
 if __name__ == "__main__":
