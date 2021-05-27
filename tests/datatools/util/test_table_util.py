@@ -10,20 +10,20 @@ def test__table__layout__traverse():
     h_box.compute_position(0, 0)
 
     assert json.loads(json.dumps(to_jsonisable(h_box))) == {
-            'height_cells': 2, 'width_cells': 3, 'x_cells': 0, 'y_cells': 0,
+            'height': 2, 'width': 3, 'x': 0, 'y': 0,
             'contents': [
                 {
-                    'height_cells': 2, 'width_cells': 1, 'x_cells': 0, 'y_cells': 0,
+                    'height': 2, 'width': 1, 'x': 0, 'y': 0,
                 },
                 {
-                    'height_cells': 2, 'width_cells': 2, 'x_cells': 1, 'y_cells': 0,
+                    'height': 2, 'width': 2, 'x': 1, 'y': 0,
                     'contents': [
-                        {'height_cells': 1, 'width_cells': 2, 'x_cells': 1, 'y_cells': 0, },
+                        {'height': 1, 'width': 2, 'x': 1, 'y': 0, },
                         {
-                            'height_cells': 1, 'width_cells': 2, 'x_cells': 1, 'y_cells': 1,
+                            'height': 1, 'width': 2, 'x': 1, 'y': 1,
                             'contents': [
-                                {'height_cells': 1, 'width_cells': 1, 'x_cells': 1, 'y_cells': 1, },
-                                {'height_cells': 1, 'width_cells': 1, 'x_cells': 2, 'y_cells': 1, }
+                                {'height': 1, 'width': 1, 'x': 1, 'y': 1, },
+                                {'height': 1, 'width': 1, 'x': 2, 'y': 1, }
                             ],
                         }
                     ],
@@ -32,22 +32,22 @@ def test__table__layout__traverse():
         }
 
     assert json.loads(json.dumps(to_jsonisable(list(h_box.traverse())))) == [
-        {'height_cells': 2, 'width_cells': 1, 'x_cells': 0, 'y_cells': 0},
-        {'height_cells': 1, 'width_cells': 2, 'x_cells': 1, 'y_cells': 0},
-        {'height_cells': 1, 'width_cells': 1, 'x_cells': 1, 'y_cells': 1},
-        {'height_cells': 1, 'width_cells': 1, 'x_cells': 2, 'y_cells': 1}
+        {'height': 2, 'width': 1, 'x': 0, 'y': 0},
+        {'height': 1, 'width': 2, 'x': 1, 'y': 0},
+        {'height': 1, 'width': 1, 'x': 1, 'y': 1},
+        {'height': 1, 'width': 1, 'x': 2, 'y': 1}
     ]
 
     from itertools import groupby
 
-    table_rows = [list(group_items) for key, group_items in groupby(h_box.traverse(), key=lambda i: i.y_cells)]
+    table_rows = [list(group_items) for key, group_items in groupby(h_box.traverse(), key=lambda i: i.y)]
     assert json.loads(json.dumps(to_jsonisable(table_rows))) == [
         [
-            {'height_cells': 2, 'width_cells': 1, 'x_cells': 0, 'y_cells': 0},
-            {'height_cells': 1, 'width_cells': 2, 'x_cells': 1, 'y_cells': 0}
+            {'height': 2, 'width': 1, 'x': 0, 'y': 0},
+            {'height': 1, 'width': 2, 'x': 1, 'y': 0}
         ],
         [
-            {'height_cells': 1, 'width_cells': 1, 'x_cells': 1, 'y_cells': 1},
-            {'height_cells': 1, 'width_cells': 1, 'x_cells': 2, 'y_cells': 1}
+            {'height': 1, 'width': 1, 'x': 1, 'y': 1},
+            {'height': 1, 'width': 1, 'x': 2, 'y': 1}
         ]
     ]

@@ -2,10 +2,10 @@ from typing import List
 
 
 class TableBlock:
-    x_cells: int
-    y_cells: int
-    width_cells: int
-    height_cells: int
+    x: int
+    y: int
+    width: int
+    height: int
 
     def compute_width(self):
         pass
@@ -13,9 +13,9 @@ class TableBlock:
     def compute_height(self):
         pass
 
-    def compute_position(self, parent_x_cells, parent_y_cells):
-        self.x_cells = parent_x_cells
-        self.y_cells = parent_y_cells
+    def compute_position(self, parent_x, parent_y):
+        self.x = parent_x
+        self.y = parent_y
 
     def traverse(self):
         yield self
@@ -25,8 +25,8 @@ class TableAutoSpan(TableBlock):
     contents: object
 
     def __init__(self):
-        self.width_cells = 1
-        self.height_cells = 1
+        self.width = 1
+        self.height = 1
 
 
 class TableHBox(TableBlock):
@@ -38,21 +38,21 @@ class TableHBox(TableBlock):
     def compute_width(self):
         for child in self.contents:
             child.compute_width()
-        self.width_cells = sum(child.width_cells for child in self.contents)
+        self.width = sum(child.width for child in self.contents)
 
     def compute_height(self):
         for child in self.contents:
             child.compute_height()
-        self.height_cells = max(child.height_cells for child in self.contents)
+        self.height = max(child.height for child in self.contents)
         for child in self.contents:
-            child.height_cells = self.height_cells
+            child.height = self.height
 
-    def compute_position(self, parent_x_cells, parent_y_cells):
-        super().compute_position(parent_x_cells, parent_y_cells)
-        x = parent_x_cells
+    def compute_position(self, parent_x, parent_y):
+        super().compute_position(parent_x, parent_y)
+        x = parent_x
         for child in self.contents:
-            child.compute_position(x, parent_y_cells)
-            x += child.width_cells
+            child.compute_position(x, parent_y)
+            x += child.width
 
     def traverse(self):
         for child in self.contents:
@@ -68,21 +68,21 @@ class TableVBox(TableBlock):
     def compute_width(self):
         for child in self.contents:
             child.compute_width()
-        self.width_cells = max(child.width_cells for child in self.contents)
+        self.width = max(child.width for child in self.contents)
 
     def compute_height(self):
         for child in self.contents:
             child.compute_height()
-        self.height_cells = sum(child.height_cells for child in self.contents)
+        self.height = sum(child.height for child in self.contents)
         for child in self.contents:
-            child.width_cells = self.width_cells
+            child.width = self.width
 
-    def compute_position(self, parent_x_cells, parent_y_cells):
-        super().compute_position(parent_x_cells, parent_y_cells)
-        y = parent_y_cells
+    def compute_position(self, parent_x, parent_y):
+        super().compute_position(parent_x, parent_y)
+        y = parent_y
         for child in self.contents:
-            child.compute_position(parent_x_cells, y)
-            y += child.height_cells
+            child.compute_position(parent_x, y)
+            y += child.height
 
     def traverse(self):
         for child in self.contents:
@@ -91,52 +91,39 @@ class TableVBox(TableBlock):
 
 class RegularTable(TableBlock):
     rows: List[TableHBox]
-    widths: List[int]
 
     def __init__(self, rows : List):
         self.rows = rows
-        self.widths = [0] * max((len(row.contents) for row in rows), default=0)
 
-    def compute_geometry(self):
-        for row in self.rows:
-            row.compute_geometry()
-        self.height_cells = sum(child.height_cells for child in self.rows)
-
-        for row in self.rows:
-            for i in range(len(row.contents)):
-                self.widths[i] = max(self.widths[i], row.contents[i].width_cells)
-
-        for row in self.rows:
-            for i in range(len(row.contents)):
-                row.contents[i].width_cells = self.widths[i]
-
-        self.width_cells = sum(width for width in self.widths)
-
-    def compute_width(self):
+    def compute_widths(self):
+        widths = [0] * max((len(row.contents) for row in self.rows), default=0)
         for row in self.rows:
             row.compute_width()
+        for row in self.rows:
+            for i in range(len(row.contents)):
+                widths[i] = max(widths[i], row.contents[i].width)
+        return widths
+
+    def compute_width(self):
+        widths = self.compute_widths()
 
         for row in self.rows:
             for i in range(len(row.contents)):
-                self.widths[i] = max(self.widths[i], row.contents[i].width_cells)
+                row.contents[i].width = widths[i]
 
-        for row in self.rows:
-            for i in range(len(row.contents)):
-                row.contents[i].width_cells = self.widths[i]
-
-        self.width_cells = sum(width for width in self.widths)
+        self.width = sum(width for width in widths)
 
     def compute_height(self):
         for row in self.rows:
             row.compute_height()
-        self.height_cells = sum(child.height_cells for child in self.rows)
+        self.height = sum(child.height for child in self.rows)
 
-    def compute_position(self, parent_x_cells, parent_y_cells):
-        super().compute_position(parent_x_cells, parent_y_cells)
-        y = parent_y_cells
+    def compute_position(self, parent_x, parent_y):
+        super().compute_position(parent_x, parent_y)
+        y = parent_y
         for child in self.rows:
-            child.compute_position(parent_x_cells, y)
-            y += child.height_cells
+            child.compute_position(parent_x, y)
+            y += child.height
 
     def traverse(self):
         for child in self.rows:

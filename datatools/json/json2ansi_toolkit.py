@@ -67,7 +67,7 @@ class PageNode:
 
     def paint(self):
         self.layout()
-        buffer = Buffer(self.root.width_cells, self.root.height_cells)
+        buffer = Buffer(self.root.width, self.root.height)
         self.root.paint(buffer)
         return buffer
 
@@ -76,22 +76,22 @@ class TextCell(TableBlock):
     def __init__(self, text, mask = 0):
         self.text = text
         self.mask = mask
-        self.width_cells = len(text) + 2
-        self.height_cells = 1
+        self.width = len(text) + 2
+        self.height = 1
 
     def paint(self, buffer):
         # background
         if self.mask != 0:
-            buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, self.height_cells, self.mask)
+            buffer.draw_attrs_box(self.x, self.y, self.width, self.height, self.mask)
 
         # top border
-        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 
         # left border
-        for j in range(self.height_cells):
-            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+        for j in range(self.height):
+            buffer.draw_text(self.x, self.y + j, '▏')
 
-        buffer.draw_text(self.x_cells + 1, self.y_cells, self.text)
+        buffer.draw_text(self.x + 1, self.y, self.text)
 
 
 class HeaderNode(TextCell):
@@ -154,11 +154,11 @@ class EntriesNode(RegularTable):
 
     def paint(self, buffer):
         # top border (in case there is no contents that normally paints the border)
-        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 
         # left border (in case there is no contents that normally paints the border)
-        for j in range(self.height_cells):
-            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+        for j in range(self.height):
+            buffer.draw_text(self.x, self.y + j, '▏')
 
         # contents
         for item in self.rows:
@@ -186,11 +186,11 @@ class UniformTableNode(RegularTable):
 
     def paint(self, buffer):
         # top border (in case there is no contents that normally paints the border)
-        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 
         # left border (in case there is no contents that normally paints the border)
-        for j in range(self.height_cells):
-            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+        for j in range(self.height):
+            buffer.draw_text(self.x, self.y + j, '▏')
 
         # contents
         for item in self.rows:
@@ -241,11 +241,11 @@ class ComplexTableNode(RegularTable):
 
     def paint(self, buffer):
         # top border (in case there is no contents that normally paints the border)
-        buffer.draw_attrs_box(self.x_cells, self.y_cells, self.width_cells, 1, Buffer.MASK_OVERLINE)
+        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 
         # left border (in case there is no contents that normally paints the border)
-        for j in range(self.height_cells):
-            buffer.draw_text(self.x_cells, self.y_cells + j, '▏')
+        for j in range(self.height):
+            buffer.draw_text(self.x, self.y + j, '▏')
 
         # contents
         for item in self.rows:
