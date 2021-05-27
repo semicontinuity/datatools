@@ -57,7 +57,7 @@ class AnsiToolkit:
             HBox([self.node(entry[col_name], col_desc) for col_name, col_desc in item_descriptor.dict.items()])
             for i, entry in enumerate(j)
         ])
-        return UniformTableNode(column_headers, row_headers, body)
+        return ComplexTableNode(column_headers, row_headers, body)
         # return ComplexTableNode(j, item_descriptor, self)
 
 
@@ -130,8 +130,8 @@ class PrimitiveNode(TextCell):
 
 
 class CompositeTableNode(RegularTable):
-    def __init__(self, rows: List):
-        super().__init__(rows)
+    def __init__(self, contents: List):
+        super().__init__(contents)
 
     @staticmethod
     def consolidate_width(corner, row_headers):
@@ -182,7 +182,7 @@ class EntriesNode(CompositeTableNode):
         )
 
 
-class UniformTableNode(CompositeTableNode):
+class ComplexTableNode(CompositeTableNode):
     def __init__(self, column_headers, row_headers, body: RegularTable):
         corner = HeaderNode('#', False)
 
@@ -203,7 +203,7 @@ class UniformTableNode(CompositeTableNode):
         )
 
 
-class ComplexTableNode(RegularTable):
+class ComplexTableNode2(CompositeTableNode):
     def __init__(self, j, entry_descriptor: DictDescriptor, kit):
         paths = compute_paths_of_leaves(entry_descriptor)
         super().__init__(
@@ -244,14 +244,3 @@ class ComplexTableNode(RegularTable):
         for name in path:
             d = d.dict[name]
         return d
-
-    def paint(self, buffer):
-        # top border (in case there is no contents that normally paints the border)
-        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
-
-        # left border (in case there is no contents that normally paints the border)
-        for j in range(self.height):
-            buffer.draw_text(self.x, self.y + j, '▏')
-
-        # contents
-        super().paint(buffer)
