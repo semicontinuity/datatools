@@ -1,7 +1,7 @@
-from typing import Tuple, Any, Dict
+from typing import Tuple, Any
 
-from datatools.json.structure_discovery import Descriptor, DictDescriptor, compute_paths_of_leaves
 from datatools.json.json2ansi_buffer import Buffer
+from datatools.json.structure_discovery import Descriptor, DictDescriptor, compute_paths_of_leaves
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
@@ -51,7 +51,7 @@ class AnsiToolkit:
         return self.array(j, descriptor)
 
     def uniform_table_node(self, j, item_descriptor):
-        return UniformTableNode(j, item_descriptor, self)
+        return CompositeTableNode(j, item_descriptor, self)
         # return ComplexTableNode(j, item_descriptor, self)
 
 
@@ -72,7 +72,7 @@ class PageNode:
         return buffer
 
 
-class TextCell(TableBlock):
+class TextCell(Block):
     def __init__(self, text, mask = 0):
         self.text = text
         self.mask = mask
@@ -123,24 +123,6 @@ class PrimitiveNode(TextCell):
             return str(j), Buffer.MASK_BOLD
 
 
-class HBox(TableHBox):
-    def __init__(self, contents):
-        super().__init__(contents)
-
-    def paint(self, buffer):
-        for item in self.contents:
-            item.paint(buffer)
-
-
-class VBox(TableVBox):
-    def __init__(self, contents):
-        super().__init__(contents)
-
-    def paint(self, buffer):
-        for item in self.contents:
-            item.paint(buffer)
-
-
 class EntriesNode(RegularTable):
     def __init__(self, entries, descriptor_f, kit, is_array):
         super().__init__(
@@ -161,26 +143,43 @@ class EntriesNode(RegularTable):
             buffer.draw_text(self.x, self.y + j, '▏')
 
         # contents
-        for item in self.rows:
-            item.paint(buffer)
+        super().paint(buffer)
 
 
-class UniformTableNode(RegularTable):
+class CompositeTableNode(RegularTable):
     def __init__(self, j, entry_descriptor: DictDescriptor, kit):
+        corner = HeaderNode('#', False)
+        column_headers = HBox([HeaderNode(column_name, False) for column_name in entry_descriptor.dict])
+        row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
+        body = RegularTable([
+            HBox([kit.node(entry[col_name], col_desc) for col_name, col_desc in entry_descriptor.dict.items()])
+            for i, entry in enumerate(j)
+        ])
+
+        header_widths = column_headers.compute_widths()
+        header_heights = row_headers.compute_heights()
+        body_widths = body.compute_widths()
+        body_heights = body.compute_heights()
+
+        column_headers.set_min_widths(body_widths)
+        body.set_min_widths(header_widths)
+        row_headers.set_min_heights(body_heights)
+        body.set_min_heights(header_heights)
+
+        column_headers.compute_width()
+        row_headers.compute_width()
+        corner.set_min_width(row_headers.width)
+        row_headers.set_min_width(corner.width)
+
+        column_headers.compute_height()
+        row_headers.compute_height()
+        column_headers.set_min_height(corner.height)
+        corner.set_min_height(column_headers.height)
+
         super().__init__(
             [
-                HBox(
-                    [HeaderNode('#', False)] +
-                    [HeaderNode(column_name, False) for column_name in entry_descriptor.dict]
-                )
-            ]
-            +
-            [
-                HBox(
-                    [HeaderNode(i, True)] +
-                    [kit.node(entry[col_name], col_desc) for col_name, col_desc in entry_descriptor.dict.items()]
-                )
-                for i, entry in enumerate(j)
+                HBox([corner, column_headers]),
+                HBox([row_headers, body])
             ]
         )
 
@@ -193,8 +192,7 @@ class UniformTableNode(RegularTable):
             buffer.draw_text(self.x, self.y + j, '▏')
 
         # contents
-        for item in self.rows:
-            item.paint(buffer)
+        super().paint(buffer)
 
 
 class ComplexTableNode(RegularTable):
@@ -248,5 +246,4 @@ class ComplexTableNode(RegularTable):
             buffer.draw_text(self.x, self.y + j, '▏')
 
         # contents
-        for item in self.rows:
-            item.paint(buffer)
+        super().paint(buffer)
