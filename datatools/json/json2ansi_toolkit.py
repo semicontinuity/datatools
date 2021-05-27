@@ -51,7 +51,7 @@ class AnsiToolkit:
         return self.array(j, descriptor)
 
     def uniform_table_node(self, j, item_descriptor):
-        return CompositeTableNode(j, item_descriptor, self)
+        return UniformTableNode(j, item_descriptor, self)
         # return ComplexTableNode(j, item_descriptor, self)
 
 
@@ -147,6 +147,47 @@ class EntriesNode(RegularTable):
 
 
 class CompositeTableNode(RegularTable):
+    def __init__(self, rows: List):
+        super().__init__(rows)
+
+    @staticmethod
+    def consolidate_width(corner, row_headers):
+        corner.set_min_width(row_headers.width)
+        row_headers.set_min_width(corner.width)
+
+    @staticmethod
+    def consolidate_height(column_headers, corner):
+        column_headers.set_min_height(corner.height)
+        corner.set_min_height(column_headers.height)
+
+    @staticmethod
+    def consolidate_min_widths(container1, container2):
+        widths1 = container1.compute_widths()
+        widths2 = container2.compute_widths()
+        container2.set_min_widths(widths1)
+        container1.set_min_widths(widths2)
+
+    @staticmethod
+    def consolidate_min_heights(container1, container2):
+        heights1 = container1.compute_heights()
+        heights2 = container2.compute_heights()
+        container2.set_min_heights(heights1)
+        container1.set_min_heights(heights2)
+
+    def paint(self, buffer):
+        self.paint_border(buffer)
+        super().paint(buffer)   # contents
+
+    def paint_border(self, buffer):
+        # top border (in case there is no contents that normally paints the border)
+        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
+
+        # left border (in case there is no contents that normally paints the border)
+        for j in range(self.height):
+            buffer.draw_text(self.x, self.y + j, '▏')
+
+
+class UniformTableNode(CompositeTableNode):
     def __init__(self, j, entry_descriptor: DictDescriptor, kit):
         corner = HeaderNode('#', False)
         column_headers = HBox([HeaderNode(column_name, False) for column_name in entry_descriptor.dict])
@@ -156,25 +197,14 @@ class CompositeTableNode(RegularTable):
             for i, entry in enumerate(j)
         ])
 
-        header_widths = column_headers.compute_widths()
-        header_heights = row_headers.compute_heights()
-        body_widths = body.compute_widths()
-        body_heights = body.compute_heights()
+        self.consolidate_min_widths(body, column_headers)
+        self.consolidate_min_heights(body, row_headers)
 
-        column_headers.set_min_widths(body_widths)
-        body.set_min_widths(header_widths)
-        row_headers.set_min_heights(body_heights)
-        body.set_min_heights(header_heights)
-
-        column_headers.compute_width()
         row_headers.compute_width()
-        corner.set_min_width(row_headers.width)
-        row_headers.set_min_width(corner.width)
+        self.consolidate_width(corner, row_headers)
 
         column_headers.compute_height()
-        row_headers.compute_height()
-        column_headers.set_min_height(corner.height)
-        corner.set_min_height(column_headers.height)
+        self.consolidate_height(column_headers, corner)
 
         super().__init__(
             [
@@ -182,17 +212,6 @@ class CompositeTableNode(RegularTable):
                 HBox([row_headers, body])
             ]
         )
-
-    def paint(self, buffer):
-        # top border (in case there is no contents that normally paints the border)
-        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
-
-        # left border (in case there is no contents that normally paints the border)
-        for j in range(self.height):
-            buffer.draw_text(self.x, self.y + j, '▏')
-
-        # contents
-        super().paint(buffer)
 
 
 class ComplexTableNode(RegularTable):
