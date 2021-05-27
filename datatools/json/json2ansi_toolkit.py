@@ -18,17 +18,16 @@ class AnsiToolkit:
             return self.object_node(j.items(), lambda key: descriptor.dict[key])
         elif descriptor.is_list():
             return self.list_of_multi_record(j, descriptor)
-        # elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
-        #     return self.list_of_single_record(j[0], descriptor.item)
+        elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
+            return self.list_of_single_record(j[0], descriptor.item)    # TODO: add [0] to show that it's a list
         elif descriptor.is_array():
             # if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
             #     return self.matrix_node(j, descriptor)
 
             if descriptor.item.is_array():
                 return self.uniform_table_node2(j, descriptor)
-
-            # if descriptor.item.is_dict() and descriptor.length is not None:
-            #     return self.uniform_table_node(j, descriptor)
+            if descriptor.item.is_dict() and descriptor.length is not None:
+                return self.uniform_table_node(j, descriptor)
             else:
                 if type(j) is dict:
                     return self.object_node(j.items(), lambda key: descriptor.item)
@@ -65,6 +64,7 @@ class AnsiToolkit:
 
         row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
         column_headers = column_headers_node_for_descriptor(item_descriptor, False)
+        # column_headers.set_level_heights(column_headers.max_level_heights())
         paths = compute_column_paths(item_descriptor)
         body = RegularTable([
             HBox([
@@ -89,6 +89,7 @@ class AnsiToolkit:
         ])
 
         column_headers = column_headers_node_for_descriptor(item_descriptor, False)
+        # column_headers.set_level_heights(column_headers.max_level_heights())
 
         return ComplexTableNode(body, column_headers, row_headers)
 
@@ -271,10 +272,10 @@ def row_headers_node_for_descriptor(j, descriptor: ArrayDescriptor, vertical: bo
             return (NestedRowHeaders if vertical else NestedColumnHeaders)(nodes, leaf_sink)
         else:
             return (HBox if vertical else VBox)([
-                HeaderNode(name, False), (VBox if vertical else HBox)(nodes)
+                HeaderNode(name, type(name) is int), (VBox if vertical else HBox)(nodes)
             ])
     else:
-        leaf = HeaderNode(name, False)
+        leaf = HeaderNode(name, type(name) is int)
         leaf_sink.append(leaf)
         return leaf
 
@@ -294,6 +295,31 @@ class NestedColumnHeaders(HBox):
         for i in range(len(sizes)):
             self.leaves[i].set_min_width(sizes[i])
 
+    def max_level_heights(self) -> List[int]:
+        result = []
+        self.max_level_heights0(result, 0, self.contents)
+        return result
+
+    def max_level_heights0(self, sizes: List[int], index: int, contents: List[HBox]):
+        if index >= len(sizes):
+            sizes.append(0)
+        for block in contents:
+            if type(block) is HeaderNode:
+                sizes[index] = max(sizes[index], block.height)
+            else:
+                sizes[index] = max(sizes[index], block.contents[0].height)
+                self.max_level_heights0(sizes, index + 1, block.contents[1].contents)
+
+    def set_level_heights(self, sizes: List[int]):
+        self.set_level_heights0(sizes, 0, self.contents)
+
+    def set_level_heights0(self, sizes: List[int], index: int, contents: List[HBox]):
+        for block in contents:
+            if type(block) is HeaderNode:
+                block.set_min_height(sizes[index])
+            else:
+                block.contents[0].set_min_height(sizes[index])
+                self.set_level_heights0(sizes, index + 1, block.contents[1].contents)
 
 class NestedRowHeaders(VBox):
     leaves: List[Block]
@@ -325,13 +351,13 @@ class NestedRowHeaders(VBox):
                 widths[index] = max(widths[index], block.contents[0].width)
                 self.max_level_widths0(widths, index + 1, block.contents[1].contents)
 
-    def set_level_widths(self, widths: List[int]):
-        self.set_level_widths0(widths, 0, self.contents)
+    def set_level_widths(self, sizes: List[int]):
+        self.set_level_widths0(sizes, 0, self.contents)
 
-    def set_level_widths0(self, widths: List[int], index: int, contents: List[HBox]):
+    def set_level_widths0(self, sizes: List[int], index: int, contents: List[HBox]):
         for block in contents:
             if type(block) is HeaderNode:
-                block.set_min_width(widths[index])
+                block.set_min_width(sizes[index])
             else:
-                block.contents[0].set_min_width(widths[index])
-                self.set_level_widths0(widths, index + 1, block.contents[1].contents)
+                block.contents[0].set_min_width(sizes[index])
+                self.set_level_widths0(sizes, index + 1, block.contents[1].contents)

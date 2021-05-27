@@ -178,9 +178,14 @@ def child_by_path(value, path: Tuple[Hashable, ...]) -> Tuple[bool, Optional[Has
                 value = value.get(key)
             else:
                 return False, None
-        else:
+        elif isinstance(key, int):
             if 0 <= key < len(value):
                 value = value[key]
+        else:
+            print(value)
+            print(path)
+            print(key)
+            raise ValueError
     return True, value
 
 
