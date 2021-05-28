@@ -1,8 +1,7 @@
 from typing import Tuple, Any
 
 from datatools.json.json2ansi_buffer import Buffer
-from datatools.json.structure_discovery import Descriptor, DictDescriptor, compute_column_paths, ArrayDescriptor, \
-    child_by_path, compute_row_paths
+from datatools.json.structure_discovery import *
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
@@ -10,10 +9,50 @@ MAX_PRIMITIVE_LENGTH = 48
 
 
 class AnsiToolkit:
-    def page_node(self, j, descriptor):
-        return PageNode(self.node(j, descriptor), "")
+    discovery: Discovery
+
+    def __init__(self, discovery):
+        self.discovery = discovery
+
+    def page_node(self, j):
+        return PageNode(self.node(j, self.discovery.object_descriptor(j)), "")
 
     def node(self, j, descriptor):
+        if descriptor.is_any():
+            descriptor = self.discovery.object_descriptor(j)
+
+        if descriptor.is_primitive():
+        # if type(j) is int:
+            if not descriptor.is_primitive():
+                raise ValueError
+            return self.primitive(j)
+
+        if not descriptor.is_not_empty():
+            return self.empty()
+
+        elif descriptor.is_array():
+            # if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
+            #     return self.matrix_node(j, descriptor)
+
+            if descriptor.is_not_empty() and descriptor.item_is_array() and not descriptor.item_is_dict() and descriptor.length is not None and descriptor.length > 1:
+                return self.uniform_table_node2(j, descriptor)
+            if descriptor.is_not_empty() and descriptor.item_is_dict() and descriptor.length is not None and descriptor.length > 1:
+                return self.uniform_table_node(j, descriptor)
+            else:
+                if type(j) is dict:
+                    return self.object_node(j.items(), descriptor.entry)
+                else:
+                    return self.array(j, descriptor)
+        if descriptor.is_dict():
+            return self.object_node(j.items(), lambda key: descriptor.items()[key]) if j else self.empty()
+        elif descriptor.is_list():
+            return self.list_of_multi_record(j, descriptor)
+        elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
+            return self.list_of_single_record(j[0], descriptor.item)    # TODO: add [0] to show that it's a list
+        else:
+            stderr_print(type(descriptor))
+
+    def node0(self, j, descriptor):
         if descriptor.is_primitive():
             return self.primitive(j)
         elif descriptor.is_dict():
@@ -51,7 +90,7 @@ class AnsiToolkit:
         ])
 
     def list_of_multi_record(self, j, descriptor):
-        return EntriesNode(enumerate(j), lambda key: descriptor.list[key], self, True)
+        return EntriesNode(enumerate(j), descriptor.entry, self, True)
 
     def array(self, j, descriptor):
         return EntriesNode(enumerate(j), lambda key: descriptor.item, self, True)
@@ -84,11 +123,12 @@ class AnsiToolkit:
         return ComplexTableNode(body, column_headers, row_headers)
 
     def uniform_table_node2(self, j, descriptor: ArrayDescriptor):
-        row_paths = compute_row_paths(j ,descriptor)
+        row_paths = compute_row_paths(j, descriptor)
         item_descriptor = descriptor.inner_item()
         column_paths = compute_column_paths(item_descriptor)
 
-        row_headers = row_headers_node_for_descriptor(j, descriptor, True)
+        row_headers = row_headers_node_for_paths(j, descriptor)
+        # row_headers = row_headers_node_for_descriptor(j, descriptor)
         row_headers.set_level_widths(row_headers.max_level_widths())
 
         body = RegularTable([
@@ -103,9 +143,14 @@ class AnsiToolkit:
 
     def uniform_table_node2_tr(self, row, row_descriptor, column_paths):
         return HBox([
-            self.node(child_by_path(row, path)[1], descriptor_by_path(row_descriptor, path))
+            self.uniform_table_node2_cell(row, row_descriptor, path)
             for path in column_paths
         ])
+
+    def uniform_table_node2_cell(self, row, row_descriptor, path):
+        child = child_by_path(row, path)
+        descriptor = descriptor_by_path(row_descriptor, path)
+        return self.node(child[1], descriptor)
 
 
 class PageNode:
@@ -221,12 +266,17 @@ class EntriesNode(CompositeTableNode):
     def __init__(self, entries, descriptor_f, kit, is_array):
         super().__init__(
             [
-                HBox([
-                    HeaderNode(key, is_array), kit.node(subj, descriptor_f(key))
-                ])
+                self.entry_node(key, descriptor_f(key), subj, is_array, kit)
                 for key, subj in entries
             ]
         )
+
+    @staticmethod
+    def entry_node(key, descriptor, subj, is_array, kit):
+        node = kit.node(subj, descriptor)
+        return HBox([
+            HeaderNode(key, is_array), node
+        ])
 
 
 class ComplexTableNode(CompositeTableNode):
@@ -252,14 +302,14 @@ class ComplexTableNode(CompositeTableNode):
 
 def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Any:
     for name in path:
-        d = d.dict[name]
+        d = d.items()[name]
     return d
 
 
 def column_headers_node_for_descriptor(descriptor: DictDescriptor, vertical: bool, leaf_sink: List = None, name=None):
     leaf_sink = leaf_sink if leaf_sink is not None else []
-    if descriptor.is_dict() and descriptor.dict:
-        nodes = [column_headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.dict.items()]
+    if descriptor.is_dict() and descriptor.is_not_empty():
+        nodes = [column_headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.items().items()]
         if name is None:
             return (NestedRowHeaders if vertical else NestedColumnHeaders)(nodes, leaf_sink)
         else:
@@ -272,15 +322,38 @@ def column_headers_node_for_descriptor(descriptor: DictDescriptor, vertical: boo
         return leaf
 
 
-def row_headers_node_for_descriptor(j, descriptor: ArrayDescriptor, vertical: bool, leaf_sink: List = None, name=None):
+def row_headers_node_for_paths(j, descriptor):
+    leaf_sink = []
+    nodes = [
+        row_headers_node_for_paths0(jj, descriptor.item, leaf_sink, name)
+        for name, jj in descriptor.enumerate_entries(j)
+    ]
+    return NestedRowHeaders(nodes, leaf_sink)
+
+def row_headers_node_for_paths0(j, descriptor, leaf_sink, name):
+    if descriptor.is_array() and descriptor.kind == 'list':
+        nodes = [
+            row_headers_node_for_paths0(jj, descriptor.item, leaf_sink, name)
+            for name, jj in descriptor.enumerate_entries(j)
+        ]
+        return HBox([
+            HeaderNode(name, type(name) is int), VBox(nodes)
+        ])
+    else:
+        leaf = HeaderNode(name, type(name) is int)
+        leaf_sink.append(leaf)
+        return leaf
+
+def row_headers_node_for_descriptor(j, descriptor: ArrayDescriptor, leaf_sink: List = None, name=None):
     leaf_sink = leaf_sink if leaf_sink is not None else []
+    # if descriptor.is_array() and descriptor.is_list():
     if descriptor.is_array():
-        nodes = [row_headers_node_for_descriptor(jj, descriptor.item, vertical, leaf_sink, name) for name, jj in descriptor.items(j)]
+        nodes = [row_headers_node_for_descriptor(jj, descriptor.item, leaf_sink, name) for name, jj in descriptor.enumerate_entries(j)]
         if name is None:
-            return (NestedRowHeaders if vertical else NestedColumnHeaders)(nodes, leaf_sink)
+            return NestedRowHeaders(nodes, leaf_sink)
         else:
-            return (HBox if vertical else VBox)([
-                HeaderNode(name, type(name) is int), (VBox if vertical else HBox)(nodes)
+            return HBox([
+                HeaderNode(name, type(name) is int), VBox(nodes)
             ])
     else:
         leaf = HeaderNode(name, type(name) is int)

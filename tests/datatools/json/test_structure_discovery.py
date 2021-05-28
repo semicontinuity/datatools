@@ -54,6 +54,17 @@ def test__object_descriptor__nested_table():
     assert result.is_array()
 
 
+def test__object_descriptor__table__deep_differences():
+    result = Discovery().object_descriptor([{"a": 1, "b": [{"x": 5, "y": 6}, {"x": 7, "y": 8} ]}, {"a": 2, "b": [1,2]}])
+    assert result == ArrayDescriptor(DictDescriptor(
+        {
+            'a': PrimitiveDescriptor('int'),
+            'b': ArrayDescriptor(AnyDescriptor()),
+        }
+    ))
+    assert result.is_array()
+
+
 def test__object_descriptor__table__qualified_rows():
     result = Discovery().object_descriptor({'key1': {'a': 1, 'b': True}, 'key2': {'a': 1, 'b': True}, })
     assert result == ArrayDescriptor(DictDescriptor(
@@ -137,7 +148,8 @@ def test__compute_row_paths():
         ]
     }
     descriptor = Discovery().object_descriptor(j)
-    assert compute_row_paths(j, descriptor) == [
+    paths = compute_row_paths(j, descriptor)
+    assert paths == [
         ('input_parameters', 0),
         ('input_parameters', 1),
         ('output_parameters', 0)

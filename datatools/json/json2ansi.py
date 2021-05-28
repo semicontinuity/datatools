@@ -12,8 +12,7 @@ def main():
     s = ''.join(lines)
     j = json.loads(s)
 
-    d = Discovery().object_descriptor(j)
-    page_node = AnsiToolkit().page_node(j, d)
+    page_node = AnsiToolkit(Discovery()).page_node(j)
 
 
     screen_size = (1000, 10000)
