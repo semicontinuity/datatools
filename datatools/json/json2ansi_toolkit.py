@@ -6,7 +6,7 @@ from datatools.json.structure_discovery import Descriptor, DictDescriptor, compu
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
-MAX_PRIMITIVE_LENGTH = 80
+MAX_PRIMITIVE_LENGTH = 48
 
 
 class AnsiToolkit:
@@ -17,7 +17,7 @@ class AnsiToolkit:
         if descriptor.is_primitive():
             return self.primitive(j)
         elif descriptor.is_dict():
-            return self.object_node(j.items(), lambda key: descriptor.dict[key])
+            return self.object_node(j.items(), lambda key: descriptor.dict[key]) if j else self.empty()
         elif descriptor.is_list():
             return self.list_of_multi_record(j, descriptor)
         elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
@@ -28,7 +28,7 @@ class AnsiToolkit:
 
             if descriptor.item.is_array():
                 return self.uniform_table_node2(j, descriptor)
-            if descriptor.item.is_dict() and descriptor.length is not None:
+            if descriptor.item.is_dict()  and descriptor.length is not None:
                 return self.uniform_table_node(j, descriptor)
             else:
                 if type(j) is dict:
@@ -38,11 +38,17 @@ class AnsiToolkit:
         else:
             stderr_print(type(descriptor))
 
+    def empty(self):
+        return PrimitiveNode('')
+
     def primitive(self, j):
         return PrimitiveNode(j)
 
     def list_of_single_record(self, element, element_descriptor):
-        return self.object_node(element.items(), lambda key: element_descriptor.dict[key])
+        return HBox([
+            HeaderNode('0', True),
+            self.object_node(element.items(), lambda key: element_descriptor.dict[key])
+        ])
 
     def list_of_multi_record(self, j, descriptor):
         return EntriesNode(enumerate(j), lambda key: descriptor.list[key], self, True)
@@ -252,7 +258,7 @@ def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Any:
 
 def column_headers_node_for_descriptor(descriptor: DictDescriptor, vertical: bool, leaf_sink: List = None, name=None):
     leaf_sink = leaf_sink if leaf_sink is not None else []
-    if descriptor.is_dict():
+    if descriptor.is_dict() and descriptor.dict:
         nodes = [column_headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.dict.items()]
         if name is None:
             return (NestedRowHeaders if vertical else NestedColumnHeaders)(nodes, leaf_sink)

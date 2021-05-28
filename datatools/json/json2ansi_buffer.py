@@ -70,7 +70,7 @@ class Buffer:
             print(s)
 
     def attr_to_ansi(self, attr):
-        codes = []
+        codes = ['37']
         if attr & self.MASK_BOLD:
             codes.append('1')
         if attr & self.MASK_ITALIC:

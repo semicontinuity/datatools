@@ -111,6 +111,21 @@ def test__compute_column_paths():
     ]
 
 
+def test__compute_column_paths__with_empty_dict():
+    descriptor = DictDescriptor(
+            {
+                'parent': DictDescriptor({
+                    'empty': DictDescriptor({}),
+                    'full': PrimitiveDescriptor('str')
+                })
+            }
+        )
+    assert compute_column_paths(descriptor) == [
+        ('parent', 'empty'),
+        ('parent', 'full'),
+    ]
+
+
 def test__compute_row_paths():
     j = {
         "input_parameters": [

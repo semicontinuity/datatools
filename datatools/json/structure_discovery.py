@@ -148,7 +148,7 @@ def compute_column_paths(descriptor: DictDescriptor) -> List[Tuple[str]]:
 def compute_column_paths0(descriptor: DictDescriptor, path: List[str], result: List[Tuple[str]]):
     for name, value_descriptor in descriptor.dict.items():
         child_path = path + [name]
-        if value_descriptor.is_dict():
+        if value_descriptor.is_dict() and value_descriptor.dict:
             compute_column_paths0(value_descriptor, child_path, result)
         else:
             result.append(tuple(child_path))
