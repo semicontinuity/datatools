@@ -64,7 +64,7 @@ class Container(Block):
     def compute_height_as_max(self):
         for child in self.contents:
             child.compute_height()
-        self.height = max(child.height for child in self.contents)
+        self.height = max((child.height for child in self.contents), default=0)
         for child in self.contents:
             child.height = self.height
 

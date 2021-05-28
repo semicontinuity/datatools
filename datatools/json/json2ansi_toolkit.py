@@ -6,6 +6,8 @@ from datatools.json.structure_discovery import Descriptor, DictDescriptor, compu
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
+MAX_PRIMITIVE_LENGTH = 80
+
 
 class AnsiToolkit:
     def page_node(self, j, descriptor):
@@ -163,7 +165,7 @@ class PrimitiveNode(TextCell):
         elif primitive_type is bool:
             return str(j).lower(), Buffer.MASK_ITALIC | Buffer.MASK_BOLD
         elif primitive_type is str:
-            return j if len(j) <= 80 else '...', Buffer.MASK_NONE
+            return j if len(j) <= MAX_PRIMITIVE_LENGTH else '...', Buffer.MASK_NONE
         else:
             return str(j), Buffer.MASK_BOLD
 

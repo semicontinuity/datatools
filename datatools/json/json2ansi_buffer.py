@@ -4,7 +4,7 @@ from datatools.util.table_util import *
 class Buffer:
     width: int
     height: int
-    chars: List[bytearray]
+    chars: List[bytearray]  # every characters is represented by 2 bytes (utf-16le)
     attrs: List[bytearray]
 
     MASK_NONE = 0x00
@@ -58,12 +58,12 @@ class Buffer:
             line[x] |= mask
             x += 1
 
-    def flush(self):
-        for y in range(self.height):
-            # print(self.chars[y].decode('utf-16le'))
-
+    def flush(self, screen_width, screen_height):
+        width = min(screen_width, self.width)
+        height = min(screen_height, self.height)
+        for y in range(height):
             s = ''
-            for x in range(self.width):
+            for x in range(width):
                 c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
                 attr = self.attrs[y][x]
                 s += self.attr_to_ansi(attr) + c + '\x1b[0m'
