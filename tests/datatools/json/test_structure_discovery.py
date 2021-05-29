@@ -122,6 +122,22 @@ def test__compute_column_paths():
     ]
 
 
+def test__compute_column_paths__1():
+    descriptor = MappingDescriptor(
+        {
+            'l': MappingDescriptor({0: AnyDescriptor()}, kind='list', array=True, length=1),
+            'c': MappingDescriptor({0: AnyDescriptor()}, kind='list', array=True, length=1)
+        },
+        kind='dict',
+        array=True,
+        length=2
+    )
+    assert compute_column_paths(descriptor) == [
+        ('l',),
+        ('c',),
+    ]
+
+
 def test__compute_column_paths__with_empty_dict():
     descriptor = DictDescriptor(
             {

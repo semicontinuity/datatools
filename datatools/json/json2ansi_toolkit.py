@@ -34,9 +34,17 @@ class AnsiToolkit:
             # if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
             #     return self.matrix_node(j, descriptor)
 
-            if descriptor.is_not_empty() and descriptor.item_is_array() and not descriptor.item_is_dict() and descriptor.length is not None and descriptor.length > 1:
+            if descriptor.is_not_empty() \
+                    and descriptor.item_is_array() \
+                    and not descriptor.item_is_dict() \
+                    and descriptor.length is not None \
+                    and descriptor.length > 1 \
+                    and type(descriptor.inner_item()) is not AnyDescriptor:
                 return self.uniform_table_node2(j, descriptor)
-            if descriptor.is_not_empty() and descriptor.item_is_dict() and descriptor.length is not None and descriptor.length > 1:
+            if descriptor.is_not_empty() \
+                    and descriptor.item_is_dict() \
+                    and descriptor.length is not None \
+                    and descriptor.length > 1:
                 return self.uniform_table_node(j, descriptor)
             else:
                 if type(j) is dict:
@@ -109,7 +117,7 @@ class AnsiToolkit:
         #     for i, entry in enumerate(j)
         # ])
 
-        row_headers = VBox([HeaderNode(i, True) for i in range(len(j))])
+        row_headers = VBox([HeaderNode(k, True) for k, v in descriptor.enumerate_entries(j)])
         column_headers = column_headers_node_for_descriptor(item_descriptor, False)
         # column_headers.set_level_heights(column_headers.max_level_heights())
         paths = compute_column_paths(item_descriptor)
@@ -117,7 +125,7 @@ class AnsiToolkit:
             HBox([
                 self.node(child_by_path(row, path)[1], descriptor_by_path(item_descriptor, path)) for path in paths
             ])
-            for index, row in enumerate(j)
+            for index, row in descriptor.enumerate_entries(j)
         ])
 
         return ComplexTableNode(body, column_headers, row_headers)

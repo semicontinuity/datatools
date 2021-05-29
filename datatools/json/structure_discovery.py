@@ -277,15 +277,15 @@ class Discovery:
             return ArrayDescriptor(merged, len(item_descriptors))
 
 
-def compute_column_paths(descriptor: DictDescriptor) -> List[Tuple[str]]:
+def compute_column_paths(descriptor: Descriptor) -> List[Tuple[str]]:
     result = []
     compute_column_paths0(descriptor, [], result)
     return result
 
 
-def compute_column_paths0(descriptor: DictDescriptor, path: List[str], result: List[Tuple[str]]):
-    # if type (descriptor) is not DictDescriptor:
-    #     raise ValueError(type (descriptor))
+def compute_column_paths0(descriptor: Descriptor, path: List[str], result: List[Tuple[str]]):
+    if type (descriptor) is AnyDescriptor:
+        raise ValueError(type (descriptor))
     for name, value_descriptor in descriptor.items().items():
         child_path = path + [name]
         if value_descriptor.is_dict() and value_descriptor.items():

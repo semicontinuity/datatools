@@ -202,7 +202,7 @@ def node(j, parent, in_array_of_nestable_obj: bool):
             return ObjectNode(j, True, parent, in_array_of_nestable_obj)
         else:
             # dict, where all entries have the same structure, i.e., array-like dict
-            dict_node = ArrayOfNestableObjectsNode(parent, j.values(), descriptor)
+            dict_node = ArrayOfNestableObjectsNode(parent, j.values(), descriptor, pruned)
             dict_node.record_nodes = []
             for key, sub_j in j.items():
                 record_node = {name: node(value, dict_node, True) for name, value in sub_j.items()}
