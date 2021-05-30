@@ -23,7 +23,7 @@ import os.path
 import signal
 from json import JSONDecodeError
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Sequence
 
 FD_TUI = 103
 
@@ -447,13 +447,13 @@ column_keys = []
 column_attrs = defaultdict(lambda: ColumnAttrs(defaultdict(int)))
 column_is_complex = defaultdict(bool)
 unique_column_values = defaultdict(set)
-max_column_widths = defaultdict(int)
+max_column_widths: Dict[str, int] = defaultdict(int)
 
 orig_data = []
 
 
 # TODO: if some column is not present for some rows, it should be included with smaller priority (after other columns)
-def pick_displayed_columns(screen_width):
+def pick_displayed_columns(screen_width) -> List[str]:
     """ Pick columns until they fit screen """
     result = []
     screen_width -= 1
@@ -489,7 +489,7 @@ def render(items, column_index, column_keys, columns, compute_cell_attrs, column
         return text, len(text), attrs
 
 
-column_colorings = []
+column_colorings: List[str] = []
 
 
 def analyze_data(data, params):
@@ -514,7 +514,7 @@ def analyze_data(data, params):
                 column_attr.non_uniques_count += 1
 
 
-def compute_column_coloring(column_key):
+def compute_column_coloring(column_key: str) -> str:
     threshold = 2 * sqrt(len(orig_data))
     nu = column_attrs[column_key].non_uniques_count
     if len(column_attrs[column_key].value_stats) < threshold:
@@ -525,12 +525,12 @@ def compute_column_coloring(column_key):
         return COLORING_NONE
 
 
-def compute_column_colorings(column_keys):
+def compute_column_colorings(column_keys: List[str]):
     global column_colorings
     column_colorings = [compute_column_coloring(c) for c in column_keys]
 
 
-def compute_cell_attrs(column_index, text):
+def compute_cell_attrs(column_index, text) -> Sequence[int, ...]:
     color = column_colorings[column_index] if column_index < len(column_colorings) else COLORING_NONE
 
     text_colors = COLORS[ColorKey.TEXT]
@@ -539,7 +539,7 @@ def compute_cell_attrs(column_index, text):
         return text_colors
 
     fg = hash_to_rgb(hash_code(text))
-    return (fg[0], fg[1], fg[2], text_colors[3], text_colors[4], text_colors[5])
+    return fg[0], fg[1], fg[2], text_colors[3], text_colors[4], text_colors[5]
 
 
 g = None
@@ -558,9 +558,9 @@ def run(state, presentation):
         screen_size = Screen.screen_size()
 
         global column_keys
-        column_keys = pick_displayed_columns(screen_size[0])
-        column_titles = [c for c in column_keys]
-        column_widths = [max_column_widths[c] for c in column_keys]
+        column_keys: List[str] = pick_displayed_columns(screen_size[0])
+        column_titles: List[str] = [c for c in column_keys]
+        column_widths: List[int] = [max_column_widths[c] for c in column_keys]
 
         compute_column_colorings(column_keys)
 
