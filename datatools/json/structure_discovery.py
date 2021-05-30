@@ -77,13 +77,33 @@ class MappingDescriptor(Descriptor):
     length: Optional[int] = None
 
     @staticmethod
-    def merge_with_descriptors(descriptors: List['Descriptor']) -> 'Descriptor':
+    def merge_with_descriptors(descriptors: List['MappingDescriptor']) -> 'Descriptor':
         descriptor0 = None
-        for d in descriptors:
-            if descriptor0 is None:
-                descriptor0 = d
+        if all(d.kind == 'dict' for d in descriptors):
+            counter = 0
+            merged_items = {}
+            for d in descriptors:
+                for k, v in d.entries.items():
+                    counter += 1
+                    existing = merged_items.get(k)
+                    if existing is None:
+                        merged_items[k] = v
+                    else:
+                        merged_items[k] = existing.merge_with(v)
+            fill_ratio = counter / (len(descriptors) * len(merged_items))
+            if fill_ratio >= 0.75:
+                return MappingDescriptor(merged_items, 'dict', True, len(merged_items))
             else:
-                descriptor0 = descriptor0.merge_with(d)
+                return AnyDescriptor()
+
+        else:
+            for d in descriptors:
+                if descriptor0 is None:
+                    descriptor0 = d
+                else:
+                    if d.kind != descriptor0.kind:
+                        return AnyDescriptor()
+                    descriptor0 = descriptor0.merge_with(d)
 
         return descriptor0
 

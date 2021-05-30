@@ -2,7 +2,6 @@ import random
 from string import ascii_lowercase, digits
 from typing import List, Tuple, Optional
 
-from datatools.json.structure_discovery import DictDescriptor
 from datatools.json.util import is_primitive
 from datatools.util.html_util import *
 from string import Template
@@ -225,16 +224,3 @@ class ListNode:
             ),
             clazz="a"
         )
-
-
-def compute_paths_of_table_leaves(descriptor: DictDescriptor, path: List[str] = None) -> List[Tuple[str]]:
-    assert descriptor.is_dict()
-    if path is None:
-        path = []
-    result = []
-    for name, value_descriptor in descriptor.dict.items():
-        if value_descriptor.is_dict():
-            result += compute_paths_of_table_leaves(value_descriptor, path + [name])
-        else:
-            result.append(tuple(path + [name]))
-    return result

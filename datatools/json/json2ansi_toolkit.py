@@ -98,12 +98,16 @@ class AnsiToolkit:
         paths = compute_column_paths(item_descriptor)
         body = RegularTable([
             HBox([
-                self.node(child_by_path(row, path)[1], descriptor_by_path(item_descriptor, path)) for path in paths
+                self.uniform_table_cell_node(row, item_descriptor, path) for path in paths
             ])
             for index, row in descriptor.enumerate_entries(j)
         ])
 
         return ComplexTableNode(body, column_headers, row_headers)
+
+    def uniform_table_cell_node(self, row, item_descriptor, path):
+        ok, child = child_by_path(row, path)
+        return self.node(child, descriptor_by_path(item_descriptor, path)) if ok else PrimitiveNode('')
 
     def uniform_table_node2(self, j, descriptor: Descriptor):
         row_paths = compute_row_paths(j, descriptor)
