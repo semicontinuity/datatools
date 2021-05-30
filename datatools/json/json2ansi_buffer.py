@@ -4,21 +4,22 @@ from datatools.util.table_util import *
 class Buffer:
     width: int
     height: int
-    chars: List[bytearray]  # every characters is represented by 2 bytes (utf-16le)
-    attrs: List[bytearray]
+    chars: List[bytearray]  # every character is represented by 2 bytes (utf-16le)
+    attrs: List[bytearray]  # for each character: 1 byte of attributes + 3 bytes for custom bg color (RGB)
 
     MASK_NONE = 0x00
     MASK_BOLD = 0x01
     MASK_ITALIC = 0x02
     MASK_FG_EMPHASIZED = 0x10
     MASK_BG_EMPHASIZED = 0x20
+    MASK_BG_CUSTOM = 0x40
     MASK_OVERLINE = 0x80
 
     def __init__(self, width, height):
         self.width = width
         self.height = height
         self.chars = [self.spaces(width) for _ in range(height)]
-        self.attrs = [bytearray(width) for _ in range(height)]
+        self.attrs = [bytearray(4 * width) for _ in range(height)]
 
     @staticmethod
     def spaces(width) -> bytearray:
@@ -33,11 +34,12 @@ class Buffer:
 
     def draw_text(self, x: int, y: int, text: str, mask: int = 0):
         attr_line = self.attrs[y]
+        attr_i = 4 * x
         char_line = self.chars[y]
         char_i = 2 * x
         for c in text:
-            attr_line[x] |= mask
-            x += 1
+            attr_line[attr_i] |= mask
+            attr_i += 4
 
             code = ord(c)
             char_line[char_i] = code & 0xff
@@ -49,14 +51,17 @@ class Buffer:
         for j in range(height):
             line = self.attrs[y]
             for i in range(width):
-                line[x + i] |= mask
+                line[(x + i) * 4] |= mask
             y += 1
 
-    def draw_mask(self, x: int, y: int, width: int, mask: int):
-        line = self.attrs[y]
-        for _ in range(width):
-            line[x] |= mask
-            x += 1
+    def draw_bg_colors_box(self, x: int, y: int, width: int, height: int, r: int, g: int, b: int):
+        for j in range(height):
+            line = self.attrs[y]
+            for i in range(width):
+                line[(x + i) * 4 + 1] = r
+                line[(x + i) * 4 + 2] = g
+                line[(x + i) * 4 + 3] = b
+            y += 1
 
     def flush(self, screen_width, screen_height):
         width = min(screen_width, self.width)
@@ -65,20 +70,31 @@ class Buffer:
             s = ''
             for x in range(width):
                 c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
-                attr = self.attrs[y][x]
-                s += self.attr_to_ansi(attr) + c + '\x1b[0m'
+                s += self.attr_to_ansi(
+                    self.attrs[y][4 * x],
+                    self.attrs[y][4 * x + 1],
+                    self.attrs[y][4 * x + 2],
+                    self.attrs[y][4 * x + 3]
+                ) + c + '\x1b[0m'
             print(s)
 
-    def attr_to_ansi(self, attr):
+    def attr_to_ansi(self, attr, r, g, b):
         codes = ['37']
         if attr & self.MASK_BOLD:
             codes.append('1')
         if attr & self.MASK_ITALIC:
             codes.append('3')
-        if attr & self.MASK_BG_EMPHASIZED:
+
+        if attr & self.MASK_BG_CUSTOM:
+            codes.append('48;2')
+            codes.append(str(r))
+            codes.append(str(g))
+            codes.append(str(b))
+        elif attr & self.MASK_BG_EMPHASIZED:
             codes.append('48;5;237')
         else:
             codes.append('40')
+
         if attr & self.MASK_FG_EMPHASIZED:
             codes.append('97')
         if attr & self.MASK_OVERLINE:
