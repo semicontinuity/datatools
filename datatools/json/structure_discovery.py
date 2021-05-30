@@ -7,23 +7,34 @@ class Descriptor:
     def is_any(self) -> bool:
         return type(self) is AnyDescriptor
 
-    def is_array(self) -> bool:
-        return type(self) is ArrayDescriptor
-
-    def is_list(self) -> bool:
-        return type(self) is ListDescriptor
-
-    def is_dict(self) -> bool:
-        return type(self) is DictDescriptor
-
     def is_primitive(self) -> bool:
         return type(self) is PrimitiveDescriptor
+
+    def is_array(self) -> bool:
+        pass
+
+    def is_list(self) -> bool:
+        pass
+
+    def is_dict(self) -> bool:
+        pass
 
     def merge_with(self, o) -> 'Descriptor':
         pass
 
     @staticmethod
-    def merge(descriptors: List) -> 'Descriptor':
+    def merge_with_descriptors(descriptors: List['Descriptor']) -> 'Descriptor':
+        descriptor0 = None
+        for d in descriptors:
+            if descriptor0 is None:
+                descriptor0 = d
+            else:
+                descriptor0 = descriptor0.merge_with(d)
+
+        return descriptor0
+
+    @staticmethod
+    def merge(descriptors: List['Descriptor']) -> 'Descriptor':
         assert len(descriptors) > 0
 
         descriptor0 = descriptors[0]
@@ -32,12 +43,11 @@ class Descriptor:
 
         for d in descriptors:
             if d is descriptor0:
-                pass
+                continue
             if type(d) != type(descriptor0):
                 return AnyDescriptor()
-            descriptor0 = descriptor0.merge_with(d)
 
-        return descriptor0
+        return descriptor0.merge_with_descriptors(descriptors)
 
 
 @dataclass
@@ -65,6 +75,17 @@ class MappingDescriptor(Descriptor):
     kind: str
     array: bool
     length: Optional[int] = None
+
+    @staticmethod
+    def merge_with_descriptors(descriptors: List['Descriptor']) -> 'Descriptor':
+        descriptor0 = None
+        for d in descriptors:
+            if descriptor0 is None:
+                descriptor0 = d
+            else:
+                descriptor0 = descriptor0.merge_with(d)
+
+        return descriptor0
 
     def merge_with(self, o) -> Descriptor:
         if o is self:
@@ -135,76 +156,6 @@ class MappingDescriptor(Descriptor):
         return item.inner_item() if item.is_array() else item
 
 
-@dataclass
-class DictDescriptor(Descriptor):
-    dict: Dict
-
-    def __eq__(self, o) -> bool:
-        if type(o) is type(self):
-            return self.dict == o.dict
-        return False
-
-    def merge_with(self, o) -> Descriptor:
-        if type(o) != DictDescriptor or self.dict.keys() != o.dict.keys():
-            return AnyDescriptor()
-        return DictDescriptor({k: v.merge_with(o.dict[k]) for k, v in self.dict.items()})
-
-    def is_not_empty(self) -> bool:
-        return bool(self.dict)
-
-    def items(self):
-        return self.dict
-
-
-@dataclass
-class ListDescriptor(Descriptor):
-    list: List
-
-    def __eq__(self, o) -> bool:
-        if type(o) is type(self):
-            return self.list == o.list
-        return False
-
-    def merge_with(self, o) -> Descriptor:
-        if type(o) != ListDescriptor or self.list != o.list:
-            return AnyDescriptor()
-        return ListDescriptor([v.merge_with(o.list[k]) for k, v in enumerate(self.list)])
-
-
-@dataclass
-class ArrayDescriptor(Descriptor):
-    array: Descriptor
-    length: Optional[int] = None
-
-    def __eq__(self, o) -> bool:
-        if type(o) is type(self):
-            return self.item == o.item
-        return False
-
-    def inner_item(self) -> Descriptor:
-        item = self.item
-        return item.inner_item() if item.is_array() else item
-
-    def item_is_array(self) -> bool:
-        return self.item.is_array()
-
-    def item_is_dict(self) -> bool:
-        return self.item.is_dict()
-
-    @property
-    def item(self) -> Descriptor:
-        return self.array
-
-    def merge_with(self, o) -> Descriptor:
-        if type(o) != ArrayDescriptor:
-            return AnyDescriptor()
-        return ArrayDescriptor(self.item.merge_with(o.item), self.length if self.length == o.length else None)
-
-    @staticmethod
-    def enumerate_entries(j):
-        return j.items() if type(j) is dict else enumerate(j)
-
-
 class Discovery:
 
     def object_descriptor(self, j):
@@ -247,35 +198,6 @@ class Discovery:
         else:
             raise AssertionError()
 
-    def array_or_dict_descriptor(self, j):
-        item_descriptors = [(k, self.object_descriptor(v)) for k, v in j.items()]
-        if len(item_descriptors) == 0:
-            return DictDescriptor({})
-
-        merged = Descriptor.merge([i[1] for i in item_descriptors])
-        if merged.is_any():
-            return DictDescriptor({i[0]: i[1] for i in item_descriptors})
-        else:
-            return ArrayDescriptor(merged, len(item_descriptors))
-
-    def array_or_list_descriptor(self, j):
-        item_descriptors: list = [self.object_descriptor(i) for i in j]
-        if len(item_descriptors) == 0:
-            return ListDescriptor([])
-
-        merged = Descriptor.merge([i for i in item_descriptors])
-        if merged.is_any():
-            return ListDescriptor(item_descriptors)
-        else:
-            return ArrayDescriptor(merged, len(item_descriptors))
-
-    def mapping_descriptor(self, item_descriptors):
-        merged = Descriptor.merge([i for i in item_descriptors])
-        if merged.is_any():
-            return MappingDescriptor()
-        else:
-            return ArrayDescriptor(merged, len(item_descriptors))
-
 
 def compute_column_paths(descriptor: Descriptor) -> List[Tuple[str]]:
     result = []
@@ -294,13 +216,13 @@ def compute_column_paths0(descriptor: Descriptor, path: List[str], result: List[
             result.append(tuple(child_path))
 
 
-def compute_row_paths(j, descriptor: ArrayDescriptor) -> List[Tuple[str]]:
+def compute_row_paths(j, descriptor: Descriptor) -> List[Tuple[str]]:
     result = []
     compute_row_paths0(j, descriptor, [], result)
     return result
 
 
-def compute_row_paths0(j, descriptor: ArrayDescriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
+def compute_row_paths0(j, descriptor: Descriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
     for key, value in descriptor.enumerate_entries(j):
         child_path = path + [key]
         if descriptor.item.is_array() and descriptor.item.kind == 'list':
