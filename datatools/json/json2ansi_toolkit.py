@@ -1,5 +1,6 @@
 from typing import Tuple, Any
 
+from datatools.json.coloring import ColumnAttrs, compute_column_attrs
 from datatools.json.json2ansi_buffer import Buffer
 from datatools.json.structure_discovery import *
 from datatools.util.logging import stderr_print
@@ -17,7 +18,7 @@ class AnsiToolkit:
     def page_node(self, j):
         return PageNode(self.node(j, self.discovery.object_descriptor(j)), "")
 
-    def node(self, j, descriptor):
+    def node(self, j, descriptor: Descriptor):
         if descriptor.is_any():
             descriptor = self.discovery.object_descriptor(j)
 
@@ -96,6 +97,12 @@ class AnsiToolkit:
         column_headers = column_headers_node_for_descriptor(item_descriptor, False)
         # column_headers.set_level_heights(column_headers.max_level_heights())
         paths = compute_column_paths(item_descriptor)
+
+        column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
+        for column_path in paths:
+            if descriptor_by_path(item_descriptor, column_path).is_primitive():
+                column_id_to_attrs[column_path] = compute_column_attrs(j, column_path, child_by_path)
+
         body = RegularTable([
             HBox([
                 self.uniform_table_cell_node(row, item_descriptor, path) for path in paths
@@ -106,8 +113,8 @@ class AnsiToolkit:
         return ComplexTableNode(body, column_headers, row_headers)
 
     def uniform_table_cell_node(self, row, item_descriptor, path):
-        ok, child = child_by_path(row, path)
-        return self.node(child, descriptor_by_path(item_descriptor, path)) if ok else PrimitiveNode('')
+        child = child_by_path(row, path)
+        return PrimitiveNode('') if child is ... else self.node(child, descriptor_by_path(item_descriptor, path))
 
     def uniform_table_node2(self, j, descriptor: Descriptor):
         row_paths = compute_row_paths(j, descriptor)
@@ -119,7 +126,7 @@ class AnsiToolkit:
         row_headers.set_level_widths(row_headers.max_level_widths())
 
         body = RegularTable([
-            self.uniform_table_node2_tr(child_by_path(j, row_path)[1], item_descriptor, column_paths)
+            self.uniform_table_node2_tr(child_by_path(j, row_path), item_descriptor, column_paths)
             for row_path in row_paths
         ])
 
@@ -137,7 +144,7 @@ class AnsiToolkit:
     def uniform_table_node2_cell(self, row, row_descriptor, path):
         child = child_by_path(row, path)
         descriptor = descriptor_by_path(row_descriptor, path)
-        return self.node(child[1], descriptor)
+        return self.node(child, descriptor)
 
 
 class PageNode:
@@ -287,7 +294,7 @@ class ComplexTableNode(CompositeTableNode):
         )
 
 
-def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Any:
+def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Descriptor:
     for name in path:
         d = d.items()[name]
     return d

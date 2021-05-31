@@ -251,15 +251,16 @@ def compute_row_paths0(j, descriptor: Descriptor, path: List[Hashable], result: 
             result.append(tuple(child_path))
 
 
-def child_by_path(value, path: Tuple[Hashable, ...]) -> Tuple[bool, Optional[Hashable]]:
+def child_by_path(value, path: Tuple[Hashable, ...]) -> Optional[Hashable]:
+    """ returns ... if path is not applicable to value """
     for key in path:
         if value is None:
-            return False, None
+            return ...
         if isinstance(value, dict):
             if key in value:
                 value = value.get(key)
             else:
-                return False, None
+                return ...
         elif isinstance(key, int):
             if 0 <= key < len(value):
                 value = value[key]
@@ -268,7 +269,7 @@ def child_by_path(value, path: Tuple[Hashable, ...]) -> Tuple[bool, Optional[Has
             print('path', path)
             print(key)
             raise ValueError
-    return True, value
+    return value
 
 
 if __name__ == "__main__":

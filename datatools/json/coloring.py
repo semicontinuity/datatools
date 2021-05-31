@@ -79,7 +79,7 @@ def compute_column_attrs(j, column_id: Hashable, cell_value_function: Callable[[
     attr = ColumnAttrs(set(), defaultdict(int), {})
     for record in j:
         cell = cell_value_function(record, column_id)
-        if cell is None or not is_primitive_type(cell):
+        if cell is ... or cell is None or not is_primitive_type(cell):
             continue
         value_as_string = str(cell)
 
