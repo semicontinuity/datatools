@@ -67,16 +67,32 @@ class Buffer:
         width = min(screen_width, self.width)
         height = min(screen_height, self.height)
         for y in range(height):
-            s = ''
-            for x in range(width):
-                c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
-                s += self.attr_to_ansi(
-                    self.attrs[y][4 * x],
-                    self.attrs[y][4 * x + 1],
-                    self.attrs[y][4 * x + 2],
-                    self.attrs[y][4 * x + 3]
-                ) + c + '\x1b[0m'
-            print(s)
+            print(self.to_string(y, width))
+
+    def to_string(self, y, width):
+        s = ''
+        prev_attr = 0
+        prev_r = -1
+        prev_g = -1
+        prev_b = -1
+
+        for x in range(width):
+            c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
+            attr = self.attrs[y][4 * x]
+            r = self.attrs[y][4 * x + 1]
+            g = self.attrs[y][4 * x + 2]
+            b = self.attrs[y][4 * x + 3]
+
+            if attr != prev_attr or ((attr & Buffer.MASK_BG_CUSTOM) != 0 and (r != prev_r or g != prev_g or b != prev_b)):
+                s += '\x1b[0;' + self.attr_to_ansi(attr, r, g, b) + 'm'
+            s += c
+
+            prev_attr = attr
+            prev_r = r
+            prev_g = g
+            prev_b = b
+
+        return s
 
     def attr_to_ansi(self, attr, r, g, b):
         codes = ['37']
@@ -99,4 +115,4 @@ class Buffer:
             codes.append('97')
         if attr & self.MASK_OVERLINE:
             codes.append('53')
-        return '\x1b[' + ';'.join(codes) + 'm'
+        return ';'.join(codes)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 
 from datatools.json.json2ansi_toolkit import *
 from datatools.json.structure_discovery import *
@@ -16,7 +17,7 @@ def main():
 
 
     screen_size = (1000, 10000)
-    if sys.stderr.isatty():
+    if sys.stdout.isatty():
         init_tty()
         screen_size = read_screen_size()[0], 10000
         deinit_tty()
@@ -51,7 +52,9 @@ def deinit_tty():
     termios.tcsetattr(FD_IN, termios.TCSANOW, ttyattr)
 
 if __name__ == "__main__":
-    # try:
+    try:
         main()
+    except (BrokenPipeError, IOError):
+        sys.stderr.close()
     # except JSONDecodeError as ex:
     #     stderr_print("Reads json. Outputs html.")
