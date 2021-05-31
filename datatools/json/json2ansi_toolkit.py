@@ -48,10 +48,12 @@ class AnsiToolkit:
             else:
                 if type(j) is dict:
                     return self.object_node(j.items(), descriptor.entry)
-                else:
+                elif len(j) > 1:
                     return self.array(j, descriptor)
         if descriptor.is_dict():
             return self.object_node(j.items(), lambda key: descriptor.items()[key]) if j else self.empty()
+        elif descriptor.is_list() and len(j) == 1 and descriptor.item.is_dict():
+            return self.list_of_single_record(j[0], descriptor.item)    # TODO: add [0] to show that it's a list
         elif descriptor.is_list():
             return self.list_of_multi_record(j, descriptor)
         elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
@@ -68,14 +70,14 @@ class AnsiToolkit:
     def list_of_single_record(self, element, element_descriptor):
         return HBox([
             HeaderNode('0', True),
-            self.object_node(element.items(), lambda key: element_descriptor.dict[key])
+            self.object_node(element.items(), element_descriptor.entry)
         ])
 
     def list_of_multi_record(self, j, descriptor):
         return EntriesNode(enumerate(j), descriptor.entry, self, True)
 
     def array(self, j, descriptor):
-        return EntriesNode(enumerate(j), lambda key: descriptor.item, self, True)
+        return EntriesNode(enumerate(j), lambda key: descriptor.item, self, len(j) > 1) # hack
 
     def object_node(self, items, descriptor_f):
         return EntriesNode(items, descriptor_f, self, False)
@@ -96,11 +98,12 @@ class AnsiToolkit:
         # column_headers.set_level_heights(column_headers.max_level_heights())
         column_paths = compute_column_paths(item_descriptor)
 
+        rows = [row for index, row in descriptor.enumerate_entries(j)]
         column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
         for column_path in column_paths:
             if descriptor_by_path(item_descriptor, column_path).is_primitive():
-                column_id_to_attrs[column_path] = compute_column_attrs(j, column_path, child_by_path)
-        compute_cross_column_attrs(j, column_id_to_attrs, child_by_path)
+                column_id_to_attrs[column_path] = compute_column_attrs(rows, column_path, child_by_path)
+        compute_cross_column_attrs(rows, column_id_to_attrs, child_by_path)
 
         body = RegularTable([
             HBox([

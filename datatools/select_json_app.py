@@ -530,7 +530,7 @@ def compute_column_colorings(column_keys: List[str]):
     column_colorings = [compute_column_coloring(c) for c in column_keys]
 
 
-def compute_cell_attrs(column_index, text) -> Sequence[int, ...]:
+def compute_cell_attrs(column_index, text) -> Sequence[int]:
     color = column_colorings[column_index] if column_index < len(column_colorings) else COLORING_NONE
 
     text_colors = COLORS[ColorKey.TEXT]
@@ -558,7 +558,7 @@ def run(state, presentation):
         screen_size = Screen.screen_size()
 
         global column_keys
-        column_keys: List[str] = pick_displayed_columns(screen_size[0])
+        column_keys = pick_displayed_columns(screen_size[0])
         column_titles: List[str] = [c for c in column_keys]
         column_widths: List[int] = [max_column_widths[c] for c in column_keys]
 
