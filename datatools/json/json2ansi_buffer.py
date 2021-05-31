@@ -92,7 +92,7 @@ class Buffer:
             prev_g = g
             prev_b = b
 
-        return s
+        return s + '\x1b[0;m'   # (for the last line only)
 
     def attr_to_ansi(self, attr, r, g, b):
         codes = ['37']

@@ -458,11 +458,13 @@ def pick_displayed_columns(screen_width) -> List[str]:
     result = []
     screen_width -= 1
 
+    # simple columns first
     for k, v in max_column_widths.items():
         if 0 < v <= screen_width - 1 and not column_is_complex[k]:
             result.append(k)
             screen_width -= (v + 1)
 
+    # complex columns second
     for k, v in max_column_widths.items():
         if 0 < v <= screen_width - 1 and column_is_complex[k]:
             result.append(k)
@@ -499,7 +501,7 @@ def analyze_data(data, params):
             value_as_string = str(value)
 
             column_attr = column_attrs[key]
-            if type(value) == dict:
+            if type(value) is dict or type(value) is list:
                 column_is_complex[key] = True
             else:
                 column_attr.value_stats[value_as_string] = column_attr.value_stats.get(value_as_string, 0) + 1
@@ -549,11 +551,8 @@ def run(state, presentation):
     s = Screen()
     try:
         cursor_position_save()
-        screen_alt()
-        s.init_tty()
 
-        s.cls()
-        s.attr_reset()
+        s.init_tty()
 
         screen_size = Screen.screen_size()
 
@@ -561,6 +560,10 @@ def run(state, presentation):
         column_keys = pick_displayed_columns(screen_size[0])
         column_titles: List[str] = [c for c in column_keys]
         column_widths: List[int] = [max_column_widths[c] for c in column_keys]
+
+        screen_alt()
+        s.cls()
+        s.attr_reset()
 
         compute_column_colorings(column_keys)
 
