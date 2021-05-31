@@ -1,6 +1,7 @@
 from typing import Tuple, Any
 
-from datatools.json.coloring import ColumnAttrs, compute_column_attrs
+from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_cross_column_attrs, hash_to_rgb_dark, \
+    hash_code
 from datatools.json.json2ansi_buffer import Buffer
 from datatools.json.structure_discovery import *
 from datatools.util.logging import stderr_print
@@ -23,9 +24,6 @@ class AnsiToolkit:
             descriptor = self.discovery.object_descriptor(j)
 
         if descriptor.is_primitive():
-        # if type(j) is int:
-            if not descriptor.is_primitive():
-                raise ValueError
             return self.primitive(j)
 
         if not descriptor.is_not_empty():
@@ -64,8 +62,8 @@ class AnsiToolkit:
     def empty(self):
         return PrimitiveNode('')
 
-    def primitive(self, j):
-        return PrimitiveNode(j)
+    def primitive(self, j, attrs: ColumnAttrs = None):
+        return PrimitiveNode(j, attrs)
 
     def list_of_single_record(self, element, element_descriptor):
         return HBox([
@@ -96,25 +94,23 @@ class AnsiToolkit:
         row_headers = VBox([HeaderNode(k, True) for k, v in descriptor.enumerate_entries(j)])
         column_headers = column_headers_node_for_descriptor(item_descriptor, False)
         # column_headers.set_level_heights(column_headers.max_level_heights())
-        paths = compute_column_paths(item_descriptor)
+        column_paths = compute_column_paths(item_descriptor)
 
         column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
-        for column_path in paths:
+        for column_path in column_paths:
             if descriptor_by_path(item_descriptor, column_path).is_primitive():
                 column_id_to_attrs[column_path] = compute_column_attrs(j, column_path, child_by_path)
+        compute_cross_column_attrs(j, column_id_to_attrs, child_by_path)
 
         body = RegularTable([
             HBox([
-                self.uniform_table_cell_node(row, item_descriptor, path) for path in paths
+                self.uniform_table_cell_node(row, item_descriptor, path, column_id_to_attrs.get(path)) for path in column_paths
             ])
             for index, row in descriptor.enumerate_entries(j)
         ])
 
         return ComplexTableNode(body, column_headers, row_headers)
 
-    def uniform_table_cell_node(self, row, item_descriptor, path):
-        child = child_by_path(row, path)
-        return PrimitiveNode('') if child is ... else self.node(child, descriptor_by_path(item_descriptor, path))
 
     def uniform_table_node2(self, j, descriptor: Descriptor):
         row_paths = compute_row_paths(j, descriptor)
@@ -125,9 +121,17 @@ class AnsiToolkit:
         # row_headers = row_headers_node_for_descriptor(j, descriptor)
         row_headers.set_level_widths(row_headers.max_level_widths())
 
+        rows = [child_by_path(j, row_path) for row_path in row_paths]
+
+        column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
+        for column_path in column_paths:
+            if descriptor_by_path(item_descriptor, column_path).is_primitive():
+                column_id_to_attrs[column_path] = compute_column_attrs(rows, column_path, child_by_path)
+        compute_cross_column_attrs(rows, column_id_to_attrs, child_by_path)
+
         body = RegularTable([
-            self.uniform_table_node2_tr(child_by_path(j, row_path), item_descriptor, column_paths)
-            for row_path in row_paths
+            self.uniform_table_node2_tr(row, item_descriptor, column_paths, column_id_to_attrs)
+            for row in rows
         ])
 
         column_headers = column_headers_node_for_descriptor(item_descriptor, False)
@@ -135,16 +139,22 @@ class AnsiToolkit:
 
         return ComplexTableNode(body, column_headers, row_headers)
 
-    def uniform_table_node2_tr(self, row, row_descriptor, column_paths):
+    def uniform_table_node2_tr(self, row, row_descriptor, column_paths, column_id_to_attrs):
         return HBox([
-            self.uniform_table_node2_cell(row, row_descriptor, path)
+            self.uniform_table_cell_node(row, row_descriptor, path, column_id_to_attrs.get(path))
             for path in column_paths
         ])
 
-    def uniform_table_node2_cell(self, row, row_descriptor, path):
+    def uniform_table_cell_node(self, row, item_descriptor, path, attrs: ColumnAttrs = None):
         child = child_by_path(row, path)
-        descriptor = descriptor_by_path(row_descriptor, path)
-        return self.node(child, descriptor)
+        if child is ...:
+            return self.empty()
+        else:
+            d = descriptor_by_path(item_descriptor, path)
+            if d.is_primitive():
+                return self.primitive(child, attrs)
+            else:
+                return self.node(child, d)
 
 
 class PageNode:
@@ -165,16 +175,20 @@ class PageNode:
 
 
 class TextCell(Block):
-    def __init__(self, text, mask = 0):
+    def __init__(self, text, mask = 0, bg: Tuple[int, int, int] = None):
         self.text = text
         self.mask = mask
         self.width = len(text) + 2
         self.height = 1
+        self.bg = bg
 
     def paint(self, buffer):
         # background
-        if self.mask != 0:
-            buffer.draw_attrs_box(self.x, self.y, self.width, self.height, self.mask)
+        if self.mask != 0 or self.bg is not None:
+            mask = self.mask if self.bg is None else self.mask | Buffer.MASK_BG_CUSTOM
+            buffer.draw_attrs_box(self.x, self.y, self.width, self.height, mask)
+            if self.bg is not None:
+                buffer.draw_bg_colors_box(self.x, self.y, self.width, self.height, *self.bg)
 
         # top border
         buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
@@ -199,8 +213,8 @@ class HeaderNode(TextCell):
 
 
 class PrimitiveNode(TextCell):
-    def __init__(self, j):
-        super().__init__(*self.text_and_mask_for(j))
+    def __init__(self, j, attrs: ColumnAttrs = None):
+        super().__init__(*self.text_and_mask_for(j), self.bg_for(j, attrs))
 
     @staticmethod
     def text_and_mask_for(j):
@@ -213,6 +227,14 @@ class PrimitiveNode(TextCell):
             return j if len(j) <= MAX_PRIMITIVE_LENGTH else '...', Buffer.MASK_NONE
         else:
             return str(j), Buffer.MASK_BOLD
+
+    @staticmethod
+    def bg_for(j, attrs: ColumnAttrs = None) -> Optional[Tuple[int, int, int]]:
+        string_value = str(j)
+        if attrs is None or not attrs.is_colored(string_value):
+            return None
+        else:
+            return hash_to_rgb_dark(attrs.value_hashes.get(string_value) or hash_code(string_value))
 
 
 class CompositeTableNode(RegularTable):

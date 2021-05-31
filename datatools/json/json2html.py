@@ -169,7 +169,7 @@ class ObjectNode:
         return tr(tk.custom_th(key, clazz='ov_th'), tk.td_value_with_color(value, "ov_v"))
 
 
-def td_value_with_attrs(attrs, value):
+def td_value_with_attrs(attrs: ColumnAttrs, value):
     if value is None:
         return td()
 

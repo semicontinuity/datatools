@@ -39,6 +39,26 @@ def hash_to_rgb(h):
     return r6*16 + r5*8 + r3 + 0xE0, g6*16 + g5*8 + g3 + 0xE0, b6*16 + b5*8 + b3 + 0xE0
 
 
+def hash_to_rgb_dark(h):
+    if h is None:
+        return 0, 0, 0
+
+    r6 = h % 2
+    h = (h - r6) // 2
+    g6 = h % 2
+    h = (h - g6) // 2
+    b6 = h % 2
+    h = (h - g6) // 2
+
+    r3 = h % 32
+    h = (h - r3) // 32
+    g3 = h % 32
+    h = (h - g3) // 32
+    b3 = h % 32
+
+    return r6 * 32 + r3, g6 * 32 + g3, b6 * 32 + b3
+
+
 def is_primitive_type(value):
     return type(value).__name__ in {'NoneType', 'int', 'float', 'str', 'bool'}
 
