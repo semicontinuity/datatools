@@ -43,12 +43,12 @@ class AnsiToolkit:
         if not descriptor.is_not_empty():
             return self.empty()
 
-        elif descriptor.is_array():
-            # if descriptor.item.is_array() and descriptor.length is not None and descriptor.item.length is not None:
+        elif descriptor.is_uniform():
+            # if descriptor.item.is_uniform() and descriptor.length is not None and descriptor.item.length is not None:
             #     return self.matrix_node(j, descriptor)
 
             if descriptor.is_not_empty() \
-                    and descriptor.item_is_array() \
+                    and descriptor.item_is_uniform() \
                     and not descriptor.item_is_dict() \
                     and descriptor.length is not None \
                     and descriptor.length > 1 \
@@ -70,7 +70,7 @@ class AnsiToolkit:
             return self.list_of_single_record(j[0], descriptor.item)    # TODO: add [0] to show that it's a list
         elif descriptor.is_list():
             return self.list_of_multi_record(j, descriptor)
-        elif descriptor.is_array() and descriptor.length == 1 and descriptor.item.is_dict():
+        elif descriptor.is_uniform() and descriptor.length == 1 and descriptor.item.is_dict():
             return self.list_of_single_record(j[0], descriptor.item)    # TODO: add [0] to show that it's a list
         else:
             stderr_print(type(descriptor))
@@ -220,12 +220,12 @@ class TextCell(Block):
 
 
 class HeaderNode(TextCell):
-    def __init__(self, key, is_array):
-        super().__init__(str(key), self.attr_for(is_array), AnsiToolkit.instance.style.header)
+    def __init__(self, key, is_uniform):
+        super().__init__(str(key), self.attr_for(is_uniform), AnsiToolkit.instance.style.header)
 
     @staticmethod
-    def attr_for(is_array):
-        if is_array:
+    def attr_for(is_uniform):
+        if is_uniform:
             return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_BOLD
         else:
             return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED
@@ -299,19 +299,19 @@ class CompositeTableNode(RegularTable):
 
 
 class EntriesNode(CompositeTableNode):
-    def __init__(self, entries, descriptor_f, kit, is_array):
+    def __init__(self, entries, descriptor_f, kit, is_uniform):
         super().__init__(
             [
-                self.entry_node(key, descriptor_f(key), subj, is_array, kit)
+                self.entry_node(key, descriptor_f(key), subj, is_uniform, kit)
                 for key, subj in entries
             ]
         )
 
     @staticmethod
-    def entry_node(key, descriptor, subj, is_array, kit):
+    def entry_node(key, descriptor, subj, is_uniform, kit):
         node = kit.node(subj, descriptor)
         return HBox([
-            HeaderNode(key, is_array), node
+            HeaderNode(key, is_uniform), node
         ])
 
 
@@ -368,7 +368,7 @@ def row_headers_node_for_paths(j, descriptor):
 
 
 def row_headers_node_for_paths0(j, descriptor, leaf_sink, name):
-    if descriptor.is_array() and descriptor.kind == 'list':
+    if descriptor.is_uniform() and descriptor.kind == 'list':
         nodes = [
             row_headers_node_for_paths0(jj, descriptor.item, leaf_sink, name)
             for name, jj in descriptor.enumerate_entries(j)
@@ -384,8 +384,8 @@ def row_headers_node_for_paths0(j, descriptor, leaf_sink, name):
 
 def row_headers_node_for_descriptor(j, descriptor: Descriptor, leaf_sink: List = None, name=None):
     leaf_sink = leaf_sink if leaf_sink is not None else []
-    # if descriptor.is_array() and descriptor.is_list():
-    if descriptor.is_array():
+    # if descriptor.is_uniform() and descriptor.is_list():
+    if descriptor.is_uniform():
         nodes = [row_headers_node_for_descriptor(jj, descriptor.item, leaf_sink, name) for name, jj in descriptor.enumerate_entries(j)]
         if name is None:
             return NestedRowHeaders(nodes, leaf_sink)

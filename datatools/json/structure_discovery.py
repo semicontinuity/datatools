@@ -11,6 +11,9 @@ class Descriptor:
         return type(self) is PrimitiveDescriptor
 
     def is_array(self) -> bool:
+        return self.is_uniform()
+
+    def is_uniform(self) -> bool:
         pass
 
     def is_list(self) -> bool:
@@ -73,7 +76,7 @@ class PrimitiveDescriptor(Descriptor):
 class MappingDescriptor(Descriptor):
     entries: Dict[Hashable, Descriptor]
     kind: str
-    array: bool
+    uniform: bool
     length: Optional[int] = None
 
     @staticmethod
@@ -114,7 +117,7 @@ class MappingDescriptor(Descriptor):
             return AnyDescriptor()
 
         if self.kind == 'list':
-            if self.array and o.array:
+            if self.uniform and o.uniform:
                 merged = self.entries[0].merge_with(o.entries[0])
                 return MappingDescriptor(
                     {0: merged}, 'list', True, self.length if self.length == o.length else None
@@ -140,16 +143,16 @@ class MappingDescriptor(Descriptor):
     def is_list(self) -> bool:
         return self.kind == 'list'
 
-    def is_array(self) -> bool:
-        return self.array
+    def is_uniform(self) -> bool:
+        return self.uniform
 
     @property
     def item(self):
         for v in self.entries.values():
             return v
 
-    def item_is_array(self) -> bool:
-        return self.item.is_array()
+    def item_is_uniform(self) -> bool:
+        return self.item.is_uniform()
 
     def item_is_dict(self) -> bool:
         return self.item.is_dict()
@@ -173,7 +176,7 @@ class MappingDescriptor(Descriptor):
         item = self.item
         if type(item) is MappingDescriptor and item.kind == 'dict': # TODO
             return item
-        return item.inner_item() if item.is_array() else item
+        return item.inner_item() if item.is_uniform() else item
 
 
 class Discovery:
@@ -194,25 +197,25 @@ class Discovery:
             if len(item_descriptors) == 0:
                 return MappingDescriptor({}, 'list', False, None)
             merged = Descriptor.merge(list(item_descriptors.values()))
-            is_array = not merged.is_any()
+            is_uniform = not merged.is_any()
             return MappingDescriptor(
                 {i: merged for i, d in item_descriptors.items()},
-                'list', is_array, len(item_descriptors) if is_array else None)
+                'list', is_uniform, len(item_descriptors) if is_uniform else None)
             # return self.array_or_list_descriptor(j)
         elif isinstance(j, dict):
             item_descriptors = {k: self.object_descriptor(v) for k, v in j.items()}
             if len(item_descriptors) == 0:
                 return MappingDescriptor({}, 'dict', False, None)
             merged = Descriptor.merge(list(item_descriptors.values()))
-            is_array = not merged.is_any()
-            if is_array:
+            is_uniform = not merged.is_any()
+            if is_uniform:
                 return MappingDescriptor(
                     {i: merged for i in item_descriptors},
-                    'dict', is_array, len(item_descriptors) if is_array else None
+                    'dict', is_uniform, len(item_descriptors) if is_uniform else None
                 )
             else:
                 return MappingDescriptor(
-                    item_descriptors, 'dict', is_array, len(item_descriptors) if is_array else None
+                    item_descriptors, 'dict', is_uniform, len(item_descriptors) if is_uniform else None
                 )
             # return self.array_or_dict_descriptor(j)
         else:
@@ -245,7 +248,7 @@ def compute_row_paths(j, descriptor: Descriptor) -> List[Tuple[str]]:
 def compute_row_paths0(j, descriptor: Descriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
     for key, value in descriptor.enumerate_entries(j):
         child_path = path + [key]
-        if descriptor.item.is_array() and descriptor.item.kind == 'list':
+        if descriptor.item.is_uniform() and descriptor.item.kind == 'list':
             compute_row_paths0(value, descriptor.item, child_path, result)
         else:
             result.append(tuple(child_path))
