@@ -87,7 +87,9 @@ class ColumnAttrs:
 
 def compute_column_coloring(column_attr, row_count):
     threshold = 2.5 * sqrt(row_count)
-    if len(column_attr.unique_values) + len(column_attr.non_unique_value_counts) < threshold:
+    if len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
+        return COLORING_NONE
+    elif len(column_attr.unique_values) + len(column_attr.non_unique_value_counts) < threshold:
         return COLORING_HASH_ALL
     elif 0 < column_attr.non_uniques_count < threshold:
         return COLORING_HASH_FREQUENT

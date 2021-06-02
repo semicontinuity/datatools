@@ -1,4 +1,4 @@
-from typing import Tuple, Any
+from typing import Tuple, Any, AnyStr
 
 from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_cross_column_attrs, hash_to_rgb_dark, \
     hash_code
@@ -7,14 +7,28 @@ from datatools.json.structure_discovery import *
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
-MAX_PRIMITIVE_LENGTH = 48
+MAX_PRIMITIVE_LENGTH = 64
+
+
+@dataclass
+class BorderStyle:
+    top: bool = False
+
+
+@dataclass
+class Style:
+    table: BorderStyle
+    header: BorderStyle
+    cell: BorderStyle
 
 
 class AnsiToolkit:
     discovery: Discovery
 
-    def __init__(self, discovery):
+    def __init__(self, discovery, style):
         self.discovery = discovery
+        self.style = style
+        AnsiToolkit.instance = self
 
     def page_node(self, j):
         return PageNode(self.node(j, self.discovery.object_descriptor(j)), "")
@@ -178,12 +192,13 @@ class PageNode:
 
 
 class TextCell(Block):
-    def __init__(self, text, mask = 0, bg: Tuple[int, int, int] = None):
+    def __init__(self, text: AnyStr, mask: int, border_style: BorderStyle, bg: Tuple[int, int, int] = None):
         self.text = text
         self.mask = mask
         self.width = len(text) + 2
         self.height = 1
         self.bg = bg
+        self.border_style = border_style
 
     def paint(self, buffer):
         # background
@@ -194,7 +209,8 @@ class TextCell(Block):
                 buffer.draw_bg_colors_box(self.x, self.y, self.width, self.height, *self.bg)
 
         # top border
-        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
+        if self.border_style.top:
+            buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 
         # left border
         for j in range(self.height):
@@ -205,7 +221,7 @@ class TextCell(Block):
 
 class HeaderNode(TextCell):
     def __init__(self, key, is_array):
-        super().__init__(str(key), self.attr_for(is_array))
+        super().__init__(str(key), self.attr_for(is_array), AnsiToolkit.instance.style.header)
 
     @staticmethod
     def attr_for(is_array):
@@ -217,7 +233,7 @@ class HeaderNode(TextCell):
 
 class PrimitiveNode(TextCell):
     def __init__(self, j, attrs: ColumnAttrs = None):
-        super().__init__(*self.text_and_mask_for(j), self.bg_for(j, attrs))
+        super().__init__(*self.text_and_mask_for(j), AnsiToolkit.instance.style.cell, self.bg_for(j, attrs))
 
     @staticmethod
     def text_and_mask_for(j):
@@ -274,7 +290,8 @@ class CompositeTableNode(RegularTable):
 
     def paint_border(self, buffer):
         # top border (in case there is no contents that normally paints the border)
-        buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
+        if AnsiToolkit.instance.style.table.top:
+            buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 
         # left border (in case there is no contents that normally paints the border)
         for j in range(self.height):
@@ -363,6 +380,7 @@ def row_headers_node_for_paths0(j, descriptor, leaf_sink, name):
         leaf = HeaderNode(name, type(name) is int)
         leaf_sink.append(leaf)
         return leaf
+
 
 def row_headers_node_for_descriptor(j, descriptor: Descriptor, leaf_sink: List = None, name=None):
     leaf_sink = leaf_sink if leaf_sink is not None else []

@@ -13,8 +13,7 @@ def main():
     s = ''.join(lines)
     j = json.loads(s)
 
-    page_node = AnsiToolkit(Discovery()).page_node(j)
-
+    page_node = AnsiToolkit(Discovery(), style()).page_node(j)
 
     screen_size = (1000, 10000)
     if sys.stdout.isatty():
@@ -27,6 +26,15 @@ def main():
 
     # from datatools.json.util import to_jsonisable
     # print(json.dumps(to_jsonisable(page_node.root)))
+
+
+def style():
+    import os
+    return Style(
+        BorderStyle(int(os.environ.get("STYLE_TABLE_BORDER_TOP", "1"))),
+        BorderStyle(int(os.environ.get("STYLE_HEADER_BORDER_TOP", "1"))),
+        BorderStyle(int(os.environ.get("STYLE_CELL_BORDER_TOP", "1")))
+    )
 
 
 FD_IN = 2
