@@ -93,6 +93,8 @@ class MappingDescriptor(Descriptor):
                         merged_items[k] = v
                     else:
                         merged_items[k] = existing.merge_with(v)
+            if len(merged_items) == 0:
+                return MappingDescriptor(merged_items, 'dict', False, 0)
             fill_ratio = counter / (len(descriptors) * len(merged_items))
             if fill_ratio >= 0.75:
                 return MappingDescriptor(merged_items, 'dict', True, len(merged_items))
