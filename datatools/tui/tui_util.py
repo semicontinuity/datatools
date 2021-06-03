@@ -1,3 +1,4 @@
+import os
 from typing import Tuple, List
 
 FD_IN = 2
@@ -27,13 +28,6 @@ def read_screen_size():
     return int(parts[2]), int(parts[1])
 
 
-def supports_sixel() -> bool:
-    """
-    Must be invoked in RAW mode
-    """
-    return TCAP_SIXEL in read_tcaps()[1]
-
-
 def read_tcaps() -> Tuple[int, List[int]]:
     """
     Return terminal ID (e.g. 6 for VT100, 65 for VT525) + list of capabilities
@@ -49,3 +43,25 @@ def query_terminal(query):
     os.write(FD_OUT, query)
     res = select.select([FD_IN], [], [], 0.05)[0]
     return os.read(FD_IN, 32)
+
+
+def cmd_copy_rectangular_area(
+        src_top_line,
+        src_left_column_border,
+        src_bottom_line_border,
+        src_right_column_border,
+        src_page_number,
+        dst_top_line,
+        dst_left_column_border,
+        dst_page_number):
+    """ DECCRA = CSI Pts;Pls;Pbs;Prs;Pps;Ptd;Pld;Ppd$v """
+    return b'\x1b%d;%d;%d;%d;%d;%d;%d;%d$v' % (
+        src_top_line,
+        src_left_column_border,
+        src_bottom_line_border,
+        src_right_column_border,
+        src_page_number,
+        dst_top_line,
+        dst_left_column_border,
+        dst_page_number
+    )
