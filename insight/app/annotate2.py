@@ -1,6 +1,7 @@
 import json
 import sys
 import typing
+import os
 from collections import defaultdict
 from typing import Dict, Set, List, Tuple, Container, Generator, Iterable
 
@@ -24,13 +25,16 @@ def main_for_json(base_folder: str, out_resource_name: str):
     tweak_schema(tdf)
 
     debug('Saving annotated data...')
-    tdf.save_as(out_resource_name)
+    OUTPUT_FORMAT = os.environ.get("OF", "tsv")
+    tdf.save_as(out_resource_name, fmt=OUTPUT_FORMAT)
 
 
 def tdf_from_aggregated_json(data, base_folder, out_resource_name):
     """
     returns analyse_column_present==True if MSG_KIND_COLUMN column is present in the dataset
     """
+    INPUT_FORMAT = os.environ.get("IF", "tsv")
+
     tg_data = []
     leaves = []
     i: int = 0
@@ -61,7 +65,7 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
             analyse_column_present = False
         leaves.append(
             TieredDataFrame(
-                base_folder, entry_name, schema_tiers[2:], leaf_df, []
+                base_folder, entry_name, schema_tiers[2:], leaf_df, [], fmt=INPUT_FORMAT
             )
         )
     tg_tdf = TieredDataFrame(
@@ -69,28 +73,32 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
         '00000000',
         schema_tiers[1:],
         pd.DataFrame.from_records(tg_data),
-        leaves
+        leaves,
+        fmt=INPUT_FORMAT
     )
     tdf = TieredDataFrame(
         base_folder,
         out_resource_name,
         schema_tiers,
         pd.DataFrame.from_records([{'tg': 'all'}]),
-        [tg_tdf]
+        [tg_tdf],
+        fmt=INPUT_FORMAT
     )
     return tdf, analyse_column_present
 
 
 def main_for_tsv(base_folder: str, in_resource_name: str, out_resource_name: str):
     debug('Loading data...')
-    tdf = TieredDataFrame(base_folder, in_resource_name)
+    INPUT_FORMAT = os.environ.get("IF", "tsv")
+    tdf = TieredDataFrame(base_folder, in_resource_name, fmt=INPUT_FORMAT)
     debug('done')
 
     annotate(tdf)
     tweak_schema(tdf)
 
     debug('Saving annotated data...')
-    tdf.save_as(out_resource_name)
+    OUTPUT_FORMAT = os.environ.get("OF", "tsv")
+    tdf.save_as(out_resource_name, fmt=OUTPUT_FORMAT)
     debug('done')
 
 
