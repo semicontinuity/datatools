@@ -136,13 +136,11 @@ COLORS = THEMES["dark"]
 class WGrid(Editor):
     search_str: str = ""
 
-    def __init__(self, title, width, height, column_titles, column_widths, compute_cell_attrs, columns, column_keys, cell_renderer):
+    def __init__(self, title, width, height, column_titles, column_widths, column_keys, cell_renderer):
         super().__init__(0, 0, width, height)
-        self.compute_cell_attrs = compute_cell_attrs
         self.title = title
         self.column_titles = column_titles
         self.column_widths = [] if len(column_titles) == 0 else self.compute_column_widths(column_widths)
-        self.columns = columns
         self.column_keys = column_keys
 
         column_positions = []
@@ -256,10 +254,10 @@ class WGrid(Editor):
             if line >= self.total_lines:
                 append_spaces(buffer1, column_width)
             else:
-                bits, used_text_len, attrs = self.cell_renderer(
+                bits, used_text_len = self.cell_renderer(
                     line,
                     column_index,
-                    self.columns, self.compute_cell_attrs, column_width,
+                    column_width,
                     is_under_cursor)
 
                 if centered:
@@ -399,22 +397,35 @@ def pick_displayed_columns(screen_width) -> List[str]:
     return result
 
 
-def render_cell_value(line, column_index, columns, compute_cell_attrs, max_width, is_under_cursor):
-    column_key = column_keys[column_index]
-    value = orig_data[line].get(column_key)
-    column_spec = columns.get(column_key)
-    if column_spec is not None:
-        value = value[:max_width]
-        text = stripes(value, column_spec)
-        attrs = COLORS[ColorKey.TEXT]
-        return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(value), attrs
-    else:
-        text = str(value)
-        if is_under_cursor:
-            attrs = COLORS[ColorKey.CURSOR]
+class WGridCellRenderer:
+    def __init__(self, columns, column_colorings) -> None:
+        self.columns = columns
+        self.column_colorings = column_colorings
+
+    def __call__(self, line, column_index, max_width, is_under_cursor):
+        column_key = column_keys[column_index]
+        value = orig_data[line].get(column_key)
+        column_spec = self.columns.get(column_key)
+        if column_spec is not None:
+            value = value[:max_width]
+            text = stripes(value, column_spec)
+            attrs = COLORS[ColorKey.TEXT]
+            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(value)
         else:
-            attrs = compute_cell_attrs(column_index, text)
-        return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(text), attrs
+            text = str(value)
+            attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(column_index, text)
+            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(text)
+
+    def compute_cell_attrs(self, column_index, text) -> Sequence[int]:
+        color = self.column_colorings[column_index] if column_index < len(self.column_colorings) else COLORING_NONE
+
+        text_colors = COLORS[ColorKey.TEXT]
+        if color == COLORING_NONE or (
+                color == COLORING_HASH_FREQUENT and column_attrs[column_keys[column_index]].value_stats[text] <= 1):
+            return text_colors
+
+        fg = hash_to_rgb(hash_code(text))
+        return fg[0], fg[1], fg[2], text_colors[3], text_colors[4], text_colors[5]
 
 
 column_colorings: List[str] = []
@@ -454,20 +465,7 @@ def compute_column_coloring(column_key: str) -> str:
 
 
 def compute_column_colorings(column_keys: List[str]):
-    global column_colorings
-    column_colorings = [compute_column_coloring(c) for c in column_keys]
-
-
-def compute_cell_attrs(column_index, text) -> Sequence[int]:
-    color = column_colorings[column_index] if column_index < len(column_colorings) else COLORING_NONE
-
-    text_colors = COLORS[ColorKey.TEXT]
-    if color == COLORING_NONE or (
-            color == COLORING_HASH_FREQUENT and column_attrs[column_keys[column_index]].value_stats[text] <= 1):
-        return text_colors
-
-    fg = hash_to_rgb(hash_code(text))
-    return fg[0], fg[1], fg[2], text_colors[3], text_colors[4], text_colors[5]
+    return [compute_column_coloring(c) for c in column_keys]
 
 
 g = None
@@ -477,12 +475,12 @@ def do_run(state, presentation, screen_size):
     global column_keys
     column_titles: List[str] = [c for c in column_keys]
     column_widths: List[int] = [max_column_widths[c] for c in column_keys]
-    compute_column_colorings(column_keys)
 
     global g
-    g = WGrid(presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths,
-              compute_cell_attrs,
-              presentation["columns"], column_keys, render_cell_value)
+    g = WGrid(
+        presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
+        WGridCellRenderer(presentation["columns"], compute_column_colorings(column_keys))
+    )
     g.total_lines = len(orig_data)
 
     top_line = state["top_line"]
