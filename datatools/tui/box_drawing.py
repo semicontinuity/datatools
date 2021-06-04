@@ -2,9 +2,6 @@ from picotui.screen import Screen
 
 from datatools.tui.box_drawing_chars import *
 
-KIND_SINGLE = 0
-KIND_DOUBLE = 1
-
 
 def draw_grid(left, top, w, h, top_kind, bottom_kind, left_kind, right_kind, h_stops, v_stops):
     def draw_line(v_pos, y, current_h_kind):

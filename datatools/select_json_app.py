@@ -23,8 +23,10 @@ from json import JSONDecodeError
 from typing import Dict, List, Any, Sequence
 
 from datatools.tui.box_drawing import draw_grid, KIND_DOUBLE, KIND_SINGLE
+from datatools.tui.box_drawing_chars import V_SINGLE, V_DOUBLE
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, ansi_foreground_escape_code, \
-    ansi_background_escape_code, ansi_fg_color_cmd_bytes, ansi_bg_color_cmd_bytes
+    ansi_background_escape_code, append_spaces, \
+    set_colors_cmd_bytes
 from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists
 
 FD_TUI = 103
@@ -134,7 +136,7 @@ COLORS = THEMES["dark"]
 class WGrid(Editor):
     search_str: str = ""
 
-    def __init__(self, title, width, height, column_titles, column_widths, compute_cell_attrs, columns, column_keys):
+    def __init__(self, title, width, height, column_titles, column_widths, compute_cell_attrs, columns, column_keys, cell_renderer):
         super().__init__(0, 0, width, height)
         self.compute_cell_attrs = compute_cell_attrs
         self.title = title
@@ -151,6 +153,15 @@ class WGrid(Editor):
             x += 1
         self.h_stops = [(x, KIND_SINGLE) for x in column_positions]
         self.h_stops = self.h_stops[1:]
+
+        self.border_left = V_DOUBLE
+        self.border_right = V_DOUBLE
+        self.separator = V_SINGLE
+
+        self.cell_renderer = cell_renderer
+
+    def show_line(self, line_content, line):
+        raise AssertionError
 
     def compute_column_widths(self, column_widths) -> List[Any]:
         total_width = sum(column_widths)
@@ -226,49 +237,44 @@ class WGrid(Editor):
         line = start_line
         row = (start_line - self.top_line) + self.y + 2  # skip border line, headers line
         for c in range(num_lines):
-            self.goto(self.x + 1, row)
-            if line >= self.total_lines:
-                self.show_line(None, line)
-            else:
-                self.show_line(self.content[line], line)
+            self.goto(self.x, row)
+            self.wr(self.render_row(line, self.cur_line == line, centered=False))
+
             line += 1
             row += 1
 
-    def show_line(self, line_content, line):
-        is_under_cursor = self.cur_line == line
-        self.redraw_row(line_content, is_under_cursor, False)
-
-    def redraw_row(self, row_items, is_under_cursor, centered):
+    def render_row(self, line, is_under_cursor, centered):
         buffer = bytearray()
-        for cell_index in range(len(self.column_widths)):
-            self.set_colors(*COLORS[ColorKey.BOX_DRAWING])
-            if cell_index > 0:
-                self.wr(b'\xe2\x94\x82')  # |
-            self.redraw_cell(cell_index, centered, is_under_cursor, row_items)
 
-    def redraw_cell(self, cell_index, centered, is_under_cursor, row_items):
-        column_width = self.column_widths[cell_index]
-        if row_items:
-            column_key = column_keys[cell_index]
-            text, text_len, attrs = render(cell_index, column_key, self.columns, self.compute_cell_attrs, column_width,
-                                           is_under_cursor, row_items.get(column_key))
-            self.set_colors(*attrs)
-            if centered:
-                column_width = column_width
-                used_text_len = min(text_len, column_width)
-                before = (column_width - used_text_len) >> 1
-                self.wr(' ' * before)
-                self.wr_fixedw(text, column_width - before)
+        for column_index in range(len(self.column_widths)):
+            # border or separator
+            buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING])
+            buffer += self.border_left if column_index == 0 else self.separator
+
+            buffer1 = bytearray()
+            column_width = self.column_widths[column_index]
+            if line >= self.total_lines:
+                append_spaces(buffer1, column_width)
             else:
-                self.wr(text)
-                self.wr(" " * (column_width - text_len))
-        else:
-            self.wr(' ' * column_width)
+                bits, used_text_len, attrs = self.cell_renderer(
+                    line,
+                    column_index,
+                    self.columns, self.compute_cell_attrs, column_width,
+                    is_under_cursor)
 
-    @staticmethod
-    def append_fixedw(to, s, width):
-        to += s[:width]
-        to += " " * (width - len(s))
+                if centered:
+                    column_width = column_width
+                    before = (column_width - used_text_len) >> 1
+                    append_spaces(buffer1, before)
+                    buffer1 += bits
+                    append_spaces(buffer1, column_width - before - used_text_len)
+                else:
+                    buffer1 += bits
+                    append_spaces(buffer1, column_width - used_text_len)
+            buffer += buffer1
+
+        buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
+        return buffer
 
     def handle_mouse(self, x, y):
         pass
@@ -351,30 +357,6 @@ class WGrid(Editor):
             Screen.wr(ansi_foreground_escape_code(c[0], c[1], c[2]))
             Screen.wr(ansi_background_escape_code(c[3], c[4], c[5]))
 
-    def set_colors_cmd(self, *c):
-        if len(c) == 2:
-            return self.attr_color_cmd_bytes(*c)
-        else:
-            return ansi_fg_color_cmd_bytes(c[0], c[1], c[2]) + ansi_bg_color_cmd_bytes(c[3], c[4], c[5])
-
-    @staticmethod
-    def attr_color_cmd_bytes(fg, bg=-1):
-        if bg == -1:
-            bg = fg >> 4
-            fg &= 0xf
-        if bg is None:
-            if fg > 8:
-                return b"\x1b[%d;1m" % (fg + 30 - 8)
-            else:
-                return b"\x1b[%dm" % (fg + 30)
-        else:
-            assert bg <= 8
-            if fg > 8:
-                return b"\x1b[%d;%d;1m" % (fg + 30 - 8, bg + 40)
-            else:
-                return b"\x1b[0;%d;%dm" % (fg + 30, bg + 40)
-
-
 
 import sys
 import json
@@ -417,20 +399,22 @@ def pick_displayed_columns(screen_width) -> List[str]:
     return result
 
 
-def render(column_index, column_key, columns, compute_cell_attrs, column_width, is_under_cursor, value):
+def render_cell_value(line, column_index, columns, compute_cell_attrs, max_width, is_under_cursor):
+    column_key = column_keys[column_index]
+    value = orig_data[line].get(column_key)
     column_spec = columns.get(column_key)
     if column_spec is not None:
-        value = value[:column_width]
+        value = value[:max_width]
         text = stripes(value, column_spec)
         attrs = COLORS[ColorKey.TEXT]
-        return text, len(value), attrs
+        return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(value), attrs
     else:
         text = str(value)
         if is_under_cursor:
             attrs = COLORS[ColorKey.CURSOR]
         else:
             attrs = compute_cell_attrs(column_index, text)
-        return text, len(text), attrs
+        return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(text), attrs
 
 
 column_colorings: List[str] = []
@@ -498,8 +482,8 @@ def do_run(state, presentation, screen_size):
     global g
     g = WGrid(presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths,
               compute_cell_attrs,
-              presentation["columns"], column_keys)
-    g.set_lines(orig_data)
+              presentation["columns"], column_keys, render_cell_value)
+    g.total_lines = len(orig_data)
 
     top_line = state["top_line"]
     if 0 <= top_line < g.total_lines:
