@@ -100,6 +100,7 @@ def set_colors_cmd_bytes(*c):
     else:
         return ansi_fg_color_cmd_bytes(c[0], c[1], c[2]) + ansi_bg_color_cmd_bytes(c[3], c[4], c[5])
 
+
 def attr_color_cmd_bytes(fg, bg=-1):
     if bg == -1:
         bg = fg >> 4
