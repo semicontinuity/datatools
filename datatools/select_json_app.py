@@ -189,7 +189,7 @@ class WGrid(Editor):
         self.cursor(False)
         self.redraw_grid()
         self.redraw_title()
-        self.redraw_column_titles(self.column_titles)
+        self.redraw_column_titles()
         self.redraw_content()
 
     def redraw_grid(self):
@@ -209,7 +209,7 @@ class WGrid(Editor):
         self.set_colors(*COLORS[ColorKey.TITLE])
         self.wr_fixedw(' ' + self.title + ' ', used_width)
 
-    def redraw_column_titles(self, l):
+    def redraw_column_titles(self):
         self.goto(self.x + 1, self.y + 1)
         self.redraw_column_titles_row(self.column_titles)
 
@@ -249,29 +249,29 @@ class WGrid(Editor):
             buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING])
             buffer += self.border_left if column_index == 0 else self.separator
 
-            buffer1 = bytearray()
             column_width = self.column_widths[column_index]
             if line >= self.total_lines:
-                append_spaces(buffer1, column_width)
+                append_spaces(buffer, column_width)
             else:
-                bits, used_text_len = self.cell_renderer(
-                    line,
-                    column_index,
-                    column_width,
-                    is_under_cursor)
-
-                if centered:
-                    column_width = column_width
-                    before = (column_width - used_text_len) >> 1
-                    append_spaces(buffer1, before)
-                    buffer1 += bits
-                    append_spaces(buffer1, column_width - before - used_text_len)
-                else:
-                    buffer1 += bits
-                    append_spaces(buffer1, column_width - used_text_len)
-            buffer += buffer1
+                buffer += self.render_cell(centered, column_index, column_width, is_under_cursor, line)
 
         buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
+        return buffer
+
+    def render_cell(self, centered, column_index, column_width, is_under_cursor, line):
+        buffer = bytearray()
+        bits, used_text_len = self.cell_renderer(line, column_index, column_width, is_under_cursor)
+
+        if centered:
+            column_width = column_width
+            before = (column_width - used_text_len) >> 1
+            append_spaces(buffer, before)
+            buffer += bits
+            append_spaces(buffer, column_width - before - used_text_len)
+        else:
+            buffer += bits
+            append_spaces(buffer, column_width - used_text_len)
+
         return buffer
 
     def handle_mouse(self, x, y):
@@ -468,36 +468,49 @@ def compute_column_colorings(column_keys: List[str]):
     return [compute_column_coloring(c) for c in column_keys]
 
 
-g = None
+class App:
+    g: WGrid
+
+    def __init__(self, state, presentation, screen_size):
+        self.g = App.grid(state, presentation, screen_size)
+        signal.signal(signal.SIGWINCH, self.handle_sigwinch)
+
+    def handle_sigwinch(self, signalNumber, frame):
+        screen_size = Screen.screen_size()  # not very stable, sometimes duplicate 'x1b[8' is read
+        self.g.width = screen_size[0]
+        self.g.height = screen_size[1]
+        self.g.redraw()
+
+    @staticmethod
+    def grid(state, presentation, screen_size) -> WGrid:
+        global column_keys
+        column_titles: List[str] = [c for c in column_keys]
+        column_widths: List[int] = [max_column_widths[c] for c in column_keys]
+
+        g = WGrid(
+            presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
+            WGridCellRenderer(presentation["columns"], compute_column_colorings(column_keys))
+        )
+        g.total_lines = len(orig_data)
+
+        top_line = state["top_line"]
+        if 0 <= top_line < g.total_lines:
+            g.top_line = top_line
+
+        cur_line = state["cur_line"]
+        if top_line <= cur_line < g.total_lines:
+            g.cur_line = cur_line
+
+        return g
+
+    def run(self):
+        res = self.g.loop()
+        exit_code = KEYS_TO_EXIT_CODES.get(res)
+        state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
+        return exit_code if exit_code is not None else EXIT_CODE_ESCAPE, state
 
 
-def do_run(state, presentation, screen_size):
-    global column_keys
-    column_titles: List[str] = [c for c in column_keys]
-    column_widths: List[int] = [max_column_widths[c] for c in column_keys]
-
-    global g
-    g = WGrid(
-        presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
-        WGridCellRenderer(presentation["columns"], compute_column_colorings(column_keys))
-    )
-    g.total_lines = len(orig_data)
-
-    top_line = state["top_line"]
-    if 0 <= top_line < g.total_lines:
-        g.top_line = top_line
-
-    cur_line = state["cur_line"]
-    if top_line <= cur_line < g.total_lines:
-        g.cur_line = cur_line
-
-    res = g.loop()
-    exit_code = KEYS_TO_EXIT_CODES.get(res)
-    state = {'top_line': g.top_line, 'cur_line': g.cur_line}
-    return exit_code if exit_code is not None else EXIT_CODE_ESCAPE, state
-
-
-def run(code):
+def run(delegate):
     s = Screen()
     try:
         cursor_position_save()
@@ -506,7 +519,7 @@ def run(code):
         s.cls()
         s.attr_reset()
 
-        return code()
+        return delegate()
     finally:
         s.attr_reset()
         s.cls()
@@ -539,14 +552,6 @@ def load_data(params):
             sys.exit(255)
 
 
-def handle_sigwinch(signalNumber, frame):
-    global g
-    screen_size = Screen.screen_size()  # not very stable, sometimes duplicate 'x1b[8' is read
-    g.width = screen_size[0]
-    g.height = screen_size[1]
-    g.redraw()
-
-
 def parse_args(argv, presentation):
     params = Params()
     a = 1
@@ -576,13 +581,12 @@ def main():
     global orig_data
     orig_data = load_data(params)
     analyze_data(orig_data, params)
-    signal.signal(signal.SIGWINCH, handle_sigwinch)
 
     screen_size = with_raw_terminal(read_screen_size)
     global column_keys
     column_keys = pick_displayed_columns(screen_size[0])
 
-    exit_code, state = run(lambda: do_run(state, presentation, screen_size))
+    exit_code, state = run(lambda: App(state, presentation, screen_size).run())
 
     write_fd_or_pass(FD_STATE_OUT, state)
     write_fd_or_pass(FD_PRESENTATION_OUT, presentation)
