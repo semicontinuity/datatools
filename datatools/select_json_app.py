@@ -18,13 +18,18 @@
 #
 # Exit code corresponds to key code + sum of modifiers codes.
 # ──────────────────────────────────────────────────────────────────────────────
+import json
 import signal
+import sys
 from json import JSONDecodeError
-from typing import Dict, List, Any, Sequence
+from typing import List, Any
 
 from datatools.tui.box_drawing import draw_grid, KIND_DOUBLE, KIND_SINGLE
 from datatools.tui.box_drawing_chars import V_SINGLE, V_DOUBLE
 from datatools.tui.jt.grid_base import WGridBase
+from datatools.tui.jt.grid_cell_renderer import WGridCellRenderer, compute_column_colorings, max_column_widths, \
+    analyze_data, pick_displayed_columns
+from datatools.tui.jt.themes import COLORS, ColorKey
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, ansi_foreground_escape_code, \
     ansi_background_escape_code, append_spaces, \
     set_colors_cmd_bytes
@@ -41,19 +46,11 @@ FD_PRESENTATION_OUT = 107
 FD_STATE_IN = 108
 FD_STATE_OUT = 109
 
-COLORING_NONE = "none"
-COLORING_HASH_ALL = "hash-all"
-COLORING_HASH_FREQUENT = "hash-frequent"
-
-from enum import Enum
-from math import sqrt
-
 from dataclasses import dataclass
 
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.select_json_app_exit_codes_mapping import *
-from datatools.tui.coloring import hash_code, hash_to_rgb
 
 
 @dataclass
@@ -62,75 +59,7 @@ class Params:
     stream_mode: bool = None
     columns = {}
 
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-def decode_rgb(s):
-    return int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16)
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-full_block = '\u2588'
-
-
-def stripes(cell_contents, column_spec):
-    spec_list = list(column_spec.items())
-    if len(spec_list) == 1 and type(spec_list[0][1]) is dict:
-        return stripes_for_nested_spec(cell_contents, spec_list[0][0], spec_list[0][1])
-    else:
-        return stripes_for_plain_spec(cell_contents, column_spec)
-
-
-def stripes_for_plain_spec(cell_contents, column_spec):
-    s = ""
-    for cell in cell_contents:
-        rgb_string = column_spec.get(cell)
-        attr = ansi_foreground_escape_code(*decode_rgb(rgb_string) if rgb_string is not None else (255, 255, 255))
-        s = s + attr + full_block
-    return s
-
-
-def stripes_for_nested_spec(cell_contents, field, spec):
-    s = ""
-    for cell in cell_contents:
-        rgb_string = spec.get(cell[field])
-        attr = ansi_foreground_escape_code(*decode_rgb(rgb_string) if rgb_string is not None else (255, 255, 255))
-        s = s + attr + full_block
-    return s
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-class ColorKey(Enum):
-    BOX_DRAWING = 'BOX_DRAWING'
-    TITLE = 'TITLE'
-    COLUMN_TITLE = 'COLUMN_TITLE'
-    CURSOR = 'CURSOR'
-    TEXT = 'TEXT'
-
-
-THEMES = {
-    "mc": {
-        ColorKey.BOX_DRAWING: [C_B_CYAN, C_BLUE],
-        ColorKey.TITLE: [C_BLACK, C_CYAN],
-        ColorKey.COLUMN_TITLE: [C_B_YELLOW, C_BLUE],
-        ColorKey.CURSOR: [C_BLACK, C_CYAN],
-        ColorKey.TEXT: [C_B_CYAN, C_BLUE]
-    },
-    "dark": {
-        ColorKey.BOX_DRAWING: (64, 96, 96, 0x29, 0x0B, 0x2E),
-        ColorKey.TITLE: (255, 255, 255, 24, 16, 23),
-        ColorKey.COLUMN_TITLE: (255, 255, 0, 24, 16, 23),
-        ColorKey.CURSOR: [C_BLACK, C_WHITE],
-        ColorKey.TEXT: (255, 255, 255, 24, 16, 23)
-    },
-}
-
-COLORS = THEMES["dark"]
 
 
 class WGrid(WGridBase):
@@ -288,12 +217,12 @@ class WGrid(WGridBase):
                 self.redraw_lines(self.top_line, content_height)
 
     def search(self):
-        line = self.cur_line
-        while line < self.total_lines:
-            for k, v in orig_data[line].items():
-                if str(v).find(self.search_str) >= 0:
-                    return line
-            line += 1
+        # line = self.cur_line
+        # while line < self.total_lines:
+        #     for k, v in orig_data[line].items():
+        #         if str(v).find(self.search_str) >= 0:
+        #             return line
+        #     line += 1
         return None
 
     def set_colors(self, *c):
@@ -304,123 +233,11 @@ class WGrid(WGridBase):
             Screen.wr(ansi_background_escape_code(c[3], c[4], c[5]))
 
 
-import sys
-import json
-from collections import defaultdict
-
-
-@dataclass
-class ColumnAttrs:
-    value_stats: Dict[str, int]
-    non_uniques_count: int = 0
-
-
-column_keys = []
-column_attrs = defaultdict(lambda: ColumnAttrs(defaultdict(int)))
-column_is_complex = defaultdict(bool)
-unique_column_values = defaultdict(set)
-max_column_widths: Dict[str, int] = defaultdict(int)
-
-orig_data = []
-
-
-# TODO: if some column is not present for some rows, it should be included with smaller priority (after other columns)
-def pick_displayed_columns(screen_width) -> List[str]:
-    """ Pick columns until they fit screen """
-    result = []
-    screen_width -= 1
-
-    # simple columns first
-    for k, v in max_column_widths.items():
-        if 0 < v <= screen_width - 1 and not column_is_complex[k]:
-            result.append(k)
-            screen_width -= (v + 1)
-
-    # complex columns second
-    for k, v in max_column_widths.items():
-        if 0 < v <= screen_width - 1 and column_is_complex[k]:
-            result.append(k)
-            screen_width -= (v + 1)
-
-    return result
-
-
-class WGridCellRenderer:
-    def __init__(self, columns, column_colorings) -> None:
-        self.columns = columns
-        self.column_colorings = column_colorings
-
-    def __call__(self, line, column_index, max_width, is_under_cursor):
-        column_key = column_keys[column_index]
-        value = orig_data[line].get(column_key)
-        column_spec = self.columns.get(column_key)
-        if column_spec is not None:
-            value = value[:max_width]
-            text = stripes(value, column_spec)
-            attrs = COLORS[ColorKey.TEXT]
-            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(value)
-        else:
-            text = str(value)
-            attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(column_index, text)
-            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(text)
-
-    def compute_cell_attrs(self, column_index, text) -> Sequence[int]:
-        color = self.column_colorings[column_index] if column_index < len(self.column_colorings) else COLORING_NONE
-
-        text_colors = COLORS[ColorKey.TEXT]
-        if color == COLORING_NONE or (
-                color == COLORING_HASH_FREQUENT and column_attrs[column_keys[column_index]].value_stats[text] <= 1):
-            return text_colors
-
-        fg = hash_to_rgb(hash_code(text))
-        return fg[0], fg[1], fg[2], text_colors[3], text_colors[4], text_colors[5]
-
-
-column_colorings: List[str] = []
-
-
-def analyze_data(data, params):
-    for record in data:
-        for key in record.keys():
-            value = record[key]
-            value_as_string = str(value)
-
-            column_attr = column_attrs[key]
-            if type(value) is dict or type(value) is list:
-                column_is_complex[key] = True
-            else:
-                column_attr.value_stats[value_as_string] = column_attr.value_stats.get(value_as_string, 0) + 1
-
-            cell_length = len(value) if key in params.columns else len(value_as_string)
-            max_column_widths[key] = max(max_column_widths[key], cell_length)
-            unique_column_values[key].add(value_as_string)
-
-    for key, column_attr in column_attrs.items():
-        for word, count in column_attr.value_stats.items():
-            if count > 1:
-                column_attr.non_uniques_count += 1
-
-
-def compute_column_coloring(column_key: str) -> str:
-    threshold = 2 * sqrt(len(orig_data))
-    nu = column_attrs[column_key].non_uniques_count
-    if len(column_attrs[column_key].value_stats) < threshold:
-        return COLORING_HASH_ALL
-    elif nu < threshold:
-        return COLORING_HASH_FREQUENT
-    else:
-        return COLORING_NONE
-
-
-def compute_column_colorings(column_keys: List[str]):
-    return [compute_column_coloring(c) for c in column_keys]
-
-
 class App:
     g: WGrid
 
-    def __init__(self, state, presentation, screen_size):
-        self.g = App.grid(state, presentation, screen_size)
+    def __init__(self, g):
+        self.g = g
         signal.signal(signal.SIGWINCH, self.handle_sigwinch)
 
     def handle_sigwinch(self, signalNumber, frame):
@@ -428,28 +245,6 @@ class App:
         self.g.width = screen_size[0]
         self.g.height = screen_size[1]
         self.g.redraw()
-
-    @staticmethod
-    def grid(state, presentation, screen_size) -> WGrid:
-        global column_keys
-        column_titles: List[str] = [c for c in column_keys]
-        column_widths: List[int] = [max_column_widths[c] for c in column_keys]
-
-        g = WGrid(
-            presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
-            WGridCellRenderer(presentation["columns"], compute_column_colorings(column_keys))
-        )
-        g.total_lines = len(orig_data)
-
-        top_line = state["top_line"]
-        if 0 <= top_line < g.total_lines:
-            g.top_line = top_line
-
-        cur_line = state["cur_line"]
-        if top_line <= cur_line < g.total_lines:
-            g.cur_line = cur_line
-
-        return g
 
     def run(self):
         res = self.g.loop()
@@ -490,13 +285,13 @@ def load_data(params):
             orig_data.append(j)
         return orig_data
     else:
-        input = sys.stdin.read()
+        data = sys.stdin.read()
         try:
-            return json.loads(input)
+            return json.loads(data)
         except JSONDecodeError as e:
             print("Cannot decode JSON", file=sys.stderr)
             print(e, file=sys.stderr)
-            print(input, file=sys.stderr)
+            print(data, file=sys.stderr)
             sys.exit(255)
 
 
@@ -520,21 +315,42 @@ def parse_args(argv, presentation):
     return params
 
 
+def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
+    column_titles: List[str] = [c for c in column_keys]
+    column_widths: List[int] = [max_column_widths[c] for c in column_keys]
+
+    g = WGrid(
+        presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
+        WGridCellRenderer(presentation["columns"], compute_column_colorings(orig_data, column_keys), orig_data, column_keys)
+    )
+    g.total_lines = len(orig_data)
+
+    top_line = state["top_line"]
+    if 0 <= top_line < g.total_lines:
+        g.top_line = top_line
+
+    cur_line = state["cur_line"]
+    if top_line <= cur_line < g.total_lines:
+        g.cur_line = cur_line
+
+    return g
+
+
 def main():
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
     params = parse_args(sys.argv, presentation)
     fd_tui = FD_TUI if fd_exists(FD_TUI) else 2
     patch_picotui(fd_tui, fd_tui)
-    global orig_data
+
     orig_data = load_data(params)
     analyze_data(orig_data, params)
 
     screen_size = with_raw_terminal(read_screen_size)
-    global column_keys
     column_keys = pick_displayed_columns(screen_size[0])
 
-    exit_code, state = run(lambda: App(state, presentation, screen_size).run())
+    g = grid(state, presentation, screen_size, orig_data, column_keys)
+    exit_code, state = run(lambda: App(g).run())
 
     write_fd_or_pass(FD_STATE_OUT, state)
     write_fd_or_pass(FD_PRESENTATION_OUT, presentation)

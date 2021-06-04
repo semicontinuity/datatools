@@ -27,3 +27,7 @@ def hash_to_rgb(h):
     b3 = h % 32
 
     return r6 * 32 + r3 + 128, g6 * 32 + g3 + 128, b6 * 32 + b3 + 128
+
+
+def decode_rgb(s):
+    return int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16)
