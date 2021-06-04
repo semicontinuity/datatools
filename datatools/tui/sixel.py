@@ -25,7 +25,7 @@
 # os.write(2, cmd)
 
 
-from datatools.tui.tui_util import TCAP_SIXEL, read_tcaps
+from datatools.tui.terminal import TCAP_SIXEL, read_tcaps
 
 
 def sixel_supported() -> bool:
@@ -41,7 +41,7 @@ def sixel_append_start_cmd(buffer: bytearray):
 
 def sixel_append_stop_cmd(buffer: bytearray):
     buffer.append(0x1b)
-    buffer.append(0x5c) # '\'
+    buffer.append(0x5c)  # '\'
 
 
 def sixel_mode_start_cmd() -> bytes:

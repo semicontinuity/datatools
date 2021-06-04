@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+import sys
 
 from datatools.json.json2ansi_toolkit import *
 from datatools.json.structure_discovery import *
-from datatools.tui.tui_util import init_tty, deinit_tty, read_screen_size
+from datatools.tui.terminal import init_tty, deinit_tty, read_screen_size, with_raw_terminal
 
 
 def main():
@@ -17,9 +18,7 @@ def main():
 
     screen_size = (1000, 10000)
     if sys.stdout.isatty():
-        init_tty()
-        screen_size = read_screen_size()[0], 10000
-        deinit_tty()
+        screen_size = with_raw_terminal(read_screen_size)[0], 10000
 
     screen_buffer = page_node.paint()
     screen_buffer.flush(*screen_size)

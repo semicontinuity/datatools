@@ -10,9 +10,9 @@ from json import JSONDecodeError
 from datatools.json.coloring import *
 from datatools.json.json_viz_helper import *
 from datatools.json.structure_analyzer import *
+from datatools.util.conf import read_fd_or_default
 from datatools.util.html_util import *
-
-DEBUG = os.getenv('DEBUG')
+from datatools.util.logging import debug, stderr_print
 
 FD_METADATA_IN = 104
 FD_METADATA_OUT = 105
@@ -24,23 +24,6 @@ FD_STATE_IN = 108
 FD_STATE_OUT = 109
 
 verbose = False
-
-
-def read_fd_or_default(fd, default):
-    try:
-        with os.fdopen(fd, 'r') as f:
-            return json.load(f)
-    except Exception:
-        return default
-
-
-def debug(*args, **kwargs):
-    if DEBUG:
-        print(*args, file=sys.stderr, **kwargs)
-
-
-def stderr_print(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
 
 
 class MatrixNode:

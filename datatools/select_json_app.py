@@ -18,12 +18,14 @@
 #
 # Exit code corresponds to key code + sum of modifiers codes.
 # ──────────────────────────────────────────────────────────────────────────────
-import os
-import os.path
 import signal
 from json import JSONDecodeError
-
 from typing import Dict, List, Any, Sequence
+
+from datatools.tui.box_drawing import draw_grid, KIND_DOUBLE, KIND_SINGLE
+from datatools.tui.terminal import with_raw_terminal, read_screen_size, ansi_foreground_escape_code, \
+    ansi_background_escape_code, ansi_fg_color_cmd_bytes, ansi_bg_color_cmd_bytes
+from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists
 
 FD_TUI = 103
 
@@ -46,11 +48,10 @@ from math import sqrt
 from dataclasses import dataclass
 from picotui.editor import Editor
 
-from datatools.util.logging import debug
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.select_json_app_exit_codes_mapping import *
-from datatools.tui.coloring import ansi_foreground_escape_code, ansi_background_escape_code, hash_code, hash_to_rgb
+from datatools.tui.coloring import hash_code, hash_to_rgb
 
 
 @dataclass
@@ -129,93 +130,6 @@ THEMES = {
 
 COLORS = THEMES["dark"]
 
-P_FIRST = 0
-P_NONE = 1
-P_STOP = 2
-P_LAST = 3
-
-KIND_SINGLE = 0
-KIND_DOUBLE = 1
-
-# for every sub-array: [vertical position * 4 + horizontal position]
-# contains duplicates, but easily addressable
-CHARS = [
-    # vertical: single, horizontal: single
-    [
-        b'\xe2\x94\x8c', b'\xe2\x94\x80', b'\xe2\x94\xac', b'\xe2\x94\x90',
-        b'\xe2\x94\x82', b' ', b'\xe2\x94\x82', b'\xe2\x94\x82',
-        b'\xe2\x94\x9c', b'\xe2\x94\x80', b'\xe2\x94\xbc', b'\xe2\x94\xa4',
-        b'\xe2\x94\x94', b'\xe2\x94\x80', b'\xe2\x94\xb4', b'\xe2\x94\x98'
-    ],
-    # vertical: single, horizontal: double
-    [
-        b'\xe2\x95\x92', b'\xe2\x95\x90', b'\xe2\x95\xa4', b'\xe2\x95\x95',
-        b'\xe2\x94\x82', b' ', b'\xe2\x94\x82', b'\xe2\x94\x82',
-        b'\xe2\x95\x9e', b'\xe2\x95\x90', b'\xe2\x95\xaa', b'\xe2\x95\xa1',
-        b'\xe2\x95\x98', b'\xe2\x95\x90', b'\xe2\x95\xa7', b'\xe2\x95\x9b'
-    ],
-    # vertical: double, horizontal: single
-    [
-        b'\xe2\x95\x93', b'\xe2\x94\x80', b'\xe2\x95\xa5', b'\xe2\x95\xa6',
-        b'\xe2\x95\x91', b' ', b'\xe2\x95\x91', b'\xe2\x95\x91',
-        b'\xe2\x95\x9f', b'\xe2\x94\x80', b'\xe2\x95\xab', b'\xe2\x95\xa2',
-        b'\xe2\x95\x99', b'\xe2\x94\x80', b'\xe2\x95\xa8', b'\xe2\x95\x9c'
-    ],
-    # vertical: double, horizontal: double
-    [
-        b'\xe2\x95\x94', b'\xe2\x95\x90', b'\xe2\x95\xa6', b'\xe2\x95\x97',
-        b'\xe2\x95\x91', b' ', b'\xe2\x95\x91', b'\xe2\x95\x91',
-        b'\xe2\x95\xa0', b'\xe2\x95\x90', b'\xe2\x95\xac', b'\xe2\x95\xa3',
-        b'\xe2\x95\x9a', b'\xe2\x95\x90', b'\xe2\x95\xa9', b'\xe2\x95\x9d'
-    ]
-]
-
-
-def draw_grid(left, top, w, h, top_kind, bottom_kind, left_kind, right_kind, h_stops, v_stops):
-    def draw_line(v_pos, y, current_h_kind):
-        Screen.goto(left, y)
-        h_stop = 0
-
-        border_chars = CHARS[current_h_kind]
-        Screen.wr(CHARS[2 * left_kind + current_h_kind][4 * v_pos + P_FIRST])
-        x = left + 1
-        while True:
-            next_h_stop = (w - 1, right_kind) if h_stop >= len(h_stops) else h_stops[h_stop]
-            next_x = left + next_h_stop[0]
-            Screen.wr(border_chars[4 * v_pos + P_NONE] * (next_x - x))
-            x = next_x
-            if h_stop >= len(h_stops):
-                break
-            else:
-                next_h_stop_v_kind = next_h_stop[1]
-                Screen.wr(CHARS[2 * next_h_stop_v_kind + current_h_kind][4 * v_pos + P_STOP])
-                x = x + 1
-                h_stop = h_stop + 1
-        Screen.wr(CHARS[2 * right_kind + current_h_kind][4 * v_pos + P_LAST])
-
-    def draw_middle():
-        y = top + 1
-        v_stop = 0
-        while True:
-            next_v_stop = (h - 1, bottom_kind) if v_stop >= len(v_stops) else v_stops[v_stop]
-            next_y = top + next_v_stop[0]
-
-            while y < next_y:
-                draw_line(P_NONE, y, 0)
-                y = y + 1
-
-            if v_stop >= len(v_stops):
-                break
-            else:
-                next_v_stop_h_kind = next_v_stop[1]
-                draw_line(P_STOP, y, next_v_stop_h_kind)
-                y = y + 1
-                v_stop = v_stop + 1
-
-    draw_line(P_FIRST, top, top_kind)
-    draw_middle()
-    draw_line(P_LAST, top + h - 1, bottom_kind)
-
 
 class WGrid(Editor):
     search_str: str = ""
@@ -237,13 +151,6 @@ class WGrid(Editor):
             x += 1
         self.h_stops = [(x, KIND_SINGLE) for x in column_positions]
         self.h_stops = self.h_stops[1:]
-
-    def set_colors(self, *c):
-        if len(c) == 2:
-            self.attr_color(*c)
-        else:
-            Screen.wr(ansi_foreground_escape_code(c[0], c[1], c[2]))
-            Screen.wr(ansi_background_escape_code(c[3], c[4], c[5]))
 
     def compute_column_widths(self, column_widths) -> List[Any]:
         total_width = sum(column_widths)
@@ -329,33 +236,39 @@ class WGrid(Editor):
 
     def show_line(self, line_content, line):
         is_under_cursor = self.cur_line == line
-        self.redraw_row(line_content, False, True, is_under_cursor)
+        self.redraw_row(line_content, is_under_cursor, False)
 
-    def redraw_row(self, row_items, centered, separator, is_under_cursor):
-        for c in range(len(self.column_widths)):
+    def redraw_row(self, row_items, is_under_cursor, centered):
+        buffer = bytearray()
+        for cell_index in range(len(self.column_widths)):
             self.set_colors(*COLORS[ColorKey.BOX_DRAWING])
-            if c > 0:
-                if separator:
-                    self.wr(b'\xe2\x94\x82')  # |
-                else:
-                    cursor_forward(1)
+            if cell_index > 0:
+                self.wr(b'\xe2\x94\x82')  # |
+            self.redraw_cell(cell_index, centered, is_under_cursor, row_items)
 
-            column_width = self.column_widths[c]
-            if row_items:
-                text, text_len, attrs = render(row_items, c, self.column_keys, self.columns, self.compute_cell_attrs,
-                                               column_width, is_under_cursor)
-                self.set_colors(*attrs)
-                if centered:
-                    column_width = column_width
-                    used_text_len = min(text_len, column_width)
-                    before = (column_width - used_text_len) >> 1
-                    self.wr(' ' * before)
-                    self.wr_fixedw(text, column_width - before)
-                else:
-                    self.wr(text)
-                    self.wr(" " * (column_width - text_len))
+    def redraw_cell(self, cell_index, centered, is_under_cursor, row_items):
+        column_width = self.column_widths[cell_index]
+        if row_items:
+            column_key = column_keys[cell_index]
+            text, text_len, attrs = render(cell_index, column_key, self.columns, self.compute_cell_attrs, column_width,
+                                           is_under_cursor, row_items.get(column_key))
+            self.set_colors(*attrs)
+            if centered:
+                column_width = column_width
+                used_text_len = min(text_len, column_width)
+                before = (column_width - used_text_len) >> 1
+                self.wr(' ' * before)
+                self.wr_fixedw(text, column_width - before)
             else:
-                self.wr(' ' * column_width)
+                self.wr(text)
+                self.wr(" " * (column_width - text_len))
+        else:
+            self.wr(' ' * column_width)
+
+    @staticmethod
+    def append_fixedw(to, s, width):
+        to += s[:width]
+        to += " " * (width - len(s))
 
     def handle_mouse(self, x, y):
         pass
@@ -431,6 +344,37 @@ class WGrid(Editor):
             line += 1
         return None
 
+    def set_colors(self, *c):
+        if len(c) == 2:
+            self.attr_color(*c)
+        else:
+            Screen.wr(ansi_foreground_escape_code(c[0], c[1], c[2]))
+            Screen.wr(ansi_background_escape_code(c[3], c[4], c[5]))
+
+    def set_colors_cmd(self, *c):
+        if len(c) == 2:
+            return self.attr_color_cmd_bytes(*c)
+        else:
+            return ansi_fg_color_cmd_bytes(c[0], c[1], c[2]) + ansi_bg_color_cmd_bytes(c[3], c[4], c[5])
+
+    @staticmethod
+    def attr_color_cmd_bytes(fg, bg=-1):
+        if bg == -1:
+            bg = fg >> 4
+            fg &= 0xf
+        if bg is None:
+            if fg > 8:
+                return b"\x1b[%d;1m" % (fg + 30 - 8)
+            else:
+                return b"\x1b[%dm" % (fg + 30)
+        else:
+            assert bg <= 8
+            if fg > 8:
+                return b"\x1b[%d;%d;1m" % (fg + 30 - 8, bg + 40)
+            else:
+                return b"\x1b[0;%d;%dm" % (fg + 30, bg + 40)
+
+
 
 import sys
 import json
@@ -473,10 +417,8 @@ def pick_displayed_columns(screen_width) -> List[str]:
     return result
 
 
-def render(items, column_index, column_keys, columns, compute_cell_attrs, column_width, is_under_cursor):
-    column_key = column_keys[column_index]
+def render(column_index, column_key, columns, compute_cell_attrs, column_width, is_under_cursor, value):
     column_spec = columns.get(column_key)
-    value = items.get(column_key)
     if column_spec is not None:
         value = value[:column_width]
         text = stripes(value, column_spec)
@@ -547,43 +489,42 @@ def compute_cell_attrs(column_index, text) -> Sequence[int]:
 g = None
 
 
-def run(state, presentation):
+def do_run(state, presentation, screen_size):
+    global column_keys
+    column_titles: List[str] = [c for c in column_keys]
+    column_widths: List[int] = [max_column_widths[c] for c in column_keys]
+    compute_column_colorings(column_keys)
+
+    global g
+    g = WGrid(presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths,
+              compute_cell_attrs,
+              presentation["columns"], column_keys)
+    g.set_lines(orig_data)
+
+    top_line = state["top_line"]
+    if 0 <= top_line < g.total_lines:
+        g.top_line = top_line
+
+    cur_line = state["cur_line"]
+    if top_line <= cur_line < g.total_lines:
+        g.cur_line = cur_line
+
+    res = g.loop()
+    exit_code = KEYS_TO_EXIT_CODES.get(res)
+    state = {'top_line': g.top_line, 'cur_line': g.cur_line}
+    return exit_code if exit_code is not None else EXIT_CODE_ESCAPE, state
+
+
+def run(code):
     s = Screen()
     try:
         cursor_position_save()
-
         s.init_tty()
-
-        screen_size = Screen.screen_size()
-
-        global column_keys
-        column_keys = pick_displayed_columns(screen_size[0])
-        column_titles: List[str] = [c for c in column_keys]
-        column_widths: List[int] = [max_column_widths[c] for c in column_keys]
-
         screen_alt()
         s.cls()
         s.attr_reset()
 
-        compute_column_colorings(column_keys)
-
-        global g
-        g = WGrid(presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, compute_cell_attrs,
-                  presentation["columns"], column_keys)
-        g.set_lines(orig_data)
-
-        top_line = state["top_line"]
-        if 0 <= top_line < g.total_lines:
-            g.top_line = top_line
-
-        cur_line = state["cur_line"]
-        if top_line <= cur_line < g.total_lines:
-            g.cur_line = cur_line
-
-        res = g.loop()
-        exit_code = KEYS_TO_EXIT_CODES.get(res)
-        state = {'top_line': g.top_line, 'cur_line': g.cur_line}
-        return exit_code if exit_code is not None else EXIT_CODE_ESCAPE, state
+        return code()
     finally:
         s.attr_reset()
         s.cls()
@@ -614,27 +555,6 @@ def load_data(params):
             print(e, file=sys.stderr)
             print(input, file=sys.stderr)
             sys.exit(255)
-
-
-def read_fd_or_default(fd, default):
-    try:
-        with os.fdopen(fd, 'r') as f:
-            debug(f'Reading from FD {fd}')
-            return json.load(f)
-    except Exception:
-        return default
-
-
-def write_fd_or_pass(fd, value):
-    try:
-        with os.fdopen(fd, 'w') as f:
-            json.dump(value, f)
-    except Exception as e:
-        pass
-
-
-def fd_exists(fd):
-    return os.path.islink(f'/proc/self/fd/{fd}')
 
 
 def handle_sigwinch(signalNumber, frame):
@@ -675,7 +595,13 @@ def main():
     orig_data = load_data(params)
     analyze_data(orig_data, params)
     signal.signal(signal.SIGWINCH, handle_sigwinch)
-    exit_code, state = run(state, presentation)
+
+    screen_size = with_raw_terminal(read_screen_size)
+    global column_keys
+    column_keys = pick_displayed_columns(screen_size[0])
+
+    exit_code, state = run(lambda: do_run(state, presentation, screen_size))
+
     write_fd_or_pass(FD_STATE_OUT, state)
     write_fd_or_pass(FD_PRESENTATION_OUT, presentation)
     if exit_code < 120:

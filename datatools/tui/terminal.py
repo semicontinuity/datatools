@@ -1,4 +1,3 @@
-import os
 from typing import Tuple, List
 
 FD_IN = 2
@@ -19,6 +18,14 @@ def init_tty():
 def deinit_tty():
     import termios
     termios.tcsetattr(FD_IN, termios.TCSANOW, ttyattr)
+
+
+def with_raw_terminal(code):
+    try:
+        init_tty()
+        return code()
+    finally:
+        deinit_tty()
 
 
 def read_screen_size():
@@ -65,3 +72,19 @@ def cmd_copy_rectangular_area(
         dst_left_column_border,
         dst_page_number
     )
+
+
+def ansi_foreground_escape_code(r, g, b):
+    return "\x1b[38;2;" + str(r) + ';' + str(g) + ';' + str(b) + 'm'
+
+
+def ansi_background_escape_code(r, g, b):
+    return "\x1b[48;2;" + str(r) + ';' + str(g) + ';' + str(b) + 'm'
+
+
+def ansi_fg_color_cmd_bytes(r, g, b):
+    return b"\x1B[38;2;%d;%d;%dm" % (r, g, b)
+
+
+def ansi_bg_color_cmd_bytes(r, g, b):
+    return b"\x1B[48;2;%d;%d;%dm" % (r, g, b)
