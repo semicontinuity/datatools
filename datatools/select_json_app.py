@@ -24,6 +24,7 @@ from typing import Dict, List, Any, Sequence
 
 from datatools.tui.box_drawing import draw_grid, KIND_DOUBLE, KIND_SINGLE
 from datatools.tui.box_drawing_chars import V_SINGLE, V_DOUBLE
+from datatools.tui.jt.grid_base import WGridBase
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, ansi_foreground_escape_code, \
     ansi_background_escape_code, append_spaces, \
     set_colors_cmd_bytes
@@ -48,7 +49,6 @@ from enum import Enum
 from math import sqrt
 
 from dataclasses import dataclass
-from picotui.editor import Editor
 
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
@@ -133,7 +133,7 @@ THEMES = {
 COLORS = THEMES["dark"]
 
 
-class WGrid(Editor):
+class WGrid(WGridBase):
     search_str: str = ""
 
     def __init__(self, title, width, height, column_titles, column_widths, column_keys, cell_renderer):
@@ -236,12 +236,11 @@ class WGrid(Editor):
         row = (start_line - self.top_line) + self.y + 2  # skip border line, headers line
         for c in range(num_lines):
             self.goto(self.x, row)
-            self.wr(self.render_row(line, self.cur_line == line, centered=False))
-
+            self.wr(self.render_line(line, self.cur_line == line, centered=False))
             line += 1
             row += 1
 
-    def render_row(self, line, is_under_cursor, centered):
+    def render_line(self, line, is_under_cursor, centered):
         buffer = bytearray()
 
         for column_index in range(len(self.column_widths)):
@@ -253,12 +252,12 @@ class WGrid(Editor):
             if line >= self.total_lines:
                 append_spaces(buffer, column_width)
             else:
-                buffer += self.render_cell(centered, column_index, column_width, is_under_cursor, line)
+                buffer += self.render_cell(line, column_index, column_width, is_under_cursor, centered)
 
         buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
         return buffer
 
-    def render_cell(self, centered, column_index, column_width, is_under_cursor, line):
+    def render_cell(self, line, column_index, column_width, is_under_cursor, centered):
         buffer = bytearray()
         bits, used_text_len = self.cell_renderer(line, column_index, column_width, is_under_cursor)
 
@@ -273,57 +272,6 @@ class WGrid(Editor):
             append_spaces(buffer, column_width - used_text_len)
 
         return buffer
-
-    def handle_mouse(self, x, y):
-        pass
-
-    def handle_cursor_keys(self, key):
-        """buggy"""
-        if not self.total_lines:
-            return
-        content_height = self.height - 3
-        if key == KEY_DOWN:
-            if self.cur_line + 1 != self.total_lines:
-                self.cur_line += 1
-                if self.cur_line >= self.top_line + self.height - 3:  # cursor went beyond visible area
-                    self.top_line += 1
-                    self.redraw_lines(self.top_line, content_height)
-                    # scroll_region(2, 2 + content_height - 2)
-                    # scroll_up()
-                    # self.redraw_lines(self.top_line + content_height - 2, 2)
-                else:
-                    self.redraw_lines(self.cur_line - 1, 2)
-        elif key == KEY_UP:
-            if self.cur_line > 0:
-                self.cur_line -= 1
-                if self.cur_line < self.top_line:  # cursor went beyond visible area
-                    self.top_line = self.cur_line
-                    self.redraw_lines(self.top_line, content_height)
-                    # scroll_region(3, 3 + content_height - 2)
-                    # scroll_down()
-                    # self.redraw_lines(self.top_line, 2)
-                else:
-                    self.redraw_lines(self.cur_line, 2)
-        elif key == KEY_PGDN:
-            if self.cur_line + 1 != self.total_lines:  # if not on the very last line
-                remains = self.total_lines - (self.top_line + content_height)
-                if 0 < remains:
-                    delta = min(remains, content_height)
-                    self.top_line += delta
-                    self.cur_line = min(self.cur_line + delta,
-                                        self.total_lines - 1) if delta > 0 else self.total_lines - 1
-                    self.redraw_lines(self.top_line, content_height)
-                else:  # everything must be visible already; must move cursor to the last line
-                    self.cur_line = self.total_lines - 1
-                    self.redraw_lines(self.top_line, content_height)
-        elif key == KEY_PGUP:
-            if self.cur_line > 0:  # if not on the very first line
-                delta = min(self.top_line, content_height)
-                self.top_line -= delta
-                self.cur_line = max(self.cur_line - delta, 0) if delta > 0 else 0
-                self.redraw_lines(self.top_line, content_height)
-        else:
-            return False
 
     def handle_edit_key(self, key):
         if key in KEYS_TO_EXIT_CODES:
