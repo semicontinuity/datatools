@@ -88,19 +88,26 @@ class WGridCellRenderer:
         self.orig_data = orig_data
         self.column_keys = column_keys
 
-    def __call__(self, line, column_index, max_width, is_under_cursor):
+    def __call__(self, line, column_index, is_under_cursor, max_width, start, end):
         column_key = self.column_keys[column_index]
         value = self.orig_data[line].get(column_key)
         column_spec = self.columns.get(column_key)
         if column_spec is not None:
-            value = value[:max_width]
+            # value is List
+            if value is None:
+                value = []
+            length = len(value)
+            value = value[start:end]
             text = self.stripes(value, column_spec)
             attrs = COLORS[ColorKey.TEXT]
-            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(value)
+            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8') + b' ' * (max_width - length)
         else:
-            text = str(value)
+            if value is None:
+                value = ''
+            length = len(value)
+            text = str(value[start:end])
             attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(column_index, text)
-            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8'), len(text)
+            return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8') + b' ' * (max_width - length)
 
     def compute_cell_attrs(self, column_index, text) -> Sequence[int]:
         color = self.column_colorings[column_index] if column_index < len(self.column_colorings) else COLORING_NONE

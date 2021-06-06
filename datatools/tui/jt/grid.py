@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Optional
 
 from picotui.screen import Screen
 
@@ -10,7 +10,7 @@ from datatools.tui.jt.themes import COLORS, ColorKey
 from datatools.tui.picotui_util import cursor_forward
 from datatools.tui.terminal import ansi_foreground_escape_code, \
     ansi_background_escape_code, append_spaces, \
-    set_colors_cmd_bytes
+    set_colors_cmd_bytes, append_utf8str_fixed_width
 
 
 class WGrid(WGridBase):
@@ -90,23 +90,29 @@ class WGrid(WGridBase):
         self.wr_fixedw(' ' + self.title + ' ', used_width)
 
     def redraw_column_titles(self):
-        self.goto(self.x + 1, self.y + 1)
-        self.redraw_column_titles_row(self.column_titles)
+        self.goto(self.x, self.y + 1)
+        self.wr(self.render_column_titles_row(self.column_titles))
 
-    def redraw_column_titles_row(self, items):
-        for c in range(len(self.column_widths)):
-            self.set_colors(*COLORS[ColorKey.BOX_DRAWING])
-            if c > 0:
-                cursor_forward(1)
+    def render_column_titles_row(self, titles):
+        buffer = bytearray()
 
-            self.set_colors(*COLORS[ColorKey.COLUMN_TITLE])
-            text = items[c]
+        for column_index in range(len(self.column_widths)):
+            # border or separator
+            buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING])
+            buffer += self.border_left if column_index == 0 else self.separator
+
+            buffer += set_colors_cmd_bytes(*COLORS[ColorKey.COLUMN_TITLE])
+            text = titles[column_index]
             text_len = len(text)
-            column_width = self.column_widths[c]
+            column_width = self.column_widths[column_index]
             used_text_len = min(text_len, column_width)
             before = (column_width - used_text_len) >> 1
-            self.wr(' ' * before)
-            self.wr_fixedw(text, column_width - before)
+            append_spaces(buffer, before)
+            append_utf8str_fixed_width(buffer, text, used_text_len)
+            append_spaces(buffer, column_width - before - used_text_len)
+
+        buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
+        return buffer
 
     def redraw_content(self):
         self.redraw_lines(self.top_line, self.height - 3)
@@ -116,11 +122,11 @@ class WGrid(WGridBase):
         row = (start_line - self.top_line) + self.y + 2  # skip border line, headers line
         for c in range(num_lines):
             self.goto(self.x, row)
-            self.wr(self.render_line(line, self.cur_line == line, centered=False))
+            self.wr(self.render_line(line, self.cur_line == line))
             line += 1
             row += 1
 
-    def render_line(self, line, is_under_cursor, centered):
+    def render_line(self, line, is_under_cursor):
         buffer = bytearray()
 
         for column_index in range(len(self.column_widths)):
@@ -132,25 +138,9 @@ class WGrid(WGridBase):
             if line >= self.total_lines:
                 append_spaces(buffer, column_width)
             else:
-                buffer += self.render_cell(line, column_index, column_width, is_under_cursor, centered)
+                buffer += self.cell_renderer(line, column_index, is_under_cursor, column_width, 0, column_width)
 
         buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
-        return buffer
-
-    def render_cell(self, line, column_index, column_width, is_under_cursor, centered):
-        buffer = bytearray()
-        bits, used_text_len = self.cell_renderer(line, column_index, column_width, is_under_cursor)
-
-        if centered:
-            column_width = column_width
-            before = (column_width - used_text_len) >> 1
-            append_spaces(buffer, before)
-            buffer += bits
-            append_spaces(buffer, column_width - before - used_text_len)
-        else:
-            buffer += bits
-            append_spaces(buffer, column_width - used_text_len)
-
         return buffer
 
     def handle_edit_key(self, key):
@@ -167,7 +157,7 @@ class WGrid(WGridBase):
                 self.cur_line = line
                 self.redraw_lines(self.top_line, content_height)
 
-    def search(self):
+    def search(self) -> Optional[int]:
         # line = self.cur_line
         # while line < self.total_lines:
         #     for k, v in orig_data[line].items():
