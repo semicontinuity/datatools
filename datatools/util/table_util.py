@@ -43,6 +43,8 @@ class Container(Block):
 
     def __init__(self, contents=None):
         self.contents = [] if contents is None else contents
+        self.width = 0
+        self.height = 0
 
     def compute_widths(self) -> List[int]:
         for child in self.contents:
@@ -111,11 +113,26 @@ class HBox(Container):
     def __init__(self, contents=None):
         super(HBox, self).__init__(contents)
 
+    def set_min_width(self, width):
+        total = sum(child.width for child in self.contents)
+        if total < width and len(self.contents) > 0:
+            self.contents[-1].set_min_width(self.contents[-1].width + (width - total))  # extra space to the last child
+        self.width = width
+        for child in self.contents:
+            child.set_min_width(child.width)
+
+    def set_min_height(self, size):
+        for child in self.contents:
+            child.set_min_height(size)
+        super(HBox, self).set_min_height(size)
+
     def compute_width(self):
         self.compute_width_as_sum()
+        # self.set_min_width(self.width)
 
     def compute_height(self):
         self.compute_height_as_max()
+        # self.set_min_height(self.height)
 
     def compute_position(self, parent_x, parent_y):
         super().compute_position(parent_x, parent_y)
@@ -126,11 +143,24 @@ class VBox(Container):
     def __init__(self, contents=None):
         super(VBox, self).__init__(contents)
 
+    def set_min_width(self, size):
+        for child in self.contents:
+            child.set_min_width(size)
+        super(VBox, self).set_min_width(size)
+
+    def set_min_height(self, height):
+        total = sum(child.height for child in self.contents)
+        if total < height and len(self.contents) > 0:
+            self.contents[-1].set_min_height(self.contents[-1].height + (height - total))  # extra space to the last child
+        self.height = height
+
     def compute_width(self):
         self.compute_width_as_max()
+        # self.set_min_width(self.width)
 
     def compute_height(self):
         self.compute_height_as_sum()
+        # self.set_min_height(self.height)
 
     def compute_position(self, parent_x, parent_y):
         super().compute_position(parent_x, parent_y)

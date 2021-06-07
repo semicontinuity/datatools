@@ -327,9 +327,6 @@ class ComplexTableNode(CompositeTableNode):
         body.compute_height()
         body.compute_width()
 
-        # Need to fix bug, when sum(child column header widths) < computed column header width
-        # Re-distribute available space, or just increase the size of the last child.
-
         self.consolidate_min_widths(body, column_headers)
         self.consolidate_min_heights(body, row_headers)
 
@@ -419,6 +416,11 @@ class NestedColumnHeaders(HBox):
 
     def compute_width(self):
         super(NestedColumnHeaders, self).compute_width()
+        self.set_min_width(self.width)
+
+    def compute_height(self):
+        super(NestedColumnHeaders, self).compute_height()
+        self.set_min_height(self.height)
 
     def compute_widths(self) -> List[int]:
         super(NestedColumnHeaders, self).compute_widths()
@@ -461,6 +463,10 @@ class NestedRowHeaders(VBox):
     def __init__(self, contents, leaves: List[Block]):
         super().__init__(contents)
         self.leaves = leaves
+
+    def compute_height(self) -> List[int]:
+        super(NestedRowHeaders, self).compute_height()
+        return [leaf.width for leaf in self.leaves]
 
     def compute_widths(self) -> List[int]:
         super(NestedRowHeaders, self).compute_widths()
