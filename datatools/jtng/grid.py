@@ -1,6 +1,6 @@
 from typing import List, Any, Optional
 
-from picotui.defs import KEY_RIGHT, KEY_LEFT
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.grid_base import WGridBase
@@ -46,8 +46,11 @@ class WGrid(WGridBase):
                     append_spaces(buffer, column_x_to - x)
                 else:
                     renderer = self.column_cell_renderer(column_index)
-                    buffer += renderer(is_under_cursor, column_width, start, end, self.cell_value_f(line, column_index))
+                    f = self.cell_value_f(line, column_index)
+                    buffer += renderer(is_under_cursor, column_width, start, end, f)
 
+            if column_x_right >= self.x_shift + self.width:
+                break
             x = column_x_right
 
         return buffer
@@ -80,7 +83,14 @@ class WGrid(WGridBase):
                 if self.x_shift > 0:
                     self.x_shift -= 1
                     self.redraw_lines(self.top_line, content_height)
-
+            elif key == KEY_END:
+                if self.x_shift + self.width < self.columns_width:
+                    self.x_shift = self.columns_width - self.width
+                    self.redraw_lines(self.top_line, content_height)
+            elif key == KEY_HOME:
+                if self.x_shift > 0:
+                    self.x_shift = 0
+                    self.redraw_lines(self.top_line, content_height)
 
         if result is None:
             self.search_str = ""

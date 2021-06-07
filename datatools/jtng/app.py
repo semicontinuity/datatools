@@ -13,10 +13,14 @@ from datatools.jtng.grid import WGrid
 def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     column_widths: List[int] = [max_column_widths[c] for c in column_keys]
 
+    def cell_value(line, column):
+        value = orig_data[line].get(column_keys[column])
+        return "-" if type(value) is str and ("\n" in value or "\t" in value) else value
+
     g = WGrid(
         screen_size[0], screen_size[1], column_widths, column_keys,
         column_renderers(column_keys).__getitem__,
-        lambda line, column: orig_data[line].get(column_keys[column])
+        cell_value
     )
     g.total_lines = len(orig_data)
 

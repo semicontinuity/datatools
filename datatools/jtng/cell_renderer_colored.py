@@ -17,7 +17,8 @@ class WColoredTextCellRenderer:
         if value is None:
             value = ''
         length = len(value)
-        text = str(value) + ' ' * (max_width - 2 - length)
+        text = str(value)
+        text += ' ' * (max_width - 2 - length)
         border_attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else COLORS[ColorKey.BOX_DRAWING]
         attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(value)
         buffer = bytearray()

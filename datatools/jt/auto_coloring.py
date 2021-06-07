@@ -52,7 +52,9 @@ def analyze_data(data, cell_is_stripes):
                 column_attr = column_attrs_map[key]
                 column_attr.value_stats[value_as_string] = column_attr.value_stats.get(value_as_string, 0) + 1
 
-            cell_length = len(value) if cell_is_stripes(key) else len(value_as_string)
+            if "\n" in value_as_string: continue
+
+            cell_length = len(value) if cell_is_stripes(key) else (0 if "\n" in value_as_string else len(value_as_string))
             max_column_widths[key] = max(max_column_widths[key], cell_length)
 
     for key, column_attr in column_attrs_map.items():
