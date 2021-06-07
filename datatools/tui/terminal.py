@@ -1,5 +1,7 @@
 from typing import Tuple, List
 
+FD_TUI = 103
+
 FD_IN = 2
 FD_OUT = 2
 

@@ -24,22 +24,13 @@ import sys
 from json import JSONDecodeError
 from typing import List
 
-from datatools.jt.auto_coloring import max_column_widths, analyze_data, pick_displayed_columns
+from datatools.jt.auto_coloring import max_column_widths, infer_presentation, pick_displayed_columns
+from datatools.jt.auto_metadata import infer_metadata
 from datatools.jt.cell_renderer import column_renderers
 from datatools.jt.grid import WGrid
-from datatools.tui.terminal import with_raw_terminal, read_screen_size
-from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists
-
-FD_TUI = 103
-
-FD_METADATA_IN = 104
-FD_METADATA_OUT = 105
-
-FD_PRESENTATION_IN = 106
-FD_PRESENTATION_OUT = 107
-
-FD_STATE_IN = 108
-FD_STATE_OUT = 109
+from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
+from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists, FD_PRESENTATION_IN, FD_STATE_IN, \
+    FD_STATE_OUT, FD_PRESENTATION_OUT, FD_METADATA_IN
 
 from dataclasses import dataclass
 
@@ -120,7 +111,7 @@ def load_data(params):
             sys.exit(255)
 
 
-def parse_args(argv, presentation):
+def parse_params(argv):
     params = Params()
     a = 1
     while a < len(argv):
@@ -132,11 +123,6 @@ def parse_args(argv, presentation):
         else:
             params.columns = json.loads(sys.argv[a])
         a += 1
-
-    if params.title is not None:
-        presentation["title"] = params.title
-    if params.columns is not None:
-        presentation["columns"] = params.columns
     return params
 
 
@@ -163,14 +149,19 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
 
 
 def main(g, app, pick_displayed_columns):
+    # metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
-    params = parse_args(sys.argv, presentation)
+    params = parse_params(sys.argv)
+
+    override(params, presentation)
+
     fd_tui = FD_TUI if fd_exists(FD_TUI) else 2
     patch_picotui(fd_tui, fd_tui)
 
     orig_data = load_data(params)
-    analyze_data(orig_data, params.columns.__contains__)
+    infer_metadata(orig_data, presentation["columns"].__contains__)
+    infer_presentation(orig_data)
 
     screen_size = with_raw_terminal(read_screen_size)
     column_keys = pick_displayed_columns(screen_size[0])
@@ -186,6 +177,13 @@ def main(g, app, pick_displayed_columns):
     if exit_code != EXIT_CODE_ESCAPE:
         print(json.dumps(orig_data[state["cur_line"]]))
     sys.exit(exit_code)
+
+
+def override(params, presentation):
+    if params.title is not None:
+        presentation["title"] = params.title
+    if params.columns is not None:
+        presentation["columns"] = params.columns
 
 
 if __name__ == "__main__":

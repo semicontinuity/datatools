@@ -10,18 +10,10 @@ from json import JSONDecodeError
 from datatools.json.coloring import *
 from datatools.json.json_viz_helper import *
 from datatools.json.structure_analyzer import *
-from datatools.util.conf import read_fd_or_default
+from datatools.util.conf import read_fd_or_default, FD_PRESENTATION_IN
 from datatools.util.html_util import *
 from datatools.util.logging import debug, stderr_print
 
-FD_METADATA_IN = 104
-FD_METADATA_OUT = 105
-
-FD_PRESENTATION_IN = 106
-FD_PRESENTATION_OUT = 107
-
-FD_STATE_IN = 108
-FD_STATE_OUT = 109
 
 verbose = False
 

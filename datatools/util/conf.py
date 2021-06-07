@@ -4,6 +4,16 @@ import os
 from datatools.util.logging import debug
 
 
+FD_METADATA_IN = 104
+FD_METADATA_OUT = 105
+
+FD_PRESENTATION_IN = 106
+FD_PRESENTATION_OUT = 107
+
+FD_STATE_IN = 108
+FD_STATE_OUT = 109
+
+
 def read_fd_or_default(fd, default):
     try:
         with os.fdopen(fd, 'r') as f:
