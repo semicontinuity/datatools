@@ -25,29 +25,7 @@ class WGrid(WGridBase):
         raise AssertionError
 
     def compute_column_widths(self, column_widths) -> List[Any]:
-        # total_width = sum(column_widths) + 2 * len(column_widths)
-        # remaining_budget_width = self.width - total_width
-        # assert remaining_budget_width >= 0  # why?
-        remaining_budget_width = 0
-        zero_columns = sum(1 for w in column_widths if w == 0)
-        if zero_columns:
-            auto_width = remaining_budget_width // zero_columns
-            computed_column_widths = []
-            for i in range(len(column_widths)):
-                if column_widths[i] != 0:
-                    computed_column_widths.append(column_widths[i])
-                else:
-                    zero_columns -= 1
-                    if zero_columns == 0:
-                        computed_column_widths.append(remaining_budget_width)
-                    else:
-                        computed_column_widths.append(auto_width)
-                        remaining_budget_width -= auto_width
-        else:
-            # no column has width 0, so it will be the last one
-            computed_column_widths = [w + 2 for w in column_widths]
-            computed_column_widths[-1] += remaining_budget_width
-        return computed_column_widths
+        return [w + 2 for w in column_widths]
 
     def redraw(self):
         self.redraw_content()
@@ -55,11 +33,11 @@ class WGrid(WGridBase):
     def render_line(self, line, is_under_cursor):
         buffer = bytearray()
 
-        x = 0
+        x = 0   # corresponds to the left border of the first column, might me off-screen
         for column_index in range(len(self.column_widths)):
             column_width = self.column_widths[column_index]
             column_x_right = x + column_width
-            column_x_to = min(self.width, column_x_right)
+            column_x_to = min(self.x_shift + self.width, column_x_right)
 
             if column_x_to > self.x_shift:
                 start = max(self.x_shift - x, 0)
@@ -71,6 +49,7 @@ class WGrid(WGridBase):
                     buffer += renderer(is_under_cursor, column_width, start, end, self.cell_value_f(line, column_index))
 
             x = column_x_right
+
         return buffer
 
     def handle_edit_key(self, key):
