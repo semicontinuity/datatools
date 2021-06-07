@@ -1,8 +1,9 @@
 from typing import Sequence
 
-from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.jt.auto_coloring import COLORING_NONE, COLORING_HASH_FREQUENT
 from datatools.jt.themes import COLORS, ColorKey
+from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
+from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes
 
 
@@ -17,8 +18,11 @@ class WColoredTextCellRenderer:
             value = ''
         length = len(value)
         text = str(value[start:end])
+        border_attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else COLORS[ColorKey.BOX_DRAWING]
         attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(value)
-        return set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8') + b' ' * (max_width - length)
+        return set_colors_cmd_bytes(*border_attrs) + LEFT_BORDER_BYTES + \
+               set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8') + b' ' * (max_width - 2 - length) + \
+               set_colors_cmd_bytes(*border_attrs) + b' '
 
     def compute_cell_attrs(self, text) -> Sequence[int]:
         text_colors = COLORS[ColorKey.TEXT]

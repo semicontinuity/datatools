@@ -44,7 +44,7 @@ def pick_displayed_columns(screen_width) -> List[str]:
 def analyze_data(data, cell_is_stripes):
     for record in data:
         for key, value in record.items():
-            value_as_string = str(value)
+            value_as_string = ' ' if value is None else str(value)   # quick an dirty
 
             if type(value) is dict or type(value) is list:
                 column_is_complex[key] = True

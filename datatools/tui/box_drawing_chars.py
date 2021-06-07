@@ -1,5 +1,8 @@
 from typing import List
 
+LEFT_BORDER = '▏'
+LEFT_BORDER_BYTES = bytes(LEFT_BORDER, 'utf-8')
+
 KIND_SINGLE = 0
 KIND_DOUBLE = 1
 

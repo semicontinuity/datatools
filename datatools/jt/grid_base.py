@@ -13,11 +13,11 @@ class WGridBase(Editor):
     def handle_cursor_keys(self, key):
         if not self.total_lines:
             return
-        content_height = self.height - 3
+        content_height = self.height - self.y_top_offset - self.y_bottom_offset
         if key == KEY_DOWN:
             if self.cur_line + 1 != self.total_lines:
                 self.cur_line += 1
-                if self.cur_line >= self.top_line + self.height - 3:  # cursor went beyond visible area
+                if self.cur_line >= self.top_line + self.height - self.y_top_offset - self.y_bottom_offset:  # cursor went beyond visible area
                     self.top_line += 1
                     self.redraw_lines(self.top_line, content_height)
                     # scroll_region(2, 2 + content_height - 2)

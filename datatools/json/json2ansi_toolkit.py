@@ -4,6 +4,7 @@ from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_c
     hash_code
 from datatools.json.json2ansi_buffer import Buffer
 from datatools.json.structure_discovery import *
+from datatools.tui.box_drawing_chars import LEFT_BORDER
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 
@@ -214,7 +215,7 @@ class TextCell(Block):
 
         # left border
         for j in range(self.height):
-            buffer.draw_text(self.x, self.y + j, '▏')
+            buffer.draw_text(self.x, self.y + j, LEFT_BORDER)
 
         buffer.draw_text(self.x + 1, self.y, self.text)
 
