@@ -24,8 +24,8 @@ import sys
 from json import JSONDecodeError
 from typing import List
 
-from datatools.jt.auto_coloring import compute_column_colorings, max_column_widths, \
-    analyze_data, pick_displayed_columns, column_attrs_map
+from datatools.jt.auto_coloring import max_column_widths, \
+    analyze_data, pick_displayed_columns, column_attrs_map, compute_column_coloring
 from datatools.jt.cell_renderer_colored import WColoredTextCellRenderer
 from datatools.jt.cell_renderer_stripes import WStripesCellRenderer
 from datatools.jt.grid import WGrid
@@ -145,25 +145,10 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     column_titles: List[str] = [c for c in column_keys]
     column_widths: List[int] = [max_column_widths[c] for c in column_keys]
 
-    cell_value_f = lambda line, column: orig_data[line].get(column_keys[column])
-    column_colorings = compute_column_colorings(orig_data, column_keys)
-
-    column_renderers = []
-    columns_presentation = presentation["columns"]
-    for i, column_key in enumerate(column_keys):
-        column_spec = columns_presentation.get(column_key)
-        if column_spec is not None:
-            column_renderers.append(WStripesCellRenderer(column_spec))
-        else:
-            column_renderers.append(
-                WColoredTextCellRenderer(
-                    column_attrs_map[column_key],
-                    column_colorings[i])
-            )
-
     g = WGrid(
         presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
-        column_renderers.__getitem__, cell_value_f
+        column_renderers(column_keys, orig_data, presentation).__getitem__,
+        lambda line, column: orig_data[line].get(column_keys[column])
     )
     g.total_lines = len(orig_data)
 
@@ -178,6 +163,20 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     return g
 
 
+def column_renderers(column_keys, orig_data, presentation):
+    column_renderers = []
+    columns_presentation = presentation["columns"]
+    for i, column_key in enumerate(column_keys):
+        column_spec = columns_presentation.get(column_key)
+        if column_spec is not None:
+            column_renderers.append(WStripesCellRenderer(column_spec))
+        else:
+            column_renderers.append(
+                WColoredTextCellRenderer(column_attrs_map[column_key])
+            )
+    return column_renderers
+
+
 def main():
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
@@ -186,7 +185,7 @@ def main():
     patch_picotui(fd_tui, fd_tui)
 
     orig_data = load_data(params)
-    analyze_data(orig_data, params)
+    analyze_data(orig_data, params.columns.__contains__)
 
     screen_size = with_raw_terminal(read_screen_size)
     column_keys = pick_displayed_columns(screen_size[0])
