@@ -69,10 +69,14 @@ class Container(Block):
             child.height = self.height
 
     def compute_width_as_sum(self):
-        self.width = sum(size for size in self.compute_widths())
+        for child in self.contents:
+            child.compute_width()
+        self.width = sum(child.width for child in self.contents)
 
     def compute_height_as_sum(self):
-        self.height = sum(size for size in self.compute_heights())
+        for child in self.contents:
+            child.compute_height()
+        self.height = sum(child.height for child in self.contents)
 
     def set_min_widths(self, sizes: List[int]):
         for i in range(len(sizes)):
