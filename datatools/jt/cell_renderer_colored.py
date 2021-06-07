@@ -1,8 +1,8 @@
 from typing import Sequence
 
 from datatools.tui.coloring import hash_code, hash_to_rgb
-from datatools.tui.jt.auto_coloring import COLORING_NONE, COLORING_HASH_FREQUENT
-from datatools.tui.jt.themes import COLORS, ColorKey
+from datatools.jt.auto_coloring import COLORING_NONE, COLORING_HASH_FREQUENT
+from datatools.jt.themes import COLORS, ColorKey
 from datatools.tui.terminal import set_colors_cmd_bytes
 
 

@@ -24,11 +24,11 @@ import sys
 from json import JSONDecodeError
 from typing import List
 
-from datatools.tui.jt.auto_coloring import compute_column_colorings, max_column_widths, \
+from datatools.jt.auto_coloring import compute_column_colorings, max_column_widths, \
     analyze_data, pick_displayed_columns, column_attrs_map
-from datatools.tui.jt.cell_renderer_colored import WColoredTextCellRenderer
-from datatools.tui.jt.cell_renderer_stripes import WStripesCellRenderer
-from datatools.tui.jt.grid import WGrid
+from datatools.jt.cell_renderer_colored import WColoredTextCellRenderer
+from datatools.jt.cell_renderer_stripes import WStripesCellRenderer
+from datatools.jt.grid import WGrid
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists
 
@@ -47,7 +47,7 @@ from dataclasses import dataclass
 
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
-from datatools.select_json_app_exit_codes_mapping import *
+from datatools.jt.exit_codes_mapping import *
 
 
 @dataclass

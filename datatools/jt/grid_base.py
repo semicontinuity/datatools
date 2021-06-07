@@ -1,6 +1,6 @@
 from picotui.editor import Editor
 
-from datatools.select_json_app_exit_codes_mapping import *
+from datatools.jt.exit_codes_mapping import *
 
 
 class WGridBase(Editor):

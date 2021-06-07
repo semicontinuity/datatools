@@ -2,11 +2,11 @@ from typing import List, Any, Optional
 
 from picotui.screen import Screen
 
-from datatools.select_json_app_exit_codes_mapping import KEYS_TO_EXIT_CODES
+from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.tui.box_drawing import draw_grid, KIND_DOUBLE, KIND_SINGLE
 from datatools.tui.box_drawing_chars import V_SINGLE, V_DOUBLE
-from datatools.tui.jt.grid_base import WGridBase
-from datatools.tui.jt.themes import COLORS, ColorKey
+from datatools.jt.grid_base import WGridBase
+from datatools.jt.themes import COLORS, ColorKey
 from datatools.tui.terminal import ansi_foreground_escape_code, \
     ansi_background_escape_code, append_spaces, \
     set_colors_cmd_bytes, append_utf8str_fixed_width

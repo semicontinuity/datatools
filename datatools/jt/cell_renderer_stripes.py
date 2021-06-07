@@ -1,5 +1,5 @@
 from datatools.tui.coloring import decode_rgb
-from datatools.tui.jt.themes import COLORS, ColorKey
+from datatools.jt.themes import COLORS, ColorKey
 from datatools.tui.terminal import ansi_foreground_escape_code, set_colors_cmd_bytes
 
 

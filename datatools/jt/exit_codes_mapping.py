@@ -2,7 +2,7 @@
 
 from picotui.defs import *
 from datatools.tui.picotui_keys import *
-from datatools.select_json_app_exit_codes import *
+from datatools.jt.exit_codes import *
 
 
 KEYS_TO_EXIT_CODES = {

@@ -1,7 +1,7 @@
 
 from enum import Enum
 
-from datatools.select_json_app_exit_codes_mapping import *
+from datatools.jt.exit_codes_mapping import *
 
 
 class ColorKey(Enum):
