@@ -145,11 +145,11 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     column_titles: List[str] = [c for c in column_keys]
     column_widths: List[int] = [max_column_widths[c] for c in column_keys]
 
-    g = WGrid(
-        presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
-        column_renderers(column_keys, presentation["columns"]).__getitem__,
-        lambda line, column: orig_data[line].get(column_keys[column])
-    )
+    g = WGrid(screen_size[0], screen_size[1], column_widths, column_keys,
+              column_renderers(column_keys, presentation["columns"]).__getitem__,
+              lambda line, column: orig_data[line].get(column_keys[column]),
+              presentation.get("title"),
+              column_titles)
     g.total_lines = len(orig_data)
 
     top_line = state["top_line"]
@@ -163,7 +163,7 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     return g
 
 
-def main():
+def main(g, app):
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
     params = parse_args(sys.argv, presentation)
@@ -176,8 +176,7 @@ def main():
     screen_size = with_raw_terminal(read_screen_size)
     column_keys = pick_displayed_columns(screen_size[0])
 
-    g = grid(state, presentation, screen_size, orig_data, column_keys)
-    exit_code, state = run(lambda: App(g).run())
+    exit_code, state = run(lambda: app(g(state, presentation, screen_size, orig_data, column_keys)).run())
 
     write_fd_or_pass(FD_STATE_OUT, state)
     write_fd_or_pass(FD_PRESENTATION_OUT, presentation)
@@ -191,4 +190,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(grid, App)

@@ -15,7 +15,8 @@ from datatools.tui.terminal import ansi_foreground_escape_code, \
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, title, width, height, column_titles, column_widths, column_keys, column_cell_renderer, cell_value_f):
+    def __init__(self, width, height, column_widths, column_keys, column_cell_renderer, cell_value_f, title,
+                 column_titles):
         super().__init__(0, 0, width, height)
         self.title = title
         self.column_titles = column_titles
