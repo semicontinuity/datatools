@@ -32,4 +32,4 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
 
 
 if __name__ == "__main__":
-    main(grid, App)
+    main(grid, App, lambda _: [k for k in max_column_widths])

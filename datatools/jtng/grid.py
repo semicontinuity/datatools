@@ -1,5 +1,7 @@
 from typing import List, Any, Optional
 
+from picotui.defs import KEY_RIGHT, KEY_LEFT
+
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.grid_base import WGridBase
 from datatools.tui.terminal import append_spaces
@@ -16,14 +18,17 @@ class WGrid(WGridBase):
         self.cell_value_f = cell_value_f
         self.y_top_offset = 0
         self.y_bottom_offset = 0
+        self.x_shift = 0
+        self.columns_width = sum(self.column_widths)
 
     def show_line(self, line_content, line):
         raise AssertionError
 
     def compute_column_widths(self, column_widths) -> List[Any]:
-        total_width = sum(column_widths) + 2 * len(column_widths)
-        remaining_budget_width = self.width - total_width
-        assert remaining_budget_width >= 0  # why?
+        # total_width = sum(column_widths) + 2 * len(column_widths)
+        # remaining_budget_width = self.width - total_width
+        # assert remaining_budget_width >= 0  # why?
+        remaining_budget_width = 0
         zero_columns = sum(1 for w in column_widths if w == 0)
         if zero_columns:
             auto_width = remaining_budget_width // zero_columns
@@ -50,13 +55,22 @@ class WGrid(WGridBase):
     def render_line(self, line, is_under_cursor):
         buffer = bytearray()
 
+        x = 0
         for column_index in range(len(self.column_widths)):
             column_width = self.column_widths[column_index]
-            if line >= self.total_lines:
-                append_spaces(buffer, column_width)
-            else:
-                renderer = self.column_cell_renderer(column_index)
-                buffer += renderer(is_under_cursor, column_width, 0, column_width, self.cell_value_f(line, column_index))
+            column_x_right = x + column_width
+            column_x_to = min(self.width, column_x_right)
+
+            if column_x_to > self.x_shift:
+                start = max(self.x_shift - x, 0)
+                end = column_x_to - x
+                if line >= self.total_lines:
+                    append_spaces(buffer, column_x_to - x)
+                else:
+                    renderer = self.column_cell_renderer(column_index)
+                    buffer += renderer(is_under_cursor, column_width, start, end, self.cell_value_f(line, column_index))
+
+            x = column_x_right
         return buffer
 
     def handle_edit_key(self, key):
@@ -75,7 +89,21 @@ class WGrid(WGridBase):
 
     def handle_cursor_keys(self, key):
         # Cursor motion resets search string
-        if super().handle_cursor_keys(key) is None:
+        result = super().handle_cursor_keys(key)
+
+        if result is False:
+            content_height = self.height - self.y_top_offset - self.y_bottom_offset
+            if key == KEY_RIGHT:
+                if self.x_shift + self.width < self.columns_width:
+                    self.x_shift += 1
+                    self.redraw_lines(self.top_line, content_height)
+            elif key == KEY_LEFT:
+                if self.x_shift > 0:
+                    self.x_shift -= 1
+                    self.redraw_lines(self.top_line, content_height)
+
+
+        if result is None:
             self.search_str = ""
 
     def search(self) -> Optional[int]:

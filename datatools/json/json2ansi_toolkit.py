@@ -320,6 +320,16 @@ class ComplexTableNode(CompositeTableNode):
     def __init__(self, body: RegularTable, column_headers, row_headers):
         corner = HeaderNode('#', False)
 
+        column_headers.compute_height()
+        column_headers.compute_width()
+        row_headers.compute_height()
+        row_headers.compute_width()
+        body.compute_height()
+        body.compute_width()
+
+        # Need to fix bug, when sum(child column header widths) < computed column header width
+        # Re-distribute available space, or just increase the size of the last child.
+
         self.consolidate_min_widths(body, column_headers)
         self.consolidate_min_heights(body, row_headers)
 
@@ -406,6 +416,9 @@ class NestedColumnHeaders(HBox):
     def __init__(self, contents, leaves: List[Block]):
         super().__init__(contents)
         self.leaves = leaves
+
+    def compute_width(self):
+        super(NestedColumnHeaders, self).compute_width()
 
     def compute_widths(self) -> List[int]:
         super(NestedColumnHeaders, self).compute_widths()

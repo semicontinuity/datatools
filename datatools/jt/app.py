@@ -24,10 +24,8 @@ import sys
 from json import JSONDecodeError
 from typing import List
 
-from datatools.jt.auto_coloring import max_column_widths, analyze_data, pick_displayed_columns, column_attrs_map
+from datatools.jt.auto_coloring import max_column_widths, analyze_data, pick_displayed_columns
 from datatools.jt.cell_renderer import column_renderers
-from datatools.jt.cell_renderer_colored import WColoredTextCellRenderer
-from datatools.jt.cell_renderer_stripes import WStripesCellRenderer
 from datatools.jt.grid import WGrid
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists
@@ -164,7 +162,7 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     return g
 
 
-def main(g, app):
+def main(g, app, pick_displayed_columns):
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
     params = parse_args(sys.argv, presentation)
@@ -191,4 +189,4 @@ def main(g, app):
 
 
 if __name__ == "__main__":
-    main(grid, App)
+    main(grid, App, pick_displayed_columns)

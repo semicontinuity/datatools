@@ -17,12 +17,17 @@ class WColoredTextCellRenderer:
         if value is None:
             value = ''
         length = len(value)
-        text = str(value[start:end])
+        text = str(value) + ' ' * (max_width - 2 - length)
         border_attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else COLORS[ColorKey.BOX_DRAWING]
         attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(value)
-        return set_colors_cmd_bytes(*border_attrs) + LEFT_BORDER_BYTES + \
-               set_colors_cmd_bytes(*attrs) + bytes(text, 'utf-8') + b' ' * (max_width - 2 - length) + \
-               set_colors_cmd_bytes(*border_attrs) + b' '
+        buffer = bytearray()
+        if start == 0:
+            buffer += set_colors_cmd_bytes(*border_attrs) + LEFT_BORDER_BYTES
+        if start < max_width - 1 and end > 1:
+            buffer += set_colors_cmd_bytes(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
+        if end == max_width:
+            buffer += set_colors_cmd_bytes(*border_attrs) + b' '
+        return buffer
 
     def compute_cell_attrs(self, text) -> Sequence[int]:
         text_colors = COLORS[ColorKey.TEXT]
