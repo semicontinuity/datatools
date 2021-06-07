@@ -25,8 +25,9 @@ from json import JSONDecodeError
 from typing import List
 
 from datatools.tui.jt.grid import WGrid
-from datatools.tui.jt.grid_cell_renderer import WGridCellRenderer, compute_column_colorings, max_column_widths, \
-    analyze_data, pick_displayed_columns
+from datatools.tui.jt.grid_cell_renderer import WTextCellRenderer, compute_column_colorings, max_column_widths, \
+    analyze_data, pick_displayed_columns, WStripesCellRenderer, column_attrs_map
+from datatools.tui.jt.themes import COLORING_NONE
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists
 
@@ -143,9 +144,25 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     column_titles: List[str] = [c for c in column_keys]
     column_widths: List[int] = [max_column_widths[c] for c in column_keys]
 
+    cell_value_f = lambda line, column: orig_data[line].get(column_keys[column])
+    column_colorings = compute_column_colorings(orig_data, column_keys)
+
+    column_renderers = []
+    columns_presentation = presentation["columns"]
+    for i, column_key in enumerate(column_keys):
+        column_spec = columns_presentation.get(column_key)
+        if column_spec is not None:
+            column_renderers.append(WStripesCellRenderer(column_spec))
+        else:
+            column_renderers.append(
+                WTextCellRenderer(
+                    column_attrs_map[column_key],
+                    column_colorings[i] if i < len(column_colorings) else COLORING_NONE)
+            )
+
     g = WGrid(
         presentation.get("title"), screen_size[0], screen_size[1], column_titles, column_widths, column_keys,
-        WGridCellRenderer(presentation["columns"], compute_column_colorings(orig_data, column_keys), orig_data, column_keys)
+        column_renderers.__getitem__, cell_value_f
     )
     g.total_lines = len(orig_data)
 

@@ -7,7 +7,6 @@ from datatools.tui.box_drawing import draw_grid, KIND_DOUBLE, KIND_SINGLE
 from datatools.tui.box_drawing_chars import V_SINGLE, V_DOUBLE
 from datatools.tui.jt.grid_base import WGridBase
 from datatools.tui.jt.themes import COLORS, ColorKey
-from datatools.tui.picotui_util import cursor_forward
 from datatools.tui.terminal import ansi_foreground_escape_code, \
     ansi_background_escape_code, append_spaces, \
     set_colors_cmd_bytes, append_utf8str_fixed_width
@@ -16,7 +15,7 @@ from datatools.tui.terminal import ansi_foreground_escape_code, \
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, title, width, height, column_titles, column_widths, column_keys, cell_renderer):
+    def __init__(self, title, width, height, column_titles, column_widths, column_keys, column_cell_renderer, cell_value_f):
         super().__init__(0, 0, width, height)
         self.title = title
         self.column_titles = column_titles
@@ -35,8 +34,8 @@ class WGrid(WGridBase):
         self.border_left = V_DOUBLE
         self.border_right = V_DOUBLE
         self.separator = V_SINGLE
-
-        self.cell_renderer = cell_renderer
+        self.column_cell_renderer = column_cell_renderer
+        self.cell_value_f = cell_value_f
 
     def show_line(self, line_content, line):
         raise AssertionError
@@ -138,7 +137,8 @@ class WGrid(WGridBase):
             if line >= self.total_lines:
                 append_spaces(buffer, column_width)
             else:
-                buffer += self.cell_renderer(line, column_index, is_under_cursor, column_width, 0, column_width)
+                renderer = self.column_cell_renderer(column_index)
+                buffer += renderer(is_under_cursor, column_width, 0, column_width, self.cell_value_f(line, column_index))
 
         buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
         return buffer
