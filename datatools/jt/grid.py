@@ -157,13 +157,18 @@ class WGrid(WGridBase):
                 self.cur_line = line
                 self.redraw_lines(self.top_line, content_height)
 
+    def handle_cursor_keys(self, key):
+        # Cursor motion resets search string
+        if super().handle_cursor_keys(key) is None:
+            self.search_str = ""
+
     def search(self) -> Optional[int]:
-        # line = self.cur_line
-        # while line < self.total_lines:
-        #     for k, v in orig_data[line].items():
-        #         if str(v).find(self.search_str) >= 0:
-        #             return line
-        #     line += 1
+        line = self.cur_line
+        while line < self.total_lines:
+            for c in range(len(self.column_widths)):
+                if str(self.cell_value_f(line, c)).find(self.search_str) >= 0:
+                    return line
+            line += 1
         return None
 
     def set_colors(self, *c):
