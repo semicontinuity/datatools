@@ -84,6 +84,7 @@ def run(delegate):
     try:
         cursor_position_save()
         s.init_tty()
+        s.cursor(False)
         screen_alt()
         s.cls()
         s.attr_reset()

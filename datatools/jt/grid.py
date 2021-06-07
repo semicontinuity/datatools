@@ -37,17 +37,20 @@ class WGrid(WGridBase):
         self.separator = V_SINGLE
         self.column_cell_renderer = column_cell_renderer
         self.cell_value_f = cell_value_f
+        self.y_top_offset = 2   # skip top border line, headers line
+        self.y_bottom_offset = 1   # skip border line at the bottom
 
     def show_line(self, line_content, line):
         raise AssertionError
 
     def compute_column_widths(self, column_widths) -> List[Any]:
         total_width = sum(column_widths)
-        budget_width = self.width - 1 - len(column_widths) - total_width
-        assert budget_width >= 0
+        # len(column_widths): assume, that this number of columns will fit; subtract this number of chars for separators
+        remaining_budget_width = self.width - 1 - len(column_widths) - total_width
+        assert remaining_budget_width >= 0
         zero_columns = sum(1 for w in column_widths if w == 0)
         if zero_columns:
-            auto_width = budget_width // zero_columns
+            auto_width = remaining_budget_width // zero_columns
             computed_column_widths = []
             for i in range(len(column_widths)):
                 if column_widths[i] != 0:
@@ -55,18 +58,17 @@ class WGrid(WGridBase):
                 else:
                     zero_columns -= 1
                     if zero_columns == 0:
-                        computed_column_widths.append(budget_width)
+                        computed_column_widths.append(remaining_budget_width)
                     else:
                         computed_column_widths.append(auto_width)
-                        budget_width -= auto_width
+                        remaining_budget_width -= auto_width
         else:
             # no column has width 0, so it will be the last one
             computed_column_widths = column_widths[:]
-            computed_column_widths[-1] += budget_width
+            computed_column_widths[-1] += remaining_budget_width
         return computed_column_widths
 
     def redraw(self):
-        self.cursor(False)
         self.redraw_grid()
         self.redraw_title()
         self.redraw_column_titles()
@@ -113,18 +115,6 @@ class WGrid(WGridBase):
 
         buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
         return buffer
-
-    def redraw_content(self):
-        self.redraw_lines(self.top_line, self.height - 3)
-
-    def redraw_lines(self, start_line, num_lines):
-        line = start_line
-        row = (start_line - self.top_line) + self.y + 2  # skip border line, headers line
-        for c in range(num_lines):
-            self.goto(self.x, row)
-            self.wr(self.render_line(line, self.cur_line == line))
-            line += 1
-            row += 1
 
     def render_line(self, line, is_under_cursor):
         buffer = bytearray()

@@ -1,15 +1,8 @@
 from typing import List, Any, Optional
 
-from picotui.screen import Screen
-
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.grid_base import WGridBase
-from datatools.jt.themes import COLORS, ColorKey
-from datatools.tui.box_drawing import KIND_SINGLE
-from datatools.tui.box_drawing_chars import V_SINGLE, V_DOUBLE
-from datatools.tui.terminal import ansi_foreground_escape_code, \
-    ansi_background_escape_code, append_spaces, \
-    set_colors_cmd_bytes
+from datatools.tui.terminal import append_spaces
 
 
 class WGrid(WGridBase):
@@ -19,32 +12,21 @@ class WGrid(WGridBase):
         super().__init__(0, 0, width, height)
         self.column_widths = self.compute_column_widths(column_widths)
         self.column_keys = column_keys
-
-        column_positions = []
-        x = 0
-        for i in range(len(self.column_widths)):
-            column_positions.append(x)
-            x += self.column_widths[i]
-            x += 1
-        self.h_stops = [(x, KIND_SINGLE) for x in column_positions]
-        self.h_stops = self.h_stops[1:]
-
-        self.border_left = V_DOUBLE
-        self.border_right = V_DOUBLE
-        self.separator = V_SINGLE
         self.column_cell_renderer = column_cell_renderer
         self.cell_value_f = cell_value_f
+        self.y_top_offset = 0
+        self.y_bottom_offset = 0
 
     def show_line(self, line_content, line):
         raise AssertionError
 
     def compute_column_widths(self, column_widths) -> List[Any]:
-        total_width = sum(column_widths)
-        budget_width = self.width - 1 - len(column_widths) - total_width
-        assert budget_width >= 0
+        total_width = sum(column_widths) + 2 * len(column_widths)
+        remaining_budget_width = self.width - total_width
+        assert remaining_budget_width >= 0  # why?
         zero_columns = sum(1 for w in column_widths if w == 0)
         if zero_columns:
-            auto_width = budget_width // zero_columns
+            auto_width = remaining_budget_width // zero_columns
             computed_column_widths = []
             for i in range(len(column_widths)):
                 if column_widths[i] != 0:
@@ -52,48 +34,29 @@ class WGrid(WGridBase):
                 else:
                     zero_columns -= 1
                     if zero_columns == 0:
-                        computed_column_widths.append(budget_width)
+                        computed_column_widths.append(remaining_budget_width)
                     else:
                         computed_column_widths.append(auto_width)
-                        budget_width -= auto_width
+                        remaining_budget_width -= auto_width
         else:
             # no column has width 0, so it will be the last one
-            computed_column_widths = column_widths[:]
-            computed_column_widths[-1] += budget_width
+            computed_column_widths = [w + 2 for w in column_widths]
+            computed_column_widths[-1] += remaining_budget_width
         return computed_column_widths
 
     def redraw(self):
-        self.cursor(False)
         self.redraw_content()
-
-    def redraw_content(self):
-        self.redraw_lines(self.top_line, self.height - 3)
-
-    def redraw_lines(self, start_line, num_lines):
-        line = start_line
-        row = (start_line - self.top_line) + self.y + 2  # skip border line, headers line
-        for c in range(num_lines):
-            self.goto(self.x, row)
-            self.wr(self.render_line(line, self.cur_line == line))
-            line += 1
-            row += 1
 
     def render_line(self, line, is_under_cursor):
         buffer = bytearray()
 
         for column_index in range(len(self.column_widths)):
-            # border or separator
-            buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING])
-            buffer += self.border_left if column_index == 0 else self.separator
-
             column_width = self.column_widths[column_index]
             if line >= self.total_lines:
                 append_spaces(buffer, column_width)
             else:
                 renderer = self.column_cell_renderer(column_index)
                 buffer += renderer(is_under_cursor, column_width, 0, column_width, self.cell_value_f(line, column_index))
-
-        buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING]) + self.border_right
         return buffer
 
     def handle_edit_key(self, key):
@@ -123,10 +86,3 @@ class WGrid(WGridBase):
                     return line
             line += 1
         return None
-
-    def set_colors(self, *c):
-        if len(c) == 2:
-            self.attr_color(*c)
-        else:
-            Screen.wr(ansi_foreground_escape_code(c[0], c[1], c[2]))
-            Screen.wr(ansi_background_escape_code(c[3], c[4], c[5]))

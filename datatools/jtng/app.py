@@ -3,7 +3,7 @@ from typing import List
 
 from datatools.jt.app import App, main
 from datatools.jt.auto_coloring import max_column_widths
-from datatools.jt.cell_renderer import column_renderers
+from datatools.jtng.cell_renderer import column_renderers
 from datatools.jtng.grid import WGrid
 
 
@@ -15,7 +15,7 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
 
     g = WGrid(
         screen_size[0], screen_size[1], column_widths, column_keys,
-        column_renderers(column_keys, presentation["columns"]).__getitem__,
+        column_renderers(column_keys).__getitem__,
         lambda line, column: orig_data[line].get(column_keys[column])
     )
     g.total_lines = len(orig_data)

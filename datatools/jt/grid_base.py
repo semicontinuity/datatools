@@ -4,6 +4,8 @@ from datatools.jt.exit_codes_mapping import *
 
 
 class WGridBase(Editor):
+    y_top_offset: int
+    y_bottom_offset: int
 
     def handle_mouse(self, x, y):
         pass
@@ -55,5 +57,17 @@ class WGridBase(Editor):
         else:
             return False
 
+    def redraw_content(self):
+        self.redraw_lines(self.top_line, self.height - self.y_top_offset - self.y_bottom_offset)
+
     def redraw_lines(self, start_line, num_lines):
+        line = start_line
+        row = (start_line - self.top_line) + self.y + self.y_top_offset  # skip border line, headers line
+        for c in range(num_lines):
+            self.goto(self.x, row)
+            self.wr(self.render_line(line, self.cur_line == line))
+            line += 1
+            row += 1
+
+    def render_line(self, line, is_under_cursor):
         pass
