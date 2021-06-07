@@ -30,7 +30,3 @@ THEMES = {
 }
 
 COLORS = THEMES["dark"]
-
-COLORING_NONE = "none"
-COLORING_HASH_ALL = "hash-all"
-COLORING_HASH_FREQUENT = "hash-frequent"

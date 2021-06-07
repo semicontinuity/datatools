@@ -24,10 +24,11 @@ import sys
 from json import JSONDecodeError
 from typing import List
 
+from datatools.tui.jt.auto_coloring import compute_column_colorings, max_column_widths, \
+    analyze_data, pick_displayed_columns, column_attrs_map
+from datatools.tui.jt.cell_renderer_colored import WColoredTextCellRenderer
+from datatools.tui.jt.cell_renderer_stripes import WStripesCellRenderer
 from datatools.tui.jt.grid import WGrid
-from datatools.tui.jt.grid_cell_renderer import WTextCellRenderer, compute_column_colorings, max_column_widths, \
-    analyze_data, pick_displayed_columns, WStripesCellRenderer, column_attrs_map
-from datatools.tui.jt.themes import COLORING_NONE
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists
 
@@ -155,9 +156,9 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
             column_renderers.append(WStripesCellRenderer(column_spec))
         else:
             column_renderers.append(
-                WTextCellRenderer(
+                WColoredTextCellRenderer(
                     column_attrs_map[column_key],
-                    column_colorings[i] if i < len(column_colorings) else COLORING_NONE)
+                    column_colorings[i])
             )
 
     g = WGrid(
