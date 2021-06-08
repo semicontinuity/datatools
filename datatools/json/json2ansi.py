@@ -3,7 +3,8 @@ import sys
 
 from datatools.json.json2ansi_toolkit import *
 from datatools.json.structure_discovery import *
-from datatools.tui.terminal import init_tty, deinit_tty, read_screen_size, with_raw_terminal
+from datatools.json2ansi.style import style
+from datatools.tui.terminal import read_screen_size, with_raw_terminal
 
 
 def main():
@@ -25,15 +26,6 @@ def main():
 
     # from datatools.json.util import to_jsonisable
     # print(json.dumps(to_jsonisable(page_node.root)))
-
-
-def style():
-    import os
-    return Style(
-        BorderStyle(int(os.environ.get("STYLE_TABLE_BORDER_TOP", "1"))),
-        BorderStyle(int(os.environ.get("STYLE_HEADER_BORDER_TOP", "1"))),
-        BorderStyle(int(os.environ.get("STYLE_CELL_BORDER_TOP", "1")))
-    )
 
 
 if __name__ == "__main__":

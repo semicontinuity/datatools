@@ -9,8 +9,6 @@ from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 from datatools.util.text_util import geometry
 
-MAX_PRIMITIVE_LENGTH = 64
-
 
 @dataclass
 class BorderStyle:
@@ -27,9 +25,10 @@ class Style:
 class AnsiToolkit:
     discovery: Discovery
 
-    def __init__(self, discovery, style):
+    def __init__(self, discovery, style, primitive_max_width=64):
         self.discovery = discovery
         self.style = style
+        self.primitive_max_width = primitive_max_width
         AnsiToolkit.instance = self
 
     def page_node(self, j):
@@ -186,7 +185,7 @@ class PageNode:
         self.root.compute_height()
         self.root.compute_position(0, 0)
 
-    def paint(self):
+    def paint(self) -> Buffer:
         self.layout()
         buffer = Buffer(self.root.width, self.root.height)
         self.root.paint(buffer)
@@ -246,7 +245,10 @@ class PrimitiveNode(TextCell):
         elif primitive_type is bool:
             return str(j).lower(), Buffer.MASK_ITALIC | Buffer.MASK_BOLD
         elif primitive_type is str:
-            return j if len(j) <= MAX_PRIMITIVE_LENGTH else '...', Buffer.MASK_NONE
+            width, height = geometry(j)
+            max_width = AnsiToolkit.instance.primitive_max_width
+            # raise ValueError(max_width)
+            return j if max_width is None or width <= max_width else '...', Buffer.MASK_NONE
         else:
             return str(j), Buffer.MASK_BOLD
 

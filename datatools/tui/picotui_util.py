@@ -69,3 +69,28 @@ def with_alt_screen(f):
         # Screen.deinit_tty()
         screen_regular()
         cursor_position_restore()
+
+
+def run(delegate):
+    import os
+    DEVEL = int(os.environ.get("DEVEL", "0"))
+    s = Screen()
+    try:
+        cursor_position_save()
+        if not DEVEL:
+            s.init_tty()
+        s.cursor(False)
+        screen_alt()
+        s.cls()
+        s.attr_reset()
+
+        return delegate()
+    finally:
+        s.attr_reset()
+        s.cls()
+        s.goto(0, 0)
+        s.cursor(True)
+        if not DEVEL:
+            s.deinit_tty()
+        screen_regular()
+        cursor_position_restore()

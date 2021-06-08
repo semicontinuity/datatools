@@ -5,7 +5,7 @@ from picotui.screen import Screen
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.tui.box_drawing import draw_grid, KIND_DOUBLE, KIND_SINGLE
 from datatools.tui.box_drawing_chars import V_SINGLE, V_DOUBLE
-from datatools.jt.grid_base import WGridBase
+from datatools.tui.grid_base import WGridBase
 from datatools.jt.themes import COLORS, ColorKey
 from datatools.tui.terminal import ansi_foreground_escape_code, \
     ansi_background_escape_code, append_spaces, \

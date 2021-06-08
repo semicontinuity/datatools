@@ -21,22 +21,20 @@
 import json
 import signal
 import sys
+from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import List
 
 from datatools.jt.auto_coloring import max_column_widths, infer_presentation, pick_displayed_columns
 from datatools.jt.auto_metadata import infer_metadata, compute_stats
 from datatools.jt.cell_renderer import column_renderers
+from datatools.jt.exit_codes_mapping import *
 from datatools.jt.grid import WGrid
-from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
-from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists, FD_PRESENTATION_IN, FD_STATE_IN, \
-    FD_STATE_OUT, FD_PRESENTATION_OUT, FD_METADATA_IN
-
-from dataclasses import dataclass
-
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
-from datatools.jt.exit_codes_mapping import *
+from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
+from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists, FD_PRESENTATION_IN, FD_STATE_IN, \
+    FD_STATE_OUT, FD_PRESENTATION_OUT
 
 
 @dataclass
@@ -66,28 +64,6 @@ class App:
         exit_code = KEYS_TO_EXIT_CODES.get(res)
         state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
         return exit_code if exit_code is not None else EXIT_CODE_ESCAPE, state
-
-
-def run(delegate):
-    s = Screen()
-    try:
-        cursor_position_save()
-        s.init_tty()
-        s.cursor(False)
-        screen_alt()
-        s.cls()
-        s.attr_reset()
-
-        return delegate()
-    finally:
-        s.attr_reset()
-        s.cls()
-        s.goto(0, 0)
-        s.cursor(True)
-
-        s.deinit_tty()
-        screen_regular()
-        cursor_position_restore()
 
 
 def load_data(params):

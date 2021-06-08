@@ -86,16 +86,16 @@ class Buffer:
         width = min(screen_width, self.width)
         height = min(screen_height, self.height)
         for y in range(height):
-            print(self.to_string(y, width))
+            print(self.to_string(0, y, width))
 
-    def to_string(self, y, width):
+    def to_string(self, x, y, width):
         s = ''
         prev_attr = 0
         prev_r = -1
         prev_g = -1
         prev_b = -1
 
-        for x in range(width):
+        for x in range(x, x + width):
             c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
             attr = self.attrs[y][4 * x]
             r = self.attrs[y][4 * x + 1]

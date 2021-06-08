@@ -1,9 +1,9 @@
 from typing import Optional
 
-from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, C_BLUE, C_B_CYAN
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.jt.grid_base import WGridBase
+from datatools.tui.grid_base import WGridBase
 from datatools.jt.themes import COLORS, ColorKey
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, set_colors_cmd_bytes
