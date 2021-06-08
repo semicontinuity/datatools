@@ -58,3 +58,6 @@ class WColoredTextCellRenderer:
 
         fg = hash_to_rgb(hash_code(value))
         return fg[0], fg[1], fg[2], text_colors[3], text_colors[4], text_colors[5]
+
+    def toggle(self):
+        self.state.collapsed = not self.state.collapsed
