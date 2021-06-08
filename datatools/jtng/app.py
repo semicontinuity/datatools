@@ -18,8 +18,8 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
         return "-" if type(value) is str and ("\n" in value or "\t" in value) else value
 
     g = WGrid(
-        screen_size[0], screen_size[1], column_widths, column_keys,
-        column_renderers(column_keys).__getitem__,
+        screen_size[0], screen_size[1], column_keys,
+        column_renderers(column_keys, column_widths).__getitem__,
         cell_value
     )
     g.total_lines = len(orig_data)

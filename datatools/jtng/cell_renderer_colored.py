@@ -7,11 +7,16 @@ from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes
 
 
+# has 2 characters of margin
 class WColoredTextCellRenderer:
     full_block = '\u2588'
 
-    def __init__(self, column_attrs):
+    def __init__(self, column_attrs, max_content_width=None):
+        self.max_content_width = max_content_width
         self.column_attrs = column_attrs
+
+    def __len__(self):
+        return self.max_content_width + 2
 
     def __call__(self, is_under_cursor, max_width, start, end, value):
         if value is None:

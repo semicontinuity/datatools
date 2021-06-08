@@ -10,22 +10,17 @@ from datatools.tui.terminal import append_spaces
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, width, height, column_widths, column_keys, column_cell_renderer, cell_value_f):
+    def __init__(self, width, height, column_keys, column_cell_renderer, cell_value_f):
         super().__init__(0, 0, width, height)
-        self.column_widths = self.compute_column_widths(column_widths)
         self.column_keys = column_keys
-        self.column_cell_renderer = column_cell_renderer
+        self.column_cell_renderer_f = column_cell_renderer
         self.cell_value_f = cell_value_f
         self.y_top_offset = 0
         self.y_bottom_offset = 0
         self.x_shift = 0
-        self.columns_width = sum(self.column_widths)
 
     def show_line(self, line_content, line):
         raise AssertionError
-
-    def compute_column_widths(self, column_widths) -> List[Any]:
-        return [w + 2 for w in column_widths]
 
     def redraw(self):
         self.redraw_content()
@@ -34,8 +29,9 @@ class WGrid(WGridBase):
         buffer = bytearray()
 
         x = 0   # corresponds to the left border of the first column, might me off-screen
-        for column_index in range(len(self.column_widths)):
-            column_width = self.column_widths[column_index]
+        for column_index in range(len(self.column_keys)):
+            renderer = self.column_cell_renderer_f(column_index)
+            column_width = len(renderer)
             column_x_right = x + column_width
             column_x_to = min(self.x_shift + self.width, column_x_right)
 
@@ -45,7 +41,6 @@ class WGrid(WGridBase):
                 if line >= self.total_lines:
                     append_spaces(buffer, column_x_to - x)
                 else:
-                    renderer = self.column_cell_renderer(column_index)
                     f = self.cell_value_f(line, column_index)
                     buffer += renderer(is_under_cursor, column_width, start, end, f)
 
@@ -75,8 +70,9 @@ class WGrid(WGridBase):
 
         if result is False:
             content_height = self.height - self.y_top_offset - self.y_bottom_offset
+            columns_width = self.compute_columns_width()
             if key == KEY_RIGHT:
-                if self.x_shift + self.width < self.columns_width:
+                if self.x_shift + self.width < columns_width:
                     self.x_shift += 1
                     self.redraw_lines(self.top_line, content_height)
             elif key == KEY_LEFT:
@@ -84,8 +80,8 @@ class WGrid(WGridBase):
                     self.x_shift -= 1
                     self.redraw_lines(self.top_line, content_height)
             elif key == KEY_END:
-                if self.x_shift + self.width < self.columns_width:
-                    self.x_shift = self.columns_width - self.width
+                if self.x_shift + self.width < columns_width:
+                    self.x_shift = columns_width - self.width
                     self.redraw_lines(self.top_line, content_height)
             elif key == KEY_HOME:
                 if self.x_shift > 0:
@@ -95,10 +91,13 @@ class WGrid(WGridBase):
         if result is None:
             self.search_str = ""
 
+    def compute_columns_width(self) -> int:
+        return sum([len(self.column_cell_renderer_f(i)) for i in range(len(self.column_keys))])
+
     def search(self) -> Optional[int]:
         line = self.cur_line
         while line < self.total_lines:
-            for c in range(len(self.column_widths)):
+            for c in range(len(self.column_keys)):
                 if str(self.cell_value_f(line, c)).find(self.search_str) >= 0:
                     return line
             line += 1
