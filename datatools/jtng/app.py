@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
+import json
+import sys
 from typing import List
 
+from datatools.json2ansi.app import make_app
 from datatools.jt.app import App, main
 from datatools.jt.auto_coloring import max_column_widths
+from datatools.jt.exit_codes import EXIT_CODE_SHIFT, EXIT_CODE_ESCAPE, EXIT_CODE_CTRL_SPACE
 from datatools.jtng.cell_renderer import column_renderers
 from datatools.jtng.grid import WGrid
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+from datatools.tui.picotui_util import run
 
 
 def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
@@ -35,5 +40,19 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     return g
 
 
+def finalizer(exit_code, orig_data, state):
+    if exit_code == EXIT_CODE_CTRL_SPACE:
+        run(lambda: make_app(orig_data[state["cur_line"]]).run())
+        return False
+
+    if exit_code < 120:
+        if (exit_code // EXIT_CODE_SHIFT) & 1 == 1:
+            print(json.dumps(orig_data))
+            return True
+    if exit_code != EXIT_CODE_ESCAPE:
+        print(json.dumps(orig_data[state["cur_line"]]))
+    return True
+
+
 if __name__ == "__main__":
-    main(grid, App, lambda _: [k for k in max_column_widths])
+    main(grid, App, lambda _: [k for k in max_column_widths], finalizer)

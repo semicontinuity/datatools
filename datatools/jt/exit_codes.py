@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Exit codes correspond to key codes + modifiers
+# Exit codes correspond to key codes + modifiers: 20*8 basic codes + extra
 EXIT_CODE_ENTER = 0
 EXIT_CODE_F1 = 1
 EXIT_CODE_F2 = 2
@@ -24,5 +24,7 @@ EXIT_CODE_BACKSPACE = 19
 EXIT_CODE_SHIFT = 20
 EXIT_CODE_CTRL = 40
 EXIT_CODE_ALT = 80
+
+EXIT_CODE_CTRL_SPACE = 194
 
 EXIT_CODE_ESCAPE = 199

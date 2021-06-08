@@ -2,10 +2,9 @@ from typing import Optional
 
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
-from datatools.json2ansi.app import make_app
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.tui.grid_base import WGridBase
 from datatools.jt.themes import COLORS, ColorKey
+from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, set_colors_cmd_bytes
 
@@ -80,20 +79,8 @@ class WGrid(WGridBase):
                 self.toggle(8)
             elif key == KEY_ALT_SHIFT_0:
                 self.toggle(9)
-
-            elif key == KEY_CTRL_F10:
-                self.tooltip(9)
-            elif key == KEY_CTRL_F11:
-                self.tooltip(10)
-            elif key == KEY_CTRL_F12:
-                self.tooltip(11)
             else:
                 self.handle_typed_key(key)
-
-    # but no navigation
-    def tooltip(self, column_index):
-        make_app(self.cell_value_f(self.cur_line, column_index)).run()
-        self.redraw()
 
     def toggle(self, column_index):
         column = self.column_cell_renderer_f(column_index)

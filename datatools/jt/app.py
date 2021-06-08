@@ -124,7 +124,7 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
     return g
 
 
-def main(g, app, pick_displayed_columns):
+def main(g, app, pick_displayed_columns, finalizer):
     # metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
     presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
@@ -143,17 +143,28 @@ def main(g, app, pick_displayed_columns):
     screen_size = with_raw_terminal(read_screen_size)
     column_keys = pick_displayed_columns(screen_size[0])
 
-    exit_code, state = run(lambda: app(g(state, presentation, screen_size, orig_data, column_keys)).run())
+    the_app = app(g(state, presentation, screen_size, orig_data, column_keys))
+
+    while True:
+        exit_code, state = run(lambda: the_app.run())
+        if finalizer(exit_code, orig_data, state):
+            break
 
     write_fd_or_pass(FD_STATE_OUT, state)
     write_fd_or_pass(FD_PRESENTATION_OUT, presentation)
+    sys.exit(exit_code)
+
+
+def finalizer(exit_code, orig_data, state):
     if exit_code < 120:
         if (exit_code // EXIT_CODE_SHIFT) & 1 == 1:
             print(json.dumps(orig_data))
-            sys.exit(exit_code)
+            return True
+
     if exit_code != EXIT_CODE_ESCAPE:
         print(json.dumps(orig_data[state["cur_line"]]))
-    sys.exit(exit_code)
+
+    return True
 
 
 def override(params, presentation):
@@ -164,4 +175,4 @@ def override(params, presentation):
 
 
 if __name__ == "__main__":
-    main(grid, App, pick_displayed_columns)
+    main(grid, App, pick_displayed_columns, finalizer)
