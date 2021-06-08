@@ -25,7 +25,7 @@ from json import JSONDecodeError
 from typing import List
 
 from datatools.jt.auto_coloring import max_column_widths, infer_presentation, pick_displayed_columns
-from datatools.jt.auto_metadata import infer_metadata
+from datatools.jt.auto_metadata import infer_metadata, compute_stats
 from datatools.jt.cell_renderer import column_renderers
 from datatools.jt.grid import WGrid
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
@@ -161,6 +161,7 @@ def main(g, app, pick_displayed_columns):
 
     orig_data = load_data(params)
     infer_metadata(orig_data, presentation["columns"].__contains__)
+    compute_stats(orig_data)
     infer_presentation(orig_data)
 
     screen_size = with_raw_terminal(read_screen_size)

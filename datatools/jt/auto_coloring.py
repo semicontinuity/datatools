@@ -31,9 +31,7 @@ def pick_displayed_columns(screen_width) -> List[str]:
 
 def infer_presentation(data):
     for key, column_attr in column_attrs_map.items():
-        for word, count in column_attr.value_stats.items():
-            if count > 1:
-                column_attr.non_uniques_count += 1
+        column_attr.non_uniques_count = len(column_attr.non_unique_value_counts)
 
     for column_attrs in column_attrs_map.values():
         column_attrs.coloring = compute_column_coloring(column_attrs, len(data))
