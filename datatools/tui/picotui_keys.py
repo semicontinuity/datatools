@@ -7,6 +7,16 @@ KEY_ALT_LEFT = b'\x1b[1;3D'
 KEY_CTRL_HOME = b'\x1b[1;5H'
 KEY_CTRL_END = b'\x1b[1;5F'
 
+KEY_CTRL_F1 = b'\x1b[1;5P'
+KEY_CTRL_F2 = b'\x1b[1;5Q'
+
+KEY_SHIFT_F3 = b'\x1b[1;2R'
+KEY_ALT_F3 = b'\x1b[1;3R'
+KEY_CTRL_F3 = b'\x1b[1;5R'
+KEY_ALT_SHIFT_F3 = b'\x1b[1;4R'
+
+KEY_CTRL_F4 = b'\x1b[1;5S'
+
 KEY_SHIFT_F5 = b'\x1b[15;2~'
 KEY_ALT_F5 = b'\x1b[15;3~'
 KEY_CTRL_F5 = b'\x1b[15;5~'
@@ -31,9 +41,8 @@ KEY_SHIFT_F10 = b'\x1b[21;2~'
 KEY_ALT_F10 = b'\x1b[21;3~'
 KEY_CTRL_F10 = b'\x1b[21;5~'
 
-KEY_SHIFT_F3 = b'\x1b[1;2R'
-KEY_ALT_F3 = b'\x1b[1;3R'
-KEY_ALT_SHIFT_F3 = b'\x1b[1;4R'
+KEY_CTRL_F11 = b'\x1b[23;5~'
+KEY_CTRL_F12 = b'\x1b[24;5~'
 
 KEY_F12 = b'\x1b[24~'
 KEY_ALT_F12 = b'\x1b[24;3~'
