@@ -61,24 +61,26 @@ class WGrid(WGridBase):
         elif type(key) is bytes:
             if key == KEY_ALT_SHIFT_1:
                 self.toggle(0)
-            if key == KEY_ALT_SHIFT_2:
+            elif key == KEY_ALT_SHIFT_2:
                 self.toggle(1)
-            if key == KEY_ALT_SHIFT_3:
+            elif key == KEY_ALT_SHIFT_3:
                 self.toggle(2)
-            if key == KEY_ALT_SHIFT_4:
+            elif key == KEY_ALT_SHIFT_4:
                 self.toggle(3)
-            if key == KEY_ALT_SHIFT_5:
+            elif key == KEY_ALT_SHIFT_5:
                 self.toggle(4)
-            if key == KEY_ALT_SHIFT_6:
+            elif key == KEY_ALT_SHIFT_6:
                 self.toggle(5)
-            if key == KEY_ALT_SHIFT_7:
+            elif key == KEY_ALT_SHIFT_7:
                 self.toggle(6)
-            if key == KEY_ALT_SHIFT_8:
+            elif key == KEY_ALT_SHIFT_8:
                 self.toggle(7)
-            if key == KEY_ALT_SHIFT_9:
+            elif key == KEY_ALT_SHIFT_9:
                 self.toggle(8)
-            if key == KEY_ALT_SHIFT_0:
+            elif key == KEY_ALT_SHIFT_0:
                 self.toggle(9)
+            elif key == KEY_CTRL_SPACE:
+                raise KeyError(self.cur_line)
             else:
                 self.handle_typed_key(key)
 

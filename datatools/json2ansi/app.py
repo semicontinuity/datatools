@@ -13,7 +13,7 @@ from datatools.tui.picotui_util import run
 from datatools.tui.terminal import read_screen_size, with_raw_terminal
 
 
-def grid(state, presentation, screen_size, j, column_keys) -> WGrid:
+def grid(screen_size, j) -> WGrid:
     page_node = AnsiToolkit(Discovery(), style(), primitive_max_width=None).page_node(j)
     screen_buffer = page_node.paint()
 
@@ -25,7 +25,7 @@ def grid(state, presentation, screen_size, j, column_keys) -> WGrid:
     return g
 
 
-def main(g, app):
+def main():
     fd_tui = 2
     patch_picotui(fd_tui, fd_tui)
 
@@ -33,13 +33,16 @@ def main(g, app):
     s = ''.join(lines)
     j = json.loads(s)
 
-    screen_size = (1000, 10000)
-    if sys.stdout.isatty():
-        screen_size = with_raw_terminal(read_screen_size)
-        screen_size = screen_size[0], screen_size[1] - 1    # something strange with the last line (autoscroll?)
-    exit_code, state = run(lambda: app(g(None, None, screen_size, j, None)).run())
+    exit_code, state = run(lambda: make_app(j).run())
     sys.exit(exit_code)
 
 
+def make_app(j):
+    screen_size = (1000, 10000)
+    if sys.stdout.isatty():
+        screen_size = with_raw_terminal(read_screen_size)
+    return App(grid(screen_size, j))
+
+
 if __name__ == "__main__":
-    main(grid, App)
+    main()
