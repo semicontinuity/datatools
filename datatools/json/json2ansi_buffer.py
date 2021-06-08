@@ -15,6 +15,8 @@ class Buffer:
     MASK_BG_CUSTOM = 0x40
     MASK_OVERLINE = 0x80
 
+    TAB_SIZE = 4
+
     def __init__(self, width, height):
         self.width = width
         self.height = height
@@ -33,19 +35,36 @@ class Buffer:
         return line
 
     def draw_text(self, x: int, y: int, text: str, mask: int = 0):
-        attr_line = self.attrs[y]
-        attr_i = 4 * x
-        char_line = self.chars[y]
-        char_i = 2 * x
-        for c in text:
-            attr_line[attr_i] |= mask
-            attr_i += 4
+        _y = y
+        _x = x
+        char_line = self.chars[_y]
+        char_i = 2 * _x
+        attr_line = self.attrs[_y]
+        attr_i = 4 * _x
 
-            code = ord(c)
-            char_line[char_i] = code & 0xff
-            char_i += 1
-            char_line[char_i] = (code >> 8) & 0xff
-            char_i += 1
+        for c in text:
+            if c == '\n':
+                _x = x
+                _y += 1
+                char_line = self.chars[_y]
+                char_i = 2 * _x
+                attr_line = self.attrs[_y]
+                attr_i = 4 * _x
+            elif c == '\t':
+                _x = x + (_x - x + Buffer.TAB_SIZE) // Buffer.TAB_SIZE * Buffer.TAB_SIZE
+                char_i = 2 * _x
+                attr_i = 4 * _x
+            else:
+                attr_line[attr_i] |= mask
+                attr_i += 4
+
+                code = ord(c)
+                char_line[char_i] = code & 0xff
+                char_i += 1
+                char_line[char_i] = (code >> 8) & 0xff
+                char_i += 1
+
+                _x += 1
 
     def draw_attrs_box(self, x: int, y: int, width: int, height: int, mask: int):
         for j in range(height):

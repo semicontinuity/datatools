@@ -7,6 +7,7 @@ from datatools.json.structure_discovery import *
 from datatools.tui.box_drawing_chars import LEFT_BORDER
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
+from datatools.util.text_util import geometry
 
 MAX_PRIMITIVE_LENGTH = 64
 
@@ -194,14 +195,15 @@ class PageNode:
 
 class TextCell(Block):
     def __init__(self, text: AnyStr, mask: int, border_style: BorderStyle, bg: Tuple[int, int, int] = None):
+        width, height = geometry(text)
         self.text = text
         self.mask = mask
-        self.width = len(text) + 2
-        self.height = 1
+        self.width = width + 2
+        self.height = height
         self.bg = bg
         self.border_style = border_style
 
-    def paint(self, buffer):
+    def paint(self, buffer: Buffer):
         # background
         if self.mask != 0 or self.bg is not None:
             mask = self.mask if self.bg is None else self.mask | Buffer.MASK_BG_CUSTOM
