@@ -1,7 +1,7 @@
 from typing import Sequence
 
 from datatools.tui.coloring import hash_code, hash_to_rgb
-from datatools.jt.auto_coloring import COLORING_NONE, COLORING_HASH_FREQUENT
+from datatools.jt.auto_presentation import COLORING_NONE, COLORING_HASH_FREQUENT
 from datatools.jt.themes import COLORS, ColorKey
 from datatools.tui.terminal import set_colors_cmd_bytes
 
@@ -9,8 +9,9 @@ from datatools.tui.terminal import set_colors_cmd_bytes
 class WColoredTextCellRenderer:
     full_block = '\u2588'
 
-    def __init__(self, column_attrs):
-        self.column_attrs = column_attrs
+    def __init__(self, column_metadata, column_presentation):
+        self.column_metadata = column_metadata
+        self.column_presentation = column_presentation
 
     def __call__(self, is_under_cursor, max_width, start, end, value):
         if value is None:
@@ -23,8 +24,8 @@ class WColoredTextCellRenderer:
     def compute_cell_attrs(self, text) -> Sequence[int]:
         text_colors = COLORS[ColorKey.TEXT]
 
-        if self.column_attrs.coloring == COLORING_NONE or (
-                self.column_attrs.coloring == COLORING_HASH_FREQUENT and self.column_attrs.value_stats[text] <= 1):
+        if self.column_presentation.coloring == COLORING_NONE or (
+                self.column_presentation.coloring == COLORING_HASH_FREQUENT and text in self.column_metadata.unique_values):
             return text_colors
 
         fg = hash_to_rgb(hash_code(text))

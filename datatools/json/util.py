@@ -1,3 +1,6 @@
+import dataclasses
+
+
 def is_primitive(obj):
     return obj is None or type(obj) is int or type(obj) is float or type(obj) is bool or type(obj) is str
 
@@ -26,3 +29,11 @@ def to_jsonisable(obj):
 
 def ext_jsonisable(func):
     return lambda obj: to_jsonisable(func(obj))
+
+
+def dataclass_from_dict(klass, d):
+    try:
+        fieldtypes = {f.name:f.type for f in dataclasses.fields(klass)}
+        return klass(**{f:dataclass_from_dict(fieldtypes[f],d[f]) for f in d})
+    except:
+        return d

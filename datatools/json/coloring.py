@@ -73,8 +73,6 @@ class ColumnAttrs:
     unique_values: Set[str]
     non_unique_value_counts: Dict[str, int]
     value_hashes: Dict[str, int]
-
-    non_uniques_count: int = 0
     coloring: str = COLORING_NONE
 
     def get_coloring(self):

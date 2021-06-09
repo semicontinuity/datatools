@@ -1,6 +1,7 @@
 from typing import Sequence
 
-from datatools.jt.auto_coloring import COLORING_NONE, COLORING_HASH_FREQUENT
+from datatools.jt.auto_metadata import ColumnMetadata
+from datatools.jt.auto_presentation import COLORING_NONE, COLORING_HASH_FREQUENT
 from datatools.jt.themes import COLORS, ColorKey
 from datatools.jtng.column_state import ColumnState
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
@@ -15,9 +16,10 @@ class WColoredTextCellRenderer:
     full_block = b'\xE2\x96\x88'
     state: ColumnState
 
-    def __init__(self, column_attrs, max_content_width, column_state):
+    def __init__(self, column_metadata: ColumnMetadata, column_presentation, max_content_width, column_state):
         self.max_content_width = max_content_width
-        self.column_attrs = column_attrs
+        self.column_metadata = column_metadata
+        self.column_presentation = column_presentation
         self.state = column_state
 
     def __len__(self):
@@ -45,15 +47,15 @@ class WColoredTextCellRenderer:
 
     def compute_cell_attrs(self, value) -> Sequence[int]:
         text_colors = COLORS[ColorKey.TEXT]
-        if self.column_attrs is None:   # complex column
+        if self.column_presentation is None:   # complex column
             return text_colors if value is not None else COLORS[ColorKey.BOX_DRAWING]
 
         if value is None:
             return text_colors
 
         value = str(value)
-        if self.column_attrs.coloring == COLORING_NONE or (
-                self.column_attrs.coloring == COLORING_HASH_FREQUENT and self.column_attrs.value_stats[value] <= 1):
+        if self.column_presentation.coloring == COLORING_NONE or (
+                self.column_presentation.coloring == COLORING_HASH_FREQUENT and value in self.column_metadata.unique_values):
             return text_colors
 
         fg = hash_to_rgb(hash_code(value))

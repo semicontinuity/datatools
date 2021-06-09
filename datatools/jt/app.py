@@ -25,8 +25,10 @@ from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import List
 
-from datatools.jt.auto_coloring import max_column_widths, infer_presentation, pick_displayed_columns
-from datatools.jt.auto_metadata import infer_metadata, compute_stats
+from datatools.json.util import to_jsonisable
+from datatools.jt.auto_metadata import infer_metadata
+from datatools.jt.auto_presentation import max_column_widths, pick_displayed_columns, \
+    infer_presentation
 from datatools.jt.cell_renderer import column_renderers
 from datatools.jt.exit_codes_mapping import *
 from datatools.jt.grid import WGrid
@@ -34,7 +36,7 @@ from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
 from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists, FD_PRESENTATION_IN, FD_STATE_IN, \
-    FD_STATE_OUT, FD_PRESENTATION_OUT
+    FD_STATE_OUT, FD_PRESENTATION_OUT, FD_METADATA_IN, FD_METADATA_OUT
 
 
 @dataclass
@@ -83,7 +85,6 @@ def load_data(params):
         except JSONDecodeError as e:
             print("Cannot decode JSON", file=sys.stderr)
             print(e, file=sys.stderr)
-            print(data, file=sys.stderr)
             sys.exit(255)
 
 
@@ -102,15 +103,18 @@ def parse_params(argv):
     return params
 
 
-def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
+def grid(state, raw_presentation, screen_size, orig_data, column_keys, column_metadata_map, column_presentation_map) -> WGrid:
     column_titles: List[str] = [c for c in column_keys]
     column_widths: List[int] = [max_column_widths[c] for c in column_keys]
 
-    g = WGrid(screen_size[0], screen_size[1], column_widths, column_keys,
-              column_renderers(column_keys, presentation["columns"]).__getitem__,
-              lambda line, column: orig_data[line].get(column_keys[column]),
-              presentation.get("title"),
-              column_titles)
+    g = WGrid(
+        screen_size[0], screen_size[1],
+        column_widths, column_keys,
+        column_renderers(column_keys, column_presentation_map, column_metadata_map).__getitem__,
+        lambda line, column: orig_data[line].get(column_keys[column]),
+        raw_presentation.get("title"),
+        column_titles
+    )
     g.total_lines = len(orig_data)
 
     top_line = state["top_line"]
@@ -125,25 +129,28 @@ def grid(state, presentation, screen_size, orig_data, column_keys) -> WGrid:
 
 
 def main(g, app, pick_displayed_columns, finalizer):
-    # metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
-    presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
+    raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
+    raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
     params = parse_params(sys.argv)
 
-    override(params, presentation)
+    override(params, raw_presentation)
 
     fd_tui = FD_TUI if fd_exists(FD_TUI) else 2
     patch_picotui(fd_tui, fd_tui)
 
     orig_data = load_data(params)
-    infer_metadata(orig_data, presentation["columns"].__contains__)
-    compute_stats(orig_data)
-    infer_presentation(orig_data)
+    column_metadata_map = infer_metadata(orig_data, raw_metadata)
+    column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
 
     screen_size = with_raw_terminal(read_screen_size)
-    column_keys = pick_displayed_columns(screen_size[0])
+    column_keys = pick_displayed_columns(screen_size[0], column_metadata_map, column_presentation_map)
 
-    the_app = app(g(state, presentation, screen_size, orig_data, column_keys))
+    the_app = app(
+        g(
+            state, raw_presentation, screen_size, orig_data, column_keys, column_metadata_map, column_presentation_map
+        )
+    )
 
     while True:
         exit_code, state = run(lambda: the_app.run())
@@ -151,7 +158,13 @@ def main(g, app, pick_displayed_columns, finalizer):
             break
 
     write_fd_or_pass(FD_STATE_OUT, state)
-    write_fd_or_pass(FD_PRESENTATION_OUT, presentation)
+    
+    raw_presentation["columns"] = {k: to_jsonisable(v) for k, v in column_presentation_map.items()}
+    write_fd_or_pass(FD_PRESENTATION_OUT, raw_presentation)
+
+    raw_metadata["columns"] = {k: to_jsonisable(v) for k, v in column_metadata_map.items()}
+    write_fd_or_pass(FD_METADATA_OUT, raw_metadata)
+
     sys.exit(exit_code)
 
 
