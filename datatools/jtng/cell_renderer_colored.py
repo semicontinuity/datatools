@@ -2,11 +2,11 @@ from typing import Sequence
 
 from datatools.jt.auto_metadata import ColumnMetadata
 from datatools.jt.auto_presentation import COLORING_NONE, COLORING_HASH_FREQUENT
-from datatools.jt.themes import COLORS, ColorKey
+from datatools.jt.themes import ColorKey, COLORS2
 from datatools.jtng.column_state import ColumnState
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
 from datatools.tui.coloring import hash_code, hash_to_rgb
-from datatools.tui.terminal import set_colors_cmd_bytes
+from datatools.tui.terminal import set_colors_cmd_bytes, set_colors_cmd_bytes2
 
 
 # Can be in 2 states:
@@ -26,40 +26,37 @@ class WColoredTextCellRenderer:
         return 1 if self.state.collapsed else self.max_content_width + 2
 
     def __call__(self, is_under_cursor, max_width, start, end, value):
-        attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(value)
+        attrs = COLORS2[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(value)
 
         if self.state.collapsed:
-            return set_colors_cmd_bytes(*self.compute_cell_attrs(value)) + self.full_block
+            return set_colors_cmd_bytes2(*self.compute_cell_attrs(value, offset=64)) + self.full_block
         else:
             value = '' if value is None else str(value)
             length = len(value)
             text = str(value)
             text += ' ' * (max_width - 2 - length)
-            border_attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else COLORS[ColorKey.BOX_DRAWING]
+            border_attrs = COLORS2[ColorKey.CURSOR] if is_under_cursor else COLORS2[ColorKey.BOX_DRAWING]
             buffer = bytearray()
             if start == 0:
-                buffer += set_colors_cmd_bytes(*border_attrs) + LEFT_BORDER_BYTES
+                buffer += set_colors_cmd_bytes2(*border_attrs) + LEFT_BORDER_BYTES
             if start < max_width - 1 and end > 1:
-                buffer += set_colors_cmd_bytes(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
+                buffer += set_colors_cmd_bytes2(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
             if end == max_width:
-                buffer += set_colors_cmd_bytes(*border_attrs) + b' '
+                buffer += set_colors_cmd_bytes2(*border_attrs) + b' '
             return buffer
 
-    def compute_cell_attrs(self, value) -> Sequence[int]:
-        text_colors = COLORS[ColorKey.TEXT]
-        if self.column_presentation is None:   # complex column
-            return text_colors if value is not None else COLORS[ColorKey.BOX_DRAWING]
-
+    def compute_cell_attrs(self, value, offset=128) -> Sequence[int]:
+        text_attrs = COLORS2[ColorKey.TEXT]
         if value is None:
-            return text_colors
+            return text_attrs
 
         value = str(value)
         if self.column_presentation.coloring == COLORING_NONE or (
                 self.column_presentation.coloring == COLORING_HASH_FREQUENT and value in self.column_metadata.unique_values):
-            return text_colors
+            return text_attrs
 
-        fg = hash_to_rgb(hash_code(value))
-        return fg[0], fg[1], fg[2], text_colors[3], text_colors[4], text_colors[5]
+        fg = hash_to_rgb(hash_code(value), offset=offset)
+        return fg, text_attrs[1]
 
     def toggle(self):
         self.state.collapsed = not self.state.collapsed

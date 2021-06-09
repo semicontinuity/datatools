@@ -9,7 +9,7 @@ def hash_code(s):
     return hh
 
 
-def hash_to_rgb(h):
+def hash_to_rgb(h, offset=128, scale=1):
     if h is None:
         return 0, 0, 0
 
@@ -26,7 +26,7 @@ def hash_to_rgb(h):
     h = (h - g3) // 32
     b3 = h % 32
 
-    return r6 * 32 + r3 + 128, g6 * 32 + g3 + 128, b6 * 32 + b3 + 128
+    return scale*(r6 * 32 + r3) + offset, scale*(g6 * 32 + g3) + offset, scale*(b6 * 32 + b3) + offset
 
 
 def decode_rgb(s):

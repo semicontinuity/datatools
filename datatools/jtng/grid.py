@@ -14,10 +14,10 @@ HORIZONTAL_PAGE_SIZE = 8
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, width, height, column_keys, column_cell_renderer, cell_value_f):
+    def __init__(self, width, height, column_keys, column_cell_renderer_f, cell_value_f):
         super().__init__(0, 0, width, height)
         self.column_keys = column_keys
-        self.column_cell_renderer_f = column_cell_renderer
+        self.column_cell_renderer_f = column_cell_renderer_f
         self.cell_value_f = cell_value_f
         self.y_top_offset = 0
         self.y_bottom_offset = 0
@@ -105,6 +105,8 @@ class WGrid(WGridBase):
                 self.handle_typed_key(key)
 
     def toggle(self, column_index):
+        if column_index >= len(self.column_keys):
+            return
         column = self.column_cell_renderer_f(column_index)
         if column is None:
             return

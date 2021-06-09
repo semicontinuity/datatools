@@ -18,8 +18,14 @@ def grid(state, presentation, screen_size, orig_data, column_metadata_map, colum
     column_keys = [k for k in column_presentation_map]
 
     def cell_value(line, column):
-        value = orig_data[line].get(column_keys[column])
-        return "-" if type(value) is str and ("\n" in value or "\t" in value) else value
+        if column >= len(column_keys):
+            raise KeyError(column)
+
+        if line >= len(orig_data):
+            raise ValueError(line)
+
+        line_ = orig_data[line]
+        return line_.get(column_keys[column])
 
     g = WGrid(
         screen_size[0], screen_size[1], column_keys,
