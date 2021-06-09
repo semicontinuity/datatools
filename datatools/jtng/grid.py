@@ -61,26 +61,46 @@ class WGrid(WGridBase):
         if key in KEYS_TO_EXIT_CODES:
             return key
         elif type(key) is bytes:
-            if key == KEY_ALT_SHIFT_1:
+            if key == KEY_ALT_1:
                 self.toggle(0)
-            elif key == KEY_ALT_SHIFT_2:
+            elif key == KEY_ALT_2:
                 self.toggle(1)
-            elif key == KEY_ALT_SHIFT_3:
+            elif key == KEY_ALT_3:
                 self.toggle(2)
-            elif key == KEY_ALT_SHIFT_4:
+            elif key == KEY_ALT_4:
                 self.toggle(3)
-            elif key == KEY_ALT_SHIFT_5:
+            elif key == KEY_ALT_5:
                 self.toggle(4)
-            elif key == KEY_ALT_SHIFT_6:
+            elif key == KEY_ALT_6:
                 self.toggle(5)
-            elif key == KEY_ALT_SHIFT_7:
+            elif key == KEY_ALT_7:
                 self.toggle(6)
-            elif key == KEY_ALT_SHIFT_8:
+            elif key == KEY_ALT_8:
                 self.toggle(7)
-            elif key == KEY_ALT_SHIFT_9:
+            elif key == KEY_ALT_9:
                 self.toggle(8)
-            elif key == KEY_ALT_SHIFT_0:
+            elif key == KEY_ALT_0:
                 self.toggle(9)
+            elif key == KEY_ALT_SHIFT_1:
+                self.toggle(10)
+            elif key == KEY_ALT_SHIFT_2:
+                self.toggle(11)
+            elif key == KEY_ALT_SHIFT_3:
+                self.toggle(12)
+            elif key == KEY_ALT_SHIFT_4:
+                self.toggle(13)
+            elif key == KEY_ALT_SHIFT_5:
+                self.toggle(14)
+            elif key == KEY_ALT_SHIFT_6:
+                self.toggle(15)
+            elif key == KEY_ALT_SHIFT_7:
+                self.toggle(16)
+            elif key == KEY_ALT_SHIFT_8:
+                self.toggle(17)
+            elif key == KEY_ALT_SHIFT_9:
+                self.toggle(18)
+            elif key == KEY_ALT_SHIFT_0:
+                self.toggle(19)
             else:
                 self.handle_typed_key(key)
 
