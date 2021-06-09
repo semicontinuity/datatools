@@ -1,0 +1,1 @@
+DOUBLE_UNDERLINE_BYTES = b'\x1b[21m'

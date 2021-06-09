@@ -121,17 +121,18 @@ def set_colors_cmd_bytes2(fg=None, bg=None):
     if fg is not None:
         if type(fg) is int:
             if fg > 8:
-                b += b"1;%d" % (fg + 30 - 8)
+                b += b'1;%d' % (fg + 30 - 8)
             else:
-                b += b"%d" % (fg + 30)
+                b += b'%d' % (fg + 30)
         else:
             b += ansi_fg_color_cmd_bytes0(*fg)
 
     if bg is not None:
         if fg is not None:
             b += b';'
+
         if type(bg) is int:
-            b += b"%dm" % (bg + 40)
+            b += b'%d' % (bg + 40)
         else:
             b += ansi_bg_color_cmd_bytes0(*bg)
 

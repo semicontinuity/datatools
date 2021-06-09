@@ -52,8 +52,8 @@ class WGrid(WGridBase):
             if x >= self.x_shift + self.width:
                 break
 
-        # just need to reset attributes, or specify table background color to paint the unused area
-        buffer += set_colors_cmd_bytes(*COLORS[ColorKey.BOX_DRAWING])
+        # reset attributes
+        buffer += b'\x1b[0m'
         append_spaces(buffer, self.width - (x - self.x_shift))
         return buffer
 

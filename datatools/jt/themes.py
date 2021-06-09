@@ -29,6 +29,7 @@ THEMES = {
     },
 }
 
+DARK = (16, 18, 18)
 THEMES2 = {
     "mc": {
         ColorKey.BOX_DRAWING: [C_B_CYAN, C_BLUE],
@@ -38,11 +39,11 @@ THEMES2 = {
         ColorKey.TEXT: [C_B_CYAN, C_BLUE]
     },
     "dark": {
-        ColorKey.BOX_DRAWING: ((64, 96, 96), (0x29, 0x0B, 0x2E)),
-        ColorKey.TITLE: ((255, 255, 255), (24, 16, 23)),
-        ColorKey.COLUMN_TITLE: ((255, 255, 0), (24, 16, 23)),
+        ColorKey.BOX_DRAWING: ((64, 96, 96), DARK),
+        ColorKey.TITLE: ((255, 255, 255), DARK),
+        ColorKey.COLUMN_TITLE: ((255, 255, 0), DARK),
         ColorKey.CURSOR: [C_BLACK, C_WHITE],
-        ColorKey.TEXT: ((255, 255, 255), (24, 16, 23))
+        ColorKey.TEXT: ((224, 240, 224), DARK)
     },
 }
 
