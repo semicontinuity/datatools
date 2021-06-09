@@ -23,15 +23,15 @@ import signal
 import sys
 from dataclasses import dataclass
 from json import JSONDecodeError
-from typing import List
+from typing import List, Dict
 
 from datatools.json.util import to_jsonisable
 from datatools.jt.auto_metadata import infer_metadata
-from datatools.jt.auto_presentation import max_column_widths, pick_displayed_columns, \
-    infer_presentation
-from datatools.jt.cell_renderer import column_renderers
+from datatools.jt.auto_presentation import infer_presentation, ColumnPresentation
+from datatools.jt.auto_renderers import column_renderers
 from datatools.jt.exit_codes_mapping import *
 from datatools.jt.grid import WGrid
+from datatools.jt.pack_columns import pick_displayed_columns
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
@@ -103,9 +103,10 @@ def parse_params(argv):
     return params
 
 
-def grid(state, raw_presentation, screen_size, orig_data, column_keys, column_metadata_map, column_presentation_map) -> WGrid:
+def grid(state, raw_presentation, screen_size, orig_data, column_metadata_map, column_presentation_map: Dict[str, ColumnPresentation]) -> WGrid:
+    column_keys = pick_displayed_columns(screen_size[0], column_metadata_map, column_presentation_map)
     column_titles: List[str] = [c for c in column_keys]
-    column_widths: List[int] = [max_column_widths[c] for c in column_keys]
+    column_widths: List[int] = [column_presentation_map[c].max_length for c in column_keys]
 
     g = WGrid(
         screen_size[0], screen_size[1],
@@ -128,7 +129,7 @@ def grid(state, raw_presentation, screen_size, orig_data, column_keys, column_me
     return g
 
 
-def main(g, app, pick_displayed_columns, finalizer):
+def main(g, app, finalizer):
     raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
     raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
@@ -144,11 +145,9 @@ def main(g, app, pick_displayed_columns, finalizer):
     column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
 
     screen_size = with_raw_terminal(read_screen_size)
-    column_keys = pick_displayed_columns(screen_size[0], column_metadata_map, column_presentation_map)
-
     the_app = app(
         g(
-            state, raw_presentation, screen_size, orig_data, column_keys, column_metadata_map, column_presentation_map
+            state, raw_presentation, screen_size, orig_data, column_metadata_map, column_presentation_map
         )
     )
 
@@ -188,4 +187,4 @@ def override(params, presentation):
 
 
 if __name__ == "__main__":
-    main(grid, App, pick_displayed_columns, finalizer)
+    main(grid, App, finalizer)

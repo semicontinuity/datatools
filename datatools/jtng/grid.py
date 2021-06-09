@@ -134,7 +134,6 @@ class WGrid(WGridBase):
                     self.x_shift = max(self.x_shift - HORIZONTAL_PAGE_SIZE, 0)
                     self.redraw_content()
 
-
         if result is None:
             self.search_str = ""
 

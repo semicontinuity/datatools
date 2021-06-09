@@ -91,8 +91,16 @@ def ansi_fg_color_cmd_bytes(r, g, b):
     return b"\x1B[38;2;%d;%d;%dm" % (r, g, b)
 
 
+def ansi_fg_color_cmd_bytes0(r, g, b):
+    return b"38;2;%d;%d;%d" % (r, g, b)
+
+
 def ansi_bg_color_cmd_bytes(r, g, b):
     return b"\x1B[48;2;%d;%d;%dm" % (r, g, b)
+
+
+def ansi_bg_color_cmd_bytes0(r, g, b):
+    return b"48;2;%d;%d;%d" % (r, g, b)
 
 
 def set_colors_cmd_bytes(*c):
@@ -101,6 +109,34 @@ def set_colors_cmd_bytes(*c):
         return attr_color_cmd_bytes(*c)
     else:
         return ansi_fg_color_cmd_bytes(c[0], c[1], c[2]) + ansi_bg_color_cmd_bytes(c[3], c[4], c[5])
+
+
+def set_colors_cmd_bytes2(fg=None, bg=None):
+    b = bytearray()
+    if fg is None and bg is None:
+        return b
+
+    b += b'\x1b['
+
+    if fg is not None:
+        if type(fg) is int:
+            if fg > 8:
+                b += b"1;%d" % (fg + 30 - 8)
+            else:
+                b += b"%d" % (fg + 30)
+        else:
+            b += ansi_fg_color_cmd_bytes0(*fg)
+
+    if bg is not None:
+        if fg is not None:
+            b += b';'
+        if type(bg) is int:
+            b += b"%dm" % (bg + 40)
+        else:
+            b += ansi_bg_color_cmd_bytes0(*bg)
+
+    b += b'm'
+    return b
 
 
 def attr_color_cmd_bytes(fg, bg=-1):
