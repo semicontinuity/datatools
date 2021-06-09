@@ -117,16 +117,17 @@ def grid(state, raw_presentation, screen_size, orig_data, column_metadata_map, c
         column_titles
     )
     g.total_lines = len(orig_data)
+    init_from_state(g, state)
+    return g
 
+
+def init_from_state(g, state):
     top_line = state["top_line"]
     if 0 <= top_line < g.total_lines:
         g.top_line = top_line
-
     cur_line = state["cur_line"]
     if top_line <= cur_line < g.total_lines:
         g.cur_line = cur_line
-
-    return g
 
 
 def main(g, app, finalizer):

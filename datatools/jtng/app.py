@@ -4,7 +4,7 @@ import sys
 from typing import List
 
 from datatools.json2ansi.app import make_app
-from datatools.jt.app import App, main
+from datatools.jt.app import App, main, init_from_state
 from datatools.jt.exit_codes import EXIT_CODE_SHIFT, EXIT_CODE_ESCAPE, EXIT_CODE_CTRL_SPACE
 from datatools.jtng.auto_renderers import column_renderers
 from datatools.jtng.grid import WGrid
@@ -17,31 +17,22 @@ from datatools.tui.picotui_util import run
 def grid(state, presentation, screen_size, orig_data, column_metadata_map, column_presentation_map) -> WGrid:
     column_keys = [k for k in column_presentation_map]
 
-    def cell_value(line, column):
-        if column >= len(column_keys):
-            raise KeyError(column)
-
-        if line >= len(orig_data):
-            raise ValueError(line)
-
-        line_ = orig_data[line]
-        return line_.get(column_keys[column])
+    cell_renderers, row_renderers = column_renderers(column_metadata_map, column_presentation_map)
+    def row_attrs(line):
+        buffer = bytearray()
+        for column_key, row_renderer in row_renderers.items():
+            buffer += row_renderer(orig_data[line].get(column_key))
+        return buffer
 
     g = WGrid(
-        screen_size[0], screen_size[1], column_keys,
-        column_renderers(column_keys, column_metadata_map, column_presentation_map).__getitem__,
-        cell_value
+        screen_size[0], screen_size[1],
+        len(cell_renderers),
+        cell_renderers.__getitem__,
+        lambda line, column: orig_data[line].get(column_keys[column]),
+        row_attrs
     )
     g.total_lines = len(orig_data)
-
-    top_line = state["top_line"]
-    if 0 <= top_line < g.total_lines:
-        g.top_line = top_line
-
-    cur_line = state["cur_line"]
-    if top_line <= cur_line < g.total_lines:
-        g.cur_line = cur_line
-
+    init_from_state(g, state)
     return g
 
 

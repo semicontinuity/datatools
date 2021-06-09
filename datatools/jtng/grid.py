@@ -3,10 +3,9 @@ from typing import Optional
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.jt.themes import COLORS, ColorKey
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
-from datatools.tui.terminal import append_spaces, set_colors_cmd_bytes
+from datatools.tui.terminal import append_spaces
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -14,14 +13,15 @@ HORIZONTAL_PAGE_SIZE = 8
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, width, height, column_keys, column_cell_renderer_f, cell_value_f):
+    def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f):
         super().__init__(0, 0, width, height)
-        self.column_keys = column_keys
+        self.column_count = column_count
         self.column_cell_renderer_f = column_cell_renderer_f
         self.cell_value_f = cell_value_f
         self.y_top_offset = 0
         self.y_bottom_offset = 0
         self.x_shift = 0
+        self.row_attrs_f = row_attrs_f
 
     def show_line(self, line_content, line):
         raise AssertionError
@@ -31,10 +31,13 @@ class WGrid(WGridBase):
 
     def render_line(self, line, is_under_cursor):
         buffer = bytearray()
+        buffer += self.row_attrs_f(line)
 
         x = 0   # corresponds to the left border of the first column, might me off-screen
-        for column_index in range(len(self.column_keys)):
+        for column_index in range(self.column_count):
             renderer = self.column_cell_renderer_f(column_index)
+            value = self.cell_value_f(line, column_index)
+
             column_width = len(renderer)
             column_x_right = x + column_width
             column_x_to = min(self.x_shift + self.width, column_x_right)
@@ -45,8 +48,8 @@ class WGrid(WGridBase):
                 if line >= self.total_lines:
                     append_spaces(buffer, column_x_to - x)
                 else:
-                    f = self.cell_value_f(line, column_index)
-                    buffer += renderer(is_under_cursor, column_width, start, end, f)
+                    # value = self.cell_value_f(line, column_index)
+                    buffer += renderer(is_under_cursor, column_width, start, end, value)
 
             x = column_x_right
             if x >= self.x_shift + self.width:
@@ -55,6 +58,7 @@ class WGrid(WGridBase):
         # reset attributes
         buffer += b'\x1b[0m'
         append_spaces(buffer, self.width - (x - self.x_shift))
+
         return buffer
 
     def handle_edit_key(self, key):
@@ -105,7 +109,7 @@ class WGrid(WGridBase):
                 self.handle_typed_key(key)
 
     def toggle(self, column_index):
-        if column_index >= len(self.column_keys):
+        if column_index >= self.column_count:
             return
         column = self.column_cell_renderer_f(column_index)
         if column is None:
@@ -160,12 +164,12 @@ class WGrid(WGridBase):
             self.search_str = ""
 
     def compute_columns_width(self) -> int:
-        return sum([len(self.column_cell_renderer_f(i)) for i in range(len(self.column_keys))])
+        return sum([len(self.column_cell_renderer_f(i)) for i in range(self.column_count)])
 
     def search(self) -> Optional[int]:
         line = self.cur_line
         while line < self.total_lines:
-            for c in range(len(self.column_keys)):
+            for c in range(self.column_count):
                 if str(self.cell_value_f(line, c)).find(self.search_str) >= 0:
                     return line
             line += 1

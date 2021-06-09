@@ -15,6 +15,7 @@ COLORING_HASH_FREQUENT = "hash-frequent"
 @dataclass
 class ColumnPresentation:
     coloring: str = COLORING_NONE
+    separator: bool = None
     indicator: bool = None
     stripes: bool = None
     max_length: int = 0
@@ -43,7 +44,7 @@ def infer_presentation(data, column_metadata_map: Dict[str, ColumnMetadata], raw
             elif column_presentation.stripes:
                 column_presentation.max_length = max(column_presentation.max_length, len(value))
             else:
-                value_as_string = ' ' if value is None else str(value)  # quick and dirty
+                value_as_string = '' if value is None else str(value)  # quick and dirty
                 column_presentation.max_length = max(column_presentation.max_length, len(value_as_string))
 
     return column_presentation_map

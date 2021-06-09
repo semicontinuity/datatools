@@ -22,6 +22,9 @@ class WColoredTextCellRenderer:
         self.column_presentation = column_presentation
         self.state = column_state
 
+    def toggle(self):
+        self.state.collapsed = not self.state.collapsed
+
     def __len__(self):
         return 1 if self.state.collapsed else self.max_content_width + 2
 
@@ -68,6 +71,3 @@ class WColoredTextCellRenderer:
 
         fg = hash_to_rgb(hash_code(value), offset=offset)
         return fg, text_attrs[1]
-
-    def toggle(self):
-        self.state.collapsed = not self.state.collapsed

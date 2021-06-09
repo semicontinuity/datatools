@@ -16,6 +16,7 @@ class WColoredTextCellRenderer:
     def __call__(self, is_under_cursor, max_width, start, end, value):
         if value is None:
             value = ''
+        value = str(value)
         length = len(value)
         text = str(value[start:end])
         attrs = COLORS[ColorKey.CURSOR] if is_under_cursor else self.compute_cell_attrs(value)

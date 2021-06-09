@@ -3,18 +3,25 @@ from typing import Dict
 from datatools.jt.auto_presentation import ColumnPresentation
 from datatools.jtng.cell_renderer_colored import WColoredTextCellRenderer
 from datatools.jtng.cell_renderer_indicator import WIndicatorCellRenderer
+from datatools.jtng.row_renderer_separator import WRowSeparatorCellRenderer
 from datatools.jtng.column_state import ColumnState
 
 
-def column_renderers(column_keys, column_metadata_map, column_presentation_map: Dict[str, ColumnPresentation]):
-    renderers = []
-    for i, column_key in enumerate(column_keys):
+def column_renderers(column_metadata_map, column_presentation_map: Dict[str, ColumnPresentation]):
+    cell_renderers = []
+    row_renderers = {}
+
+    for column_key, column_presentation in column_presentation_map.items():
         column_metadata = column_metadata_map.get(column_key)
-        column_presentation = column_presentation_map.get(column_key)
+
+        if column_presentation.separator:
+            row_renderers[column_key] = WRowSeparatorCellRenderer()
+            continue
+
         if column_presentation.indicator:
-            renderers.append(WIndicatorCellRenderer())
+            cell_renderers.append(WIndicatorCellRenderer())
         else:
-            renderers.append(
+            cell_renderers.append(
                 WColoredTextCellRenderer(
                     column_metadata,
                     column_presentation,
@@ -23,4 +30,4 @@ def column_renderers(column_keys, column_metadata_map, column_presentation_map: 
                 )
             )
 
-    return renderers
+    return cell_renderers, row_renderers

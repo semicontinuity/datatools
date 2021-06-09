@@ -5,6 +5,9 @@ from datatools.tui.terminal import set_colors_cmd_bytes2
 
 
 class WIndicatorCellRenderer:
+    def toggle(self):
+        pass
+
     def __len__(self):
         return 1
 
@@ -18,6 +21,3 @@ class WIndicatorCellRenderer:
         )
         buffer += LEFT_BORDER_BYTES
         return buffer
-
-    def toggle(self):
-        pass
