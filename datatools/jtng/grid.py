@@ -8,6 +8,8 @@ from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, set_colors_cmd_bytes
 
+HORIZONTAL_PAGE_SIZE = 8
+
 
 class WGrid(WGridBase):
     search_str: str = ""
@@ -106,8 +108,9 @@ class WGrid(WGridBase):
 
         if result is False:
             columns_width = self.compute_columns_width()
+            max_x_shift = columns_width - self.width
             if key == KEY_RIGHT:
-                if self.x_shift + self.width < columns_width:
+                if self.x_shift < max_x_shift:
                     self.x_shift += 1
                     self.redraw_content()
             elif key == KEY_LEFT:
@@ -115,13 +118,22 @@ class WGrid(WGridBase):
                     self.x_shift -= 1
                     self.redraw_content()
             elif key == KEY_END:
-                if self.x_shift + self.width < columns_width:
-                    self.x_shift = columns_width - self.width
+                if self.x_shift < max_x_shift:
+                    self.x_shift = max_x_shift
                     self.redraw_content()
             elif key == KEY_HOME:
                 if self.x_shift > 0:
                     self.x_shift = 0
                     self.redraw_content()
+            elif key == KEY_ALT_RIGHT:
+                if self.x_shift < max_x_shift:
+                    self.x_shift = min(self.x_shift + HORIZONTAL_PAGE_SIZE, max_x_shift)
+                    self.redraw_content()
+            elif key == KEY_ALT_LEFT:
+                if self.x_shift > 0:
+                    self.x_shift = max(self.x_shift - HORIZONTAL_PAGE_SIZE, 0)
+                    self.redraw_content()
+
 
         if result is None:
             self.search_str = ""
