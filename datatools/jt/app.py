@@ -43,7 +43,7 @@ from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists,
 class Params:
     title: str = None
     stream_mode: bool = None
-    columns = {}
+    columns = None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
