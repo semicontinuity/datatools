@@ -31,33 +31,36 @@ class WGrid(WGridBase):
 
     def render_line(self, line, is_under_cursor):
         buffer = bytearray()
-        buffer += self.row_attrs_f(line)
+        if line < self.total_lines:
+            buffer += self.row_attrs_f(line)
 
-        x = 0   # corresponds to the left border of the first column, might me off-screen
-        for column_index in range(self.column_count):
-            renderer = self.column_cell_renderer_f(column_index)
-            value = self.cell_value_f(line, column_index)
+            x = 0   # corresponds to the left border of the first column, might me off-screen
+            for column_index in range(self.column_count):
+                renderer = self.column_cell_renderer_f(column_index)
+                value = self.cell_value_f(line, column_index)
 
-            column_width = len(renderer)
-            column_x_right = x + column_width
-            column_x_to = min(self.x_shift + self.width, column_x_right)
+                column_width = len(renderer)
+                column_x_right = x + column_width
+                column_x_to = min(self.x_shift + self.width, column_x_right)
 
-            if column_x_to > self.x_shift:
-                start = max(self.x_shift - x, 0)
-                end = column_x_to - x
-                if line >= self.total_lines:
-                    append_spaces(buffer, column_x_to - x)
-                else:
-                    # value = self.cell_value_f(line, column_index)
-                    buffer += renderer(is_under_cursor, column_width, start, end, value)
+                if column_x_to > self.x_shift:
+                    start = max(self.x_shift - x, 0)
+                    end = column_x_to - x
+                    if line >= self.total_lines:
+                        append_spaces(buffer, column_x_to - x)
+                    else:
+                        # value = self.cell_value_f(line, column_index)
+                        buffer += renderer(is_under_cursor, column_width, start, end, value)
 
-            x = column_x_right
-            if x >= self.x_shift + self.width:
-                break
+                x = column_x_right
+                if x >= self.x_shift + self.width:
+                    break
 
-        # reset attributes
-        buffer += b'\x1b[0m'
-        append_spaces(buffer, self.width - (x - self.x_shift))
+            # reset attributes
+            buffer += b'\x1b[0m'
+            append_spaces(buffer, self.width - (x - self.x_shift))
+        else:
+            append_spaces(buffer, self.width)
 
         return buffer
 

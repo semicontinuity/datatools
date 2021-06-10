@@ -18,9 +18,12 @@ def grid(state, presentation, screen_size, orig_data, column_metadata_map, colum
     column_keys = [k for k in column_presentation_map]
 
     cell_renderers, row_renderers = column_renderers(column_metadata_map, column_presentation_map)
+
     def row_attrs(line):
         buffer = bytearray()
         for column_key, row_renderer in row_renderers.items():
+            if line >= len(orig_data):
+                raise KeyError(line)
             buffer += row_renderer(orig_data[line].get(column_key))
         return buffer
 

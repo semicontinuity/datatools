@@ -19,6 +19,7 @@ class ColumnPresentation:
     indicator: bool = None
     stripes: bool = None
     max_length: int = 0
+    collapsed: bool = None
 
 
 def infer_presentation(data, column_metadata_map: Dict[str, ColumnMetadata], raw_presentation: Dict[str, Any]):
@@ -35,6 +36,7 @@ def infer_presentation(data, column_metadata_map: Dict[str, ColumnMetadata], raw
             column_presentation.indicator = True
         else:
             column_presentation.coloring = infer_column_coloring(column_metadata, len(data))
+            column_presentation.collapsed = column_metadata.contains_single_value()
 
     for record in data:
         for key, value in record.items():
