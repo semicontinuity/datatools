@@ -61,7 +61,7 @@ class WColoredTextCellRenderer(WCellRenderer):
     def compute_cell_attrs(self, value, assistant_value, offset=128) -> Sequence[int]:
         text_attrs = COLORS2[ColorKey.TEXT]
         if value is None:
-            return text_attrs
+            return COLORS2[ColorKey.BOX_DRAWING][1], None
 
         value = str(value)
         if self.column_presentation.coloring == COLORING_NONE or (

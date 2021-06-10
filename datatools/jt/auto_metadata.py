@@ -10,6 +10,7 @@ class ColumnMetadata:
     unique_values: Set[str]
     non_unique_value_counts: Dict[str, int]
     complex: bool = None
+    type: str = None
     multiline: bool = None
 
     def contains_single_value(self):
@@ -31,11 +32,22 @@ def infer_metadata0(data, column_metadata_map):
     for record in data:
         for key, value in record.items():
             column_metadata = column_metadata_map[key]
-            # quick an dirty
-            if type(value) is dict or type(value) is list:
+            if type(value) is dict:
                 column_metadata.complex = True
-            elif type(value) is str and '\n' in value:
-                column_metadata.multiline = True
+                if column_metadata.type is None:
+                    column_metadata.type = 'dict'
+                elif column_metadata.type != 'dict':
+                    column_metadata.type = 'any'
+            elif type(value) is list:
+                column_metadata.complex = True
+                if column_metadata.type is None:
+                    column_metadata.type = 'list'
+                elif column_metadata.type != 'list':
+                    column_metadata.type = 'any'
+            else:
+                column_metadata.type = 'primitive'
+                if type(value) is str and '\n' in value:
+                    column_metadata.multiline = True
 
 
 def infer_metadata1(data, column_metadata_map):

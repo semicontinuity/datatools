@@ -15,18 +15,24 @@ class WStripesCellRenderer(WCellRenderer):
         self.column_presentation = column_presentation
         self.state = column_state
 
+    def toggle(self):
+        self.state.collapsed = not self.state.collapsed
+
     def __len__(self):
-        return 2 + self.max_content_width
+        return 1 if self.state.collapsed else self.max_content_width + 2
 
     def __call__(self, is_under_cursor, max_width, start, end, value, assistant_value):
         if self.state.collapsed:
-            cell_attrs = COLORS2[ColorKey.BOX_DRAWING]
-            return set_colors_cmd_bytes2(
-                COLORS2[ColorKey.BOX_DRAWING][0],
-                cell_attrs[0]
-            ) + LEFT_BORDER_BYTES
+            # distinguish only empty
+            cell_attrs = (COLORS2[ColorKey.BOX_DRAWING][1], None) if value is None or len(value) == 0 else COLORS2[ColorKey.TEXT]
+            return set_colors_cmd_bytes2(COLORS2[ColorKey.BOX_DRAWING][0], cell_attrs[0]) + LEFT_BORDER_BYTES
         else:
-            stripes = [] if value is None or len(value) == 0 else [int(s, 16) for s in value.split(',')]
+            if value is None or len(value) == 0:
+                stripes = []
+            elif type(value) is list:
+                stripes = [int(s, 16) for s in value]
+            else:
+                stripes = [int(s, 16) for s in value.split(',')]
             length = len(stripes)
 
             buffer = bytearray()
@@ -38,11 +44,13 @@ class WStripesCellRenderer(WCellRenderer):
             if start < max_width - 1 and end > 1:
                 index_from = 0 if start == 0 else start - 1
                 index_to = max_width - 2 if end == max_width else end - 1
-                WStripesCellRenderer.append_stripes(stripes, index_from, min(index_to, length), buffer)
-                buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
-                buffer += b' ' * (index_to - length)
+                to = min(index_to, length)
+                WStripesCellRenderer.append_stripes(stripes, index_from, to, buffer)
+                if to < index_to:
+                    buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
+                    buffer += b' ' * (index_to - max(index_from, to))
             if end == max_width:
-                buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + b' '
+                buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
                 buffer += b' '
 
             return buffer
