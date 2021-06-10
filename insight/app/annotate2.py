@@ -207,7 +207,12 @@ def annotate_group(tg_row, tg_tdf):
         k: hash_code_hex8(hash(tuple(v))) for k, v in item_occurs_in_transactions.items()
     }
     debug('Attaching column "milestones"')
-    tg_tdf.node_df['milestones'] = [','.join(code for code in (co_occurrence_codes.get(i) for i in e))
+
+    def codes(e):
+        return [code for code in (co_occurrence_codes.get(i) for i in e)]
+
+    OUTPUT_FORMAT = os.environ.get("OF", "tsv")
+    tg_tdf.node_df['milestones'] = [','.join(codes(e)) if OUTPUT_FORMAT=='tsv' else codes(e)
                                     for e in milestones_in_transactions]
 
     def item_code(r) -> str:
