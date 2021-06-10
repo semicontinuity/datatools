@@ -1,29 +1,5 @@
 # SIXEL primitives
-#
-# example usage:
-#
-# import os
-# cmd = bytearray()
-# sixel_append_start_cmd(cmd)
-# sixel_append_set_color_register_cmd(cmd, 1, 99, 0, 0)
-# sixel_append_set_color_register_cmd(cmd, 7000000, 0, 99, 0)
-# sixel_append_set_color_register_cmd(cmd, 1255, 0, 0, 99)
-#
-# sixel_append_use_color(cmd, 1)
-# sixel_append_repeated(cmd, 100, 60)
-# sixel_append_lf(cmd)
-#
-# sixel_append_use_color(cmd, 7000000)
-# sixel_append_repeated(cmd, 100, 63)
-# sixel_append_lf(cmd)
-#
-# sixel_append_use_color(cmd, 1255)
-# sixel_append_repeated(cmd, 100, 63)
-# sixel_append_lf(cmd)
-#
-# sixel_append_stop_cmd(cmd)
-# os.write(2, cmd)
-
+# https://vt100.net/docs/vt3xx-gp/chapter14.html
 
 from datatools.tui.terminal import TCAP_SIXEL, read_tcaps
 
@@ -76,14 +52,24 @@ def sixel_append_use_color(buffer: bytearray, color_reg: int):
     sixel_append_number(buffer, color_reg)
 
 
+def sixel_append_bits(buffer: bytearray, bits: int):
+    buffer.append(63 + bits)
+
+
 def sixel_append_encoded(buffer: bytearray, data: bytes):
     buffer += data
 
 
 def sixel_append_repeated(buffer: bytearray, count: int, bits: int):
-    buffer.append(0x21)   # '#'
-    sixel_append_number(buffer, count)
-    buffer.append(63 + bits)
+    if count == 1:
+        buffer.append(63 + bits)
+    elif count == 2:
+        buffer.append(63 + bits)
+        buffer.append(63 + bits)
+    else:
+        buffer.append(0x21)   # '#'
+        sixel_append_number(buffer, count)
+        buffer.append(63 + bits)
 
 
 def sixel_append_cr(buffer: bytearray):
@@ -92,3 +78,29 @@ def sixel_append_cr(buffer: bytearray):
 
 def sixel_append_lf(buffer: bytearray):
     buffer.append(0x2D)   # '-'
+
+
+# example usage:
+#
+# import os
+# cmd = bytearray()
+# sixel_append_start_cmd(cmd)
+# sixel_append_set_color_register_cmd(cmd, 1, 99, 0, 0)
+# sixel_append_set_color_register_cmd(cmd, 7000000, 0, 99, 0)
+# sixel_append_set_color_register_cmd(cmd, 1255, 0, 0, 99)
+#
+# sixel_append_use_color(cmd, 1)
+# sixel_append_repeated(cmd, 100, 60)
+# sixel_append_lf(cmd)
+#
+# sixel_append_use_color(cmd, 7000000)
+# sixel_append_repeated(cmd, 100, 63)
+# sixel_append_lf(cmd)
+#
+# sixel_append_use_color(cmd, 1255)
+# sixel_append_repeated(cmd, 100, 63)
+# sixel_append_stop_cmd(cmd)
+# sixel_append_start_cmd(cmd)
+#
+# os.write(2, cmd)
+# os.write(2, b'$$$')

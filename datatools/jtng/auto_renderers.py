@@ -5,6 +5,7 @@ from datatools.jt.auto_presentation import ColumnPresentation
 from datatools.jtng.cell_renderer_colored import WColoredTextCellRenderer
 from datatools.jtng.cell_renderer_indicator import WIndicatorCellRenderer
 from datatools.jtng.cell_renderer_stripes import WStripesCellRenderer
+from datatools.jtng.cell_renderer_stripes_sixel import WStripesSixelCellRenderer
 from datatools.jtng.column_state import ColumnState
 from datatools.jtng.row_renderer_separator import WRowSeparatorCellRenderer
 
@@ -25,7 +26,7 @@ def column_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_pres
         if column_presentation.indicator:
             cell_renderers.append(WIndicatorCellRenderer())
         elif column_presentation.stripes:
-            cell_renderers.append(WStripesCellRenderer(
+            cell_renderers.append(WStripesSixelCellRenderer(
                 column_metadata,
                 column_presentation,
                 column_presentation.max_length,

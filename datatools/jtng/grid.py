@@ -20,7 +20,8 @@ class WGrid(WGridBase):
         self.column_cell_renderer_f = column_cell_renderer_f
         self.cell_value_f = cell_value_f
         self.y_top_offset = 0
-        self.y_bottom_offset = 0
+        self.y_bottom_offset = 1    # last line not painted because of sixels
+        self.rows_view_height = self.height - self.y_top_offset - self.y_bottom_offset
         self.x_shift = 0
         self.row_attrs_f = row_attrs_f
 
