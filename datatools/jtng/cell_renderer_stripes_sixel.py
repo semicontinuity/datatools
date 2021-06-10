@@ -41,16 +41,22 @@ class WStripesSixelCellRenderer(WCellRenderer):
             length = len(stripes)
 
             buffer = bytearray()
-            buffer += b'\x1b[0m'    # reset attrs to paint default terminal background
 
             if start == 0:
+                buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
                 buffer += LEFT_BORDER_BYTES
             if start < max_width - 1 and end > 1:
+                # Paint with default terminal background
+                # This is for Gnome Terminal, which ignores currently set BG color, and uses terminal default BG color
+                buffer += b'\x1b[49m'    # reset to default BG color
+
                 index_from = 0 if start == 0 else start - 1
                 index_to = max_width - 2 if end == max_width else end - 1
-                to = min(index_to, self.chars_required_for_stripes(length))
 
                 buffer += b'\x1b[s' # save cursor pos
+                # buffer += b' ' * (index_to - index_from)
+                # buffer += b'\x1b[u' # restore cursor pos, because *$* terminal moves cursor to the next line
+                to = min(index_to, self.chars_required_for_stripes(length))
                 painted_chars = self.append_stripes(stripes, index_from * self.stripes_per_char, to * self.stripes_per_char, buffer)
                 buffer += b'\x1b[u' # restore cursor pos, because *$* terminal moves cursor to the next line
 

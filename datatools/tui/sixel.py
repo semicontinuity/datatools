@@ -12,21 +12,17 @@ def sixel_append_start_cmd(buffer: bytearray):
     # DCS P1 ; P2; P3; q: P2=0 or 2 (default): 0 will be painted with the currently set BG color; 1: transparency
     buffer.append(0x1b)
     buffer.append(0x50)  # 'P'
+    sixel_append_number(buffer, 0)
+    buffer.append(0x3B)
+    sixel_append_number(buffer, 1)
+    buffer.append(0x3B)
+    sixel_append_number(buffer, 0)
     buffer.append(0x71)  # 'q'
 
 
 def sixel_append_stop_cmd(buffer: bytearray):
     buffer.append(0x1b)
     buffer.append(0x5c)  # '\'
-
-
-def sixel_mode_start_cmd() -> bytes:
-    # DCS P1 ; P2; P3; q: P2=0 or 2 (default): 0 will be painted with the currently set BG color; 1: transparency
-    return b'\x1bPq'
-
-
-def sixel_mode_stop_cmd() -> bytes:
-    return b'\x1b\\'
 
 
 def sixel_append_number(buffer: bytearray, n: int):
