@@ -44,19 +44,17 @@ class WColoredTextCellRenderer(WCellRenderer):
             length = len(value)
             text = str(value)
             text += ' ' * (max_width - 2 - length)
-            border_attrs = COLORS2[ColorKey.BOX_DRAWING]
-
             buffer = bytearray()
             if is_under_cursor:
                 buffer += DOUBLE_UNDERLINE_BYTES
 
             if start == 0:
-                buffer += set_colors_cmd_bytes2(*border_attrs) + LEFT_BORDER_BYTES
+                buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
             if start < max_width - 1 and end > 1:
                 attrs = self.compute_cell_attrs(value, assistant_value)
                 buffer += set_colors_cmd_bytes2(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
             if end == max_width:
-                buffer += set_colors_cmd_bytes2(*border_attrs) + b' '
+                buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + b' '
 
             return buffer
 
