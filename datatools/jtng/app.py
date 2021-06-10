@@ -15,9 +15,7 @@ from datatools.tui.picotui_util import run
 
 
 def grid(state, presentation, screen_size, orig_data, column_metadata_map, column_presentation_map) -> WGrid:
-    column_keys = [k for k in column_presentation_map]
-
-    cell_renderers, row_renderers = column_renderers(column_metadata_map, column_presentation_map)
+    column_keys, cell_renderers, row_renderers = column_renderers(column_metadata_map, column_presentation_map)
 
     def row_attrs(line):
         buffer = bytearray()
@@ -27,11 +25,19 @@ def grid(state, presentation, screen_size, orig_data, column_metadata_map, colum
             buffer += row_renderer(orig_data[line].get(column_key))
         return buffer
 
+    def cell_value(line, column):
+        if column is None:
+            return None
+        if type(column) is int:
+            return orig_data[line].get(column_keys[column])
+        else:
+            return orig_data[line].get(column)
+
     g = WGrid(
         screen_size[0], screen_size[1],
         len(cell_renderers),
         cell_renderers.__getitem__,
-        lambda line, column: orig_data[line].get(column_keys[column]),
+        cell_value,
         row_attrs
     )
     g.total_lines = len(orig_data)

@@ -1,17 +1,14 @@
 from datatools.jt.themes import COLORS2, ColorKey
-from datatools.jtng.cell_renderer import DOUBLE_UNDERLINE_BYTES
+from datatools.jtng.cell_renderer import DOUBLE_UNDERLINE_BYTES, WCellRenderer
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
 from datatools.tui.terminal import set_colors_cmd_bytes2
 
 
-class WIndicatorCellRenderer:
-    def toggle(self):
-        pass
-
+class WIndicatorCellRenderer(WCellRenderer):
     def __len__(self):
         return 1
 
-    def __call__(self, is_under_cursor, max_width, start, end, value):
+    def __call__(self, is_under_cursor, max_width, start, end, value, assistant_value):
         buffer = bytearray()
         if is_under_cursor:
             buffer += DOUBLE_UNDERLINE_BYTES

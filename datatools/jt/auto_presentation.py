@@ -10,6 +10,7 @@ from datatools.jt.auto_metadata import ColumnMetadata
 COLORING_NONE = "none"
 COLORING_HASH_ALL = "hash-all"
 COLORING_HASH_FREQUENT = "hash-frequent"
+COLORING_HASH_ASSISTANT_COLUMN = "hash-assistant-column"
 
 
 @dataclass
@@ -20,6 +21,7 @@ class ColumnPresentation:
     stripes: bool = None
     max_length: int = 0
     collapsed: bool = None
+    assistant_column: str = None
 
 
 def infer_presentation(data, column_metadata_map: Dict[str, ColumnMetadata], raw_presentation: Dict[str, Any]):

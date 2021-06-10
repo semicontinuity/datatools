@@ -9,6 +9,7 @@ from datatools.jtng.row_renderer_separator import WRowSeparatorCellRenderer
 
 
 def column_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presentation_map: Dict[str, ColumnPresentation]):
+    column_keys = []
     cell_renderers = []
     row_renderers = {}
 
@@ -19,6 +20,7 @@ def column_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_pres
             row_renderers[column_key] = WRowSeparatorCellRenderer()
             continue
 
+        column_keys.append(column_key)
         if column_presentation.indicator:
             cell_renderers.append(WIndicatorCellRenderer())
         else:
@@ -31,4 +33,4 @@ def column_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_pres
                 )
             )
 
-    return cell_renderers, row_renderers
+    return column_keys, cell_renderers, row_renderers

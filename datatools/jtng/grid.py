@@ -3,6 +3,7 @@ from typing import Optional
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
+from datatools.jtng.cell_renderer import WCellRenderer
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces
@@ -36,8 +37,7 @@ class WGrid(WGridBase):
 
             x = 0   # corresponds to the left border of the first column, might me off-screen
             for column_index in range(self.column_count):
-                renderer = self.column_cell_renderer_f(column_index)
-                value = self.cell_value_f(line, column_index)
+                renderer: WCellRenderer = self.column_cell_renderer_f(column_index)
 
                 column_width = len(renderer)
                 column_x_right = x + column_width
@@ -49,8 +49,11 @@ class WGrid(WGridBase):
                     if line >= self.total_lines:
                         append_spaces(buffer, column_x_to - x)
                     else:
-                        # value = self.cell_value_f(line, column_index)
-                        buffer += renderer(is_under_cursor, column_width, start, end, value)
+                        buffer += renderer(
+                            is_under_cursor, column_width, start, end,
+                            self.cell_value_f(line, column_index),
+                            self.cell_value_f(line, renderer.assistant())
+                        )
 
                 x = column_x_right
                 if x >= self.x_shift + self.width:
