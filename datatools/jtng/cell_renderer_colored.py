@@ -6,7 +6,7 @@ from datatools.jt.auto_presentation import COLORING_NONE, COLORING_HASH_FREQUENT
 from datatools.jt.themes import ColorKey, COLORS2
 from datatools.jtng.cell_renderer import DOUBLE_UNDERLINE_BYTES, WCellRenderer
 from datatools.jtng.column_state import ColumnState
-from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
+from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
 
@@ -28,6 +28,9 @@ class WColoredTextCellRenderer(WCellRenderer):
 
     def toggle(self):
         self.state.collapsed = not self.state.collapsed
+
+    def __str__(self):
+        return LEFT_BORDER + self.column_presentation.title
 
     def __len__(self):
         return 1 if self.state.collapsed else self.max_content_width + 2

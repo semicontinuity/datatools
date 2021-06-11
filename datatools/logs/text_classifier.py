@@ -8,7 +8,7 @@ Typically, messages in the log files are produced by substituting parameters in 
 
 Here, 1st and 2nd messages are quite similar,
 with difference only in "client id" (101/102) and "action type" ("in"/"out").
-These messages can be thought of as instances of template "Client * logged out *".
+These messages can be thought of as instances of template "Client * logged *".
 
 This code tries to group similar text values together in groups, and assign unique group ids to messages.
 (This process is referred to as "annotation").
@@ -17,11 +17,11 @@ This can be helpful in further data analysis.
 
 For instance, above-mentioned example could have been annotated as
 
-{"time":"00:10", "message":"Client 101 logged in", "messageKind":"deadbeef"}
-{"time":"00:12", "message":"Client 102 logged out", "messageKind":"deadbeef"}
-{"time":"00:59", "message":"Shutdown", "messageKind":"abcd1234"}
+{"time":"00:10", "message":"Client 101 logged in", "_message_kind":"deadbeef"}
+{"time":"00:12", "message":"Client 102 logged out", "_message_kind":"deadbeef"}
+{"time":"00:59", "message":"Shutdown", "_message_kind":"abcd1234"}
 
-Often, it is known, that contents of messages heavily depends on values of other field(s).
+Often, it is known, that the contents of messages heavily depends on values of other field(s).
 E.g., in log files, the contents of messages is determined by the "logger" field:
 each logger "produces" several kinds of messages, and different loggers produce different groups of messages.
 Thus, it is helpful to pre-group all log lines, based on the value of "logger" field,
@@ -29,8 +29,8 @@ and classify messages inside these groups. This is much faster and more reliable
 
 This module provides function to classify and annotate a field in json-lines data (pre-grouped by another field).
 
-Usage: python3 -m datatools.logs.text_classifier annotate_lines "message" "kind"
-(will classify the field "message" and produce the field "kind"; no pre-grouping)
+Usage: python3 -m datatools.logs.text_classifier annotate_lines "message" "_message_kind"
+(will classify the field "message" and produce the field "_message_kind"; no pre-grouping)
 Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 """
 import json
@@ -57,7 +57,8 @@ class Stat:
 
 
 def tokenize(s: str):
-    tokens = re.split(r'(\s+|[;,=)(\]\[:])', s)
+    # tokens = re.split(r'(\s+|[;,=)(\]\[:])', s)   # without '-' - worked for SQL queries
+    tokens = re.split(r'(\s+|[-;,=)(\]\[:])', s)
     i = 0
     while i < len(tokens):
         token = tokens[i]

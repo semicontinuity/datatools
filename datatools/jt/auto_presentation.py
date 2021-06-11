@@ -15,6 +15,7 @@ COLORING_HASH_ASSISTANT_COLUMN = "hash-assistant-column"
 
 @dataclass
 class ColumnPresentation:
+    title: str = None
     coloring: str = COLORING_NONE
     separator: bool = None
     indicator: bool = None
@@ -33,6 +34,7 @@ def infer_presentation(data, column_metadata_map: Dict[str, ColumnMetadata], raw
 
     for key, column_metadata in column_metadata_map.items():
         column_presentation = column_presentation_map[key]
+        column_presentation.title = key
 
         if column_metadata.type == 'list':  # assume that all lists are stripes for now
             column_presentation.stripes = True

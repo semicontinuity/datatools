@@ -8,6 +8,10 @@ class WCellRenderer:
     def assistant(self):
         pass
 
+    def __str__(self):
+        """ Footer string """
+        pass
+
     def __len__(self):
         pass
 
