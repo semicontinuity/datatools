@@ -33,8 +33,9 @@ def infer_timestamp_format(ts):
     if time_offset is not None:
         if len(ts) - time_offset > 8 and (ts[time_offset + 8] == '.' or ts[time_offset + 8] == ','):
             fraction_char = ts[time_offset + 8]
-        if ts.find('+') >= 0:
+        if ts.find('+') >= 0 or ts.find('Z') >= 0:
             has_tz_offset = True
+
     pattern = ''
     if date_offset is not None: pattern = pattern + '%Y-%m-%d'
     if sep_char is not None: pattern = pattern + sep_char

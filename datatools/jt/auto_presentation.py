@@ -37,7 +37,7 @@ def infer_presentation(data, column_metadata_map: Dict[str, ColumnMetadata], raw
         column_presentation.title = key
 
         # assume that all lists are stripes for now
-        if column_metadata.type == 'list' and column_metadata.stereotype == 'hashes':
+        if column_metadata.type == 'list' and (column_metadata.stereotype == 'hashes' or column_metadata.stereotype == 'time_series'):
             column_presentation.stripes = True
         elif column_metadata.complex or column_metadata.multiline:
             column_presentation.indicator = True

@@ -23,6 +23,9 @@ class WStripesSixelCellRenderer(WCellRenderer):
     def toggle(self):
         self.state.collapsed = not self.state.collapsed
 
+    def to_hash_codes_list(self, value):
+        return []
+
     def __len__(self):
         return 1 if self.state.collapsed else self.chars_required_for_stripes(self.max_content_width) + 2
 
@@ -32,13 +35,8 @@ class WStripesSixelCellRenderer(WCellRenderer):
             cell_attrs = (COLORS2[ColorKey.BOX_DRAWING][1], None) if value is None or len(value) == 0 else COLORS2[ColorKey.TEXT]
             return set_colors_cmd_bytes2(COLORS2[ColorKey.BOX_DRAWING][0], cell_attrs[0]) + LEFT_BORDER_BYTES
         else:
-            if value is None or len(value) == 0:
-                stripes = []
-            elif type(value) is list:
-                stripes = [int(s, 16) for s in value]
-            else:
-                stripes = [int(s, 16) for s in value.split(',')]
-            length = len(stripes)
+            hash_codes = self.to_hash_codes_list(value)
+            length = len(hash_codes)
 
             buffer = bytearray()
 
@@ -57,7 +55,7 @@ class WStripesSixelCellRenderer(WCellRenderer):
                 # buffer += b' ' * (index_to - index_from)
                 # buffer += b'\x1b[u'   # restore cursor pos, because *$* terminal moves cursor to the next line
                 to = min(index_to, self.chars_required_for_stripes(length))
-                painted_chars = self.append_stripes(stripes, index_from * self.stripes_per_char, to * self.stripes_per_char, buffer)
+                painted_chars = self.append_stripes(hash_codes, index_from * self.stripes_per_char, to * self.stripes_per_char, buffer)
                 buffer += b'\x1b[u'     # restore cursor pos, because *$* terminal moves cursor to the next line
 
                 if painted_chars > 0:
