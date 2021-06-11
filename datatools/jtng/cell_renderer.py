@@ -1,4 +1,4 @@
-DOUBLE_UNDERLINE_BYTES = b'\x1b[21m'
+from datatools.tui.box_drawing_chars import LEFT_BORDER
 
 
 class WCellRenderer:
@@ -10,7 +10,7 @@ class WCellRenderer:
 
     def __str__(self):
         """ Footer string """
-        pass
+        return LEFT_BORDER
 
     def __len__(self):
         pass

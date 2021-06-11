@@ -1,6 +1,7 @@
 from datatools.jt.themes import COLORS2, ColorKey
-from datatools.jtng.cell_renderer import DOUBLE_UNDERLINE_BYTES, WCellRenderer
-from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
+from datatools.jtng.cell_renderer import WCellRenderer
+from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
+from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.terminal import set_colors_cmd_bytes2
 
 

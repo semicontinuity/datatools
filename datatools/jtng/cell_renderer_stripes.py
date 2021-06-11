@@ -1,7 +1,8 @@
 from datatools.jt.auto_metadata import ColumnMetadata
 from datatools.jt.auto_presentation import ColumnPresentation
 from datatools.jt.themes import COLORS2, ColorKey
-from datatools.jtng.cell_renderer import WCellRenderer, DOUBLE_UNDERLINE_BYTES
+from datatools.jtng.cell_renderer import WCellRenderer
+from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, FULL_BLOCK_BYTES
 from datatools.tui.coloring import hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2

@@ -4,8 +4,9 @@ from datatools.jt.auto_metadata import ColumnMetadata
 from datatools.jt.auto_presentation import COLORING_NONE, COLORING_HASH_FREQUENT, ColumnPresentation, \
     COLORING_HASH_ASSISTANT_COLUMN
 from datatools.jt.themes import ColorKey, COLORS2
-from datatools.jtng.cell_renderer import DOUBLE_UNDERLINE_BYTES, WCellRenderer
+from datatools.jtng.cell_renderer import WCellRenderer
 from datatools.jtng.column_state import ColumnState
+from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2

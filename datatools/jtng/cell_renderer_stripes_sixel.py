@@ -53,12 +53,12 @@ class WStripesSixelCellRenderer(WCellRenderer):
                 index_from = 0 if start == 0 else start - 1
                 index_to = max_width - 2 if end == max_width else end - 1
 
-                buffer += b'\x1b[s' # save cursor pos
+                buffer += b'\x1b[s'     # save cursor pos
                 # buffer += b' ' * (index_to - index_from)
-                # buffer += b'\x1b[u' # restore cursor pos, because *$* terminal moves cursor to the next line
+                # buffer += b'\x1b[u'   # restore cursor pos, because *$* terminal moves cursor to the next line
                 to = min(index_to, self.chars_required_for_stripes(length))
                 painted_chars = self.append_stripes(stripes, index_from * self.stripes_per_char, to * self.stripes_per_char, buffer)
-                buffer += b'\x1b[u' # restore cursor pos, because *$* terminal moves cursor to the next line
+                buffer += b'\x1b[u'     # restore cursor pos, because *$* terminal moves cursor to the next line
 
                 if painted_chars > 0:
                     buffer += b'\x1b[' + bytes(str(painted_chars), 'ascii') + b'C'  # cursor forward (skip stripes)

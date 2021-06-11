@@ -30,6 +30,8 @@ THEMES = {
 }
 
 DARK = (16, 18, 18)
+FOOTER_BG = (40, 40, 40)
+
 THEMES2 = {
     "mc": {
         ColorKey.BOX_DRAWING: [C_B_CYAN, C_BLUE],

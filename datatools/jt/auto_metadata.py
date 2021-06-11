@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Dict, Set
 
 from datatools.json.util import is_primitive, dataclass_from_dict
-from datatools.util.text_util import infer_timestamp_format
+from datatools.util.time_series import time_series_list_descriptor
+from datatools.util.time_util import infer_timestamp_format
 
 
 @dataclass
@@ -13,6 +14,9 @@ class ColumnMetadata:
     complex: bool = None
     type: str = None
     multiline: bool = None
+    stereotype: str = None
+    time_series_timestamp_field: str = None
+    time_series_timestamp_format: str = None
 
     def contains_single_value(self):
         return len(self.non_unique_value_counts) == 1
@@ -33,7 +37,7 @@ def infer_metadata(data, raw_metadata):
     return column_metadata_map
 
 
-def infer_metadata0(data, column_metadata_map):
+def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
     timestamp_formats = {}
     for record in data:
         for key, value in record.items():
@@ -50,6 +54,15 @@ def infer_metadata0(data, column_metadata_map):
                     column_metadata.type = 'list'
                 elif column_metadata.type != 'list':
                     column_metadata.type = 'any'
+
+                if column_metadata.stereotype is None or column_metadata.stereotype == 'time_series':
+                    descriptor = time_series_list_descriptor(value)
+                    if descriptor is not None:
+                        column_metadata.stereotype = 'time_series'
+                        column_metadata.time_series_timestamp_field = descriptor[0]
+                        column_metadata.time_series_timestamp_format = descriptor[1]
+                        continue
+                column_metadata.stereotype = 'unknown'
             else:
                 column_metadata.type = 'primitive'
                 if type(value) is str:

@@ -1,10 +1,11 @@
 from typing import Optional
 
+from datatools.jt.themes import FOOTER_BG
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jtng.cell_renderer import WCellRenderer
-from datatools.tui.ansi import ANSI_ATTR_OVERLINE, ANSI_COLOR_BLACK
+from datatools.tui.ansi import ANSI_ATTR_OVERLINE
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2
@@ -35,13 +36,13 @@ class WGrid(WGridBase):
         self.redraw_footer()
 
     def redraw_footer(self):
-        self.goto(self.x, self.y + self.width - 1)
+        self.goto(self.x, self.y + self.y_top_offset + min(self.rows_view_height, self.total_lines))
         self.wr(self.render_footer())
 
     def render_footer(self):
         buffer = bytearray()
         buffer += ansi_attr_bytes(ANSI_ATTR_OVERLINE)
-        buffer += set_colors_cmd_bytes2(None, (40, 40, 40))
+        buffer += set_colors_cmd_bytes2(None, FOOTER_BG)
 
         x = 0   # corresponds to the left border of the first column, might be off-screen
         for column_index in range(self.column_count):
@@ -52,12 +53,14 @@ class WGrid(WGridBase):
             if column_x_to > self.x_shift:
                 start = max(self.x_shift - x, 0)
                 end = column_x_to - x
-                text = str(renderer)[start:end]
-                buffer += bytes(text, 'utf-8')
-                remaining = end - start - len(text)
+                remaining = end - start
+                column_footer = str(renderer)
+                if column_footer is not None:
+                    text = column_footer[start:end]
+                    buffer += bytes(text, 'utf-8')
+                    remaining -= len(text)
                 if remaining > 0:
                     buffer += b' ' * remaining
-                # raise ValueError(end - start)
             x = column_x_right
             if x >= self.x_shift + self.width:
                 break
