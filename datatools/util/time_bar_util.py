@@ -7,13 +7,12 @@ def fit_time_bar(min_pos, max_pos, n_chars, stripes_per_char):
     label_length_chars = 5 if is_same_date(min_pos, max_pos) else 16
     time_format = "%H:%M" if is_same_date(max_pos, min_pos) else "%Y-%m-%d %H:%M"
 
-    stripes_per_char = 2
     stride_of_marks_in_chars = label_length_chars + 2  # 2 spaces between labels
     x_axis_unit_per_mark = x_axis_amount_per_stripe * stripes_per_char * stride_of_marks_in_chars
     x_axis_unit_per_mark = compute_better_time_unit(x_axis_unit_per_mark)  # TODO better non-time units
     x_axis_amount_per_char = x_axis_unit_per_mark / stride_of_marks_in_chars
     x_axis_amount_per_stripe = x_axis_amount_per_char / stripes_per_char
-    n_chars = int((max_pos - min_pos) / x_axis_amount_per_stripe / stripes_per_char + 1)  # + 1 to round up
+    n_chars = int((max_pos - min_pos) / x_axis_amount_per_stripe / stripes_per_char)
     n_stripes = n_chars * stripes_per_char
 
     bar = time_bar(
@@ -60,5 +59,23 @@ def compute_better_time_unit(time_unit):
         return 45 * 60
     elif time_unit > 45 * 60 and time_unit <= 60 * 60:
         return 60 * 60
+    elif time_unit > 60 * 60 and time_unit <= 90 * 60:  # 1.5 hours
+        return 90 * 60
+    elif time_unit > 90 * 60 and time_unit <= 120 * 60:  # 2 hours
+        return 120 * 60
+    elif time_unit > 120 * 60 and time_unit <= 180 * 60:  # 3 hours
+        return 120 * 60
+    elif time_unit > 180 * 60 and time_unit <= 240 * 60:  # 4 hours
+        return 240 * 60
+    elif time_unit > 4 * 60 * 60 and time_unit <= 6 * 60 * 60:  # 6 hours
+        return 6 * 60 * 60
+    elif time_unit > 6 * 60 * 60 and time_unit <= 8 * 60 * 60:  # 8 hours
+        return 8 * 60 * 60
+    elif time_unit > 8 * 60 * 60 and time_unit <= 12 * 60 * 60:  # 12 hours
+        return 12 * 60 * 60
+    elif time_unit > 12 * 60 * 60 and time_unit <= 24 * 60 * 60:  # 24 hours
+        return 24 * 60 * 60
+    elif time_unit > 24 * 60 * 60 and time_unit <= 48 * 60 * 60:  # 48 hours
+        return 48 * 60 * 60
     else:
         return time_unit

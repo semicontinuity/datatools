@@ -22,24 +22,18 @@ class WTimeSeriesStripesCellRenderer(WStripesSixelCellRenderer):
 
         self.bar, self.n_stripes, self.x_axis_amount_per_stripe = fit_time_bar(
             self.column_metadata.time_series_timestamp_min,
-            self.column_metadata.time_series_timestamp_max, 128, 2)
-        # self.cache = {}
+            self.column_metadata.time_series_timestamp_max, 128, 4)
 
     def __str__(self):
         return LEFT_BORDER + self.bar
 
     def to_hash_codes_list(self, value):
-        return [0xFFFFFFFF for record in value]
-
-    def __call__(self, is_under_cursor, max_width, start, end, value, assistant_value):
-        # self.cache.get()
-        gutter = self.build_gutter(
+        return self.build_gutter(
             self.column_metadata.time_series_timestamp_min,
             value, self.n_stripes,
             self.x_axis_amount_per_stripe,
             self.column_metadata.time_series_timestamp_field
         )
-        return bytes(self.gutter_bar_string(gutter), 'utf-8')
 
     def build_gutter(self, min_time, data, n_stripes, x_axis_amount_per_stripe, timestamp_field_name):
         result = [None] * n_stripes
