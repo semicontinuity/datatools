@@ -20,6 +20,10 @@ def time_series_list_summary(data) -> Optional[Tuple]:
                 continue
 
             pattern, _ = infer_timestamp_format(value)
+            if pattern is None:
+                summaries[key] = ...
+                continue
+
             ts = datetime.datetime.strptime(value, pattern).timestamp()
 
             if current_summary is None:

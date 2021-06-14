@@ -23,9 +23,9 @@ def infer_timestamp_format(ts):
     time_offset = None
     fraction_char = None
     has_tz_offset = None
-    if ts[2] == ':':
+    if ts[2] == ':' and ts[:2].isdigit():
         time_offset = 0
-    if ts[4] == '-':
+    if ts[4] == '-' and ts[:4].isdigit():
         date_offset = 0
     if len(ts) >= 19 and date_offset is not None:
         sep_char = ts[10]
@@ -42,4 +42,4 @@ def infer_timestamp_format(ts):
     if time_offset is not None: pattern = pattern + '%H:%M:%S'
     if fraction_char: pattern = pattern + fraction_char + '%f'
     if has_tz_offset is not None: pattern = pattern + '%z'
-    return pattern, ts
+    return pattern if pattern != '' else None, ts

@@ -10,7 +10,7 @@ from datatools.tui.terminal import set_colors_cmd_bytes2
 
 
 class WStripesSixelCellRenderer(WCellRenderer):
-    SIXELS_PER_CHAR: int = 10
+    SIXELS_PER_CHAR: int = 2
 
     def __init__(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, max_content_width, column_state):
         self.max_content_width = max_content_width
