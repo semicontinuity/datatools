@@ -36,10 +36,11 @@ Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 import json
 import re
 import sys
+import os
 from collections import defaultdict
 from dataclasses import dataclass
 from types import GeneratorType
-from typing import Tuple, Iterable, Iterator, Set, Dict, List, Hashable, Any, Sequence
+from typing import Tuple, Iterable, Iterator, Set, Dict, List, Hashable, Any, Sequence, Callable
 
 from datatools.json.util import to_jsonisable
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
@@ -321,7 +322,7 @@ def collapse_successive_wildcards(in_pattern: Iterable[str]) -> Tuple[List[str],
     return out_pattern, milestone_offsets
 
 
-def pack_pattern(in_pattern: Tuple[str, ...], lines: Sequence[str]) -> Tuple[str, ...]:
+def pack_pattern(in_pattern: Tuple[str, ...], lines: Sequence[str], wildcard = None) -> Tuple[str, ...]:
     if len(lines) == 1:
         return tuple(lines[0])
 
@@ -348,13 +349,13 @@ def pack_pattern(in_pattern: Tuple[str, ...], lines: Sequence[str]) -> Tuple[str
     if text != '':
         out_pattern.append(text)
     if in_wildcard:
-        out_pattern.append(None)
+        out_pattern.append(wildcard)
 
     return tuple(out_pattern)
 
 
-def with_packed_patterns(buckets: Dict[Tuple[str, ...], Any]) -> Dict[Tuple[str, ...], Any]:
-    return {pack_pattern(k, v): v for k, v in buckets.items()}
+def with_packed_patterns(buckets: Dict[Tuple[str, ...], Any], wildcard = None) -> Dict[Tuple[str, ...], Any]:
+    return {pack_pattern(k, v, wildcard): v for k, v in buckets.items()}
 
 
 def pattern_and_args(s, token_set):
@@ -392,7 +393,7 @@ def compute_group_lookups(records, group_field, classify_field, make_buckets_fun
     return group_to_lookup
 
 
-def invert(bucket_data: Dict[Tuple[str, ...], List[str]]) -> Dict[str, Tuple[str, ...]]:
+def invert(bucket_data) -> Dict[Tuple[str, ...], List[str]]:
     return {tuple(s): bucket_pattern for bucket_pattern, bucket_contents in bucket_data.items() for s in bucket_contents}
 
 
@@ -406,30 +407,34 @@ def run():
     elif len(sys.argv) == 2 and sys.argv[1] == "buckets":
         return to_jsonisable(with_packed_patterns(make_buckets(load_tokenized_strings())))
     elif (len(sys.argv) == 5 or len(sys.argv) == 4) and sys.argv[1] == "annotate_lines":
+        # <classify_field> <result_field> [<group_by_field>]
         group_field = sys.argv[4] if len(sys.argv) == 5 else None
         data = load_data()
         data_groups = {None: data if group_field is None else grouped_data(data, group_field)}
 
+        if os.environ.get("PATTERNS") == '1':
+            category_f = lambda p: ''.join(('*' if part is None else part) for part in p)
+        else:
+            category_f = lambda p: f'{hash(p) & 0xFFFFFFFF:02x}'
+
         for group_id, group_data in data_groups.items():
-            argv_ = sys.argv[2]
-            sys_argv_ = sys.argv[3]
-            annotate_lines(group_data, classify_field=argv_, result_field=sys_argv_)
+            annotate_lines(group_data, classify_field=sys.argv[2], result_field=sys.argv[3], category_f=category_f)
 
         return data
 
 
-def annotate_lines(records: Sequence[Any], classify_field: str, result_field: str):
+def annotate_lines(records: Sequence[Any], classify_field: str, result_field: str, category_f: Callable[[Sequence], str]):
     debug(f"Annotating")
-    classified_fields = [j[classify_field] for j in records]
-    tokenized_strings = [[token for token in tokenize(s)] for s in classified_fields]
+    classified_field_values = [j[classify_field] for j in records]
+    tokenized_strings = [[token for token in tokenize(value)] for value in classified_field_values]
 
-    buckets = make_buckets(tokenized_strings)
+    buckets: Dict[Tuple[str, ...], List[str]] = make_buckets(tokenized_strings)
     group_to_lookup = invert(buckets)
 
     for record in records:
         message = record[classify_field]
         p = group_to_lookup[tuple(token for token in tokenize(message))]
-        category = f'{hash(p) & 0xFFFFFFFF:02x}'
+        category = category_f(p)
         record[result_field] = category
 
 
