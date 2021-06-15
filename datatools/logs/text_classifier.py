@@ -204,7 +204,7 @@ def make_buckets(tokenized_strings) -> Dict[Tuple[str, ...], List[str]]:
 
 
 def initial_refined_buckets(tokenized_strings):
-    buckets = bucketize(tokenized_strings)
+    buckets: Dict[Tuple[str, ...], List[str]] = bucketize(tokenized_strings)
     debug("Initial refinement of buckets")
     refined_buckets: Dict[Tuple[str, ...], List[str]] = refine_buckets(buckets.values())
     debug("Completed initial refinement of buckets!")
