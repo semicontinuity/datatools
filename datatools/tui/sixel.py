@@ -14,7 +14,7 @@ def sixel_append_start_cmd(buffer: bytearray):
     buffer.append(0x50)  # 'P'
     sixel_append_number(buffer, 0)
     buffer.append(0x3B)
-    sixel_append_number(buffer, 1)
+    sixel_append_number(buffer, 0)
     buffer.append(0x3B)
     sixel_append_number(buffer, 0)
     buffer.append(0x71)  # 'q'

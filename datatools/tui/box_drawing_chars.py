@@ -2,7 +2,7 @@ from typing import List
 
 FULL_BLOCK_BYTES = b'\xE2\x96\x88'
 LEFT_BORDER = '▏'
-LEFT_BORDER_BYTES = bytes(LEFT_BORDER, 'utf-8')
+LEFT_BORDER_BYTES = b'\xE2\x96\x8F'
 
 KIND_SINGLE = 0
 KIND_DOUBLE = 1
