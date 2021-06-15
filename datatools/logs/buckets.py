@@ -135,7 +135,7 @@ class Bucket:
         return [offset + shift for offset in ref_column]
 
 
-def scatter_into(buckets_dict_to, buckets_dict_from, tokenized_strings: List[List[str]], indices: List[int]):
+def scatter_into(buckets_dict_to, buckets_dict_from, tokenized_strings: List[List[str]], indices: List[int]) -> Dict:
     debug(f"Computing buckets for {len(tokenized_strings)} strings")
     stats = list(compute_stats_for_tokenized(tokenized_strings))
     token_to_quality = {stat.token: stat.quality for stat in stats}
@@ -180,7 +180,7 @@ def trim_bucket(bucket) -> Bucket:
 
 class Classifier:
 
-    def __init__(self, lines) -> None:
+    def __init__(self, lines: Sequence[str]) -> None:
         self.tokenized_strings = [[token for token in tokenize(s)] for s in lines]
 
     def compute_initial_buckets(self):
@@ -358,11 +358,11 @@ def gather(buckets_dict, similarities: Dict[Hashable, Dict[Hashable, Any]]):
 
 
 def compute_bucket_similarities_graph(
-        buckets: List, similarity_metric: Callable[[Any, Any], Optional[float]]) -> Dict[Hashable, Dict[Hashable, Any]]:
+        buckets: List,
+        similarity_metric: Callable[[Any, Any], Optional[float]]) -> Dict[Hashable, Dict[Hashable, Any]]:
     graph = {tuple(b.pattern): {} for b in buckets}
 
-    for n_i, n_j, w in compute_mutual_weights_iter(
-            buckets, similarity_metric, lambda b: tuple(b.pattern)):
+    for n_i, n_j, w in compute_mutual_weights_iter(buckets, similarity_metric, lambda b: tuple(b.pattern)):
         graph[n_i][n_j] = w
         graph[n_j][n_i] = w
 
@@ -408,16 +408,21 @@ def run():
     elif len(sys.argv) == 2 and sys.argv[1] == "bucket_similarities":
         d = {}
         strings = load_tokenized_strings()
-        buckets = scatter_into(d, d, strings, [i for i in range(len(strings))])
-        pattern_to_index = {pattern: i for i, pattern in enumerate(buckets)}
+        buckets_dict = scatter_into(d, d, strings, [i for i in range(len(strings))])
+        for b in buckets_dict.values():
+            b.compute_hashes_centroid_and_rmsd()
+            debug(b.pattern, b.hashes_centroid)
+        # pattern_to_index = {pattern: i for i, pattern in enumerate(buckets_dict)}
+
         similarities = compute_bucket_similarities_graph(
-            [bucket for bucket in buckets.values()],
-            buckets_distance_less_than(20)
+            [bucket for bucket in buckets_dict.values()],
+            buckets_distance_less_than(128)
         )
 
         bucket_index_to_similarities = {}
         for pattern, similar in similarities.items():
-            bucket_index_to_similarities[pattern_to_index[pattern]] = tuple([pattern_to_index[p] for p in similar])
+            # bucket_index_to_similarities[pattern_to_index[pattern]] = tuple([pattern_to_index[p] for p in similar])
+            bucket_index_to_similarities[str(pattern)] = {str(sim):w for sim, w in similar.items()}
         return bucket_index_to_similarities
     elif len(sys.argv) == 2 and sys.argv[1] == "clusters":
         return classifier.compute_clusters()

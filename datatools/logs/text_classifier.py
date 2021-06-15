@@ -34,6 +34,7 @@ Usage: python3 -m datatools.logs.text_classifier annotate_lines "message" "_mess
 Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 """
 import json
+import math
 import re
 import sys
 import os
@@ -140,8 +141,8 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
     token2quality = {}
     total_quality = 0
     # total_support = 0
-    for token, quality in f.items():
-        quality = len(token2lines[token]) * len(token2lines[token]) / quality
+    for token, count in f.items():
+        quality = len(token2lines[token]) * len(token2lines[token]) / count
         token2quality[token] = quality
         total_quality += quality
         # total_support += len(token2lines[token])
@@ -170,7 +171,9 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
         prev_selected = selected
         i += 1
 
-        yield Stat(token=token, quality=quality, count=f[token], support=support, selected=selected)
+        yield Stat(token=token, quality=math.log(quality), count=f[token], support=support, selected=selected)
+
+    debug(f"Computed stats for {size} lines")
 
 
 def compute_token_counts(tokens: Iterable[Hashable]) -> Dict[Hashable, int]:
@@ -425,8 +428,8 @@ def run():
 
 def annotate_lines(records: Sequence[Any], classify_field: str, result_field: str, category_f: Callable[[Sequence], str]):
     debug(f"Annotating")
-    classified_field_values = [j[classify_field] for j in records]
-    tokenized_strings = [[token for token in tokenize(value)] for value in classified_field_values]
+    classify_field_values = [j[classify_field] for j in records]
+    tokenized_strings = [[token for token in tokenize(value)] for value in classify_field_values]
 
     buckets: Dict[Tuple[str, ...], List[str]] = make_buckets(tokenized_strings)
     group_to_lookup = invert(buckets)
