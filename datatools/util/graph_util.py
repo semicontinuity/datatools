@@ -20,7 +20,7 @@ def compute_weights_graph(
 def compute_mutual_weights_iter(
         elements: List[Any],
         weight_f: Callable[[Any, Any], Optional[float]],
-        node_f: Callable[[Any], Hashable]):
+        node_id_f: Callable[[Any], Hashable]):
 
     debug(f"Computing weights, number of elements: {len(elements)}")
 
@@ -29,7 +29,7 @@ def compute_mutual_weights_iter(
             weight = weight_f(elements[i], elements[j])
             if weight is None:
                 continue
-            yield node_f(elements[i]), node_f(elements[j]), weight
+            yield node_id_f(elements[i]), node_id_f(elements[j]), weight
 
 
 def discretize_graph(

@@ -264,16 +264,17 @@ class Classifier:
         self.compute_nearest_neighbor_d(buckets_dict, buckets_distance_less_than(2 * 128))
         return buckets_dict
 
-    def compute_nearest_neighbor_d(self, buckets: Dict, similarity_metric: Callable[[Any, Any], Optional[float]]):
-        self.compute_buckets_centroids(buckets)
+    def compute_nearest_neighbor_d(self, buckets_dict: Dict, similarity_metric: Callable[[Any, Any], Optional[float]]):
+        self.compute_buckets_centroids(buckets_dict)
 
-        similarities: Dict[Hashable, Dict[Hashable, Any]] = compute_bucket_similarities_graph(list(buckets.values()),
-                                                                                              similarity_metric)
+        similarities: Dict[Hashable, Dict[Hashable, Any]] = compute_bucket_similarities_graph(
+            list(buckets_dict.values()), similarity_metric, lambda b: tuple(b.pattern)
+        )
         for pattern, similar in similarities.items():
             if len(similar) > 0:
-                buckets[pattern].nearest_neighbor_d = min(similar.values())
+                buckets_dict[pattern].nearest_neighbor_d = min(similar.values())
             else:
-                buckets[pattern].nearest_neighbor_d = None
+                buckets_dict[pattern].nearest_neighbor_d = None
 
     @staticmethod
     def compute_buckets_centroids(buckets: Dict):
@@ -296,19 +297,21 @@ def gather_and_scatter2(
     debug("Computed bucket centroids")
 
     similarities: Dict[Hashable, Dict[Hashable, Any]] = compute_bucket_similarities_graph(
-        list(buckets_dict.values()), similarity_metric
+        list(buckets_dict.values()), similarity_metric, lambda b: tuple(b.pattern)
     )
-    buckets_dict, crude_buckets = gather(buckets_dict, similarities)
-    for crude_bucket in crude_buckets:
-        crude_bucket.compute_hashes_centroid_and_rmsd()
-        if crude_bucket.hashes_rmsd > 15:
-            scatter_into(buckets_dict, buckets_dict, crude_bucket.tokenized_strings, crude_bucket.indices)
-        else:
-            new_pattern = crude_bucket.tokenized_strings[0]
-            crude_bucket.pattern = new_pattern
-            buckets_dict[tuple(new_pattern)] = crude_bucket
+    crude_merged_buckets = gather(buckets_dict, similarities)
+    new_buckets_dict = {}
 
-    return buckets_dict
+    for crude_merged_bucket in crude_merged_buckets:
+        crude_merged_bucket.compute_hashes_centroid_and_rmsd()
+        if crude_merged_bucket.hashes_rmsd > 15:
+            scatter_into(new_buckets_dict, {}, crude_merged_bucket.tokenized_strings, crude_merged_bucket.indices)
+        else:
+            new_pattern = crude_merged_bucket.tokenized_strings[0]
+            crude_merged_bucket.pattern = new_pattern
+            new_buckets_dict[tuple(new_pattern)] = crude_merged_bucket
+
+    return new_buckets_dict
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -325,14 +328,16 @@ def gather_and_scatter(
     debug("Computed bucket centroids")
 
     similarities: Dict[Hashable, Dict[Hashable, Any]] = compute_bucket_similarities_graph(
-        list(buckets_dict.values()), similarity_metric
+        list(buckets_dict.values()), similarity_metric, lambda b: tuple(b.pattern)
     )
-    buckets_dict, crude_buckets = gather(buckets_dict, similarities)
-    for crude_bucket in crude_buckets:
-        # crude_bucket.compute_centroid_hashes()  # for future
-        scatter_into(buckets_dict, buckets_dict, crude_bucket.tokenized_strings, crude_bucket.indices)
+    crude_merged_buckets = gather(buckets_dict, similarities)
 
-    return buckets_dict
+    new_buckets_dict = {}
+    for crude_merged_bucket in crude_merged_buckets:
+        scatter_into(new_buckets_dict, {}, crude_merged_bucket.tokenized_strings, crude_merged_bucket.indices)
+
+    debug(f"Scattered into {len(new_buckets_dict)} buckets")
+    return new_buckets_dict
 
 
 def gather(buckets_dict, similarities: Dict[Hashable, Dict[Hashable, Any]]):
@@ -340,29 +345,31 @@ def gather(buckets_dict, similarities: Dict[Hashable, Dict[Hashable, Any]]):
     similar_buckets_pattern_list: List[List[Hashable]] = connected_components(similarities)
     debug(f"Computed {len(similar_buckets_pattern_list)} connected components of buckets similarity graph")
 
-    crude_buckets = []
+    crude_merged_buckets = []
     for similar_bucket_patterns in similar_buckets_pattern_list:
-        crude_bucket = Bucket()
+        crude_merged_bucket = Bucket()
         for bucket_pattern in similar_bucket_patterns:
             bucket = buckets_dict.get(bucket_pattern)
             del buckets_dict[bucket_pattern]
 
-            crude_bucket.indices.extend(bucket.indices)
-            crude_bucket.tokenized_strings.extend(bucket.tokenized_strings)
-            crude_bucket.hashes[0].extend(bucket.hashes[0])
-            crude_bucket.hashes[1].extend(bucket.hashes[1])
-        crude_buckets.append(crude_bucket)
-    return buckets_dict, crude_buckets
+            crude_merged_bucket.indices.extend(bucket.indices)
+            crude_merged_bucket.tokenized_strings.extend(bucket.tokenized_strings)
+            crude_merged_bucket.hashes[0].extend(bucket.hashes[0])
+            crude_merged_bucket.hashes[1].extend(bucket.hashes[1])
+            # can also transfer centroids (needs accumulator)...
+        crude_merged_buckets.append(crude_merged_bucket)
+    return crude_merged_buckets
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 def compute_bucket_similarities_graph(
         buckets: List,
-        similarity_metric: Callable[[Any, Any], Optional[float]]) -> Dict[Hashable, Dict[Hashable, Any]]:
+        similarity_metric: Callable[[Any, Any], Optional[float]],
+        node_id_f) -> Dict[Hashable, Dict[Hashable, float]]:
     graph = {tuple(b.pattern): {} for b in buckets}
 
-    for n_i, n_j, w in compute_mutual_weights_iter(buckets, similarity_metric, lambda b: tuple(b.pattern)):
+    for n_i, n_j, w in compute_mutual_weights_iter(buckets, similarity_metric, node_id_f):
         graph[n_i][n_j] = w
         graph[n_j][n_i] = w
 
@@ -416,7 +423,8 @@ def run():
 
         similarities = compute_bucket_similarities_graph(
             [bucket for bucket in buckets_dict.values()],
-            buckets_distance_less_than(128)
+            buckets_distance_less_than(128),
+            lambda b: tuple(b.pattern)
         )
 
         bucket_index_to_similarities = {}
