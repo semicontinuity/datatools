@@ -6,9 +6,10 @@ from types import GeneratorType
 from typing import *
 
 from datatools.json.util import to_jsonisable
+from datatools.logs.buckets_pattern_inference import infer_pattern
 from datatools.logs.text_classifier import collapse_successive_wildcards
-from datatools.logs.text_classifier import tokenize, compute_selected, compute_stats_for_tokenized
 from datatools.logs.text_classifier import raw_pattern_and_milestone_offsets
+from datatools.logs.text_classifier import tokenize, compute_selected, compute_stats_for_tokenized
 from datatools.util.graph_util import compute_mutual_weights_iter, connected_components
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
@@ -17,17 +18,15 @@ from datatools.util.sequence_hash import seq_sim_hash, hamming_distance, centroi
 
 @dataclass
 class Bucket:
-    pattern: List[Hashable]
+    pattern: List[str]
     indices: List[int]
-    tokenized_strings: List[Sequence[Hashable]]
+    tokenized_strings: List[Sequence[str]]
     # hashes: Tuple[List[AnyStr], List[AnyStr]]
     hashes: Tuple[List[AnyStr], List[AnyStr]]
     # hashes_centroid: Tuple[AnyStr, AnyStr]
     hashes_centroid: Tuple[AnyStr, AnyStr]
     hashes_rmsd: float
     nearest_neighbor_d: float
-
-    milestone_count: int
     alignment_offsets: List[List[int]]
 
     def __init__(
@@ -36,12 +35,23 @@ class Bucket:
             milestone_count=0):
 
         self.pattern = pattern
-        self.alignment_offsets = [[] for _ in range(milestone_count)]
         self.indices = []
         self.tokenized_strings = []
         self.hashes = [], []
         self.hashes_rmsd = 0.0
+        self.hashes_centroid = None
         self.nearest_neighbor_d = 0.0
+        if milestone_count:
+            self.init_alignment_offsets(milestone_count)
+        else:
+            self.alignment_offsets = None
+
+    def milestone_count(self):
+        return len(self.alignment_offsets)
+
+    def init_alignment_offsets(self, milestone_count):
+        self.alignment_offsets = [[] for _ in range(milestone_count)]
+        debug(f"self.alignment_offsets: {len(self.alignment_offsets)}")
 
     def enumerate_tokenized_strings(self):
         for i in range(len(self.tokenized_strings)):
@@ -49,19 +59,24 @@ class Bucket:
 
     def append(self,
                index: int,
-               tokenized_string: Sequence[Hashable],
-               milestone_offsets: List[int],
-               hash_tuple: Tuple[AnyStr, AnyStr]):
+               tokenized_string: Sequence[str],
+               milestone_offsets: List[int] = None,
+               hash_tuple: Tuple[AnyStr, AnyStr] = None):
 
         self.indices.append(index)
         self.tokenized_strings.append(tokenized_string)
 
-        if milestone_offsets is not None:
-            for i in range(len(self.alignment_offsets)):
-                self.alignment_offsets[i].append(milestone_offsets[i])
+        if self.alignment_offsets is not None and milestone_offsets is not None:
+            self.append_milestone_offsets(milestone_offsets)
+        if hash_tuple is not None:
+            self.hashes[0].append(hash_tuple[0])
+            self.hashes[1].append(hash_tuple[1])
 
-        self.hashes[0].append(hash_tuple[0])
-        self.hashes[1].append(hash_tuple[1])
+    def append_milestone_offsets(self, milestone_offsets):
+        if len(milestone_offsets) != len(self.alignment_offsets):
+            raise AssertionError(len(self.alignment_offsets), milestone_offsets)
+        for i in range(len(self.alignment_offsets)):
+            self.alignment_offsets[i].append(milestone_offsets[i])
 
     def compute_hashes_centroid_and_rmsd(self):
         self.hashes_centroid = centroid(self.hashes[0]), centroid(self.hashes[1])
@@ -257,12 +272,25 @@ class Classifier:
 
     def repeatedly_clusterize(self, buckets_list: List[Bucket]):
         # for threshold in [74, 52, 30, 15, 7, 1]:
-        for threshold in [8, 6, 4, 2.5, 1.9, 1.6]:
+        for threshold in [6, 3, 1.5]:
+        # for threshold in [1.9]:
             debug("")
             debug(f"Clusterizing with threshold {threshold}")
             buckets_list = gather_and_scatter(buckets_list, buckets_relative_distance_less_than(threshold))
         # self.compute_nearest_neighbor_d(buckets_list, buckets_distance_less_than(2 * 128))
-        return gather(buckets_list, buckets_relative_distance_less_than(1.4))
+
+        crude_merged_buckets = gather(buckets_list, buckets_relative_distance_less_than(1.15))
+        for bucket in crude_merged_buckets:
+            bucket.pattern = infer_pattern(bucket)
+            if bucket.pattern is None:
+                raise AssertionError(bucket.tokenized_strings)
+        return crude_merged_buckets
+
+        # for bucket in buckets_list:
+        #     bucket.alignment_offsets = None
+        #     bucket.pattern = infer_pattern(bucket)
+        # return buckets_list
+
 
     def compute_nearest_neighbor_d(self, buckets_dict: Dict, similarity_metric: Callable[[Any, Any], Optional[float]]):
         self.compute_buckets_centroids(buckets_dict)

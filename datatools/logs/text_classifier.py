@@ -42,7 +42,8 @@ from types import GeneratorType
 from typing import Tuple, Iterable, Iterator, Set, Dict, List, Hashable, Any, Sequence, Callable
 
 from datatools.json.util import to_jsonisable
-from datatools.logs.buckets_helper import Stat, compute_token_counts, compute_stats_for_tokenized
+from datatools.logs.buckets_helper import Stat, compute_token_counts, compute_stats_for_tokenized, \
+    raw_pattern_and_milestone_offsets
 from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
@@ -218,18 +219,6 @@ def grouped_data(data, group_field: str):
     for record in data:
         group_to_group_data[record[group_field]].append(record)
     return group_to_group_data
-
-
-def raw_pattern_and_milestone_offsets(tokens: Iterable[str], selected: Set[str]) -> Tuple[List[str], List[int]]:
-    raw_pattern = []
-    milestone_offsets = []
-    for offset, token in enumerate(tokens):
-        if token in selected:
-            raw_pattern.append(token)
-            milestone_offsets.append(offset)
-        else:
-            raw_pattern.append(None)
-    return raw_pattern, milestone_offsets
 
 
 def pattern_iterable(string, selected) -> Iterable[str]:

@@ -1,7 +1,7 @@
-from typing import Hashable, Sequence
+from typing import Hashable, Sequence, Set
 
 
-def global_singletons(tokenized_strings: Sequence[Sequence[Hashable]]):
+def global_singletons(tokenized_strings: Sequence[Sequence[Hashable]]) -> Set:
     singletons = None
     local_singletons = set()
     local_non_singletons = set()
