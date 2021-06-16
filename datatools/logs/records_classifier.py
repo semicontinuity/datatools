@@ -1,15 +1,12 @@
 import json
+import os
 import re
 import sys
-import os
-from collections import defaultdict
-from dataclasses import dataclass
 from types import GeneratorType
-from typing import Tuple, Iterable, Iterator, Set, Dict, List, Hashable, Any, Sequence, Callable
+from typing import Tuple, Dict, List, Any, Sequence, Callable
 
 from datatools.json.util import to_jsonisable
 from datatools.logs.buckets import Classifier, Bucket
-from datatools.util.graph_util import compute_weights_graph, discretize_graph, levenshtein_distance, ConnectedComponents
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
 
@@ -60,7 +57,7 @@ def run():
         data_groups = {None: data if group_field is None else grouped_data(data, group_field)}
 
         if os.environ.get("PATTERNS") == '1':
-            category_f = lambda p: ''.join(('*' if part is None else part) for part in p)
+            category_f = lambda pattern: ''.join(('*' if part is None else part) for part in pattern)
         else:
             category_f = lambda p: f'{hash(p) & 0xFFFFFFFF:02x}'
 
