@@ -353,7 +353,7 @@ def compute_singletons(tg_tdf):
     return frozenset(max_occurrences_of_item[max_occurrences_of_item == 1].index)
 
 
-def compute_singletons_allow_runs(tg_tdf):
+def compute_singletons_allow_runs(tg_tdf) -> Set[str]:
     debug(f'Computing singletons; data length={len(tg_tdf)}')
     singletons: Set[str] = set()
     failed_singletons: Set[str] = set()
