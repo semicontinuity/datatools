@@ -174,12 +174,6 @@ def annotate_group(tg_row, tg_tdf):
         with transitions as tx:
             for index, row in tx_tdf.node_df.iterrows():
                 tx(row[MSG_KIND_COLUMN])
-    debug('Analyzing transitions (2)')
-    transitions_2 = insight.logic.transitions2.Transitions()
-    for tx_keys, tx_tdf in tg_tdf:
-        with transitions_2 as tx:
-            for index, row in tx_tdf.node_df.iterrows():
-                tx(row[MSG_KIND_COLUMN])
     milestones: Dict[str, Dict[str, int]] = pruned(transitions.singleton_transitions)
     item_occurs_in_transactions, milestones_in_transactions = occurrences(tg_tdf, milestones)
     transaction_codes: List[str] = [hash_code_hex8(hash(tuple(e))) for e in milestones_in_transactions]
@@ -188,8 +182,15 @@ def annotate_group(tg_row, tg_tdf):
     # non_milestone_transitions = compute_non_milestone_transitions(tg_tdf, milestones)
     # non_milestone_strings: typing.Set[typing.Tuple[str]] = contiguous_strings(non_milestone_transitions)
     # chains: typing.Set[typing.Tuple[str]] = insight.logic.transitions2.chains(transitions_2.summary)
+
+    debug('Analyzing transitions (2)')
+    transitions_2 = insight.logic.transitions2.Transitions()
+    for tx_keys, tx_tdf in tg_tdf:
+        with transitions_2 as tx:
+            for index, row in tx_tdf.node_df.iterrows():
+                tx(row[MSG_KIND_COLUMN])
+
     debug('Computing chains')
-    # non_milestone_strings: typing.Set[typing.Tuple[str]] = insight.logic.transitions2.chains(transitions_2.summary)
     transition_cliques: typing.Dict[str, typing.Set[str]] = insight.logic.transitions2.infer_transition_cliques(
         transitions_2.summary)
     # non_milestone_strings: typing.Set[typing.Tuple[str]] = insight.logic.transitions2.infer_transition_cliques_tuples(transitions_2.summary)

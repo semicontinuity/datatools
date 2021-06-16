@@ -95,7 +95,7 @@ def pruned(singleton_transitions_graph: Dict[str, Dict[str, int]]) -> Dict[str, 
     Node with greater value is retained.
 
     The idea behind this is that if for some symbol X, there are no or little specific rules
-    about it position relative to other symbols in sequences, then this symbol is more likely to be dropped.
+    about its position relative to other symbols in sequences, then this symbol is more likely to be dropped.
 
     For instance, if X occurs in sequences like
 

@@ -1,6 +1,5 @@
-import typing
 from collections import defaultdict
-from datatools.util.logging import debug
+from typing import Dict, List, Tuple, Set, FrozenSet, AbstractSet
 
 
 class ItemTransitionsSummary:
@@ -22,9 +21,9 @@ class ItemTransitionsSummary:
 
 class ItemSummary:
     count: int
-    transitions: typing.Dict[str, ItemTransitionsSummary]
+    transitions: Dict[str, ItemTransitionsSummary]
 
-    def __init__(self, count: int = 0, transitions: typing.Dict[str, ItemTransitionsSummary] = None) -> None:
+    def __init__(self, count: int = 0, transitions: Dict[str, ItemTransitionsSummary] = None) -> None:
         self.count = count
         self.transitions = transitions or defaultdict(lambda: ItemTransitionsSummary())
 
@@ -38,13 +37,13 @@ class ItemSummary:
 
 
 class Transitions:
-    summary: typing.Dict[str, ItemSummary]
-    item_counts: typing.Dict[str, int]
-    transition_counts: typing.Dict[str, typing.Dict[str, int]]
-    previous_items: typing.AbstractSet[str]
+    summary: Dict[str, ItemSummary]
+    item_counts: Dict[str, int]
+    transition_counts: Dict[str, Dict[str, int]]
+    previous_items: AbstractSet[str]
 
     class Transaction:
-        def __init__(self, summary: typing.Dict[str, ItemSummary]):
+        def __init__(self, summary: Dict[str, ItemSummary]):
             self.summary = summary
 
         def __enter__(self):
@@ -70,7 +69,7 @@ class Transitions:
                 self.transition_counts[previous_item][item] += 1
             self.previous_items.add(item)
 
-        def flush(self, item: str, item_transition_counts: typing.Dict[str, int]):
+        def flush(self, item: str, item_transition_counts: Dict[str, int]):
             global_item_summary: ItemSummary = self.summary[item]
             for to, count in item_transition_counts.items():
                 if count == 1:
@@ -93,14 +92,14 @@ class Transitions:
         self.transaction.__exit__()
 
 
-def pruned(summary: typing.Dict[str, ItemSummary]) -> typing.Dict[str, typing.List[str]]:
+def pruned(summary: Dict[str, ItemSummary]) -> Dict[str, List[str]]:
     """
     Prunes transitions summary.
     Searches for 'strict' transition chains A-(1)->B-(1)->C ...
     The algorithm is not very effective, should consult Rivest for better one.
     ::return mapping of item to its chain
     """
-    item_to_owning_chain: typing.Dict[str, typing.List[str]] = defaultdict(list)
+    item_to_owning_chain: Dict[str, List[str]] = defaultdict(list)
 
     for item, item_summary in summary.items():
         count = item_summary.count
@@ -126,7 +125,7 @@ def pruned(summary: typing.Dict[str, ItemSummary]) -> typing.Dict[str, typing.Li
 
         # longest found chain replaces shortest chains
         last_item = chain[-1]
-        existing_chain: typing.List[str] = item_to_owning_chain[last_item]
+        existing_chain: List[str] = item_to_owning_chain[last_item]
         if len(existing_chain) < len(chain):
             for element in chain:
                 item_to_owning_chain[element] = chain
@@ -134,11 +133,11 @@ def pruned(summary: typing.Dict[str, ItemSummary]) -> typing.Dict[str, typing.Li
     return item_to_owning_chain
 
 
-def compute_strict_in_out_degrees(summary: typing.Dict[str, ItemSummary]) -> typing.Dict[str, typing.Tuple[int, int]]:
+def compute_strict_in_out_degrees(summary: Dict[str, ItemSummary]) -> Dict[str, Tuple[int, int]]:
     """
     Computes in- and out-degrees of strict transitions in summary graph.
     """
-    degrees: typing.Dict[str, typing.Tuple[int, int]] = defaultdict(lambda: (0, 0))
+    degrees: Dict[str, Tuple[int, int]] = defaultdict(lambda: (0, 0))
 
     for item, item_summary in summary.items():
         count = item_summary.count
@@ -147,23 +146,23 @@ def compute_strict_in_out_degrees(summary: typing.Dict[str, ItemSummary]) -> typ
 
         for to, item_transitions_summary in item_summary.transitions.items():
             if item_transitions_summary.transitions1 == count and summary[to].count == count:
-                item_degrees: typing.Tuple[int, int] = degrees[item]
+                item_degrees: Tuple[int, int] = degrees[item]
                 degrees[item] = (item_degrees[0], item_degrees[1] + 1)
-                to_degrees: typing.Tuple[int, int] = degrees[to]
+                to_degrees: Tuple[int, int] = degrees[to]
                 degrees[to] = (to_degrees[0] + 1, to_degrees[1])
 
     return degrees
 
 
-def infer_transition_cliques(summary: typing.Dict[str, ItemSummary]) -> typing.Dict[str, typing.Set[str]]:
+def infer_transition_cliques(summary: Dict[str, ItemSummary]) -> Dict[str, Set[str]]:
     """
     Infers transition cliques.
     Actually, there are transition chains, but it's harder to infer chain from its transitive closure.
     The algorithm is not very effective.
     ::return mapping of item to its clique
     """
-    degrees: typing.Dict[str, typing.Tuple[int, int]] = compute_strict_in_out_degrees(summary)
-    item_to_owning_clique: typing.Dict[str, typing.Set[str]] = defaultdict(set)
+    degrees: Dict[str, Tuple[int, int]] = compute_strict_in_out_degrees(summary)
+    item_to_owning_clique: Dict[str, Set[str]] = defaultdict(set)
 
     for item, item_summary in summary.items():
         count = item_summary.count
@@ -206,13 +205,13 @@ def infer_transition_cliques(summary: typing.Dict[str, ItemSummary]) -> typing.D
     return item_to_owning_clique
 
 
-def chains(summary: typing.Dict[str, ItemSummary]) -> typing.Set[typing.Tuple[str]]:
+def chains(summary: Dict[str, ItemSummary]) -> Set[Tuple[str]]:
     return {tuple(e) for e in pruned(summary).values()}
 
 
-def infer_transition_cliques_tuples(summary: typing.Dict[str, ItemSummary]) -> typing.Set[typing.Tuple[str]]:
+def infer_transition_cliques_tuples(summary: Dict[str, ItemSummary]) -> Set[Tuple[str]]:
     return {tuple(e) for e in infer_transition_cliques(summary).values()}
 
 
-def infer_transition_cliques_frozen(summary: typing.Dict[str, ItemSummary]) -> typing.Set[typing.FrozenSet[str]]:
+def infer_transition_cliques_frozen(summary: Dict[str, ItemSummary]) -> Set[FrozenSet[str]]:
     return {frozenset(e) for e in infer_transition_cliques(summary).values()}
