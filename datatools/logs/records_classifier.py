@@ -6,7 +6,8 @@ from types import GeneratorType
 from typing import Tuple, Dict, List, Any, Sequence, Callable
 
 from datatools.json.util import to_jsonisable
-from datatools.logs.buckets import Classifier, Bucket, buckets_relative_distance_less_than
+from datatools.logs.buckets import Classifier, Bucket
+from datatools.logs.text_classifier import grouped_data
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
 
@@ -48,6 +49,7 @@ def annotate_lines(records: List[Any], classify_field: str, result_field: str, c
         category = category_f(bucket.pattern)
         for index in bucket.indices:
             records[index][result_field] = category
+
 
 def run():
     if (len(sys.argv) == 5 or len(sys.argv) == 4) and sys.argv[1] == "annotate_lines":
