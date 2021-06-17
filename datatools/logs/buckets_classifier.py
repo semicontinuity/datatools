@@ -81,6 +81,20 @@ class Classifier:
 
         return buckets_dict
 
+    def compute_clusters_new(self) -> List[Bucket]:
+        all_bucket = Bucket()
+        all_bucket.tokenized_strings = self.tokenized_strings
+        all_bucket.indices = [i for i in range(len(self.tokenized_strings))]
+        buckets_list = []
+        self.recursively_scatter(all_bucket, buckets_list)
+
+        crude_merged_buckets = self.gather(buckets_list, buckets_relative_distance_less_than(1.4))
+        for bucket in crude_merged_buckets:
+            bucket.pattern = infer_pattern(bucket.tokenized_strings)
+            if bucket.pattern is None:
+                raise AssertionError(bucket.tokenized_strings)
+        return crude_merged_buckets
+
     def compute_clusters(self) -> List[Bucket]:
         buckets_list = self.compute_initial_buckets()
         debug(f"Computed {len(buckets_list)} initial buckets")
@@ -93,7 +107,7 @@ class Classifier:
 
     def repeatedly_clusterize(self, buckets_list: List[Bucket]):
         # for threshold in [74, 52, 30, 15, 7, 1]:
-        for threshold in [6, 3, 1.5]:
+        for threshold in [9, 5, 2]:
         # for threshold in [1.9]:
             debug("")
             debug(f"Clusterizing with threshold {threshold}")
@@ -163,17 +177,30 @@ class Classifier:
             similarity_metric: Callable[[Any, Any], Optional[float]]
     ) -> List[Bucket]:
 
+        debug(f"******* Gathering: inferring patterns...")
         for b in buckets_list:
-            infer_pattern(b.tokenized_strings)
+            b.pattern = infer_pattern(b.tokenized_strings)
+            debug(b.pattern)
+            debug()
+
         crude_merged_buckets = self.gather(buckets_list, similarity_metric)
 
         new_buckets_list = []
         for crude_merged_bucket in crude_merged_buckets:
             new_buckets_list.extend(
-                scatter_into({}, {}, crude_merged_bucket.tokenized_strings, crude_merged_bucket.indices, self.ratio))
+                scatter_into({}, {}, crude_merged_bucket.tokenized_strings, crude_merged_bucket.indices, self.ratio)
+            )
 
         debug(f"Scattered into {len(new_buckets_list)} buckets")
         return new_buckets_list
+
+    def recursively_scatter(self, bucket: Bucket, buckets_sink: List[Bucket]):
+        sub_buckets = scatter_into({}, {}, bucket.tokenized_strings, bucket.indices, self.ratio)
+        if len(sub_buckets) == 1:
+            buckets_sink.append(bucket)
+        else:
+            for bucket in sub_buckets:
+                self.recursively_scatter(bucket, buckets_sink)
 
     def gather(self, buckets_list: List[Bucket], similarity_metric: Callable[[Any, Any], Optional[float]]) -> List[Bucket]:
         debug("Computing bucket centroids")
@@ -181,20 +208,20 @@ class Classifier:
             bucket.compute_hashes_centroid_and_rmsd()
         debug("Computed bucket centroids")
 
-        debug(f"Merging {len(buckets_list)} buckets")
-
         debug("Computing connected components of buckets similarity graph")
         buckets_dict = {id(b): b for b in buckets_list}
         similarities: Dict[Hashable, Dict[Hashable, Any]] = compute_bucket_similarities_graph(
             buckets_list, similarity_metric, lambda b: id(b)
         )
-        debug(similarities)
+        # debug(similarities)
         similar_buckets_id_list: List[List[Hashable]] = connected_components(similarities)
         debug(f"Computed {len(similar_buckets_id_list)} connected components of buckets similarity graph")
 
+        debug(f"Merging {len(buckets_list)} buckets")
         crude_merged_buckets = []
         for similar_bucket_ids in similar_buckets_id_list:
             similar_buckets = [buckets_dict.get(bucket_id) for bucket_id in similar_bucket_ids]
+            debug(">>> SIMILAR:", [b.pattern for b in similar_buckets])
 
             crude_merged_bucket = Bucket()  # no pattern
             for bucket in similar_buckets:

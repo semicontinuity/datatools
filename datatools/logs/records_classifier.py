@@ -44,7 +44,7 @@ def invert(buckets: List[Bucket]) -> Dict[Tuple[str, ...], List[str]]:
 def annotate_lines(records: List[Any], classify_field: str, result_field: str, category_f: Callable[[Sequence], str]):
     debug(f"Annotating")
     classify_field_values = [j[classify_field] for j in records]
-    buckets = Classifier.tokenize(classify_field_values).compute_clusters()
+    buckets = Classifier.tokenize(classify_field_values).compute_clusters_new()
 
     for bucket in buckets:
         category = category_f(bucket.pattern)

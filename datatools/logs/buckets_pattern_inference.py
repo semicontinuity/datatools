@@ -2,7 +2,6 @@ from typing import *
 
 from datatools.logs.buckets import Bucket
 from datatools.logs.text_classifier import raw_pattern_and_milestone_offsets
-from datatools.util.logging import debug
 from insight.logic.singletons import global_singletons
 from insight.logic.transitions import Transitions, pruned
 
@@ -27,7 +26,6 @@ def do_infer_pattern(tokenized_strings, pattern_sink):
 
 def infer_milestones(tokenized_strings):
     singletons: Set[str] = global_singletons(tokenized_strings)
-    debug(singletons)
     if len(singletons) == 0:
         return None
 
