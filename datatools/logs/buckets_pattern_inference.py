@@ -60,7 +60,8 @@ def do_infer_pattern_for(bucket, milestones_list, pattern_sink: List):
         len(bucket)
     )
     if before is not None:
-        pattern_sink.append(None)
+        # pattern_sink.append(None)
+        do_infer_pattern(before, pattern_sink)
     pattern_sink.append(milestones_list[0])
 
     for x in range(1, len(milestones_list)):
@@ -72,7 +73,8 @@ def do_infer_pattern_for(bucket, milestones_list, pattern_sink: List):
         )
 
         if between is not None:
-            pattern_sink.append(None)
+            # pattern_sink.append(None)
+            do_infer_pattern(between, pattern_sink)
         pattern_sink.append(milestones_list[x])
 
     after = tokens_between(
@@ -82,7 +84,8 @@ def do_infer_pattern_for(bucket, milestones_list, pattern_sink: List):
         len(bucket)
     )
     if after is not None:
-        pattern_sink.append(None)
+        # pattern_sink.append(None)
+        do_infer_pattern(after, pattern_sink)
 
 
 def tokens_between(prev_offset_f: Callable[[int], int], offset_f: Callable[[int], int], line_f: Callable[[int], List], length: int):
@@ -94,5 +97,5 @@ def tokens_between(prev_offset_f: Callable[[int], int], offset_f: Callable[[int]
         if offset == prev_offset + 1:
             return None
 
-        result.append(line_f(i))
+        result.append(line_f(i)[prev_offset + 1 : offset])
     return result

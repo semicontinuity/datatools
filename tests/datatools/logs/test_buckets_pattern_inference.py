@@ -75,6 +75,7 @@ def test__3():
     assert infer_pattern(bucket.tokenized_strings) == ['t1', None, '-']
 
 
+# Global milestones are: t1, t2, t3. x is not (not unique in string), but between t1..t2, t2..t3 it is
 DATA_4 = [
     ['t1', 'x', '1', 't2', 'a', 'x', 'h', 't3'],
     ['t1', 'x', '2', 't2', 'b', 'x', 'i', 't3'],
@@ -91,4 +92,5 @@ def test__4():
     for i, tokens in enumerate(DATA_4):
         bucket.append(i, tokens)
 
-    assert infer_pattern(bucket.tokenized_strings) == ['t1', None, 't2', None, 't3']
+    pattern = infer_pattern(bucket.tokenized_strings)
+    assert pattern == ['t1', 'x', None, 't2', None, 'x', None, 't3']
