@@ -1,6 +1,23 @@
 from datatools.logs.buckets import Bucket
 from datatools.logs.buckets_pattern_inference import infer_pattern
 
+DATA_0 = [
+    ['1'],
+    ['2'],
+    ['3'],
+]
+
+
+def test__0():
+    bucket = Bucket()
+
+    for i, tokens in enumerate(DATA_0):
+        bucket.append(i, tokens)
+
+    pattern = infer_pattern(bucket.tokenized_strings)
+    assert pattern == [None]
+
+
 DATA_1 = [
     ['q', 't1', '-', '1', 'x'],
     ['q', 't1', '-', '2', 'y'],
@@ -17,7 +34,7 @@ def test__1():
     for i, tokens in enumerate(DATA_1):
         bucket.append(i, tokens)
 
-    assert infer_pattern(bucket) == [None, 't1', '-', None]
+    assert infer_pattern(bucket.tokenized_strings) == [None, 't1', '-', None]
 
 
 DATA_2 = [
@@ -36,7 +53,7 @@ def test__2():
     for i, tokens in enumerate(DATA_2):
         bucket.append(i, tokens)
 
-    assert infer_pattern(bucket) == ['t1', '-', None]
+    assert infer_pattern(bucket.tokenized_strings) == ['t1', '-', None]
 
 
 DATA_3 = [
@@ -55,7 +72,7 @@ def test__3():
     for i, tokens in enumerate(DATA_3):
         bucket.append(i, tokens)
 
-    assert infer_pattern(bucket) == ['t1', None, '-']
+    assert infer_pattern(bucket.tokenized_strings) == ['t1', None, '-']
 
 
 DATA_4 = [
@@ -74,4 +91,4 @@ def test__4():
     for i, tokens in enumerate(DATA_4):
         bucket.append(i, tokens)
 
-    assert infer_pattern(bucket) == ['t1', None, 't2', None, 't3']
+    assert infer_pattern(bucket.tokenized_strings) == ['t1', None, 't2', None, 't3']
