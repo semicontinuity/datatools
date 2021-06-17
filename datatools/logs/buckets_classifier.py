@@ -163,6 +163,8 @@ class Classifier:
             similarity_metric: Callable[[Any, Any], Optional[float]]
     ) -> List[Bucket]:
 
+        for b in buckets_list:
+            infer_pattern(b.tokenized_strings)
         crude_merged_buckets = self.gather(buckets_list, similarity_metric)
 
         new_buckets_list = []
@@ -192,10 +194,10 @@ class Classifier:
 
         crude_merged_buckets = []
         for similar_bucket_ids in similar_buckets_id_list:
-            crude_merged_bucket = Bucket()  # no pattern
-            for bucket_id in similar_bucket_ids:
-                bucket = buckets_dict.get(bucket_id)
+            similar_buckets = [buckets_dict.get(bucket_id) for bucket_id in similar_bucket_ids]
 
+            crude_merged_bucket = Bucket()  # no pattern
+            for bucket in similar_buckets:
                 crude_merged_bucket.indices.extend(bucket.indices)
                 crude_merged_bucket.tokenized_strings.extend(bucket.tokenized_strings)
                 crude_merged_bucket.hashes[0].extend(bucket.hashes[0])
