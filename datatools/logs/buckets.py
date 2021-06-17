@@ -194,9 +194,14 @@ def trim_bucket(bucket) -> Bucket:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 class Classifier:
+    tokenized_strings: List[List[str]]
 
-    def __init__(self, lines: Sequence[str]) -> None:
-        self.tokenized_strings = [[token for token in tokenize(s)] for s in lines]
+    @classmethod
+    def tokenize(self, lines: Sequence[str]) -> 'Classifier':
+        return Classifier([[token for token in tokenize(s)] for s in lines])
+
+    def __init__(self, tokenized_strings):
+        self.tokenized_strings = tokenized_strings
 
     def compute_initial_buckets(self):
         return scatter_into(
@@ -450,7 +455,7 @@ def buckets_overlap():
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def run():
-    classifier = Classifier(load_lines())
+    classifier = Classifier.tokenize(load_lines())
 
     if len(sys.argv) == 2 and sys.argv[1] == "initial_buckets":
         return classifier.compute_initial_buckets()
