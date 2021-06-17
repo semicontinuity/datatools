@@ -15,7 +15,7 @@ class Stat:
     selected: bool
 
 
-def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> Iterator[Stat]:
+def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]], ratio=0.5) -> Iterator[Stat]:
     size = len(tokenized_strings)
     debug(f"Computing stats for {size} lines")
     token2lines = defaultdict(list)  # or better just set of line indices!
@@ -53,7 +53,7 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]]) -> I
     # for count in f.values():
     #     total_count += count
 
-    limit = 0.5 * total_quality
+    limit = ratio * total_quality
     total = 0
     prev_support = 0
     prev_quality = 0

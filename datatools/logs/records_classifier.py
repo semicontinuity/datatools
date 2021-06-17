@@ -6,7 +6,7 @@ from types import GeneratorType
 from typing import Tuple, Dict, List, Any, Sequence, Callable
 
 from datatools.json.util import to_jsonisable
-from datatools.logs.buckets import Classifier, Bucket
+from datatools.logs.buckets import Classifier, Bucket, buckets_relative_distance_less_than
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
 
