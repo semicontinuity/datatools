@@ -23,22 +23,15 @@ class Bucket:
     nearest_neighbor_d: float
     alignment_offsets: List[List[int]]
 
-    def __init__(
-            self,
-            pattern=None,
-            milestone_count=0):
-
+    def __init__(self, pattern=None):
         self.pattern = pattern
         self.indices = []
         self.tokenized_strings = []
+        self.alignment_offsets = None
         self.hashes = [], []
         self.hashes_rmsd = 0.0
         self.hashes_centroid = None
         self.nearest_neighbor_d = 0.0
-        if milestone_count:
-            self.init_alignment_offsets(milestone_count)
-        else:
-            self.alignment_offsets = None
 
     def milestone_count(self):
         return len(self.alignment_offsets)
@@ -51,22 +44,17 @@ class Bucket:
         for i in range(len(self.tokenized_strings)):
             yield self.indices[i], self.tokenized_strings[i]
 
-    def append(self,
-               index: int,
-               tokenized_string: Sequence[str],
-               milestone_offsets: List[int] = None,
-               hash_tuple: Tuple[AnyStr, AnyStr] = None):
-
+    def append(self, index: int, tokenized_string: Sequence[str]):
         self.indices.append(index)
         self.tokenized_strings.append(tokenized_string)
 
-        if self.alignment_offsets is not None and milestone_offsets is not None:
-            self.append_milestone_offsets(milestone_offsets)
-        if hash_tuple is not None:
-            self.hashes[0].append(hash_tuple[0])
-            self.hashes[1].append(hash_tuple[1])
+    def append_hash_tuple(self, hash_tuple: Tuple[AnyStr, AnyStr]):
+        self.hashes[0].append(hash_tuple[0])
+        self.hashes[1].append(hash_tuple[1])
 
     def append_milestone_offsets(self, milestone_offsets):
+        if self.alignment_offsets is None:
+            raise ValueError
         if len(milestone_offsets) != len(self.alignment_offsets):
             raise AssertionError(len(self.alignment_offsets), milestone_offsets)
         for i in range(len(self.alignment_offsets)):
@@ -163,13 +151,17 @@ def scatter_into(
         bucket_from = buckets_dict_from.get(pattern_tuple)
         bucket_to = buckets_dict_to.get(pattern_tuple)
         if bucket_from is None and bucket_to is None:
-            buckets_dict_to[pattern_tuple] = bucket_to = Bucket(pattern, len(pattern_milestone_offsets))
+            buckets_dict_to[pattern_tuple] = bucket_to = Bucket(pattern)
         elif bucket_from is not None and bucket_to is None:
             del buckets_dict_from[pattern_tuple]
             buckets_dict_to[pattern_tuple] = bucket_to = bucket_from
         # else: bucket_from is None and bucket_to is not None:
 
-        bucket_to.append(index, tokens, milestone_offsets, sim_hash)
+        bucket_to.append(index, tokens)
+        bucket_to.append_hash_tuple(sim_hash)
+        if bucket_to.alignment_offsets is None:
+            bucket_to.init_alignment_offsets(len(milestone_offsets))
+        bucket_to.append_milestone_offsets(milestone_offsets)
     debug(f"Scattered {len(tokenized_strings)} strings to {len(buckets_dict_to)} buckets")
 
     return list(buckets_dict_to.values())

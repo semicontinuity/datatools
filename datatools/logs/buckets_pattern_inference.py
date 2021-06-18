@@ -42,11 +42,9 @@ def apply_milestones(bucket, milestones_list):
     for tokenized_string in bucket.tokenized_strings:
         _, milestone_offsets = raw_pattern_and_milestone_offsets(tokenized_string, set(milestones_list))
         if bucket.alignment_offsets is None:
-            # if len(milestone_offsets) == 0:
-            #     return None
             bucket.init_alignment_offsets(len(milestone_offsets))
         if len(milestone_offsets) > len(bucket.alignment_offsets):
-            raise ValueError(tokenized_string, milestone_offsets)
+            raise ValueError(len(milestone_offsets), len(bucket.alignment_offsets), tokenized_string, milestone_offsets)
         bucket.append_milestone_offsets(milestone_offsets)
 
 
