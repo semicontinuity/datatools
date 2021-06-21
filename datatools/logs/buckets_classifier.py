@@ -1,8 +1,10 @@
 from typing import *
 
-from datatools.logs.buckets import buckets_overlap, Bucket, buckets_relative_distance_less_than
+from datatools.logs.buckets import Bucket
 from datatools.logs.buckets_helper import compute_stats_for_tokenized, raw_pattern_and_milestone_offsets
 from datatools.logs.buckets_pattern_inference import infer_pattern
+from datatools.logs.cluster_data import clusters_distance_less_than, clusters_relative_distance_less_than, \
+    clusters_overlap
 from datatools.logs.text_classifier import tokenize, compute_selected, collapse_successive_wildcards
 from datatools.util.graph_util import connected_components, compute_mutual_weights_iter
 from datatools.util.logging import debug
@@ -154,7 +156,7 @@ class Classifier:
     def compute_bucket_features(buckets: Iterable[Bucket]):
         debug("Computing bucket features")
         for bucket in buckets:
-            bucket.compute_features()
+            bucket.cluster_data.compute_features()
         debug("Computed bucket features")
 
     def gather_and_scatter(
@@ -191,12 +193,12 @@ class Classifier:
     def gather(self, buckets_list: List[Bucket], similarity_metric: Callable[[Any, Any], Optional[float]]) -> List[Bucket]:
         debug("Computing bucket centroids")
         for bucket in buckets_list:
-            bucket.compute_features()
+            bucket.cluster_data.compute_features()
         debug("Computed bucket centroids")
 
         debug("Computing connected components of buckets similarity graph")
         buckets_dict = {id(b): b for b in buckets_list}
-        similarities: Dict[Hashable, Dict[Hashable, Any]] = compute_bucket_similarities_graph(
+        similarities: Dict[Hashable, Dict[Hashable, Any]] = self.compute_bucket_similarities_graph(
             buckets_list, similarity_metric, lambda b: id(b)
         )
         # debug(similarities)
@@ -217,7 +219,7 @@ class Classifier:
 
 
 def scatter_into(
-        buckets_dict_to, buckets_dict_from, tokenized_strings: List[List[str]], indices: List[int], ratio=0.5
+        buckets_dict_to, buckets_dict_from, tokenized_strings: List[Sequence[str]], indices: List[int], ratio=0.5
 ) -> List[Bucket]:
     debug(f"Scattering {len(tokenized_strings)} strings to buckets")
     stats = list(compute_stats_for_tokenized(tokenized_strings, ratio))
@@ -249,3 +251,18 @@ def scatter_into(
     debug(f"Scattered {len(tokenized_strings)} strings to {len(buckets_dict_to)} buckets")
 
     return list(buckets_dict_to.values())
+
+
+def buckets_distance_less_than(threshold):
+    delegate = clusters_distance_less_than(threshold)
+    return lambda b1, b2: delegate(b1.cluster_data, b2.cluster_data)
+
+
+def buckets_relative_distance_less_than(ratio_threshold):
+    delegate = clusters_relative_distance_less_than(ratio_threshold)
+    return lambda b1, b2: delegate(b1.cluster_data, b2.cluster_data)
+
+
+def buckets_overlap():
+    delegate = clusters_overlap()
+    return lambda b1, b2: delegate(b1.cluster_data, b2.cluster_data)
