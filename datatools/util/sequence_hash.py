@@ -38,7 +38,7 @@ def add_int_hash_to_vector(int_hash, vector, offset, weight):
 
 
 def binarize_vector_to_hash(vector: List[float]) -> AnyStr:
-    """ Returns 16-byte hash """
+    """ Returns N-bit hash """
     vector_offset = 0
     result_offset = 0
     bits = len(vector)
@@ -65,15 +65,20 @@ def centroid(hashes: Iterable[AnyStr], size_bits=256) -> AnyStr:
     return binarize_vector_to_hash(vector)
 
 
-def seq_sim_hash(
+def seq_sim_vector(
         tokenized_string: Sequence[AnyStr],
-        token_weight: Callable[[AnyStr], float] = lambda token: 1) -> AnyStr:
-    """ Returns 2x 16-byte hashes """
+        token_weight: Callable[[AnyStr], float] = lambda token: 1) -> List[int]:
+    """ Returns 256-entry int vector """
     length = len(tokenized_string)
     if length == 0:
-        return ZERO_HASH
+        return [0] * 16 * 16
     elif length == 1:
-        return mmh3.hash_bytes(tokenized_string[0]) * 2
+        vector = [0] * 16 * 16
+        hash_bytes0 = mmh3.hash_bytes(tokenized_string[0])
+        token_weight0 = token_weight(tokenized_string[0])
+        add_hash_to_vector(hash_bytes0, vector, 0, token_weight0)
+        add_hash_to_vector(hash_bytes0, vector, 128, token_weight0)
+        return vector
     elif length == 3:
         # Special case: if common approach is used, then hash of the middle element is ignored:
         # first element hash has weight 2, middle element hash has weight 1, thus, first element always dominates.
@@ -89,7 +94,7 @@ def seq_sim_hash(
         add_hash_to_vector(hash_bytes1, vector, 0, token_weight1)
         add_hash_to_vector(hash_bytes1, vector, 128, token_weight1)
         add_hash_to_vector(hash_bytes2, vector, 128, token_weight2)
-        return binarize_vector_to_hash(vector)
+        return vector
     else:
         vector = [0] * 16 * 16
         for i in range(length):
@@ -104,5 +109,17 @@ def seq_sim_hash(
             count_before = i
             if count_before > 0:
                 add_hash_to_vector(hash_bytes, vector, 128, count_before * weight)
+        return vector
 
-        return binarize_vector_to_hash(vector)
+
+def seq_sim_hash(
+        tokenized_string: Sequence[AnyStr],
+        token_weight: Callable[[AnyStr], float] = lambda token: 1) -> AnyStr:
+    """ Returns 32-byte hash """
+    length = len(tokenized_string)
+    if length == 0:
+        return ZERO_HASH
+    elif length == 1:
+        return mmh3.hash_bytes(tokenized_string[0]) * 2
+    else:
+        return binarize_vector_to_hash(seq_sim_vector(tokenized_string, token_weight))
