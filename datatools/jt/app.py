@@ -141,7 +141,7 @@ def init_from_state(g, state):
 def main(app_id, app_f, g, router):
     raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
     raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
-    state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
+    state = read_fd_or_default(fd=FD_STATE_IN, default=default_state())
     params = parse_params(sys.argv)
 
     override(params, raw_presentation)
@@ -152,10 +152,8 @@ def main(app_id, app_f, g, router):
     orig_data = load_data(params)
     column_metadata_map = infer_metadata(orig_data, raw_metadata)
     column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
-
     ui_data = UiData(orig_data, column_metadata_map, column_presentation_map, state)
     screen_size = with_raw_terminal(read_screen_size)
-
     a = app_f(app_id, g(screen_size, ui_data), ui_data)
     apps_stack = []
     apps_stack.append(a)
@@ -182,6 +180,10 @@ def main(app_id, app_f, g, router):
     write_fd_or_pass(FD_METADATA_OUT, raw_metadata)
 
     sys.exit(exit_code)
+
+
+def default_state():
+    return {'top_line': 0, 'cur_line': 0}
 
 
 def router(app, exit_code):
