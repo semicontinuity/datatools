@@ -28,3 +28,7 @@ EXIT_CODE_ALT = 80
 EXIT_CODE_CTRL_SPACE = 194
 
 EXIT_CODE_ESCAPE = 199
+
+
+def exit_code_key_with_modifier(exit_code: int, modifier_code: int):
+    return (exit_code // modifier_code) & 1 == 1

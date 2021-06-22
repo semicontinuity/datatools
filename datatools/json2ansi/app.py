@@ -7,8 +7,7 @@ from datatools.json.structure_discovery import Discovery
 from datatools.json2ansi.grid import WGrid
 from datatools.json2ansi.style import style
 from datatools.jt.app import App
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-from datatools.tui.picotui_patch import patch_picotui
+from datatools.tui.picotui_patch import patch_picotui, isatty
 from datatools.tui.picotui_util import run
 from datatools.tui.terminal import read_screen_size, with_raw_terminal
 
@@ -25,23 +24,22 @@ def grid(screen_size, j) -> WGrid:
     return g
 
 
+def make_json2ansi_app(j):
+    screen_size = (1000, 10000)
+    if isatty():
+        screen_size = with_raw_terminal(read_screen_size)
+    return App(grid(screen_size, j))
+
+
 def main():
-    fd_tui = 2
-    patch_picotui(fd_tui, fd_tui)
+    patch_picotui()
 
     lines = [line for line in sys.stdin]
     s = ''.join(lines)
     j = json.loads(s)
 
-    exit_code, state = run(lambda: make_app(j).run())
+    exit_code, state = run(lambda: make_json2ansi_app(j).run())
     sys.exit(exit_code)
-
-
-def make_app(j):
-    screen_size = (1000, 10000)
-    if sys.stdout.isatty():
-        screen_size = with_raw_terminal(read_screen_size)
-    return App(grid(screen_size, j))
 
 
 if __name__ == "__main__":

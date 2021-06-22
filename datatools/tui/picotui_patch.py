@@ -78,6 +78,10 @@ def cursor_position():
     return int(s[i1 + 1:i2]) - 1, int(s[i2 + 1:i3]) - 1
 
 
+def isatty():
+    import os
+    return os.isatty(FD_OUT)
+
 def init_tty(*args):
     import tty, termios
     global ttyattr
