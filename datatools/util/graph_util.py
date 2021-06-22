@@ -7,13 +7,14 @@ def compute_weights_graph(
         elements: List[Hashable],
         weight_f: Callable[[Any, Any], Optional[float]],
         node_f: Callable[[Any], Hashable]) -> Dict[Hashable, Dict[Hashable, float]]:
+    return graph_from_edges(compute_mutual_weights_iter(elements, weight_f, node_f), elements, node_f)
 
+
+def graph_from_edges(edges, elements, node_f):
     graph = {node_f(element): {} for element in elements}
-
-    for n_i, n_j, w in compute_mutual_weights_iter(elements, weight_f, node_f):
+    for n_i, n_j, w in edges:
         graph[n_i][n_j] = w
         graph[n_j][n_i] = w
-
     return graph
 
 

@@ -44,6 +44,16 @@ def clusters_distance_less_than(threshold):
     return similarity_metric
 
 
+def clusters_relative_distance():
+    def similarity_metric(b1: ClusterData, b2: ClusterData) -> Optional[float]:
+        clusters_d = hamming_distance(b1.hashes_centroid, b2.hashes_centroid)
+        clusters_span = b1.hashes_rmsd + b2.hashes_rmsd
+        if clusters_span == 0:
+            return None
+        return clusters_d / clusters_span
+    return similarity_metric
+
+
 def clusters_relative_distance_less_than(ratio_threshold):
     def similarity_metric(b1: ClusterData, b2: ClusterData) -> Optional[float]:
         clusters_d = hamming_distance(b1.hashes_centroid, b2.hashes_centroid)
