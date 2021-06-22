@@ -10,8 +10,8 @@ def compute_weights_graph(
     return graph_from_edges(compute_mutual_weights_iter(elements, weight_f, node_f), elements, node_f)
 
 
-def graph_from_edges(edges, elements, node_f):
-    graph = {node_f(element): {} for element in elements}
+def graph_from_edges(edges, elements, node_id_f):
+    graph = {node_id_f(element): {} for element in elements}
     for n_i, n_j, w in edges:
         graph[n_i][n_j] = w
         graph[n_j][n_i] = w
@@ -21,13 +21,14 @@ def graph_from_edges(edges, elements, node_f):
 def compute_mutual_weights_iter(
         elements: List[Any],
         weight_f: Callable[[Any, Any], Optional[float]],
-        node_id_f: Callable[[Any], Hashable]):
+        node_id_f: Callable[[Any], Hashable],
+        node_value_f: Callable[[Any], Hashable] = lambda x: x):
 
     debug(f"Computing weights, number of elements: {len(elements)}")
 
     for i in range(len(elements)):
         for j in range(i + 1, len(elements)):
-            weight = weight_f(elements[i], elements[j])
+            weight = weight_f(node_value_f(elements[i]), node_value_f(elements[j]))
             if weight is None:
                 continue
             yield node_id_f(elements[i]), node_id_f(elements[j]), weight

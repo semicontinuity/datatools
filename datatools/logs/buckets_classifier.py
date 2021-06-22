@@ -3,6 +3,7 @@ from typing import *
 from datatools.logs.buckets import Bucket
 from datatools.logs.buckets_helper import compute_stats_for_tokenized, raw_pattern_and_milestone_offsets
 from datatools.logs.buckets_pattern_inference import infer_pattern
+from datatools.logs.buckets_pattern_merger import merge_buckets, merge_buckets_by_pattern
 from datatools.logs.text_classifier import tokenize, compute_selected, collapse_successive_wildcards
 from datatools.util.graph_util import connected_components, compute_mutual_weights_iter, graph_from_edges
 from datatools.util.logging import debug
@@ -30,9 +31,18 @@ class Classifier:
         buckets_list = []
         self.recursively_scatter(all_bucket, buckets_list)
 
-        crude_merged_buckets = self.gather(buckets_list)
+        # crude_merged_buckets = self.gather(buckets_list)
+        # for bucket in crude_merged_buckets:
+        #     bucket.pattern = infer_pattern(bucket.tokenized_strings)
+        # return crude_merged_buckets
+
+        for bucket in buckets_list:
+            bucket.pattern = infer_pattern(bucket.tokenized_strings)
+
+        crude_merged_buckets = merge_buckets_by_pattern(buckets_list)
         for bucket in crude_merged_buckets:
             bucket.pattern = infer_pattern(bucket.tokenized_strings)
+
         return crude_merged_buckets
 
     def compute_clusters(self) -> List[Bucket]:
@@ -124,33 +134,26 @@ class Classifier:
             bucket.cluster_data.compute_features()
         debug("Computed bucket centroids")
 
-        buckets_dict = {id(b): b for b in buckets_list}
-        f = lambda b: id(b)
+
+        node_id_f = lambda b: id(b)
         # edges = [(n_i, n_j, w) for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, self.similarity_metric, f) if w is not None and w < 1.4]
 
         # Aggregate edges between most similar buckets (1/16 of all)
-        edges = [(n_i, n_j, w) for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, self.distance_f, f)]
+        edges = [(n_i, n_j, w) for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, self.distance_f, node_id_f)]
         debug(f"Computing connected components of buckets similarity graph: analyzing {len(edges)} edges")
         edges.sort(key=lambda e: e[2])
         # edges = edges[0: len(edges) // 64]
         edges = []
 
-        similarities: Dict[Hashable, Dict[Hashable, Any]] = graph_from_edges(edges, buckets_list, f)
+        similarities: Dict[Hashable, Dict[Hashable, Any]] = graph_from_edges(edges, buckets_list, node_id_f)
         debug(similarities)
         similar_buckets_id_list: List[List[Hashable]] = connected_components(similarities)
         debug(f"Computed {len(similar_buckets_id_list)} connected components of buckets similarity graph")
 
-        debug(f"Merging some of {len(buckets_list)} buckets")
-        crude_merged_buckets = []
-        for similar_bucket_ids in similar_buckets_id_list:
-            similar_buckets: List[Bucket] = [buckets_dict.get(bucket_id) for bucket_id in similar_bucket_ids]
-            debug(">>> SIMILAR:", [b.pattern for b in similar_buckets])
+        buckets_dict = {id(b): b for b in buckets_list}
+        return merge_buckets(buckets_dict, similar_buckets_id_list)
 
-            crude_merged_bucket = Bucket()  # no pattern
-            for bucket in similar_buckets:
-                crude_merged_bucket.extend(bucket)
-            crude_merged_buckets.append(crude_merged_bucket)
-        return crude_merged_buckets
+
 
     def scatter_into(self,
             buckets_dict_to, buckets_dict_from, tokenized_strings: List[List[str]], indices: List[int], ratio=0.5
