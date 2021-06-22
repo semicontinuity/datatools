@@ -4,8 +4,6 @@ from typing import *
 from datatools.logs.buckets import Bucket
 from datatools.logs.buckets_helper import compute_stats_for_tokenized, raw_pattern_and_milestone_offsets
 from datatools.logs.buckets_pattern_inference import infer_pattern
-from datatools.logs.cluster_data import clusters_distance_less_than, clusters_relative_distance_less_than, \
-    clusters_overlap, clusters_relative_distance
 from datatools.logs.text_classifier import tokenize, compute_selected, collapse_successive_wildcards
 from datatools.util.graph_util import connected_components, compute_mutual_weights_iter, graph_from_edges
 from datatools.util.logging import debug
@@ -15,7 +13,7 @@ from datatools.util.sequence_hash import seq_sim_hash
 class Classifier:
     tokenized_strings: List[List[str]]
     ratio: float = 0.5
-    similarity_metric: Callable[[Any, Any], Optional[float]]
+    distance_f: Callable[[Any, Any], Optional[float]]
 
     @classmethod
     def tokenize(self, lines: Sequence[str]) -> 'Classifier':
@@ -24,8 +22,7 @@ class Classifier:
     def __init__(self, tokenized_strings):
         self.string_to_vector = seq_sim_hash
         self.tokenized_strings = tokenized_strings
-        # self.similarity_metric = buckets_relative_distance_less_than(1.4)
-        self.similarity_metric = buckets_relative_distance()
+        self.distance_f = lambda b1, b2: b1.cluster_data.distance_to(b2.cluster_data)
 
     def compute_clusters_new(self) -> List[Bucket]:
         all_bucket = Bucket()
@@ -57,11 +54,13 @@ class Classifier:
         # for threshold in [1.9]:
             debug("")
             debug(f"Clusterizing with threshold {threshold}")
-            self.similarity_metric = buckets_relative_distance_less_than(threshold)
+            # self.similarity_metric = buckets_relative_distance_less_than(threshold)
+
             buckets_list = self.gather_and_scatter(buckets_list)
         # self.compute_nearest_neighbor_d(buckets_list, buckets_distance_less_than(2 * 128))
 
-        self.similarity_metric = buckets_relative_distance_less_than(1.15)
+        # self.similarity_metric = buckets_relative_distance_less_than(1.15)
+
         crude_merged_buckets = self.gather(buckets_list)
         for bucket in crude_merged_buckets:
             bucket.pattern = infer_pattern(bucket.tokenized_strings)
@@ -79,19 +78,11 @@ class Classifier:
 
         node_id_f = lambda b: tuple(b.pattern)
         buckets_list = list(buckets_dict.values())
-        similarities: Dict[Hashable, Dict[Hashable, Any]] = self.compute_bucket_similarities_graph(
-            buckets_list, node_id_f
+        similarities: Dict[Hashable, Dict[Hashable, Any]] = graph_from_edges(
+            compute_mutual_weights_iter(buckets_list, self.distance_f, node_id_f), buckets_list, node_id_f
         )
         for pattern, similar in similarities.items():
             buckets_dict[pattern] = min(similar.values()) if len(similar) > 0 else None
-
-    def compute_bucket_similarities_graph(
-            self,
-            buckets: List,
-            node_id_f: Callable[[Any], Hashable]) -> Dict[Hashable, Dict[Hashable, float]]:
-
-        return graph_from_edges(compute_mutual_weights_iter(buckets, self.similarity_metric, node_id_f), buckets,
-                                node_id_f)
 
     @staticmethod
     def compute_bucket_features(buckets: Iterable[Bucket]):
@@ -139,9 +130,12 @@ class Classifier:
         debug("Computing connected components of buckets similarity graph")
         buckets_dict = {id(b): b for b in buckets_list}
         f = lambda b: id(b)
-        edges = compute_mutual_weights_iter(buckets_list, self.similarity_metric, f)
-        # edges.sort()
-        edges = [(n_i, n_j, w) for n_i, n_j, w in edges if w is not None and w < 1.4]
+        # edges = [(n_i, n_j, w) for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, self.similarity_metric, f) if w is not None and w < 1.4]
+
+        # Aggregate edges between most similar buckets (1/16 of all)
+        edges = [(n_i, n_j, w) for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, self.distance_f, f)]
+        edges.sort(key=lambda e: e[2])
+        edges = edges[0: len(edges) // 16]
 
         similarities: Dict[Hashable, Dict[Hashable, Any]] = graph_from_edges(edges, buckets_list, f)
         debug(similarities)
@@ -171,7 +165,6 @@ class Classifier:
             index = indices[i]
             tokenized_string = tokenized_strings[i]
 
-            string_vector = self.string_to_vector(tokenized_string, token_to_quality.get)
             raw_pattern, milestone_offsets = raw_pattern_and_milestone_offsets(tokenized_string, selected)
             pattern, pattern_milestone_offsets = collapse_successive_wildcards(raw_pattern)
             pattern_tuple = tuple(pattern)
@@ -186,30 +179,10 @@ class Classifier:
             # else: bucket_from is None and bucket_to is not None:
 
             bucket_to.append(index, tokenized_string)
-            bucket_to.append_string_vector(string_vector)
+            bucket_to.append_string_vector(self.string_to_vector(tokenized_string, token_to_quality.get))
             if bucket_to.alignment_offsets is None:
                 bucket_to.init_alignment_offsets(len(milestone_offsets))
             bucket_to.append_milestone_offsets(milestone_offsets)
         debug(f"Scattered {len(tokenized_strings)} strings to {len(buckets_dict_to)} buckets")
 
         return list(buckets_dict_to.values())
-
-
-def buckets_distance_less_than(threshold):
-    delegate = clusters_distance_less_than(threshold)
-    return lambda b1, b2: delegate(b1.cluster_data, b2.cluster_data)
-
-
-def buckets_relative_distance_less_than(ratio_threshold):
-    delegate = clusters_relative_distance_less_than(ratio_threshold)
-    return lambda b1, b2: delegate(b1.cluster_data, b2.cluster_data)
-
-
-def buckets_relative_distance():
-    delegate = clusters_relative_distance()
-    return lambda b1, b2: delegate(b1.cluster_data, b2.cluster_data)
-
-
-def buckets_overlap():
-    delegate = clusters_overlap()
-    return lambda b1, b2: delegate(b1.cluster_data, b2.cluster_data)
