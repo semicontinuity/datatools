@@ -32,6 +32,7 @@ from datatools.jt.auto_renderers import column_renderers
 from datatools.jt.exit_codes_mapping import *
 from datatools.jt.grid import WGrid
 from datatools.jt.pack_columns import pick_displayed_columns
+from datatools.jt.ui_data import UiData
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
@@ -53,11 +54,10 @@ class App:
     orig_data: List
     state: Dict
 
-    def __init__(self, app_id, g, orig_data: List = None, state: dict = None):
+    def __init__(self, app_id, g, ui_data: UiData):
         self.app_id = app_id
         self.g = g
-        self.orig_data = orig_data
-        self.state = state
+        self.ui_data = ui_data
         signal.signal(signal.SIGWINCH, self.handle_sigwinch)
 
     def handle_sigwinch(self, signalNumber, frame):
@@ -69,7 +69,7 @@ class App:
     def run(self):
         res = self.g.loop()
         exit_code = KEYS_TO_EXIT_CODES.get(res)
-        self.state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
+        self.ui_data.state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
         return exit_code if exit_code is not None else EXIT_CODE_ESCAPE
 
 
@@ -108,7 +108,10 @@ def parse_params(argv):
     return params
 
 
-def grid(state, raw_presentation, screen_size, orig_data, column_metadata_map, column_presentation_map: Dict[str, ColumnPresentation]) -> WGrid:
+def grid(
+        state, raw_presentation, screen_size, orig_data, column_metadata_map, column_presentation_map: Dict[str, ColumnPresentation],
+        ui_data: UiData
+) -> WGrid:
     column_keys = pick_displayed_columns(screen_size[0], column_metadata_map, column_presentation_map)
     column_titles: List[str] = [c for c in column_keys]
     column_widths: List[int] = [column_presentation_map[c].max_length for c in column_keys]
@@ -150,16 +153,12 @@ def main(app_id, app_f, g, router):
     column_metadata_map = infer_metadata(orig_data, raw_metadata)
     column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
 
+    ui_data = UiData(orig_data, column_metadata_map, column_presentation_map, state)
     screen_size = with_raw_terminal(read_screen_size)
 
+    a = app_f(app_id, g(screen_size, ui_data), ui_data)
     apps_stack = []
-    apps_stack.append(app_f(
-        app_id,
-        g(
-            state, raw_presentation, screen_size, orig_data, column_metadata_map, column_presentation_map
-        ),
-        orig_data, state
-    ))
+    apps_stack.append(a)
 
     exit_code = 0
     while True:
@@ -188,11 +187,11 @@ def main(app_id, app_f, g, router):
 def router(app, exit_code):
     if exit_code <= EXIT_CODE_BACKSPACE + EXIT_CODE_SHIFT + EXIT_CODE_CTRL + EXIT_CODE_ALT:  # max regular exit code
         if (exit_code // EXIT_CODE_SHIFT) & 1 == 1:
-            print(json.dumps(app.orig_data))
+            print(json.dumps(app.ui_data.orig_data))
             return None
 
     if exit_code != EXIT_CODE_ESCAPE:
-        print(json.dumps(app.orig_data[app.state["cur_line"]]))
+        print(json.dumps(app.ui_data.orig_data[app.ui_data.state["cur_line"]]))
 
     return None
 

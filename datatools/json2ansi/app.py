@@ -7,6 +7,7 @@ from datatools.json.structure_discovery import Discovery
 from datatools.json2ansi.grid import WGrid
 from datatools.json2ansi.style import style
 from datatools.jt.app import App
+from datatools.jt.ui_data import UiData
 from datatools.tui.picotui_patch import patch_picotui, isatty
 from datatools.tui.picotui_util import run
 from datatools.tui.terminal import read_screen_size, with_raw_terminal
@@ -28,7 +29,7 @@ def make_json2ansi_app(j):
     screen_size = (1000, 10000)
     if isatty():
         screen_size = with_raw_terminal(read_screen_size)
-    return App('json2ansi', grid(screen_size, j))
+    return App('json2ansi', grid(screen_size, j), UiData(j, {}, {}, {}))
 
 
 def main():
