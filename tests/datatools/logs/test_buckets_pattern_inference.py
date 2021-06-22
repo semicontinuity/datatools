@@ -1,5 +1,5 @@
 from datatools.logs.buckets import Bucket
-from datatools.logs.buckets_pattern_inference import infer_pattern
+from datatools.logs.buckets_pattern_inference import infer_pattern, scan_column
 
 DATA_0 = [
     ['1'],
@@ -94,3 +94,36 @@ def test__4():
 
     pattern = infer_pattern(bucket.tokenized_strings)
     assert pattern == ['t1', 'x', None, 't2', None, 'x', None, 't3']
+
+
+DATA_5 = [
+    ['fill', '-', 'ID1', '-', '1'],
+    ['fill', '-', 'ID1', '-', '1'],
+    ['fill', '-', 'ID2', '-', '1'],
+    ['fill', '-', 'ID2', '-', '1'],
+    ['fill', '-', 'ID3', '-', '1'],
+    ['fill', '-', 'ID3', '-', '1'],
+]
+
+
+def test__5__scan_column():
+    assert scan_column(DATA_5, 0, False) == 'fill'
+    assert scan_column(DATA_5, 1, False) == '-'
+    assert scan_column(DATA_5, 2, False) == None
+    assert scan_column(DATA_5, 3, False) == '-'
+    assert scan_column(DATA_5, 4, False) == '1'
+
+    assert scan_column(DATA_5, 0, True) == '1'
+    assert scan_column(DATA_5, 1, True) == '-'
+    assert scan_column(DATA_5, 2, True) == None
+    assert scan_column(DATA_5, 3, True) == '-'
+    assert scan_column(DATA_5, 4, True) == 'fill'
+
+
+def test__5():
+    bucket = Bucket()
+
+    for i, tokens in enumerate(DATA_5):
+        bucket.append(i, tokens)
+
+    assert infer_pattern(bucket.tokenized_strings) == ['fill', None, '1']

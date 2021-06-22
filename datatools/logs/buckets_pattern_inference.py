@@ -95,3 +95,26 @@ def tokens_between(prev_offset_f: Callable[[int], int], offset_f: Callable[[int]
 
         result.append(line_f(i)[prev_offset + 1 : offset])
     return result
+
+
+def scan_column(tokenized_strings: List[List[str]], offset: int, from_end: bool):
+    """ token at the column if all tokens in the column are the same; None otherwise """
+    result = None
+    for i in range(len(tokenized_strings)):
+        tokenized_string = tokenized_strings[i]
+        if from_end:
+            x = len(tokenized_string) - 1 - offset
+            if x < 0:
+                return None
+        else:
+            x = offset
+            if x >= len(tokenized_string):
+                return None
+
+        token = tokenized_string[x]
+        if result is None:
+            result = token
+        elif result != token:
+            return None
+
+    return result
