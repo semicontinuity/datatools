@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import *
 
 from datatools.logs.buckets import Bucket
@@ -34,8 +33,6 @@ class Classifier:
         crude_merged_buckets = self.gather(buckets_list)
         for bucket in crude_merged_buckets:
             bucket.pattern = infer_pattern(bucket.tokenized_strings)
-            if bucket.pattern is None:
-                raise AssertionError(bucket.tokenized_strings)
         return crude_merged_buckets
 
     def compute_clusters(self) -> List[Bucket]:
@@ -127,15 +124,16 @@ class Classifier:
             bucket.cluster_data.compute_features()
         debug("Computed bucket centroids")
 
-        debug("Computing connected components of buckets similarity graph")
         buckets_dict = {id(b): b for b in buckets_list}
         f = lambda b: id(b)
         # edges = [(n_i, n_j, w) for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, self.similarity_metric, f) if w is not None and w < 1.4]
 
         # Aggregate edges between most similar buckets (1/16 of all)
         edges = [(n_i, n_j, w) for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, self.distance_f, f)]
+        debug(f"Computing connected components of buckets similarity graph: analyzing {len(edges)} edges")
         edges.sort(key=lambda e: e[2])
-        edges = edges[0: len(edges) // 16]
+        # edges = edges[0: len(edges) // 64]
+        edges = []
 
         similarities: Dict[Hashable, Dict[Hashable, Any]] = graph_from_edges(edges, buckets_list, f)
         debug(similarities)
@@ -155,7 +153,7 @@ class Classifier:
         return crude_merged_buckets
 
     def scatter_into(self,
-            buckets_dict_to, buckets_dict_from, tokenized_strings: List[Sequence[str]], indices: List[int], ratio=0.5
+            buckets_dict_to, buckets_dict_from, tokenized_strings: List[List[str]], indices: List[int], ratio=0.5
     ) -> List[Bucket]:
         debug(f"Scattering {len(tokenized_strings)} strings to buckets")
         stats = list(compute_stats_for_tokenized(tokenized_strings, ratio))

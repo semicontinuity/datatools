@@ -13,15 +13,34 @@ def infer_pattern(tokenized_strings):
 
 
 def do_infer_pattern(tokenized_strings, pattern_sink):
-    milestones_list = infer_milestones(tokenized_strings)
-    if milestones_list is None:
-        pattern_sink.append(None)
-        return
+    head_tokens = scan_columns(tokenized_strings, False)
+    tail_tokens = scan_columns(tokenized_strings, True, len(head_tokens))
+
+    pattern_sink.extend(head_tokens)
 
     temp_bucket = Bucket()
-    temp_bucket.tokenized_strings = tokenized_strings
-    apply_milestones(temp_bucket, milestones_list)
-    do_infer_pattern_for(temp_bucket, milestones_list, pattern_sink)
+    temp_bucket.tokenized_strings = cut_tokens_between(tokenized_strings, len(head_tokens), len(tail_tokens))
+    if temp_bucket.tokenized_strings is not None:
+        milestones_list = infer_milestones(temp_bucket.tokenized_strings)
+        if milestones_list is None:
+            pattern_sink.append(None)
+        else:
+            apply_milestones(temp_bucket, milestones_list)
+            do_infer_pattern_for(temp_bucket, milestones_list, pattern_sink)
+
+    pattern_sink.extend(tail_tokens)
+
+
+def cut_tokens_between(tokenized_strings, head: int, tail: int):
+    """ return None if all strings are empty after cutting 'head' tokens from head and 'tail' tokens from tail """
+    non_empty = False
+    result = []
+    for s in tokenized_strings:
+        cut = s[head:len(s) - tail]
+        result.append(cut)
+        if len(cut) > 0:
+            non_empty = True
+    return result if non_empty else None
 
 
 def infer_milestones(tokenized_strings):
@@ -97,18 +116,34 @@ def tokens_between(prev_offset_f: Callable[[int], int], offset_f: Callable[[int]
     return result
 
 
-def scan_column(tokenized_strings: List[List[str]], offset: int, from_end: bool):
+def scan_columns(tokenized_strings: List[List[str]], from_tail: bool, spared_columns: int = 0):
+    result = []
+
+    x = 0
+    while True:
+        token = scan_column(tokenized_strings, x, from_tail, spared_columns)
+        if token is None:
+            return result
+
+        if from_tail:
+            result.insert(0, token)
+        else:
+            result.append(token)
+        x += 1
+
+
+def scan_column(tokenized_strings: List[List[str]], offset: int, from_tail: bool, spared_columns: int = 0):
     """ token at the column if all tokens in the column are the same; None otherwise """
     result = None
     for i in range(len(tokenized_strings)):
         tokenized_string = tokenized_strings[i]
-        if from_end:
+        if from_tail:
             x = len(tokenized_string) - 1 - offset
-            if x < 0:
+            if x < spared_columns:
                 return None
         else:
             x = offset
-            if x >= len(tokenized_string):
+            if x >= len(tokenized_string) - spared_columns:
                 return None
 
         token = tokenized_string[x]

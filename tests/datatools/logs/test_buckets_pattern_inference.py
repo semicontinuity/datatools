@@ -1,5 +1,5 @@
 from datatools.logs.buckets import Bucket
-from datatools.logs.buckets_pattern_inference import infer_pattern, scan_column
+from datatools.logs.buckets_pattern_inference import infer_pattern, scan_column, scan_columns
 
 DATA_0 = [
     ['1'],
@@ -28,7 +28,7 @@ DATA_1 = [
 ]
 
 
-def test__1():
+def test__1__infer_pattern():
     bucket = Bucket()
 
     for i, tokens in enumerate(DATA_1):
@@ -120,10 +120,31 @@ def test__5__scan_column():
     assert scan_column(DATA_5, 4, True) == 'fill'
 
 
+def test__5__scan_column2():
+    assert scan_columns(DATA_5, False) == ['fill', '-']
+    assert scan_columns(DATA_5, True) == ['-', '1']
+
+
 def test__5():
+    bucket = bucket_of(DATA_5)
+    assert infer_pattern(bucket.tokenized_strings) == ['fill', '-', None, '-', '1']
+
+
+DATA_6 = [
+    ['main'],
+    ['main'],
+    ['main'],
+]
+
+
+def test__6():
+    bucket = bucket_of(DATA_6)
+    pattern = infer_pattern(bucket.tokenized_strings)
+    assert pattern == ['main']
+
+
+def bucket_of(data):
     bucket = Bucket()
-
-    for i, tokens in enumerate(DATA_5):
+    for i, tokens in enumerate(data):
         bucket.append(i, tokens)
-
-    assert infer_pattern(bucket.tokenized_strings) == ['fill', None, '1']
+    return bucket
