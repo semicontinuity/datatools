@@ -50,9 +50,14 @@ class Params:
 
 class App:
     g: WGrid
+    orig_data: List
+    state: Dict
 
-    def __init__(self, g):
+    def __init__(self, app_id, g, orig_data: List = None, state: dict = None):
+        self.app_id = app_id
         self.g = g
+        self.orig_data = orig_data
+        self.state = state
         signal.signal(signal.SIGWINCH, self.handle_sigwinch)
 
     def handle_sigwinch(self, signalNumber, frame):
@@ -64,8 +69,8 @@ class App:
     def run(self):
         res = self.g.loop()
         exit_code = KEYS_TO_EXIT_CODES.get(res)
-        state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
-        return exit_code if exit_code is not None else EXIT_CODE_ESCAPE, state
+        self.state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
+        return exit_code if exit_code is not None else EXIT_CODE_ESCAPE
 
 
 def load_data(params):
@@ -130,7 +135,7 @@ def init_from_state(g, state):
         g.cur_line = cur_line
 
 
-def main(g, app, finalizer):
+def main(app_id, app_f, g, router):
     raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
     raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default={'top_line': 0, 'cur_line': 0})
@@ -146,16 +151,28 @@ def main(g, app, finalizer):
     column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
 
     screen_size = with_raw_terminal(read_screen_size)
-    the_app = app(
+
+    apps_stack = []
+    apps_stack.append(app_f(
+        app_id,
         g(
             state, raw_presentation, screen_size, orig_data, column_metadata_map, column_presentation_map
-        )
-    )
+        ),
+        orig_data, state
+    ))
 
+    exit_code = 0
     while True:
-        exit_code, state = run(lambda: the_app.run())
-        if finalizer(exit_code, orig_data, state):
+        if not apps_stack:
             break
+        the_app = apps_stack.pop()
+        exit_code = run(the_app.run)
+        new_app = router(the_app, exit_code)
+        if new_app is None:
+            continue
+        if new_app != the_app:
+            apps_stack.append(the_app)
+            apps_stack.append(new_app)
 
     write_fd_or_pass(FD_STATE_OUT, state)
     
@@ -168,16 +185,16 @@ def main(g, app, finalizer):
     sys.exit(exit_code)
 
 
-def finalizer(exit_code, orig_data, state):
-    if exit_code < 120:
+def router(app, exit_code):
+    if exit_code <= EXIT_CODE_BACKSPACE + EXIT_CODE_SHIFT + EXIT_CODE_CTRL + EXIT_CODE_ALT:  # max regular exit code
         if (exit_code // EXIT_CODE_SHIFT) & 1 == 1:
-            print(json.dumps(orig_data))
-            return True
+            print(json.dumps(app.orig_data))
+            return None
 
     if exit_code != EXIT_CODE_ESCAPE:
-        print(json.dumps(orig_data[state["cur_line"]]))
+        print(json.dumps(app.orig_data[app.state["cur_line"]]))
 
-    return True
+    return None
 
 
 def override(params, presentation):
@@ -188,4 +205,4 @@ def override(params, presentation):
 
 
 if __name__ == "__main__":
-    main(grid, App, finalizer)
+    main('jt', App, grid, router)

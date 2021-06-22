@@ -28,7 +28,7 @@ def make_json2ansi_app(j):
     screen_size = (1000, 10000)
     if isatty():
         screen_size = with_raw_terminal(read_screen_size)
-    return App(grid(screen_size, j))
+    return App('json2ansi', grid(screen_size, j))
 
 
 def main():
