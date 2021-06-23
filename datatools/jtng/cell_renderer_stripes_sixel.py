@@ -3,7 +3,6 @@ from datatools.jt.auto_presentation import ColumnPresentation
 from datatools.jt.themes import COLORS2, ColorKey
 from datatools.jtng.cell_renderer import WCellRenderer
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
-from datatools.tui.coloring import hash_to_rgb
 from datatools.tui.sixel import sixel_append_set_color_register_cmd, sixel_append_start_cmd, sixel_append_stop_cmd, \
     sixel_append_use_color, sixel_append_repeated, sixel_append_lf
 from datatools.tui.terminal import set_colors_cmd_bytes2
@@ -23,7 +22,7 @@ class WStripesSixelCellRenderer(WCellRenderer):
     def toggle(self):
         self.state.collapsed = not self.state.collapsed
 
-    def to_hash_codes_list(self, value):
+    def to_color_list(self, value):
         return []
 
     def __len__(self):
@@ -35,8 +34,8 @@ class WStripesSixelCellRenderer(WCellRenderer):
             cell_attrs = (COLORS2[ColorKey.BOX_DRAWING][1], None) if value is None or len(value) == 0 else COLORS2[ColorKey.TEXT]
             return set_colors_cmd_bytes2(COLORS2[ColorKey.BOX_DRAWING][0], cell_attrs[0]) + LEFT_BORDER_BYTES
         else:
-            hash_codes = self.to_hash_codes_list(value)
-            length = len(hash_codes)
+            colors = self.to_color_list(value)
+            length = len(colors)
 
             buffer = bytearray()
 
@@ -55,7 +54,8 @@ class WStripesSixelCellRenderer(WCellRenderer):
                 # buffer += b' ' * (index_to - index_from)
                 # buffer += b'\x1b[u'   # restore cursor pos, because *$* terminal moves cursor to the next line
                 to = min(index_to, self.chars_required_for_stripes(length))
-                painted_chars = self.append_stripes(hash_codes, index_from * self.stripes_per_char, to * self.stripes_per_char, buffer)
+
+                painted_chars = self.append_stripes(colors, index_from * self.stripes_per_char, to * self.stripes_per_char, buffer)
                 buffer += b'\x1b[u'     # restore cursor pos, because *$* terminal moves cursor to the next line
 
                 if painted_chars > 0:
@@ -68,20 +68,19 @@ class WStripesSixelCellRenderer(WCellRenderer):
 
             return buffer
 
-    def append_stripes(self, list_of_hash_codes, start_stripe, end_stripe, buffer):
+    def append_stripes(self, list_of_colors, start_stripe, end_stripe, buffer):
         color_index = 0
         color_indices = {}
 
         sixel_append_start_cmd(buffer)
 
         for i in range(start_stripe, end_stripe):
-            if i >= len(list_of_hash_codes):
+            if i >= len(list_of_colors):
                 break
-            hash_code = list_of_hash_codes[i]
-            index = color_indices.get(hash_code)
+            color = list_of_colors[i]
+            index = color_indices.get(color)
             if index is None:
-                color_indices[hash_code] = color_index
-                color = hash_to_rgb(hash_code, offset=64)
+                color_indices[color] = color_index
                 sixel_append_set_color_register_cmd(
                     buffer, color_index, color[0] * 99 // 255, color[1] * 99 // 255, color[2] * 99 // 255)
                 color_index += 1
@@ -95,10 +94,10 @@ class WStripesSixelCellRenderer(WCellRenderer):
         for j in range(3):
             color_index = -1
             for i in range(start_stripe, end_stripe):
-                if i >= len(list_of_hash_codes):
+                if i >= len(list_of_colors):
                     break
-                hash_code = list_of_hash_codes[i]
-                index = color_indices.get(hash_code)
+                color = list_of_colors[i]
+                index = color_indices.get(color)
                 if index != color_index:
                     sixel_append_use_color(buffer, index)
                     color_index = index

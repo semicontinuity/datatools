@@ -16,7 +16,7 @@ COLORING_HASH_ASSISTANT_COLUMN = "hash-assistant-column"
 @dataclass
 class ColumnPresentation:
     title: str = None
-    coloring: str = COLORING_NONE
+    coloring: Any = COLORING_NONE
     separator: bool = None
     indicator: bool = None
     stripes: bool = None
