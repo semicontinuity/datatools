@@ -12,7 +12,7 @@ from datatools.util.sequence_hash import seq_sim_hash
 
 class Classifier:
     tokenized_strings: List[List[str]]
-    ratio: float = 0.5
+    ratio: float = 0.66
     distance_f: Callable[[Any, Any], Optional[float]]
 
     @classmethod

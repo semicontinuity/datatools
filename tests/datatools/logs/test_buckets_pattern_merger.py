@@ -1,18 +1,18 @@
 from datatools.logs.buckets import Bucket
-from datatools.logs.buckets_pattern_merger import pattern_distance, merge_buckets_by_pattern
+from datatools.logs.buckets_pattern_merger import pattern_similarity, merge_buckets_by_pattern
 
 
 def test__pattern_distance__1_wildcard():
-    assert pattern_distance(['a', '-', None], ['a', '-', '1']) == 0
+    assert pattern_similarity(['a', '-', None], ['a', '-', '1']) == 0
 
 
 def test__pattern_distance__2_wildcards():
-    distance = pattern_distance([None, '-', None], ['a', '-', '1'])
+    distance = pattern_similarity([None, '-', None], ['a', '-', '1'])
     assert distance is None
 
 
 def test__pattern_distance__not_equal():
-    assert pattern_distance(['a', '-', '1'], ['a', '-', '2']) is None
+    assert pattern_similarity(['a', '-', '1'], ['a', '-', '2']) is None
 
 
 def test__merge_buckets_by_pattern():

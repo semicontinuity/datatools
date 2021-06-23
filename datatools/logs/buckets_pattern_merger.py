@@ -7,7 +7,7 @@ from datatools.util.logging import debug
 
 def merge_buckets_by_pattern(buckets_list: List) -> List[Bucket]:
     edges = [(n_i, n_j, w)
-             for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, pattern_distance, id, lambda b: b.pattern)]
+             for n_i, n_j, w in compute_mutual_weights_iter(buckets_list, pattern_similarity, id, lambda b: b.pattern)]
 
     similarities: Dict[Hashable, Dict[Hashable, Any]] = graph_from_edges(edges, buckets_list, id)
     debug(similarities)
@@ -18,26 +18,27 @@ def merge_buckets_by_pattern(buckets_list: List) -> List[Bucket]:
     return merge_buckets(buckets_dict, similar_buckets_id_list)
 
 
-def pattern_distance(p1: List[str], p2: List[str], match_result=0, mismatch_result=None):
+def pattern_similarity(p1: List[str], p2: List[str], similar_result=0, dissimilar_result=None):
     """
     Compares patterns
-    Patterns are equal, if all tokens are equal, with the exception of max 1 wildcard (==None)
+    Patterns are similar, if all tokens are equal, with the exception of max 1 wildcard (==None)
     """
     if len(p1) != len(p2):
-        return mismatch_result
-    wildcard_count = 0
+        return dissimilar_result
+    mismatch_count = 0
     for i in range(len(p1)):
         t1 = p1[i]
         t2 = p2[i]
         if t1 == t2:
             continue
         if t1 is None or t2 is None:
-            if wildcard_count > 0:
-                return mismatch_result
-            wildcard_count += 1
+        # if True:
+            if mismatch_count > 0:
+                return dissimilar_result
+            mismatch_count += 1
             continue
-        return mismatch_result
-    return match_result
+        return dissimilar_result
+    return similar_result
 
 
 def merge_buckets(buckets_dict, similar_buckets_id_list) -> List[Bucket]:
