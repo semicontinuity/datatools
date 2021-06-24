@@ -90,7 +90,7 @@ class Buffer:
 
     def to_string(self, x, y, width):
         s = ''
-        prev_attr = 0
+        prev_attr = -1
         prev_r = -1
         prev_g = -1
         prev_b = -1
