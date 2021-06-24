@@ -39,7 +39,7 @@ def main():
     s = ''.join(lines)
     j = json.loads(s)
 
-    exit_code, state = run(lambda: make_json2ansi_app(j).run())
+    exit_code = run(lambda: make_json2ansi_app(j).run())
     sys.exit(exit_code)
 
 

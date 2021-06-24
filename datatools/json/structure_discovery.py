@@ -25,15 +25,10 @@ class Descriptor:
     def merge_with(self, o) -> 'Descriptor':
         pass
 
-    @staticmethod
-    def merge_with_descriptors(descriptors: List['Descriptor']) -> 'Descriptor':
-        descriptor0 = None
-        for d in descriptors:
-            if descriptor0 is None:
-                descriptor0 = d
-            else:
-                descriptor0 = descriptor0.merge_with(d)
-
+    def merge_with_descriptors(self, descriptors: List['Descriptor']) -> 'Descriptor':
+        descriptor0 = self
+        for d in descriptors[1:]:
+            descriptor0 = descriptor0.merge_with(d)
         return descriptor0
 
     @staticmethod
@@ -41,7 +36,7 @@ class Descriptor:
         assert len(descriptors) > 0
 
         descriptor0 = descriptors[0]
-        if type(descriptor0) == AnyDescriptor:
+        if len(descriptors) == 1 or type(descriptor0) == AnyDescriptor:
             return descriptor0
 
         for d in descriptors:
@@ -50,7 +45,7 @@ class Descriptor:
             if type(d) != type(descriptor0):
                 return AnyDescriptor()
 
-        return descriptor0.merge_with_descriptors(descriptors)
+        return descriptor0.merge_with_descriptors(descriptors[1:])
 
 
 @dataclass
@@ -79,13 +74,14 @@ class MappingDescriptor(Descriptor):
     uniform: bool
     length: Optional[int] = None
 
-    @staticmethod
-    def merge_with_descriptors(descriptors: List['MappingDescriptor']) -> 'Descriptor':
-        descriptor0 = None
-        if all(d.kind == 'dict' for d in descriptors):
+    def merge_with_descriptors(self, descriptors: List['MappingDescriptor']) -> 'Descriptor':
+        descriptor0 = self
+        if self.kind == 'dict' and all(d.kind == 'dict' for d in descriptors):
             counter = 0
             merged_items = {}
-            for d in descriptors:
+
+            def put_entries(d):
+                nonlocal counter
                 for k, v in d.entries.items():
                     counter += 1
                     existing = merged_items.get(k)
@@ -93,9 +89,14 @@ class MappingDescriptor(Descriptor):
                         merged_items[k] = v
                     else:
                         merged_items[k] = existing.merge_with(v)
+
+            put_entries(descriptor0)
+            for d in descriptors:
+                put_entries(d)
+
             if len(merged_items) == 0:
                 return MappingDescriptor(merged_items, 'dict', False, 0)
-            fill_ratio = counter / (len(descriptors) * len(merged_items))
+            fill_ratio = counter / ((1 + len(descriptors)) * len(merged_items))
             if fill_ratio >= 0.75:
                 return MappingDescriptor(merged_items, 'dict', True, len(merged_items))
             else:
@@ -103,12 +104,9 @@ class MappingDescriptor(Descriptor):
 
         else:
             for d in descriptors:
-                if descriptor0 is None:
-                    descriptor0 = d
-                else:
-                    if d.kind != descriptor0.kind:
-                        return AnyDescriptor()
-                    descriptor0 = descriptor0.merge_with(d)
+                if d.kind != descriptor0.kind:
+                    return AnyDescriptor()
+                descriptor0 = descriptor0.merge_with(d)
 
         return descriptor0
 
@@ -208,8 +206,10 @@ class Discovery:
             item_descriptors = {k: self.object_descriptor(v) for k, v in j.items()}
             if len(item_descriptors) == 0:
                 return MappingDescriptor({}, 'dict', False, None)
-            merged = Descriptor.merge(list(item_descriptors.values()))
+            descriptors = list(item_descriptors.values())
+            merged = Descriptor.merge(descriptors)
             is_uniform = not merged.is_any()
+            # is_uniform = merged.is_uniform()
             if is_uniform:
                 return MappingDescriptor(
                     {i: merged for i in item_descriptors},

@@ -50,11 +50,11 @@ def test__object_descriptor__complex():
 def test__compute_column_paths__1():
     descriptor = MappingDescriptor(
         {
-            'l': MappingDescriptor({0: AnyDescriptor()}, kind='list', array=True, length=1),
-            'c': MappingDescriptor({0: AnyDescriptor()}, kind='list', array=True, length=1)
+            'l': MappingDescriptor({0: AnyDescriptor()}, kind='list', uniform=True, length=1),
+            'c': MappingDescriptor({0: AnyDescriptor()}, kind='list', uniform=True, length=1)
         },
         kind='dict',
-        array=True,
+        uniform=True,
         length=2
     )
     assert compute_column_paths(descriptor) == [
