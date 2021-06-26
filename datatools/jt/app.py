@@ -32,7 +32,7 @@ from datatools.jt.auto_renderers import column_renderers
 from datatools.jt.exit_codes_mapping import *
 from datatools.jt.grid import WGrid
 from datatools.jt.pack_columns import pick_displayed_columns
-from datatools.jt.ui_data import UiData
+from datatools.jt.data_bundle import DataBundle
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
@@ -54,10 +54,10 @@ class App:
     orig_data: List
     state: Dict
 
-    def __init__(self, app_id, g, ui_data: UiData):
+    def __init__(self, app_id, g, data_bundle: DataBundle):
         self.app_id = app_id
         self.g = g
-        self.ui_data = ui_data
+        self.data_bundle = data_bundle
         signal.signal(signal.SIGWINCH, self.handle_sigwinch)
 
     def handle_sigwinch(self, signalNumber, frame):
@@ -69,7 +69,7 @@ class App:
     def run(self):
         res = self.g.loop()
         exit_code = KEYS_TO_EXIT_CODES.get(res)
-        self.ui_data.state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
+        self.data_bundle.state = {'top_line': self.g.top_line, 'cur_line': self.g.cur_line}
         return exit_code if exit_code is not None else EXIT_CODE_ESCAPE
 
 
@@ -108,24 +108,21 @@ def parse_params(argv):
     return params
 
 
-def grid(
-        state, raw_presentation, screen_size, orig_data, column_metadata_map, column_presentation_map: Dict[str, ColumnPresentation],
-        ui_data: UiData
-) -> WGrid:
-    column_keys = pick_displayed_columns(screen_size[0], column_metadata_map, column_presentation_map)
+def grid(screen_size, data_bundle: DataBundle) -> WGrid:
+    column_keys = pick_displayed_columns(screen_size[0], data_bundle.column_metadata_map, data_bundle.column_presentation_map)
     column_titles: List[str] = [c for c in column_keys]
-    column_widths: List[int] = [column_presentation_map[c].max_length for c in column_keys]
+    column_widths: List[int] = [data_bundle.column_presentation_map[c].max_length for c in column_keys]
 
     g = WGrid(
         screen_size[0], screen_size[1],
         column_widths, column_keys,
-        column_renderers(column_keys, column_presentation_map, column_metadata_map).__getitem__,
-        lambda line, column: orig_data[line].get(column_keys[column]),
-        raw_presentation.get("title"),
+        column_renderers(column_keys, data_bundle.column_presentation_map, data_bundle.column_metadata_map).__getitem__,
+        lambda line, column: data_bundle.orig_data[line].get(column_keys[column]),
+        data_bundle.title,
         column_titles
     )
-    g.total_lines = len(orig_data)
-    init_from_state(g, state)
+    g.total_lines = len(data_bundle.orig_data)
+    init_from_state(g, data_bundle.state)
     return g
 
 
@@ -139,22 +136,12 @@ def init_from_state(g, state):
 
 
 def main(app_id, app_f, g, router):
-    raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
-    raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
-    state = read_fd_or_default(fd=FD_STATE_IN, default=default_state())
-    params = parse_params(sys.argv)
-
-    override(params, raw_presentation)
-
+    data_bundle = load_data_bundle()
     fd_tui = FD_TUI if fd_exists(FD_TUI) else 2
     patch_picotui(fd_tui, fd_tui)
 
-    orig_data = load_data(params)
-    column_metadata_map = infer_metadata(orig_data, raw_metadata)
-    column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
-    ui_data = UiData(orig_data, column_metadata_map, column_presentation_map, state)
     screen_size = with_raw_terminal(read_screen_size)
-    a = app_f(app_id, g(screen_size, ui_data), ui_data)
+    a = app_f(app_id, g(screen_size, data_bundle), data_bundle)
     apps_stack = []
     apps_stack.append(a)
 
@@ -171,15 +158,32 @@ def main(app_id, app_f, g, router):
             apps_stack.append(the_app)
             apps_stack.append(new_app)
 
-    write_fd_or_pass(FD_STATE_OUT, state)
-    
-    raw_presentation["columns"] = {k: to_jsonisable(v) for k, v in column_presentation_map.items()}
-    write_fd_or_pass(FD_PRESENTATION_OUT, raw_presentation)
-
-    raw_metadata["columns"] = {k: to_jsonisable(v) for k, v in column_metadata_map.items()}
-    write_fd_or_pass(FD_METADATA_OUT, raw_metadata)
-
+    store_data_bundle(data_bundle)
     sys.exit(exit_code)
+
+
+def load_data_bundle():
+    raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
+    raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
+    state = read_fd_or_default(fd=FD_STATE_IN, default=default_state())
+    params = parse_params(sys.argv)
+
+    override(params, raw_presentation)
+
+    orig_data = load_data(params)
+    column_metadata_map = infer_metadata(orig_data, raw_metadata)
+    column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
+    return DataBundle(orig_data, column_metadata_map, column_presentation_map, state, raw_presentation.get("title"))
+
+
+def store_data_bundle(data_bundle):
+    write_fd_or_pass(FD_STATE_OUT, data_bundle.state)
+    raw_presentation = {}
+    raw_presentation["columns"] = {k: to_jsonisable(v) for k, v in data_bundle.column_presentation_map.items()}
+    write_fd_or_pass(FD_PRESENTATION_OUT, raw_presentation)
+    raw_metadata = {}
+    raw_metadata["columns"] = {k: to_jsonisable(v) for k, v in data_bundle.column_metadata_map.items()}
+    write_fd_or_pass(FD_METADATA_OUT, raw_metadata)
 
 
 def default_state():
@@ -189,11 +193,11 @@ def default_state():
 def router(app, exit_code):
     if exit_code <= EXIT_CODE_BACKSPACE + EXIT_CODE_SHIFT + EXIT_CODE_CTRL + EXIT_CODE_ALT:  # max regular exit code
         if (exit_code // EXIT_CODE_SHIFT) & 1 == 1:
-            print(json.dumps(app.ui_data.orig_data))
+            print(json.dumps(app.data_bundle.orig_data))
             return None
 
     if exit_code != EXIT_CODE_ESCAPE:
-        print(json.dumps(app.ui_data.orig_data[app.ui_data.state["cur_line"]]))
+        print(json.dumps(app.data_bundle.orig_data[app.data_bundle.state["cur_line"]]))
 
     return None
 
