@@ -168,6 +168,10 @@ class MappingDescriptor(Descriptor):
         return j.items() if type(j) is dict else enumerate(j)
 
     def entry(self, k):
+        item = self.item
+        if item.is_any():   # if List[Any], there is only one item descriptor for all keys
+            return item
+
         if k not in self.entries:
             raise KeyError
         return self.entries[k]
