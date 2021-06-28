@@ -44,7 +44,6 @@ from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists,
 class Params:
     title: str = None
     stream_mode: bool = None
-    columns = None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -102,8 +101,6 @@ def parse_params(argv):
             params.title = sys.argv[a]
         elif sys.argv[a] == "-s":
             params.stream_mode = True
-        else:
-            params.columns = json.loads(sys.argv[a])
         a += 1
     return params
 
@@ -136,7 +133,9 @@ def init_from_state(g, state):
 
 
 def main(app_id, app_f, g, router):
-    data_bundle = load_data_bundle()
+    params = parse_params(sys.argv)
+    orig_data = load_data(params)
+    data_bundle = load_data_bundle(params, orig_data)
     fd_tui = FD_TUI if fd_exists(FD_TUI) else 2
     patch_picotui(fd_tui, fd_tui)
 
@@ -162,15 +161,14 @@ def main(app_id, app_f, g, router):
     sys.exit(exit_code)
 
 
-def load_data_bundle():
+def load_data_bundle(params, orig_data):
     raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
     raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default=default_state())
-    params = parse_params(sys.argv)
 
-    override(params, raw_presentation)
+    if params.title is not None:
+        raw_presentation["title"] = params.title
 
-    orig_data = load_data(params)
     column_metadata_map = infer_metadata(orig_data, raw_metadata)
     column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
     return DataBundle(orig_data, column_metadata_map, column_presentation_map, state, raw_presentation.get("title"))
@@ -179,11 +177,12 @@ def load_data_bundle():
 def store_data_bundle(data_bundle):
     write_fd_or_pass(FD_STATE_OUT, data_bundle.state)
     raw_presentation = {}
-    raw_presentation["columns"] = {k: to_jsonisable(v) for k, v in data_bundle.column_presentation_map.items()}
-    write_fd_or_pass(FD_PRESENTATION_OUT, raw_presentation)
+    raw_presentation["columns"] = data_bundle.column_presentation_map
+    write_fd_or_pass(FD_PRESENTATION_OUT, to_jsonisable(raw_presentation))
     raw_metadata = {}
-    raw_metadata["columns"] = {k: to_jsonisable(v) for k, v in data_bundle.column_metadata_map.items()}
-    write_fd_or_pass(FD_METADATA_OUT, raw_metadata)
+
+    raw_metadata["columns"] = data_bundle.column_metadata_map
+    write_fd_or_pass(FD_METADATA_OUT, to_jsonisable(raw_metadata))
 
 
 def default_state():
@@ -205,8 +204,6 @@ def router(app, exit_code):
 def override(params, presentation):
     if params.title is not None:
         presentation["title"] = params.title
-    if params.columns is not None:
-        presentation["columns"] = params.columns
 
 
 if __name__ == "__main__":
