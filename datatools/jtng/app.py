@@ -4,7 +4,7 @@ import json
 from datatools.json2ansi.app import make_json2ansi_app
 from datatools.jt.app import App, main, init_from_state, default_state
 from datatools.jt.auto_metadata import enrich_metadata, Metadata
-from datatools.jt.auto_presentation import enrich_presentation, Presentation
+from datatools.jt.auto_presentation import enrich_presentation, Presentation, ColumnPresentation
 from datatools.jt.data_bundle import DataBundle
 from datatools.jt.exit_codes import *
 from datatools.jtng.auto_renderers import column_renderers
@@ -49,10 +49,9 @@ def router(app, exit_code):
         if exit_code == EXIT_CODE_CTRL_SPACE:
             sub_table_column = time_series_column(app.data_bundle)  # may be more than 1...
             if sub_table_column:
-                #app.data_bundle.presentation.columns[sub_table_column]
                 return nested_table_app(
-                    app.data_bundle.orig_data[app.data_bundle.state["cur_line"]][sub_table_column]
-
+                    app.data_bundle.orig_data[app.data_bundle.state["cur_line"]][sub_table_column],
+                    app.data_bundle.presentation.columns[sub_table_column].contents
                 )
             else:
                 return make_json2ansi_app(app.data_bundle.orig_data[app.data_bundle.state["cur_line"]])
@@ -72,14 +71,9 @@ def time_series_column(data_bundle: DataBundle):
             return name
 
 
-def nested_table_app(cell_j, column_presentation=None):
+def nested_table_app(cell_j, column_contents_presentation: Presentation):
     metadata = enrich_metadata(cell_j, Metadata())
-    p = Presentation()
-    # if p.columns:
-    #     raise KeyError(p)
-    presentation = enrich_presentation(cell_j, metadata, p)
-
-
+    presentation = enrich_presentation(cell_j, metadata, column_contents_presentation or Presentation())
 
     data_bundle = DataBundle(cell_j, metadata, presentation, default_state())
     screen_size = with_raw_terminal(read_screen_size)
