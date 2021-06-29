@@ -23,7 +23,7 @@ import signal
 import sys
 from dataclasses import dataclass
 from json import JSONDecodeError
-from typing import List, Dict
+from typing import List
 
 from datatools.json.util import to_jsonisable, dataclass_from_dict
 from datatools.jt.auto_metadata import enrich_metadata, Metadata
@@ -36,8 +36,9 @@ from datatools.jt.pack_columns import pick_displayed_columns
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
-from datatools.util.conf import read_fd_or_default, write_fd_or_pass, fd_exists, FD_PRESENTATION_IN, FD_STATE_IN, \
-    FD_STATE_OUT, FD_PRESENTATION_OUT, FD_METADATA_IN, FD_METADATA_OUT
+from datatools.util.conf import write_fd_or_pass, fd_exists, FD_STATE_OUT, FD_PRESENTATION_OUT, FD_METADATA_OUT, \
+    state_or_default, presentation_or_default, \
+    metadata_or_default
 
 
 @dataclass
@@ -161,9 +162,9 @@ def main(app_id, app_f, g, router):
 
 
 def load_data_bundle(params, orig_data):
-    raw_metadata = read_fd_or_default(fd=FD_METADATA_IN, default={})
-    raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
-    state = read_fd_or_default(fd=FD_STATE_IN, default=default_state())
+    raw_metadata = metadata_or_default(default={})
+    raw_presentation = presentation_or_default(default={})
+    state = state_or_default(default=default_state())
 
     metadata = dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata})
     presentation = dataclass_from_dict(Presentation, raw_presentation, {'Presentation': Presentation})

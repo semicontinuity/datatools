@@ -10,10 +10,9 @@ from json import JSONDecodeError
 from datatools.json.coloring import *
 from datatools.json.json_viz_helper import *
 from datatools.json.structure_analyzer import *
-from datatools.util.conf import read_fd_or_default, FD_PRESENTATION_IN
+from datatools.util.conf import presentation_or_default
 from datatools.util.html_util import *
 from datatools.util.logging import debug, stderr_print
-
 
 verbose = False
 
@@ -224,7 +223,7 @@ def main():
         global verbose
         verbose = True
 
-    presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
+    presentation = presentation_or_default(default={})
 
     if len(sys.argv) == 2:
         presentation["title"] = sys.argv[1]
