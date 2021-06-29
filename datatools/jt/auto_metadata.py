@@ -32,7 +32,7 @@ class Metadata:
     timestamp_format: str = None
 
 
-def infer_metadata(data, metadata: Metadata) -> Metadata:
+def enrich_metadata(data, metadata: Metadata) -> Metadata:
     if metadata.columns:
         return metadata
 
@@ -79,9 +79,9 @@ def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
                         column_metadata.multiline = True
                         timestamp_formats[key] = ''
                     elif current_ts_format != '':
-                        format, _ = infer_timestamp_format(value)
-                        if format != current_ts_format:
-                            timestamp_formats[key] = format if current_ts_format is None else ''
+                        fmt, _ = infer_timestamp_format(value)
+                        if fmt != current_ts_format:
+                            timestamp_formats[key] = fmt if current_ts_format is None else ''
     return timestamp_formats
 
 

@@ -26,8 +26,8 @@ from json import JSONDecodeError
 from typing import List, Dict
 
 from datatools.json.util import to_jsonisable, dataclass_from_dict
-from datatools.jt.auto_metadata import infer_metadata, Metadata
-from datatools.jt.auto_presentation import infer_presentation
+from datatools.jt.auto_metadata import enrich_metadata, Metadata
+from datatools.jt.auto_presentation import enrich_presentation, Presentation
 from datatools.jt.auto_renderers import column_renderers
 from datatools.jt.data_bundle import DataBundle
 from datatools.jt.exit_codes_mapping import *
@@ -50,8 +50,7 @@ class Params:
 
 class App:
     g: WGrid
-    orig_data: List
-    state: Dict
+    data_bundle: DataBundle
 
     def __init__(self, app_id, g, data_bundle: DataBundle):
         self.app_id = app_id
@@ -106,16 +105,16 @@ def parse_params(argv):
 
 
 def grid(screen_size, data_bundle: DataBundle) -> WGrid:
-    column_keys = pick_displayed_columns(screen_size[0], data_bundle.metadata.columns, data_bundle.column_presentation_map)
+    column_keys = pick_displayed_columns(screen_size[0], data_bundle.metadata.columns, data_bundle.presentation.columns)
     column_titles: List[str] = [c for c in column_keys]
-    column_widths: List[int] = [data_bundle.column_presentation_map[c].max_length for c in column_keys]
+    column_widths: List[int] = [data_bundle.presentation.columns[c].max_length for c in column_keys]
 
     g = WGrid(
         screen_size[0], screen_size[1],
         column_widths, column_keys,
-        column_renderers(column_keys, data_bundle.column_presentation_map, data_bundle.metadata.columns).__getitem__,
+        column_renderers(column_keys, data_bundle.presentation.columns, data_bundle.metadata.columns).__getitem__,
         lambda line, column: data_bundle.orig_data[line].get(column_keys[column]),
-        data_bundle.title,
+        data_bundle.presentation.title,
         column_titles
     )
     g.total_lines = len(data_bundle.orig_data)
@@ -166,19 +165,19 @@ def load_data_bundle(params, orig_data):
     raw_presentation = read_fd_or_default(fd=FD_PRESENTATION_IN, default={})
     state = read_fd_or_default(fd=FD_STATE_IN, default=default_state())
 
+    metadata = dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata})
+    presentation = dataclass_from_dict(Presentation, raw_presentation, {'Presentation': Presentation})
     if params.title is not None:
-        raw_presentation["title"] = params.title
+        presentation.title = params.title
 
-    metadata = infer_metadata(orig_data, dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata}))
-    column_presentation_map = infer_presentation(orig_data, metadata.columns, raw_presentation)
-    return DataBundle(orig_data, metadata, column_presentation_map, state, raw_presentation.get("title"))
+    metadata = enrich_metadata(orig_data, metadata)
+    presentation = enrich_presentation(orig_data, metadata, presentation)
+    return DataBundle(orig_data, metadata, presentation, state)
 
 
 def store_data_bundle(data_bundle):
     write_fd_or_pass(FD_STATE_OUT, data_bundle.state)
-    raw_presentation = {}
-    raw_presentation["columns"] = data_bundle.column_presentation_map
-    write_fd_or_pass(FD_PRESENTATION_OUT, to_jsonisable(raw_presentation))
+    write_fd_or_pass(FD_PRESENTATION_OUT, to_jsonisable(data_bundle.presentation))
     write_fd_or_pass(FD_METADATA_OUT, to_jsonisable(data_bundle.metadata))
 
 
@@ -196,11 +195,6 @@ def router(app, exit_code):
         print(json.dumps(app.data_bundle.orig_data[app.data_bundle.state["cur_line"]]))
 
     return None
-
-
-def override(params, presentation):
-    if params.title is not None:
-        presentation["title"] = params.title
 
 
 if __name__ == "__main__":
