@@ -16,5 +16,5 @@ def test__infer_metadata0():
     assert series.stereotype == 'time_series'
     assert series.time_series_timestamp_field == 'ts'
     assert series.time_series_timestamp_format == '%Y-%m-%d'
-    assert series.time_series_timestamp_min == 1577826000.0
-    assert series.time_series_timestamp_max == 1578085200.0
+    assert series.min_value == 1577826000.0
+    assert series.max_value == 1578085200.0

@@ -69,8 +69,8 @@ def time_series_column(data_bundle: DataBundle):
 
 
 def nested_table_app(j):
-    metadata, column_metadata_map = infer_metadata(j, Metadata())
-    column_presentation_map = infer_presentation(j, column_metadata_map, {})
+    metadata = infer_metadata(j, Metadata())
+    column_presentation_map = infer_presentation(j, metadata.columns, {})
     data_bundle = DataBundle(j, metadata, column_presentation_map, default_state())
     screen_size = with_raw_terminal(read_screen_size)
     return App('jtng', grid(screen_size, data_bundle), data_bundle)

@@ -29,14 +29,14 @@ class WTimeSeriesStripesCellRenderer(WStripesSixelCellRenderer):
         self.color_mapping[...] = hash_to_rgb(0xFFFFFFFF, offset=128)    # default color
 
         self.bar, self.n_stripes, self.x_axis_amount_per_stripe = fit_time_bar(
-            self.column_metadata.time_series_timestamp_min,
-            self.column_metadata.time_series_timestamp_max, 128, 4)
+            self.column_metadata.min_value,
+            self.column_metadata.max_value, 128, 4)
 
     def __str__(self):
         return LEFT_BORDER + self.bar
 
     def to_color_list(self, value):
-        color_selectors = self.build_gutter(self.column_metadata.time_series_timestamp_min, value, self.n_stripes,
+        color_selectors = self.build_gutter(self.column_metadata.min_value, value, self.n_stripes,
                                             self.x_axis_amount_per_stripe,
                                             self.column_metadata.time_series_timestamp_field)
         return [self.color_mapping.get(sel, (0, 0, 0)) for sel in color_selectors]

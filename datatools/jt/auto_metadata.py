@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, Set
+from typing import Dict, Set, Any
 
 from datatools.json.util import is_primitive
 from datatools.util.time_series_util import time_series_list_summary
@@ -15,10 +15,10 @@ class ColumnMetadata:
     type: str = None
     multiline: bool = None
     stereotype: str = None
+    min_value: Any = None
+    max_value: Any = None
     time_series_timestamp_field: str = None
     time_series_timestamp_format: str = None
-    time_series_timestamp_min: float = None
-    time_series_timestamp_max: float = None
     metadata: 'Metadata' = None
 
     def contains_single_value(self):
@@ -32,10 +32,9 @@ class Metadata:
     timestamp_format: str = None
 
 
-def infer_metadata(data, metadata: Metadata):
-    raw_columns_metadata = metadata.columns
-    if raw_columns_metadata:
-        return metadata, raw_columns_metadata
+def infer_metadata(data, metadata: Metadata) -> Metadata:
+    if metadata.columns:
+        return metadata
 
     timestamp_formats = infer_metadata0(data, metadata.columns)
     good_timestamp_formats = [(k, v) for k, v in timestamp_formats.items() if v != '']
@@ -44,7 +43,7 @@ def infer_metadata(data, metadata: Metadata):
         metadata.timestamp_format = good_timestamp_formats[0][1]
 
     infer_metadata1(data, metadata.columns)
-    return metadata, metadata.columns
+    return metadata
 
 
 def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
@@ -91,21 +90,21 @@ def update_time_series_metadata(column_metadata: ColumnMetadata, descriptor):
         column_metadata.stereotype = 'time_series'
         column_metadata.time_series_timestamp_field = descriptor[0]
         column_metadata.time_series_timestamp_format = descriptor[1]
-        column_metadata.time_series_timestamp_min = descriptor[2]
-        column_metadata.time_series_timestamp_max = descriptor[3]
+        column_metadata.min_value = descriptor[2]
+        column_metadata.max_value = descriptor[3]
         return
 
     if column_metadata.stereotype == 'time_series'\
             and column_metadata.time_series_timestamp_field == descriptor[0]\
             and column_metadata.time_series_timestamp_format == descriptor[1]:
-        column_metadata.time_series_timestamp_min = min(descriptor[2], column_metadata.time_series_timestamp_min)
-        column_metadata.time_series_timestamp_max = max(descriptor[3], column_metadata.time_series_timestamp_max)
+        column_metadata.min_value = min(descriptor[2], column_metadata.min_value)
+        column_metadata.max_value = max(descriptor[3], column_metadata.max_value)
         return
 
     column_metadata.stereotype = 'unknown'
     column_metadata.time_series_timestamp_format = None
-    column_metadata.time_series_timestamp_min = None
-    column_metadata.time_series_timestamp_max = None
+    column_metadata.min_value = None
+    column_metadata.max_value = None
 
 
 def infer_metadata1(data, column_metadata_map):

@@ -169,8 +169,8 @@ def load_data_bundle(params, orig_data):
     if params.title is not None:
         raw_presentation["title"] = params.title
 
-    metadata, column_metadata_map = infer_metadata(orig_data, dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata}))
-    column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
+    metadata = infer_metadata(orig_data, dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata}))
+    column_presentation_map = infer_presentation(orig_data, metadata.columns, raw_presentation)
     return DataBundle(orig_data, metadata, column_presentation_map, state, raw_presentation.get("title"))
 
 
