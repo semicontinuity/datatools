@@ -3,7 +3,7 @@ import json
 
 from datatools.json2ansi.app import make_json2ansi_app
 from datatools.jt.app import App, main, init_from_state, default_state
-from datatools.jt.auto_metadata import infer_metadata
+from datatools.jt.auto_metadata import infer_metadata, Metadata
 from datatools.jt.auto_presentation import infer_presentation
 from datatools.jt.data_bundle import DataBundle
 from datatools.jt.exit_codes import *
@@ -13,7 +13,7 @@ from datatools.tui.terminal import with_raw_terminal, read_screen_size
 
 
 def grid(screen_size, data_bundle: DataBundle) -> WGrid:
-    column_keys, cell_renderers, row_renderers = column_renderers(data_bundle.column_metadata_map, data_bundle.column_presentation_map)
+    column_keys, cell_renderers, row_renderers = column_renderers(data_bundle.metadata.columns, data_bundle.column_presentation_map)
 
     def row_attrs(line):
         buffer = bytearray()
@@ -49,7 +49,7 @@ def router(app, exit_code):
         if exit_code == EXIT_CODE_CTRL_SPACE:
             sub_table_column = time_series_column(app.data_bundle)  # may be more than 1...
             if sub_table_column:
-                return sub_table_app(app.data_bundle.orig_data[app.data_bundle.state["cur_line"]][sub_table_column])
+                return nested_table_app(app.data_bundle.orig_data[app.data_bundle.state["cur_line"]][sub_table_column])
             else:
                 return make_json2ansi_app(app.data_bundle.orig_data[app.data_bundle.state["cur_line"]])
         if exit_code <= EXIT_CODE_BACKSPACE + EXIT_CODE_SHIFT + EXIT_CODE_CTRL + EXIT_CODE_ALT:  # max regular exit code
@@ -63,15 +63,15 @@ def router(app, exit_code):
 
 
 def time_series_column(data_bundle: DataBundle):
-    for name, metadata in data_bundle.column_metadata_map.items():
+    for name, metadata in data_bundle.metadata.columns.items():
         if metadata.stereotype == 'time_series':
             return name
 
 
-def sub_table_app(j):
-    column_metadata_map = infer_metadata(j, {})
+def nested_table_app(j):
+    metadata, column_metadata_map = infer_metadata(j, Metadata())
     column_presentation_map = infer_presentation(j, column_metadata_map, {})
-    data_bundle = DataBundle(j, column_metadata_map, column_presentation_map, default_state())
+    data_bundle = DataBundle(j, metadata, column_presentation_map, default_state())
     screen_size = with_raw_terminal(read_screen_size)
     return App('jtng', grid(screen_size, data_bundle), data_bundle)
 

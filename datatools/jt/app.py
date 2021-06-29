@@ -25,14 +25,14 @@ from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import List, Dict
 
-from datatools.json.util import to_jsonisable
-from datatools.jt.auto_metadata import infer_metadata
-from datatools.jt.auto_presentation import infer_presentation, ColumnPresentation
+from datatools.json.util import to_jsonisable, dataclass_from_dict
+from datatools.jt.auto_metadata import infer_metadata, Metadata
+from datatools.jt.auto_presentation import infer_presentation
 from datatools.jt.auto_renderers import column_renderers
+from datatools.jt.data_bundle import DataBundle
 from datatools.jt.exit_codes_mapping import *
 from datatools.jt.grid import WGrid
 from datatools.jt.pack_columns import pick_displayed_columns
-from datatools.jt.data_bundle import DataBundle
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import with_raw_terminal, read_screen_size, FD_TUI
@@ -106,14 +106,14 @@ def parse_params(argv):
 
 
 def grid(screen_size, data_bundle: DataBundle) -> WGrid:
-    column_keys = pick_displayed_columns(screen_size[0], data_bundle.column_metadata_map, data_bundle.column_presentation_map)
+    column_keys = pick_displayed_columns(screen_size[0], data_bundle.metadata.columns, data_bundle.column_presentation_map)
     column_titles: List[str] = [c for c in column_keys]
     column_widths: List[int] = [data_bundle.column_presentation_map[c].max_length for c in column_keys]
 
     g = WGrid(
         screen_size[0], screen_size[1],
         column_widths, column_keys,
-        column_renderers(column_keys, data_bundle.column_presentation_map, data_bundle.column_metadata_map).__getitem__,
+        column_renderers(column_keys, data_bundle.column_presentation_map, data_bundle.metadata.columns).__getitem__,
         lambda line, column: data_bundle.orig_data[line].get(column_keys[column]),
         data_bundle.title,
         column_titles
@@ -169,9 +169,9 @@ def load_data_bundle(params, orig_data):
     if params.title is not None:
         raw_presentation["title"] = params.title
 
-    column_metadata_map = infer_metadata(orig_data, raw_metadata)
+    metadata, column_metadata_map = infer_metadata(orig_data, dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata}))
     column_presentation_map = infer_presentation(orig_data, column_metadata_map, raw_presentation)
-    return DataBundle(orig_data, column_metadata_map, column_presentation_map, state, raw_presentation.get("title"))
+    return DataBundle(orig_data, metadata, column_presentation_map, state, raw_presentation.get("title"))
 
 
 def store_data_bundle(data_bundle):
@@ -179,10 +179,7 @@ def store_data_bundle(data_bundle):
     raw_presentation = {}
     raw_presentation["columns"] = data_bundle.column_presentation_map
     write_fd_or_pass(FD_PRESENTATION_OUT, to_jsonisable(raw_presentation))
-    raw_metadata = {}
-
-    raw_metadata["columns"] = data_bundle.column_metadata_map
-    write_fd_or_pass(FD_METADATA_OUT, to_jsonisable(raw_metadata))
+    write_fd_or_pass(FD_METADATA_OUT, to_jsonisable(data_bundle.metadata))
 
 
 def default_state():

@@ -1,16 +1,16 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Set
 
-from datatools.json.util import is_primitive, dataclass_from_dict
+from datatools.json.util import is_primitive
 from datatools.util.time_series_util import time_series_list_summary
 from datatools.util.time_util import infer_timestamp_format
 
 
 @dataclass
 class ColumnMetadata:
-    unique_values: Set[str]
-    non_unique_value_counts: Dict[str, int]
+    unique_values: Set[str] = field(default_factory=set)
+    non_unique_value_counts: Dict[str, int] = field(default_factory=dict)
     complex: bool = None
     type: str = None
     multiline: bool = None
@@ -19,24 +19,32 @@ class ColumnMetadata:
     time_series_timestamp_format: str = None
     time_series_timestamp_min: float = None
     time_series_timestamp_max: float = None
+    metadata: 'Metadata' = None
 
     def contains_single_value(self):
         return len(self.non_unique_value_counts) == 1
 
 
-def infer_metadata(data, raw_metadata):
-    raw_columns_metadata = raw_metadata.get("columns")
-    if raw_columns_metadata:
-        return {k: dataclass_from_dict(ColumnMetadata, v) for k, v in raw_columns_metadata.items()}
+@dataclass
+class Metadata:
+    columns: Dict[str, ColumnMetadata] = field(default_factory=lambda: defaultdict(lambda: ColumnMetadata(set(), {})))
+    timestamp_field: str = None
+    timestamp_format: str = None
 
-    column_metadata_map = defaultdict(lambda: ColumnMetadata(set(), {}))
-    timestamp_formats = infer_metadata0(data, column_metadata_map)
+
+def infer_metadata(data, metadata: Metadata):
+    raw_columns_metadata = metadata.columns
+    if raw_columns_metadata:
+        return metadata, raw_columns_metadata
+
+    timestamp_formats = infer_metadata0(data, metadata.columns)
     good_timestamp_formats = [(k, v) for k, v in timestamp_formats.items() if v != '']
     if len(good_timestamp_formats) == 1:
-        raw_metadata['timestamp_field'] = good_timestamp_formats[0][0]
-        raw_metadata['timestamp_format'] = good_timestamp_formats[0][1]
-    infer_metadata1(data, column_metadata_map)
-    return column_metadata_map
+        metadata.timestamp_field = good_timestamp_formats[0][0]
+        metadata.timestamp_format = good_timestamp_formats[0][1]
+
+    infer_metadata1(data, metadata.columns)
+    return metadata, metadata.columns
 
 
 def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
