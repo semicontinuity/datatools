@@ -46,6 +46,7 @@ class Params:
     title: str = None
     stream_mode: bool = None
     compact: bool = None
+    quit: bool = None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -108,6 +109,8 @@ def parse_params(argv):
             params.stream_mode = True
         elif sys.argv[a] == '-c':
             params.compact = True
+        elif sys.argv[a] == '-q':
+            params.quit = True
         a += 1
     return params
 
@@ -147,22 +150,29 @@ def main(app_id, app_f, g, router):
     patch_picotui(fd_tui, fd_tui)
 
     screen_size = with_raw_terminal(read_screen_size)
-    a = app_f(app_id, g(screen_size, data_bundle), data_bundle)
-    apps_stack = []
-    apps_stack.append(a)
-
     exit_code = 0
-    while True:
-        if not apps_stack:
-            break
-        the_app = apps_stack.pop()
-        exit_code = run(the_app.run)
-        new_app = router(the_app, exit_code)
-        if new_app is None:
-            continue
-        if new_app != the_app:
-            apps_stack.append(the_app)
-            apps_stack.append(new_app)
+
+    if params.quit:
+        screen_size = screen_size[0], len(data_bundle.orig_data) + 1
+        the_grid = g(screen_size, data_bundle)
+        the_grid.interactive = False
+        the_grid.redraw()
+    else:
+        the_grid = g(screen_size, data_bundle)
+        a = app_f(app_id, the_grid, data_bundle)
+        apps_stack = []
+        apps_stack.append(a)
+        while True:
+            if not apps_stack:
+                break
+            the_app = apps_stack.pop()
+            exit_code = run(the_app.run)
+            new_app = router(the_app, exit_code)
+            if new_app is None:
+                continue
+            if new_app != the_app:
+                apps_stack.append(the_app)
+                apps_stack.append(new_app)
 
     store_data_bundle(data_bundle)
     sys.exit(exit_code)

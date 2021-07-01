@@ -17,6 +17,12 @@ def cursor_position_restore():
     Screen.wr(b"\x1b8")
 
 
+def cursor_position_set(p):
+    y = p[0]
+    x = p[1]
+    Screen.wr(b"\x1b[%d;%dH" % (y + 1, x + 1))
+
+
 def cursor_up(n):
     cursor_move(b'A', n)
 
