@@ -1,15 +1,14 @@
 from typing import Optional
 
-from datatools.jt.themes import FOOTER_BG
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.exit_codes_mapping import KEYS_TO_EXIT_CODES
+from datatools.jt.themes import FOOTER_BG
 from datatools.jtng.cell_renderer import WCellRenderer
 from datatools.tui.ansi import ANSI_ATTR_OVERLINE
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2
-
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -18,13 +17,11 @@ class WGrid(WGridBase):
     search_str: str = ""
 
     def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f):
-        super().__init__(0, 0, width, height)
+        # last line not painted because of sixels (and footer)
+        super().__init__(width, height, 0, 1)
         self.column_count = column_count
         self.column_cell_renderer_f = column_cell_renderer_f
         self.cell_value_f = cell_value_f
-        self.y_top_offset = 0
-        self.y_bottom_offset = 1    # last line not painted because of sixels (and footer)
-        self.rows_view_height = self.height - self.y_top_offset - self.y_bottom_offset
         self.x_shift = 0
         self.row_attrs_f = row_attrs_f
 

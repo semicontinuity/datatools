@@ -17,7 +17,8 @@ class WGrid(WGridBase):
 
     def __init__(self, width, height, column_widths, column_keys, column_cell_renderer, cell_value_f, title,
                  column_titles):
-        super().__init__(0, 0, width, height)
+        # 2 chars for border line, headers line; 1 char for border line at the bottom
+        super().__init__(width, height, 2, 1)
         self.title = title
         self.column_titles = column_titles
         self.column_widths = [] if len(column_titles) == 0 else self.compute_column_widths(column_widths)
@@ -37,8 +38,6 @@ class WGrid(WGridBase):
         self.separator = V_SINGLE
         self.column_cell_renderer = column_cell_renderer
         self.cell_value_f = cell_value_f
-        self.y_top_offset = 2   # skip top border line, headers line
-        self.y_bottom_offset = 1   # skip border line at the bottom
 
     def show_line(self, line_content, line):
         raise AssertionError

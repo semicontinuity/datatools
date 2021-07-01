@@ -1,4 +1,5 @@
 from picotui.editor import Editor
+from picotui.screen import Screen
 
 from datatools.jt.exit_codes_mapping import *
 
@@ -7,6 +8,14 @@ class WGridBase(Editor):
     y_top_offset: int
     y_bottom_offset: int
     rows_view_height: int
+    interactive: bool = True
+
+    def __init__(self, width, height, y_top_offset, y_bottom_offset, interactive=True):
+        super().__init__(0, 0, width, height)
+        self.y_top_offset = y_top_offset
+        self.y_bottom_offset = y_bottom_offset
+        self.rows_view_height = self.height - self.y_top_offset - self.y_bottom_offset
+        self.interactive = interactive
 
     def handle_mouse(self, x, y):
         pass
@@ -86,6 +95,10 @@ class WGridBase(Editor):
             self.goto(self.x, (line - self.top_line) + self.y + self.y_top_offset)  # skip border line, headers line
             self.wr(self.render_line(line, self.cur_line == line))
             line += 1
+
+    def goto(self, x, y):
+        if self.interactive:
+            Screen.wr(b"\x1b[%d;%dH" % (y + 1, x + 1))
 
     def render_line(self, line, is_under_cursor):
         pass
