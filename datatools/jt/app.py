@@ -45,6 +45,7 @@ from datatools.util.conf import write_fd_or_pass, fd_exists, FD_STATE_OUT, FD_PR
 class Params:
     title: str = None
     stream_mode: bool = None
+    compact: bool = None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -73,8 +74,12 @@ class App:
 
 
 def load_data(params):
-    orig_data = []
+    return do_load_data(params)
+
+
+def do_load_data(params):
     if params.stream_mode:
+        orig_data = []
         while True:
             line = sys.stdin.readline()
             if not line:
@@ -101,6 +106,8 @@ def parse_params(argv):
             params.title = sys.argv[a]
         elif sys.argv[a] == "-s":
             params.stream_mode = True
+        elif sys.argv[a] == "-c":
+            params.compact = True
         a += 1
     return params
 

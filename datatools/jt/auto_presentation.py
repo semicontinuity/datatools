@@ -38,7 +38,7 @@ class Presentation:
 
     def clone(self):
         return Presentation(
-            {k: v.clone() for k, v in self.columns.items()},
+            defaultdict(ColumnPresentation, {k: v.clone() for k, v in self.columns.items()}),
             self.title
         )
 
@@ -66,7 +66,7 @@ def enrich_presentation(data, metadata: Metadata, presentation: Presentation) ->
                 column_presentation.coloring = infer_column_coloring(column_metadata, len(data))
                 column_presentation.collapsed = column_metadata.contains_single_value()
 
-    if discover_max_length:
+    if discover_columns or discover_max_length:
         for record in data:
             for key, value in record.items():
                 column_presentation = presentation.columns.get(key)
