@@ -106,7 +106,7 @@ def parse_params(argv):
             params.title = sys.argv[a]
         elif sys.argv[a] == "-s":
             params.stream_mode = True
-        elif sys.argv[a] == "-c":
+        elif sys.argv[a] == '-c':
             params.compact = True
         a += 1
     return params
@@ -173,6 +173,8 @@ def load_data_bundle(params, orig_data):
     raw_presentation = presentation_or_default(default={})
     state = state_or_default(default=default_state())
 
+    if len(raw_metadata) == 0 and len(raw_presentation) == 0 and params.compact:
+        orig_data = [{'_': orig_data}]
     metadata = dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata})
     presentation = dataclass_from_dict(Presentation, raw_presentation, {'Presentation': Presentation})
     if params.title is not None:
