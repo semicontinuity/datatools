@@ -3,6 +3,7 @@ from datatools.jt.auto_presentation import ColumnPresentation
 from datatools.jt.themes import COLORS2, ColorKey
 from datatools.jtng.cell_renderer import WCellRenderer
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
+from datatools.tui.picotui_util import cursor_forward_cmd, cursor_up_cmd
 from datatools.tui.sixel import sixel_append_set_color_register_cmd, sixel_append_start_cmd, sixel_append_stop_cmd, \
     sixel_append_use_color, sixel_append_repeated, sixel_append_lf
 from datatools.tui.terminal import set_colors_cmd_bytes2
@@ -50,16 +51,12 @@ class WStripesSixelCellRenderer(WCellRenderer):
                 index_from = 0 if start == 0 else start - 1
                 index_to = max_width - 2 if end == max_width else end - 1
 
-                buffer += b'\x1b[s'     # save cursor pos
-                # buffer += b' ' * (index_to - index_from)
-                # buffer += b'\x1b[u'   # restore cursor pos, because *$* terminal moves cursor to the next line
                 to = min(index_to, self.chars_required_for_stripes(length))
-
                 painted_chars = self.append_stripes(colors, index_from * self.stripes_per_char, to * self.stripes_per_char, buffer)
-                buffer += b'\x1b[u'     # restore cursor pos, because *$* terminal moves cursor to the next line
+                buffer += cursor_up_cmd(1)  # restore cursor pos, because *$* terminal moves cursor to the next line
 
                 if painted_chars > 0:
-                    buffer += b'\x1b[' + bytes(str(painted_chars), 'ascii') + b'C'  # cursor forward (skip stripes)
+                    buffer += cursor_forward_cmd(painted_chars)  # skip stripes
                 if painted_chars < index_to:
                     buffer += b' ' * (index_to - max(index_from, painted_chars))
             if end == max_width:

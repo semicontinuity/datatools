@@ -155,6 +155,7 @@ def main(app_id, app_f, g, router):
     if params.quit:
         screen_size = screen_size[0], len(data_bundle.orig_data) + 1
         the_grid = g(screen_size, data_bundle)
+        the_grid.cur_line = -1
         the_grid.interactive = False
         the_grid.redraw()
     else:

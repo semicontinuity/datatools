@@ -24,23 +24,39 @@ def cursor_position_set(p):
 
 
 def cursor_up(n):
-    cursor_move(b'A', n)
+    Screen.wr(cursor_up_cmd(n))
+
+
+def cursor_up_cmd(n):
+    return cursor_move_cmd(b'A', n)
 
 
 def cursor_down(n):
-    cursor_move(b'B', n)
+    Screen.wr(cursor_down_cmd(n))
+
+
+def cursor_down_cmd(n):
+    return cursor_move_cmd(b'B', n)
 
 
 def cursor_forward(n):
-    cursor_move(b'C', n)
+    Screen.wr(cursor_forward_cmd(n))
+
+
+def cursor_forward_cmd(n):
+    return cursor_move_cmd(b'C', n)
 
 
 def cursor_backward(n):
-    cursor_move(b'D', n)
+    Screen.wr(cursor_backward_cmd(n))
 
 
-def cursor_move(where, n):
-    Screen.wr(b"\x1b[" + bytes(n) + where)
+def cursor_backward_cmd(n):
+    return cursor_move_cmd(b'D', n)
+
+
+def cursor_move_cmd(where, n):
+    return b"\x1b[%d%s" % (n, where)
 
 
 def scroll_region(top_row: int, bottom_row: int):
