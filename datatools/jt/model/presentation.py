@@ -50,7 +50,7 @@ class ColumnRenderer:
 class ColumnPresentation:
     title: str = None
     contents: 'Presentation' = None
-    renderers: List[ColumnRenderer] = field(default_factory=lambda: list)
+    renderers: List[ColumnRenderer] = field(default_factory=list)
 
     def clone(self):
         return ColumnPresentation(
