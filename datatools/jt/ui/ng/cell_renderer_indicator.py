@@ -1,12 +1,13 @@
 from typing import Any
 
-from datatools.jt.model.presentation import ColumnPresentation
-from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.jt.model.attributes import MASK_ROW_CURSOR
+from datatools.jt.model.presentation import ColumnPresentation
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
 from datatools.tui.coloring import decode_rgb, is_color_value
+from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
 
 
@@ -17,6 +18,8 @@ class WIndicatorCellRenderer(WColumnRenderer):
         coloring = column_presentation.get_renderer().coloring
         if is_color_value(coloring):
             self.bg = decode_rgb(coloring[1:])
+        else:
+            self.bg = hash_to_rgb(hash_code(column_presentation.title), offset=64)
 
     def __len__(self):
         return 1
@@ -33,6 +36,6 @@ class WIndicatorCellRenderer(WColumnRenderer):
         return buffer
 
     def bg_color(self, value):
-        if self.bg is not None and value is not None:
+        if value is not None:
             return self.bg
         return COLORS2[ColorKey.TEXT][0] if value is not None else COLORS2[ColorKey.BOX_DRAWING][1]
