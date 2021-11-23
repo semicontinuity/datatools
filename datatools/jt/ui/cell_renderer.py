@@ -2,12 +2,6 @@ from datatools.tui.box_drawing_chars import LEFT_BORDER
 
 
 class WColumnRenderer:
-    def toggle(self):
-        """
-        To be deleted
-        """
-        pass
-
     def assistant(self):
         pass
 

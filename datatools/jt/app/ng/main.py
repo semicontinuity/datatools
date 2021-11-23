@@ -38,7 +38,7 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
     g = WGrid(
         screen_size[0], screen_size[1],
         len(cell_renderers),
-        cell_renderers.__getitem__,
+        lambda i: cell_renderers[i],
         cell_value,
         row_attrs
     )

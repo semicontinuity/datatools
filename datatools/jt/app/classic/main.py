@@ -22,10 +22,12 @@ import json
 from typing import List
 
 from datatools.jt.app.app_kit import Applet, main
+from datatools.jt.app.classic.pack_columns import pick_displayed_columns
 from datatools.jt.logic.auto_column_renderers import column_renderers
 from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE
+from datatools.jt.model.exit_codes import EXIT_CODE_MAX_REGULAR, exit_code_key_has_modifier, EXIT_CODE_SHIFT, \
+    EXIT_CODE_ESCAPE
 from datatools.jt.ui.classic.grid import WGrid
-from datatools.jt.app.classic.pack_columns import pick_displayed_columns
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -34,7 +36,7 @@ from datatools.jt.app.classic.pack_columns import pick_displayed_columns
 def grid(screen_size, data_bundle: DataBundle) -> WGrid:
     column_keys = pick_displayed_columns(screen_size[0], data_bundle.metadata.columns, data_bundle.presentation.columns)
     column_titles: List[str] = [c for c in column_keys]
-    column_widths: List[int] = [data_bundle.presentation.columns[c].get_renderer().max_content_width for c in column_keys]
+    column_widths: List[int] = [data_bundle.presentation.columns[c].renderers[0].max_content_width for c in column_keys]
 
     g = WGrid(
         screen_size[0], screen_size[1],
@@ -59,7 +61,7 @@ def init_from_state(g, state):
 
 
 def app_router(app, exit_code):
-    if exit_code <= EXIT_CODE_BACKSPACE + EXIT_CODE_SHIFT + EXIT_CODE_CTRL + EXIT_CODE_ALT:  # max regular exit code
+    if exit_code <= EXIT_CODE_MAX_REGULAR:
         if exit_code_key_has_modifier(exit_code, EXIT_CODE_SHIFT):
             print(json.dumps(app.data_bundle.orig_data))
             return None

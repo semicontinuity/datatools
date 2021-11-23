@@ -1,14 +1,24 @@
+from dataclasses import dataclass
 from typing import Dict
 
-from datatools.jt.model.metadata import ColumnMetadata
-from datatools.jt.model.presentation import ColumnPresentation
-from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.jt.model.attributes import MASK_ROW_CURSOR
+from datatools.jt.model.column_state import ColumnState
+from datatools.jt.model.metadata import ColumnMetadata
+from datatools.jt.model.presentation import ColumnPresentation, ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
+
+
+@dataclass
+class ColumnRendererDictIndexHashColored(ColumnRenderer):
+    type = 'dict-index-hash-colored'
+
+    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: 'ColumnPresentation', column_state: ColumnState):
+        return WDictIndexCellRenderer(column_metadata, column_presentation)
 
 
 class WDictIndexCellRenderer(WColumnRenderer):

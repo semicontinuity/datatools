@@ -1,30 +1,37 @@
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
+from datatools.jt.model.column_state import ColumnState
 from datatools.jt.model.metadata import ColumnMetadata
-from datatools.jt.model.presentation import ColumnPresentation
+from datatools.jt.model.presentation import ColumnPresentation, ColumnRenderer
 from datatools.jt.ui.ng.cell_renderer_stripes_sixel import WStripesSixelCellRenderer
 from datatools.tui.box_drawing_chars import LEFT_BORDER
 from datatools.tui.coloring import hash_to_rgb, decode_rgb
 from datatools.util.time_bar_util import fit_time_bar
 
 
+@dataclass
+class ColumnRendererStripesTimeSeries(ColumnRenderer):
+    type = 'stripes-time-series'
+    coloring: Any = None
+
+    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: 'ColumnPresentation', column_state: ColumnState):
+        return WTimeSeriesStripesCellRenderer(column_metadata, column_presentation, self, column_state)
+
+
 class WTimeSeriesStripesCellRenderer(WStripesSixelCellRenderer):
     color_selector_weights: Dict
     color_selector_column: Optional[str]
 
-    def __init__(
-            self,
-            column_metadata: ColumnMetadata, column_presentation: ColumnPresentation,
-            max_content_width, column_state):
-        super().__init__(column_metadata, column_presentation, max_content_width, column_state)
+    def __init__(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_renderer: ColumnRendererStripesTimeSeries, column_state: ColumnState):
+        super().__init__(column_metadata, column_presentation, column_renderer, column_state)
 
-        renderer = self.column_presentation.get_renderer()
-        if type(renderer.coloring) is dict:
-            self.color_selector_weights = renderer.coloring['weights']
-            self.color_selector_column = renderer.coloring['column']
+        if type(column_renderer.coloring) is dict:
+            self.color_selector_weights = column_renderer.coloring['weights']
+            self.color_selector_column = column_renderer.coloring['column']
             self.color_mapping = {
-                value: decode_rgb(color[1:]) for value, color in renderer.coloring['colors'].items()
+                value: decode_rgb(color[1:]) for value, color in column_renderer.coloring['colors'].items()
             }
         else:
             self.color_selector_weights = {}

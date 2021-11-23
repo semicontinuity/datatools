@@ -56,12 +56,11 @@ def dataclass_from_dict(klass, d, klass_map = None):
             return r
 
     try:
-        fieldtypes = {f.name:f.type for f in dataclasses.fields(klass)}
-        res = {}
-        for f in d:
-            val = dataclass_from_dict(fieldtypes[f], d[f], klass_map)
-            res[f] = val
-
+        if "type" in d:
+            klass = klass_map[d["type"]]
+        fieldtypes = {f.name: f.type for f in dataclasses.fields(klass)}
+        res = {f: dataclass_from_dict(fieldtypes[f], d[f], klass_map) for f, v in d.items() if f != 'type'}
         return klass(**res)
     except:
+        # 'regular' case when d is not dataclass (code!)
         return d

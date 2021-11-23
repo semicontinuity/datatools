@@ -1,7 +1,8 @@
+from datatools.jt.model.column_state import ColumnState
 from datatools.jt.model.metadata import ColumnMetadata
-from datatools.jt.model.presentation import ColumnPresentation
-from datatools.jt.ui.themes import COLORS2, ColorKey
+from datatools.jt.model.presentation import ColumnPresentation, ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
 from datatools.tui.picotui_util import cursor_forward_cmd, cursor_up_cmd
 from datatools.tui.sixel import sixel_append_set_color_register_cmd, sixel_append_start_cmd, sixel_append_stop_cmd, \
@@ -14,8 +15,8 @@ class WStripesSixelCellRenderer(WColumnRenderer):
     SIXELS_PER_STRIPE: int = 2   # characters are assumed to be 20x10 by sixel-compatible terminals
     STRIPES_PER_CHAR = SIXELS_PER_CHAR // SIXELS_PER_STRIPE
 
-    def __init__(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, max_content_width, column_state):
-        self.max_content_width = max_content_width
+    def __init__(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_renderer: ColumnRenderer, column_state: ColumnState):
+        self.max_content_width = column_renderer.max_content_width
         self.column_metadata = column_metadata
         self.column_presentation = column_presentation
         self.state = column_state

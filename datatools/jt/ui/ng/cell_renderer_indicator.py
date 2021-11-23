@@ -1,7 +1,10 @@
+from dataclasses import dataclass
 from typing import Any
 
 from datatools.jt.model.attributes import MASK_ROW_CURSOR
-from datatools.jt.model.presentation import ColumnPresentation
+from datatools.jt.model.column_state import ColumnState
+from datatools.jt.model.metadata import ColumnMetadata
+from datatools.jt.model.presentation import ColumnPresentation, ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
@@ -11,15 +14,21 @@ from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
 
 
+@dataclass
+class ColumnRendererIndicator(ColumnRenderer):
+    type = 'indicator'
+    color: str = None
+
+    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_state: ColumnState):
+        return WIndicatorCellRenderer(self)
+
+
 class WIndicatorCellRenderer(WColumnRenderer):
     bg: Any = None
 
-    def __init__(self, column_presentation: ColumnPresentation):
-        coloring = column_presentation.get_renderer().coloring
-        if is_color_value(coloring):
-            self.bg = decode_rgb(coloring[1:])
-        else:
-            self.bg = hash_to_rgb(hash_code(column_presentation.title), offset=64)
+    def __init__(self, column_renderer: ColumnRendererIndicator):
+        if is_color_value(column_renderer.color):
+            self.bg = decode_rgb(column_renderer.color[1:])
 
     def __len__(self):
         return 1
@@ -36,6 +45,13 @@ class WIndicatorCellRenderer(WColumnRenderer):
         return buffer
 
     def bg_color(self, value):
-        if value is not None:
+        if value is None:
+            return None
+
+        if self.bg is None:
+            if type(value) is dict or type(value) is list:
+                return self.bg
+            else:
+                return hash_to_rgb(hash_code(value), offset=64)
+        else:
             return self.bg
-        return COLORS2[ColorKey.TEXT][0] if value is not None else COLORS2[ColorKey.BOX_DRAWING][1]

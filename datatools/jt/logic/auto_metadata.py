@@ -7,17 +7,17 @@ from datatools.util.time_util import infer_timestamp_format
 
 
 def enrich_metadata(data, metadata: Metadata) -> Metadata:
-    # if metadata.columns:
-    #     return metadata
+    infer_metadata_time_fields(data, metadata)
+    infer_metadata1(data, metadata.columns)
+    return metadata
 
+
+def infer_metadata_time_fields(data, metadata):
     timestamp_formats = infer_metadata0(data, metadata.columns)
     good_timestamp_formats = [(k, v) for k, v in timestamp_formats.items() if v != '']
     if len(good_timestamp_formats) == 1:
         metadata.timestamp_field = good_timestamp_formats[0][0]
         metadata.timestamp_format = good_timestamp_formats[0][1]
-
-    infer_metadata1(data, metadata.columns)
-    return metadata
 
 
 def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
@@ -44,7 +44,7 @@ def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
                 if column_metadata.stereotype is None or column_metadata.stereotype == STEREOTYPE_TIME_SERIES:
                     if column_metadata.metadata is None:    # Ersatz
                         column_metadata.metadata = Metadata()
-                        infer_metadata0(value, column_metadata.metadata.columns)
+                        infer_metadata_time_fields(value, column_metadata.metadata)
 
                     descriptor = time_series_list_summary(value)
                     if descriptor is not None:

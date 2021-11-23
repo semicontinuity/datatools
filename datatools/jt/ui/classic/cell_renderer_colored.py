@@ -24,7 +24,7 @@ class WColoredTextCellRenderer:
     def compute_cell_attrs(self, text) -> Sequence[int]:
         text_colors = COLORS[ColorKey.TEXT]
 
-        coloring = self.column_presentation.get_renderer().coloring
+        coloring = self.column_presentation.renderers[0].coloring
         if coloring == COLORING_NONE or (
                 coloring == COLORING_HASH_FREQUENT and text in self.column_metadata.unique_values):
             return text_colors

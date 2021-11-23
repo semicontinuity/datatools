@@ -16,6 +16,11 @@ from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.classic.grid import WGrid
+from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash
+from datatools.jt.ui.ng.cell_renderer_dict_index import ColumnRendererDictIndexHashColored
+from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
+from datatools.jt.ui.ng.cell_renderer_stripes_hashes import ColumnRendererStripesHashColored
+from datatools.jt.ui.ng.cell_renderer_stripes_time_series import ColumnRendererStripesTimeSeries
 from datatools.tui.picotui_patch import get_screen_size, patch_picotui
 from datatools.tui.picotui_util import with_raw_term, screen_unprepare, screen_prepare
 from datatools.tui.terminal import with_raw_terminal
@@ -134,7 +139,19 @@ def load_data_bundle(params: Params, orig_data: List):
     if len(raw_metadata) == 0 and len(raw_presentation) == 0 and params.compact:
         orig_data = [{'_': orig_data}]
     metadata = dataclass_from_dict(Metadata, raw_metadata, {'Metadata': Metadata})
-    presentation = dataclass_from_dict(Presentation, raw_presentation, {'Presentation': Presentation})
+    presentation = dataclass_from_dict(
+        Presentation,
+        raw_presentation,
+        {
+            'Presentation': Presentation,
+            ColumnRendererColoredPlain.type: ColumnRendererColoredPlain,
+            ColumnRendererColoredHash.type: ColumnRendererColoredHash,
+            ColumnRendererDictIndexHashColored.type: ColumnRendererDictIndexHashColored,
+            ColumnRendererIndicator.type: ColumnRendererIndicator,
+            ColumnRendererStripesTimeSeries.type: ColumnRendererStripesTimeSeries,
+            ColumnRendererStripesHashColored.type: ColumnRendererStripesHashColored
+        }
+    )
     if params.title is not None:
         presentation.title = params.title
 
