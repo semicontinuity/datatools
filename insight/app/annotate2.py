@@ -13,7 +13,7 @@ from insight.tiered_data_frame import TieredDataFrame
 from insight.util.itertools import matching_sub_sequences, collapse_repeats
 
 MSG_KIND_COLUMN = os.getenv('MSG_KIND_COLUMN')
-MSG_KIND_COLUMN = 'hash' if MSG_KIND_COLUMN is None else MSG_KIND_COLUMN
+MSG_KIND_COLUMN = 'msg_kind' if MSG_KIND_COLUMN is None else MSG_KIND_COLUMN
 
 
 def main_for_json(base_folder: str, out_resource_name: str):

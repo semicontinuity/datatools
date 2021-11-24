@@ -10,6 +10,7 @@ import pandas as pd
 class TieredDataFrame:
 
     schema_tiers: List
+    node_df: pd.DataFrame
 
     def __init__(self, base_folder, name, schema_tiers=None, node_df=None, leaves=None, fmt=None):
         self.base_folder = base_folder
@@ -99,6 +100,14 @@ class TieredDataFrame:
             return self.node_df
         index = int(path[0], 16)
         return self.leaves[index].resolve_df(path[1:])
+
+    def to_nested_json(self):
+        j = self.node_df.to_json(orient='records')
+        jj = json.loads(j)
+        if len(self.leaves) > 0:
+            for i, entry in enumerate(jj):
+                entry['_'] = self.leaves[i].to_nested_json()
+        return jj
 
     def __len__(self):
         return len(self.node_df)
