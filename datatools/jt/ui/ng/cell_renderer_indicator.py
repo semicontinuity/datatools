@@ -46,7 +46,7 @@ class WIndicatorCellRenderer(WColumnRenderer):
 
     def bg_color(self, value):
         if value is None:
-            return None
+            return COLORS2[ColorKey.BOX_DRAWING][1]
 
         if self.bg is None:
             if type(value) is dict or type(value) is list:
