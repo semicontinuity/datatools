@@ -4,6 +4,8 @@ from typing import Optional
 
 def hash_code(s):
     """ Consistent hash """
+    if type(s) is int:
+        return s
     hh = 0
     for c in s:
         hh = (31 * hh + ord(c)) % 4294967296

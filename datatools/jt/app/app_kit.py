@@ -173,12 +173,18 @@ def default_state():
 def load_data(params: Params):
     if params.stream_mode:
         orig_data = []
+        i = 0
         while True:
             line = sys.stdin.readline()
             if not line:
                 break
-            j = json.loads(line)
+            try:
+                j = json.loads(line)
+            except JSONDecodeError:
+                print(f"Cannot decode JSON line {i}: {line}", file=sys.stderr)
+                sys.exit(255)
             orig_data.append(j)
+            i += 1
         return orig_data
     else:
         data = sys.stdin.read()
