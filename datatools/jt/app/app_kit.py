@@ -16,7 +16,8 @@ from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.classic.grid import WGrid
-from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash
+from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
+    ColumnRendererColoredMapping
 from datatools.jt.ui.ng.cell_renderer_dict_index import ColumnRendererDictIndexHashColored
 from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
 from datatools.jt.ui.ng.cell_renderer_stripes_hashes import ColumnRendererStripesHashColored
@@ -146,6 +147,7 @@ def load_data_bundle(params: Params, orig_data: List):
             'Presentation': Presentation,
             ColumnRendererColoredPlain.type: ColumnRendererColoredPlain,
             ColumnRendererColoredHash.type: ColumnRendererColoredHash,
+            ColumnRendererColoredMapping.type: ColumnRendererColoredMapping,
             ColumnRendererDictIndexHashColored.type: ColumnRendererDictIndexHashColored,
             ColumnRendererIndicator.type: ColumnRendererIndicator,
             ColumnRendererStripesTimeSeries.type: ColumnRendererStripesTimeSeries,

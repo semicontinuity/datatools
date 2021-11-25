@@ -2,12 +2,12 @@ from math import sqrt
 
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation, COLORING_NONE, COLORING_HASH_ALL, COLORING_HASH_FREQUENT
-from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash
+from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
+    ColumnRendererColoredMapping
 from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
 from datatools.jt.ui.ng.cell_renderer_stripes_hashes import ColumnRendererStripesHashColored
 from datatools.jt.ui.ng.cell_renderer_stripes_time_series import ColumnRendererStripesTimeSeries
 from datatools.tui.coloring import hash_code, hash_to_rgb
-from datatools.util.logging import debug
 from datatools.util.time_bar_util import fit_time_bar
 
 POPULATED_RATIO = 0.66
@@ -22,7 +22,6 @@ def enrich_presentation(data, metadata: Metadata, presentation: Presentation) ->
         return presentation
 
     presentation = presentation.clone()
-
 
     if discover_columns:
         for key, column_metadata in metadata.columns.items():
@@ -79,7 +78,7 @@ def enrich_presentation(data, metadata: Metadata, presentation: Presentation) ->
                         if sub_presentation is None:
                             column_presentation.contents = enrich_presentation(value, metadata.columns[key].metadata, Presentation())
                     else:
-                        if type(column_renderer) is ColumnRendererColoredPlain or type(column_renderer) is ColumnRendererColoredHash:
+                        if type(column_renderer) is ColumnRendererColoredPlain or type(column_renderer) is ColumnRendererColoredHash or type(column_renderer) is ColumnRendererColoredMapping:
                             value_as_string = '' if value is None else str(value)  # quick and dirty
                             column_renderer.max_content_width = max(column_renderer.max_content_width or 0, len(value_as_string))
 

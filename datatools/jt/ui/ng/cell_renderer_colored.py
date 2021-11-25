@@ -33,7 +33,7 @@ class ColumnRendererColoredMapping(ColumnRendererColoredPlain):
     colorMap: Dict[str, str] = None
 
     def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_state: ColumnState):
-        return WColoredTextCellRendererPlain(column_metadata, column_presentation, self)
+        return WColoredTextCellRendererMapping(column_metadata, column_presentation, self)
 
 
 @dataclass
