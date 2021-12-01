@@ -2,7 +2,7 @@ from typing import AnyStr
 
 from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_cross_column_attrs, hash_to_rgb_dark, \
     hash_code
-from datatools.json.json2ansi_buffer import Buffer
+from datatools.tui.json2ansi_buffer import Buffer
 from datatools.json.structure_discovery import *
 from datatools.tui.box_drawing_chars import LEFT_BORDER
 from datatools.util.logging import stderr_print
@@ -213,6 +213,7 @@ class TextCell(Block):
             if self.bg is not None:
                 buffer.draw_bg_colors_box(self.x, self.y, self.width, self.height, *self.bg)
 
+        # TODO: if border is off, visual artifacts appear - Table node should paint its grid
         # top border
         if self.border_style.top:
             buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
@@ -297,7 +298,7 @@ class CompositeTableNode(RegularTable):
         super().paint(buffer)   # contents
 
     def paint_border(self, buffer):
-        # top border (in case there is no contents that normally paints the border)
+        # top border (for the case, when there is no content that paints its border)
         if AnsiToolkit.instance.style.table.top:
             buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 

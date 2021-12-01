@@ -3,7 +3,7 @@
 import json
 import sys
 
-from datatools.json.json2ansi_buffer import Buffer
+from datatools.tui.json2ansi_buffer import Buffer
 from datatools.json.json2ansi_toolkit import Style, AnsiToolkit
 from datatools.json.structure_discovery import Discovery
 from datatools.json2ansi.default_style import default_style
