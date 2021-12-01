@@ -21,9 +21,13 @@ def stderr_print(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr)
 
 
-def debug(*args, **kwargs):
-    if DEBUG:
-        print(*args, **kwargs, file=DEBUG_FILE)
+def debug(msg, **kwargs):
+    if DEBUG == 'json':
+        j = {k: to_jsonisable(v) for k, v in kwargs.items()}
+        j["message"] = msg
+        print(json.dumps(j), file=DEBUG_FILE)
+    elif DEBUG:
+        print(msg, **kwargs, file=DEBUG_FILE)
 
 
 def trace(value, title=''):

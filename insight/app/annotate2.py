@@ -201,7 +201,7 @@ def annotate_group(tg_row, tg_tdf):
     transition_cliques_values = {frozenset(e) for e in transition_cliques.values()}
     for clique in set(transition_cliques_values):
         non_milestone_string_code = hash_code_hex8(hash(frozenset(clique)))
-        debug(non_milestone_string_code, clique)
+        debug(non_milestone_string_code, clique='clique')
         for item in clique:
             non_milestone_codes[item] = non_milestone_string_code
     debug('Computing co-occurrence codes')
