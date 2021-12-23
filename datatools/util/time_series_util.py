@@ -40,6 +40,9 @@ def time_series_list_summary(data) -> Optional[Tuple]:
 
     good = [(k, v) for k, v in summaries.items() if v is not ...]
 
+    if len(good) == 0:
+        return None
+
     # In real-world data there were 2 different time formats in the dataset...
 
     # if len(good) != 1:
