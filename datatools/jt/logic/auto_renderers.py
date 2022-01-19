@@ -49,6 +49,8 @@ def renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presentatio
 
         column_keys.append(column_key)
         column_delegates = []
+        if not column_presentation.renderers:
+            raise ValueError(f'No renderers for {column_key}')
         for column_renderer in column_presentation.renderers:
             column_delegates.append(column_renderer.make_delegate(column_metadata, column_presentation, ColumnState(False)))
 

@@ -10,7 +10,7 @@ from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_renderers import renderers
 from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR_LINE_Y
-from datatools.jt.model.metadata import Metadata
+from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.ng.grid import WGrid
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
@@ -76,7 +76,7 @@ def app_router(applet, exit_code):
 
 def time_series_column(data_bundle: DataBundle):
     for name, metadata in data_bundle.metadata.columns.items():
-        if metadata.stereotype == 'time_series':
+        if metadata.stereotype == STEREOTYPE_TIME_SERIES:
             return name
 
 

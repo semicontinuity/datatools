@@ -1,6 +1,6 @@
 from math import sqrt
 
-from datatools.jt.model.metadata import Metadata
+from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation, COLORING_NONE, COLORING_HASH_ALL, COLORING_HASH_FREQUENT
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
     ColumnRendererColoredMapping
@@ -36,11 +36,11 @@ def enrich_presentation(data, metadata: Metadata, presentation: Presentation) ->
                 column_presentation.separator = True
                 continue
 
-            if column_metadata.type == 'list' and (column_metadata.stereotype == 'hashes' or column_metadata.stereotype == 'time_series'):
+            if column_metadata.type == 'list' and (column_metadata.stereotype == 'hashes' or column_metadata.stereotype == STEREOTYPE_TIME_SERIES):
                 # assume that all lists are stripes for now
                 if column_metadata.stereotype == 'hashes':
                     column_renderer = ColumnRendererStripesHashColored()
-                elif column_metadata.stereotype == 'time_series':
+                elif column_metadata.stereotype == STEREOTYPE_TIME_SERIES:
                     column_renderer = ColumnRendererStripesTimeSeries()
                 else:
                     column_renderer = ColumnRendererIndicator()

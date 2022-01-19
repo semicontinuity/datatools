@@ -2,7 +2,7 @@ import datetime
 from collections import defaultdict
 
 from datatools.jt.logic.auto_metadata import infer_metadata0, enrich_metadata
-from datatools.jt.model.metadata import ColumnMetadata, Metadata
+from datatools.jt.model.metadata import ColumnMetadata, Metadata, STEREOTYPE_TIME_SERIES
 
 
 def test__infer_metadata0():
@@ -15,7 +15,7 @@ def test__infer_metadata0():
     infer_metadata0(data, column_metadata_map)
 
     series = column_metadata_map['series']
-    assert series.stereotype == 'time_series'
+    assert series.stereotype == STEREOTYPE_TIME_SERIES
     assert series.time_series_timestamp_field == 'ts'
     assert series.time_series_timestamp_format == '%Y-%m-%d'
     assert series.min_value == datetime.datetime.strptime("2020-01-01", '%Y-%m-%d').timestamp()
@@ -32,7 +32,7 @@ def test__infer_metadata1():
     infer_metadata0(data, column_metadata_map)
 
     series = column_metadata_map['series']
-    assert series.stereotype == 'time_series'
+    assert series.stereotype == STEREOTYPE_TIME_SERIES
     assert series.time_series_timestamp_field == 'ts'
     assert series.time_series_timestamp_format == '%Y-%m-%dT%H:%M:%S.%f%z'
     assert series.min_value == datetime.datetime.strptime("2020-01-01T00:00:00.000Z", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()
