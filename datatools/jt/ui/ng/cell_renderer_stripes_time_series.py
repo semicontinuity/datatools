@@ -31,7 +31,7 @@ class WTimeSeriesStripesCellRenderer(WStripesSixelCellRenderer):
             self.color_selector_weights = column_renderer.coloring['weights']
             self.color_selector_column = column_renderer.coloring['column']
             self.color_mapping = {
-                value: decode_rgb(color[1:]) for value, color in column_renderer.coloring['colors'].items()
+                value: decode_rgb(color[1:]) for value, color in column_renderer.coloring['colorMap'].items()
             }
         else:
             self.color_selector_weights = {}
