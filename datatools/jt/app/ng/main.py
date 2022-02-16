@@ -8,7 +8,7 @@ from datatools.jt.app.classic.main import init_from_state
 from datatools.jt.model.exit_codes import *
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
-from datatools.jt.logic.auto_renderers import renderers
+from datatools.jt.logic.auto_renderers import make_renderers
 from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR_LINE_Y
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
@@ -19,7 +19,7 @@ LEAF_CONTENTS_APPLET_STYLE = default_style([48, 40, 24])
 
 
 def grid(screen_size, data_bundle: DataBundle) -> WGrid:
-    column_keys, cell_renderers, row_renderers = renderers(data_bundle.metadata.columns, data_bundle.presentation.columns)
+    column_keys, cell_renderers, row_renderers = make_renderers(data_bundle.metadata.columns, data_bundle.presentation.columns)
 
     def row_attrs(line):
         attrs = 0

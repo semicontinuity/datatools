@@ -33,7 +33,7 @@ class WMultiRenderer(WColumnRenderer):
         return self.delegates[self.current]
 
 
-def renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presentation_map: Dict[str, ColumnPresentation]):
+def make_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presentation_map: Dict[str, ColumnPresentation]):
     column_keys = []
     cell_renderers = []
     row_renderers = {}

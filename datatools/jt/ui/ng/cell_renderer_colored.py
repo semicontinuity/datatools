@@ -59,6 +59,8 @@ class WColoredTextCellRenderer(WColumnRenderer):
         return LEFT_BORDER + self.column_presentation.title if self.column_presentation.title else LEFT_BORDER
 
     def __len__(self):
+        if self.column_renderer.max_content_width is None:
+            return 0    # Declared in presentation file, but never occurring in the data
         return self.column_renderer.max_content_width + 2
 
     def __call__(self, row_attrs, max_width, start, end, value, assistant_value) -> bytes:
