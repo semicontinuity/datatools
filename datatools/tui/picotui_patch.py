@@ -67,6 +67,7 @@ def screen_size_or_default(*args):
 
 
 def cursor_position():
+    """ cursor_y, cursor_x """
     wr(b"\x1b[6n")
     import select
     res = select.select([FD_IN], [], [], 0.05)[0]
@@ -82,6 +83,7 @@ def cursor_position():
 def isatty():
     import os
     return os.isatty(FD_OUT)
+
 
 def init_tty(*args):
     import tty, termios

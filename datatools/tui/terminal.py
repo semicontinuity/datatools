@@ -1,5 +1,6 @@
 from typing import Tuple, List
 
+from datatools.tui.picotui_patch import isatty, cursor_position
 from datatools.tui.tui_fd import FD_TUI_IN, FD_TUI_OUT
 
 TCAP_132_COLUMNS = 1
@@ -35,6 +36,18 @@ def read_screen_size():
     assert resp.startswith(b"\x1b[8;") and resp[-1:] == b"t"
     parts = resp[:-1].split(b";")
     return int(parts[2]), int(parts[1])
+
+
+def screen_size_or_default(default=(1000, 10000)):
+    if isatty():
+        return with_raw_terminal(read_screen_size)
+    return default
+
+
+def cursor_position_or_default(default=(0, 0)):
+    if isatty():
+        return with_raw_terminal(cursor_position)
+    return default
 
 
 def read_tcaps() -> Tuple[int, List[int]]:

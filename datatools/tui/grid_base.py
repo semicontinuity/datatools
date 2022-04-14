@@ -95,7 +95,10 @@ class WGridBase(Editor):
     def redraw_lines(self, line, num_lines):
         self.before_redraw()
         for c in range(num_lines):
-            self.goto(self.x, self.line_y(line))  # skip border line, headers line
+            if self.interactive:
+                self.goto(self.x, self.line_y(line))  # skip border line, headers line
+            else:
+                self.wr('\n')
             self.wr(self.render_line(line, self.cur_line == line))
             line += 1
         self.after_redraw()
@@ -109,9 +112,9 @@ class WGridBase(Editor):
     def after_redraw(self):
         pass
 
-    def goto(self, x, y):
-        if self.interactive:
-            Screen.wr(b"\x1b[%d;%dH" % (y + 1, x + 1))
+    # def goto(self, x, y):
+    #     if self.interactive:
+    #         Screen.wr(b"\x1b[%d;%dH" % (y + 1, x + 1))
 
     def render_line(self, line, is_under_cursor):
         pass

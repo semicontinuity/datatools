@@ -9,8 +9,8 @@ HORIZONTAL_PAGE_SIZE = 8
 
 
 class WGrid(WGridBase):
-    def __init__(self, x: int, y: int, width, height, buffer: Buffer, cell_value_f):
-        super().__init__(x, y, width, height, 0, 0)
+    def __init__(self, x: int, y: int, width, height, buffer: Buffer, cell_value_f, interactive=True):
+        super().__init__(x, y, width, height, 0, 0, interactive)
         self.buffer = buffer
         self.cell_value_f = cell_value_f
         self.x_shift = 0

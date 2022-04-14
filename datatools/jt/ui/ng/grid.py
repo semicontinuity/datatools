@@ -1,15 +1,14 @@
 from typing import Optional
 
-from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
-
-from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.jt.ui.themes import FOOTER_BG
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
+from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.themes import FOOTER_BG
 from datatools.tui.ansi import ANSI_ATTR_OVERLINE
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -17,9 +16,9 @@ HORIZONTAL_PAGE_SIZE = 8
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f):
+    def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f, interactive=True):
         # last line not painted because of sixels (and footer)
-        super().__init__(0, 0, width, height, 0, 1)
+        super().__init__(0, 0, width, height, 0, 1, interactive=interactive)
         self.column_count = column_count
         self.column_cell_renderer_f = column_cell_renderer_f
         self.cell_value_f = cell_value_f
