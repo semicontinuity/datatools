@@ -57,6 +57,9 @@ class Applet:
         self.g.height = screen_size[1]
         self.g.redraw()
 
+    def redraw(self):
+        self.g.redraw()
+
     def run(self):
         res = self.g.loop()
         exit_code = KEYS_TO_EXIT_CODES.get(res)

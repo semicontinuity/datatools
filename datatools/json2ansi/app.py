@@ -63,6 +63,10 @@ def main():
     fd_tui = infer_fd_tui()
     patch_picotui(fd_tui, fd_tui)
 
+    if len(sys.argv) > 1 and sys.argv[1] == '-q':
+        make_json2ansi_applet(data()).redraw()
+        return
+
     try:
         cursor_position_save()
         Screen.init_tty()
@@ -75,10 +79,13 @@ def main():
 
 
 def do_main():
+    return run(lambda: make_json2ansi_applet(data()).run())
+
+
+def data():
     lines = [line for line in sys.stdin]
     s = ''.join(lines)
-    j = json.loads(s)
-    return run(lambda: make_json2ansi_applet(j).run())
+    return json.loads(s)
 
 
 if __name__ == "__main__":
