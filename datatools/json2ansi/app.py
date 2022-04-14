@@ -15,7 +15,7 @@ from datatools.jt.model.presentation import Presentation
 from datatools.tui.json2ansi_buffer import Buffer
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
-from datatools.tui.terminal import screen_size_or_default, cursor_position_or_default
+from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.tui_fd import infer_fd_tui
 
 
@@ -78,17 +78,11 @@ def main():
     fd_tui = infer_fd_tui()
     patch_picotui(fd_tui, fd_tui)
 
-    # Does not work: need to refactor code to paint on the screen buffer first
     if len(sys.argv) > 1 and sys.argv[1] == '-q':
         j = data()
         screen_buffer = paint_screen_buffer(j, default_style())
-
-        screen_width, screen_height = screen_size_or_default()
-        y, x = cursor_position_or_default()
-        grid_context = GridContext(x, y, screen_width, screen_height, interactive=False)
-
-        # No applet needed!
-        do_make_json2ansi_applet(grid_context, j, False, screen_buffer, None).redraw()
+        screen_size = screen_size_or_default()
+        screen_buffer.flush(*screen_size)
         return
 
     try:
