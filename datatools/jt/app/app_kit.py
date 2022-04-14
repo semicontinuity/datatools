@@ -39,6 +39,7 @@ class Params:
     env_presentation: bool = True
 
 
+# NB: we do not need to keep data_bundle; better to return state from run()
 class Applet:
     g: WGrid
     data_bundle: DataBundle

@@ -2,8 +2,8 @@
 
 import json
 import sys
+from dataclasses import dataclass
 
-from datatools.tui.json2ansi_buffer import Buffer
 from datatools.json.json2ansi_toolkit import Style, AnsiToolkit
 from datatools.json.structure_discovery import Discovery
 from datatools.json2ansi.default_style import default_style
@@ -12,6 +12,7 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
+from datatools.tui.json2ansi_buffer import Buffer
 from datatools.tui.picotui_patch import isatty
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
@@ -19,23 +20,18 @@ from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.tui.tui_fd import infer_fd_tui
 
 
-def grid(screen_buffer: Buffer, x: int, y: int, width: int, height: int) -> WGrid:
-
-    def cell_value(line, column):
-        return "-"
-
-    g = WGrid(x, y, width, height, screen_buffer, cell_value)
-    g.total_lines = screen_buffer.height
-    return g
+@dataclass
+class GridContext:
+    x: int
+    y: int
+    width: int
+    height: int
 
 
-def make_json2ansi_applet(j, style: Style = default_style(), state=None, popup: bool = False):
-    state = {} if state is None else state
+def auto_position(screen_buffer, state):
     screen_width, screen_height = (1000, 10000)
     if isatty():
         screen_width, screen_height = with_raw_terminal(read_screen_size)
-    screen_buffer = paint_screen_buffer(j, style)
-
     if "anchor" in state:
         anchor_y = state["anchor"]["y"]
         if anchor_y > screen_height / 2:
@@ -46,10 +42,31 @@ def make_json2ansi_applet(j, style: Style = default_style(), state=None, popup: 
     else:
         y = 0
         x = 0
+    grid_context = GridContext(x, y, screen_width, screen_height)
+    return grid_context
 
+
+def grid(screen_buffer: Buffer, grid_context: GridContext) -> WGrid:
+
+    def cell_value(line, column):
+        return "-"
+
+    g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, screen_buffer, cell_value)
+    g.total_lines = screen_buffer.height
+    return g
+
+
+def make_json2ansi_applet(j, style: Style = default_style(), state=None, popup: bool = False):
+    state = {} if state is None else state
+    screen_buffer = paint_screen_buffer(j, style)
+    grid_context = auto_position(screen_buffer, state)
+    return do_make_json2ansi_applet(grid_context, j, popup, screen_buffer, state)
+
+
+def do_make_json2ansi_applet(grid_context, j, popup, screen_buffer, state):
     return Applet(
         'json2ansi',
-        grid(screen_buffer, x, y, screen_width, screen_height),
+        grid(screen_buffer, grid_context),
         DataBundle(j, Metadata(), Presentation(), state),
         popup
     )
