@@ -93,10 +93,6 @@ def ansi_goto_str(x, y):
     return "\x1b[%d;%dH" % (y + 1, x + 1)
 
 
-def ansi_rgb_color_str(r, g, b):
-    return "2;%d;%d;%d" % (r, g, b)
-
-
 def ansi_attr_bytes(*codes):
     return b'\x1b[' + b';'.join(codes) + b'm'
 

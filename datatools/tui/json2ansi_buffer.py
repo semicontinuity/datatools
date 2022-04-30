@@ -1,7 +1,4 @@
-from typing import Optional
-
-from datatools.tui.terminal import ansi_rgb_color_str
-from datatools.util.table_util import *
+from typing import Optional, List
 
 
 class Buffer:
@@ -9,7 +6,7 @@ class Buffer:
     height: int
     chars: List[bytearray]  # every character is represented by 2 bytes (utf-16le)
     attrs: List[bytearray]  # for each character: 1 byte of attributes + 3 bytes for custom bg color (RGB)
-    default_bg_color: Optional[List[int]]   # RGB
+    default_bg_color: Optional[List[int]]  # RGB
 
     MASK_NONE = 0x00
     MASK_BOLD = 0x01
@@ -91,23 +88,24 @@ class Buffer:
         width = min(screen_width, self.width)
         height = min(screen_height, self.height)
         for y in range(height):
-            print(self.to_string(0, y, width))
+            print(self.to_string(y, 0, width))
 
-    def to_string(self, x, y, width):
+    def to_string(self, y, x_from, x_to):
         s = ''
         prev_attr = -1
         prev_r = -1
         prev_g = -1
         prev_b = -1
 
-        for x in range(x, x + width):
+        for x in range(x_from, x_to):
             c = chr(self.chars[y][2 * x] + (self.chars[y][2 * x + 1] << 8))
             attr = self.attrs[y][4 * x]
             r = self.attrs[y][4 * x + 1]
             g = self.attrs[y][4 * x + 2]
             b = self.attrs[y][4 * x + 3]
 
-            if attr != prev_attr or ((attr & Buffer.MASK_BG_CUSTOM) != 0 and (r != prev_r or g != prev_g or b != prev_b)):
+            if attr != prev_attr or (
+                    (attr & Buffer.MASK_BG_CUSTOM) != 0 and (r != prev_r or g != prev_g or b != prev_b)):
                 s += '\x1b[' + self.attr_to_ansi(attr, r, g, b) + 'm'
             s += c
 
@@ -116,26 +114,33 @@ class Buffer:
             prev_g = g
             prev_b = b
 
-        return s + '\x1b[0;m'   # (for the last line only)
+        return s + '\x1b[0;m'  # (for the last line only)
 
     def attr_to_ansi(self, attr, r, g, b):
-        codes = ['37']
+        codes: List[str] = ['37']
+
+        # ESC[48;2;{r};{g};{b}m Set background color as RGB.
+        def append_bg_rgb_color(r, g, b):
+            codes.append('48')
+            codes.append('2')
+            codes.append(str(r))
+            codes.append(str(g))
+            codes.append(str(b))
+
         if attr & self.MASK_BOLD:
             codes.append('1')
         if attr & self.MASK_ITALIC:
             codes.append('3')
 
         if attr & self.MASK_BG_CUSTOM:
-            codes.append('48')
-            codes.append(ansi_rgb_color_str(r, g, b))
+            append_bg_rgb_color(r, g, b)
         elif attr & self.MASK_BG_EMPHASIZED:
             codes.append('48;5;237')
         else:
             if self.default_bg_color is None:
                 codes.append('40')  # black
             else:
-                codes.append('48')
-                codes.append(ansi_rgb_color_str(*self.default_bg_color))
+                append_bg_rgb_color(*self.default_bg_color)
 
         if attr & self.MASK_FG_EMPHASIZED:
             codes.append('97')

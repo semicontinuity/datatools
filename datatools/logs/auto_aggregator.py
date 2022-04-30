@@ -85,7 +85,7 @@ def compute_run_columns() -> List[str]:
     ]
 
 
-def compute_group_runs_and_median_by(run_columns):
+def compute_group_runs_and_median_by(run_columns: List[str]):
     debug(f'Computing group runs by {run_columns}')
     result = []
     run_dict = None
@@ -124,7 +124,7 @@ def compute_group_runs_and_median_by(run_columns):
     return result, median_run_length
 
 
-def compute_group_runs_by(run_columns):
+def compute_group_runs_by(run_columns: List[str]):
     return compute_group_runs_and_median_by(run_columns)[0]
 
 
