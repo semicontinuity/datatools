@@ -27,6 +27,7 @@ class ColumnPresentation:
     title: str = None
     contents: 'Presentation' = None
     separator: bool = False
+    visible: bool = None
     renderers: List[ColumnRenderer] = field(default_factory=list)
 
     def clone(self):
@@ -34,6 +35,7 @@ class ColumnPresentation:
             self.title,
             self.contents.clone() if self.contents is not None else None,
             self.separator,
+            self.visible,
             [renderer.clone() for renderer in self.renderers] if self.renderers is not None else None
         )
 

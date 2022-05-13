@@ -40,7 +40,7 @@ def make_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presen
 
     for column_key, column_presentation in column_presentation_map.items():
         column_metadata = column_metadata_map.get(column_key)
-        if column_metadata is None:
+        if not column_presentation.visible and column_metadata is None:
             continue
 
         if column_presentation.separator:
@@ -50,9 +50,10 @@ def make_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presen
         column_keys.append(column_key)
         column_delegates = []
         if not column_presentation.renderers:
-            raise ValueError(f'No renderers for {column_key}')
+            raise ValueError(f'No renderers for {column_key}: {column_presentation}')
         for column_renderer in column_presentation.renderers:
-            column_delegates.append(column_renderer.make_delegate(column_metadata, column_presentation, ColumnState(False)))
+            delegate = column_renderer.make_delegate(column_metadata, column_presentation, ColumnState(False))
+            column_delegates.append(delegate)
 
         cell_renderers.append(WMultiRenderer(column_delegates))
 

@@ -19,6 +19,11 @@ LEAF_CONTENTS_APPLET_STYLE = default_style([48, 40, 24])
 
 
 def grid(screen_size, data_bundle: DataBundle) -> WGrid:
+    def named_cell_value(line, column_key):
+        if column_key is None:
+            return None
+        return data_bundle.orig_data[line].get(column_key)
+
     column_keys, cell_renderers, row_renderers = make_renderers(data_bundle.metadata.columns, data_bundle.presentation.columns)
 
     def row_attrs(line):
@@ -27,19 +32,11 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
             attrs |= row_renderer(data_bundle.orig_data[line].get(column_key))
         return attrs
 
-    def cell_value(line, column):
-        if column is None:
-            return None
-        if type(column) is int:
-            return data_bundle.orig_data[line].get(column_keys[column])
-        else:
-            return data_bundle.orig_data[line].get(column)
-
     g = WGrid(
         screen_size[0], screen_size[1],
         len(cell_renderers),
         lambda i: cell_renderers[i],
-        cell_value,
+        lambda line, index: None if index is None else named_cell_value(line, column_keys[index]),
         row_attrs
     )
     g.total_lines = len(data_bundle.orig_data)

@@ -1,7 +1,11 @@
+from typing import Callable, Any
+
 from datatools.tui.box_drawing_chars import LEFT_BORDER
 
 
 class WColumnRenderer:
+    cell_value_f: Callable[[int, int], Any]
+
     def assistant(self):
         pass
 
