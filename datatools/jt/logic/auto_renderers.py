@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Callable, Any
 
 from datatools.jt.model.column_state import ColumnState
 from datatools.jt.model.metadata import ColumnMetadata
@@ -33,7 +33,11 @@ class WMultiRenderer(WColumnRenderer):
         return self.delegates[self.current]
 
 
-def make_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presentation_map: Dict[str, ColumnPresentation]):
+def make_renderers(
+        column_metadata_map: Dict[str, ColumnMetadata],
+        column_presentation_map: Dict[str, ColumnPresentation],
+        named_cell_value_f: Callable[[int, str], Any]
+):
     column_keys = []
     cell_renderers = []
     row_renderers = {}
@@ -53,6 +57,7 @@ def make_renderers(column_metadata_map: Dict[str, ColumnMetadata], column_presen
             raise ValueError(f'No renderers for {column_key}: {column_presentation}')
         for column_renderer in column_presentation.renderers:
             delegate = column_renderer.make_delegate(column_metadata, column_presentation, ColumnState(False))
+            delegate.named_cell_value_f = named_cell_value_f
             column_delegates.append(delegate)
 
         cell_renderers.append(WMultiRenderer(column_delegates))

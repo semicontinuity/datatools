@@ -22,7 +22,7 @@ class ColumnRendererSeqDiagramCall(ColumnRendererBase):
 
 class WSeqDiagramCallCellRenderer(WColoredTextCellRenderer):
     def __len__(self):
-        return 1
+        return 3
 
     def __call__(self, row_attrs, max_width, start, end, value, assistant_value):
         return super().__call__(row_attrs, max_width, start, end, '-', assistant_value)

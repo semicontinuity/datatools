@@ -24,7 +24,8 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
             return None
         return data_bundle.orig_data[line].get(column_key)
 
-    column_keys, cell_renderers, row_renderers = make_renderers(data_bundle.metadata.columns, data_bundle.presentation.columns)
+    column_keys, cell_renderers, row_renderers = make_renderers(
+        data_bundle.metadata.columns, data_bundle.presentation.columns, named_cell_value)
 
     def row_attrs(line):
         attrs = 0
