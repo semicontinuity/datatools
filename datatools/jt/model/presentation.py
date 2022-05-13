@@ -27,7 +27,7 @@ class ColumnPresentation:
     title: str = None
     contents: 'Presentation' = None
     separator: bool = False
-    visible: bool = None
+    visible: bool = None # Means that it is synthetic column. TODO Must be prop of renderer?
     renderers: List[ColumnRenderer] = field(default_factory=list)
 
     def clone(self):

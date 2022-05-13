@@ -31,7 +31,7 @@ class WStripesSixelCellRenderer(WColumnRenderer):
         return 1 if self.state.collapsed else self.max_content_width
         # return 1 if self.state.collapsed else self.chars_required_for_stripes(self.max_content_width) + 2
 
-    def __call__(self, row_attrs, max_width, start, end, value, assistant_value):
+    def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row):
         if self.state.collapsed:
             # distinguish only empty
             cell_attrs = (COLORS2[ColorKey.BOX_DRAWING][1], None) if value is None or len(value) == 0 else COLORS2[ColorKey.TEXT]

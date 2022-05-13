@@ -37,7 +37,7 @@ class WDictIndexCellRenderer(WColumnRenderer):
     def __len__(self):
         return len(self.dictionary)
 
-    def __call__(self, row_attrs, max_width, start, end, value, assistant_value):
+    def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row):
         buffer = bytearray()
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES
