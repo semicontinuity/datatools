@@ -63,21 +63,21 @@ class WColoredTextCellRenderer(WColumnRenderer):
             return 0    # Declared in presentation file, but never occurring in the data
         return self.column_renderer.max_content_width + 2
 
-    def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row) -> bytes:
+    def __call__(self, row_attrs, column_width, start, end, value, assistant_value, row) -> bytes:
         value = '' if value is None else str(value)
         length = len(value)
         text = str(value)
-        text += ' ' * (max_width - 2 - length)
+        text += ' ' * (column_width - 2 - length)
         buffer = bytearray()
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES
 
         if start == 0:
             buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
-        if start < max_width - 1 and end > 1:
+        if start < column_width - 1 and end > 1:
             attrs = self.compute_cell_attrs(value, assistant_value)
             buffer += set_colors_cmd_bytes2(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
-        if end == max_width:
+        if end == column_width:
             buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + b' '
 
         return buffer

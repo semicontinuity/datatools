@@ -18,13 +18,15 @@ class WColumnRenderer:
 
     def __len__(self) -> int:
         """
-        Has to return the width of the column (or cell?) in characters.
+        :return: current width of the column in characters,
+        it will be applied to all cells of the column currently rendered, so it must be consstent.
         """
         pass
 
-    def __call__(self, attrs, max_width, start, end, value, assistant_value, row: int) -> bytes:
+    def __call__(self, attrs, column_width, start, end, value, assistant_value, row: int) -> bytes:
         """
         Has to generate and return text buffer for the contents of the cell with the value 'value'.
-        attrs: combination of MASK_* constants.
+        :param attrs:           combination of MASK_* constants
+        :param column_width:    current width of the rendered column, as returned by __len__
         """
         pass

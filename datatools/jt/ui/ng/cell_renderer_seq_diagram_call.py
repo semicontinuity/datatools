@@ -30,8 +30,8 @@ class WSeqDiagramCallCellRenderer(WColoredTextCellRenderer):
     def __len__(self):
         return 24
 
-    def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row):
+    def __call__(self, row_attrs, column_width, start, end, value, assistant_value, row):
         val_from = self.named_cell_value_f(row, self.column_renderer.columnFrom)
         val_to = self.named_cell_value_f(row, self.column_renderer.columnTo)
         text = f'{val_from} -> {val_to}'[:len(self) - 2]
-        return super().__call__(row_attrs, max_width, start, end, text, assistant_value, row)
+        return super().__call__(row_attrs, column_width, start, end, text, assistant_value, row)

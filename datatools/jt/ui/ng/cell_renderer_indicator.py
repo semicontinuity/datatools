@@ -33,7 +33,7 @@ class WIndicatorCellRenderer(WColumnRenderer):
     def __len__(self):
         return 1
 
-    def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row):
+    def __call__(self, row_attrs, column_width, start, end, value, assistant_value, row):
         buffer = bytearray()
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES

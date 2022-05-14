@@ -23,7 +23,7 @@ class WStripesCellRenderer(WColumnRenderer):
     def __len__(self):
         return 1 if self.state.collapsed else self.max_content_width + 2
 
-    def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row):
+    def __call__(self, row_attrs, column_width, start, end, value, assistant_value, row):
         if self.state.collapsed:
             # distinguish only empty
             cell_attrs = (COLORS2[ColorKey.BOX_DRAWING][1], None) if value is None or len(value) == 0 else COLORS2[ColorKey.TEXT]
@@ -43,15 +43,15 @@ class WStripesCellRenderer(WColumnRenderer):
 
             if start == 0:
                 buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
-            if start < max_width - 1 and end > 1:
+            if start < column_width - 1 and end > 1:
                 index_from = 0 if start == 0 else start - 1
-                index_to = max_width - 2 if end == max_width else end - 1
+                index_to = column_width - 2 if end == column_width else end - 1
                 to = min(index_to, length)
                 WStripesCellRenderer.append_stripes(stripes, index_from, to, buffer)
                 if to < index_to:
                     buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
                     buffer += b' ' * (index_to - max(index_from, to))
-            if end == max_width:
+            if end == column_width:
                 buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
                 buffer += b' '
 
