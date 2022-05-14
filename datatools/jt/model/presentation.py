@@ -2,9 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List
 
-from datatools.jt.model.column_state import ColumnState
-from datatools.jt.model.metadata import ColumnMetadata
-from datatools.util.logging import debug
+from datatools.jt.ui.ng.render_data import RenderData
 
 COLORING_NONE = "none"
 COLORING_HASH_ALL = "hash-all"
@@ -18,7 +16,7 @@ class ColumnRenderer:
     def clone(self):
         return type(self)(**self.__dict__)
 
-    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: 'ColumnPresentation', column_state: ColumnState):
+    def make_delegate(self, render_data: RenderData):
         pass
 
 

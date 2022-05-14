@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 
-from datatools.jt.model.column_state import ColumnState
-from datatools.jt.model.metadata import ColumnMetadata
-from datatools.jt.model.presentation import ColumnRenderer, ColumnPresentation
+from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.ng.cell_renderer_stripes_sixel import WStripesSixelCellRenderer
+from datatools.jt.ui.ng.render_data import RenderData
 from datatools.tui.coloring import hash_to_rgb
 
 
@@ -11,8 +10,8 @@ from datatools.tui.coloring import hash_to_rgb
 class ColumnRendererStripesHashColored(ColumnRenderer):
     type = 'stripes-hash-colored'
 
-    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_state: ColumnState):
-        return WStripesHashesCellRenderer(column_metadata, column_presentation, self, column_state)
+    def make_delegate(self, render_data: RenderData):
+        return WStripesHashesCellRenderer(self, render_data)
 
 
 class WStripesHashesCellRenderer(WStripesSixelCellRenderer):

@@ -4,6 +4,7 @@ from datatools.jt.model.column_state import ColumnState
 from datatools.jt.model.metadata import ColumnMetadata
 from datatools.jt.model.presentation import ColumnPresentation
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.ng.row_renderer_separator import WRowSeparatorCellRenderer
 
 
@@ -36,7 +37,8 @@ class WMultiRenderer(WColumnRenderer):
 def make_renderers(
         column_metadata_map: Dict[str, ColumnMetadata],
         column_presentation_map: Dict[str, ColumnPresentation],
-        named_cell_value_f: Callable[[int, str], Any]
+        named_cell_value_f: Callable[[int, str], Any],
+        size: int
 ):
     column_keys = []
     cell_renderers = []
@@ -55,9 +57,11 @@ def make_renderers(
         column_delegates = []
         if not column_presentation.renderers:
             raise ValueError(f'No renderers for {column_key}: {column_presentation}')
+
+        column_state = ColumnState(False)
+        render_data = RenderData(column_metadata, column_presentation, column_state, size, named_cell_value_f)
         for column_renderer in column_presentation.renderers:
-            delegate = column_renderer.make_delegate(column_metadata, column_presentation, ColumnState(False))
-            delegate.named_cell_value_f = named_cell_value_f
+            delegate = column_renderer.make_delegate(render_data)
             column_delegates.append(delegate)
 
         cell_renderers.append(WMultiRenderer(column_delegates))

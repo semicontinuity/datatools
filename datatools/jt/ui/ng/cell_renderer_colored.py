@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from typing import Sequence, Dict
 
 from datatools.jt.model.attributes import MASK_ROW_CURSOR
-from datatools.jt.model.column_state import ColumnState
-from datatools.jt.model.metadata import ColumnMetadata
-from datatools.jt.model.presentation import ColumnPresentation, ColumnRenderer
+from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS2
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
@@ -23,8 +22,8 @@ class ColumnRendererBase(ColumnRenderer):
 class ColumnRendererColoredPlain(ColumnRendererBase):
     type = 'colored-plain'
 
-    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_state: ColumnState):
-        return WColoredTextCellRendererPlain(column_metadata, column_presentation, self)
+    def make_delegate(self, render_data: RenderData):
+        return WColoredTextCellRendererPlain(self, render_data)
 
 
 @dataclass
@@ -32,8 +31,8 @@ class ColumnRendererColoredMapping(ColumnRendererColoredPlain):
     type = 'colored-mapping'
     colorMap: Dict[str, str] = None
 
-    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_state: ColumnState):
-        return WColoredTextCellRendererMapping(column_metadata, column_presentation, self)
+    def make_delegate(self, render_data: RenderData):
+        return WColoredTextCellRendererMapping(self, render_data)
 
 
 @dataclass
@@ -41,22 +40,21 @@ class ColumnRendererColoredHash(ColumnRendererColoredPlain):
     type = 'colored-hash'
     onlyFrequent: bool = False
 
-    def make_delegate(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_state: ColumnState):
-        return WColoredTextCellRendererHash(column_metadata, column_presentation, self)
+    def make_delegate(self, render_data: RenderData):
+        return WColoredTextCellRendererHash(self, render_data)
 
 
 class WColoredTextCellRenderer(WColumnRenderer):
 
-    def __init__(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_renderer: ColumnRendererBase):
-        self.column_metadata = column_metadata
-        self.column_presentation = column_presentation
+    def __init__(self, column_renderer: ColumnRendererBase, render_data: RenderData):
         self.column_renderer = column_renderer
+        self.render_data = render_data
 
     def assistant(self):
         return self.column_renderer.assistant_column
 
     def __str__(self):
-        return LEFT_BORDER + self.column_presentation.title if self.column_presentation.title else LEFT_BORDER
+        return LEFT_BORDER + self.render_data.column_presentation.title if self.render_data.column_presentation.title else LEFT_BORDER
 
     def __len__(self):
         if self.column_renderer.max_content_width is None:
@@ -115,7 +113,7 @@ class WColoredTextCellRendererMapping(WColoredTextCellRenderer):
 
 class WColoredTextCellRendererHash(WColoredTextCellRenderer):
     def compute_color(self, value):
-        if self.column_renderer.onlyFrequent and value in self.column_metadata.unique_values:
+        if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:
             return super().compute_color(value)
         else:
             return hash_to_rgb(hash_code(value), offset=128)

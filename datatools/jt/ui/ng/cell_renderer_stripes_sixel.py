@@ -1,7 +1,6 @@
-from datatools.jt.model.column_state import ColumnState
-from datatools.jt.model.metadata import ColumnMetadata
-from datatools.jt.model.presentation import ColumnPresentation, ColumnRenderer
+from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
 from datatools.tui.picotui_util import cursor_forward_cmd, cursor_up_cmd
@@ -15,24 +14,26 @@ class WStripesSixelCellRenderer(WColumnRenderer):
     SIXELS_PER_STRIPE: int = 2   # characters are assumed to be 20x10 by sixel-compatible terminals
     STRIPES_PER_CHAR = SIXELS_PER_CHAR // SIXELS_PER_STRIPE
 
-    def __init__(self, column_metadata: ColumnMetadata, column_presentation: ColumnPresentation, column_renderer: ColumnRenderer, column_state: ColumnState):
+    def __init__(
+            self,
+            column_renderer: ColumnRenderer,
+            render_data: RenderData):
+
         self.max_content_width = column_renderer.max_content_width
-        self.column_metadata = column_metadata
-        self.column_presentation = column_presentation
-        self.state = column_state
+        self.render_data = render_data
 
     def toggle(self):
-        self.state.collapsed = not self.state.collapsed
+        self.render_data.column_state.collapsed = not self.render_data.column_state.collapsed
 
     def to_color_list(self, value):
         return []
 
     def __len__(self):
-        return 1 if self.state.collapsed else self.max_content_width
+        return 1 if self.render_data.column_state.collapsed else self.max_content_width
         # return 1 if self.state.collapsed else self.chars_required_for_stripes(self.max_content_width) + 2
 
     def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row):
-        if self.state.collapsed:
+        if self.render_data.column_state.collapsed:
             # distinguish only empty
             cell_attrs = (COLORS2[ColorKey.BOX_DRAWING][1], None) if value is None or len(value) == 0 else COLORS2[ColorKey.TEXT]
             return set_colors_cmd_bytes2(COLORS2[ColorKey.BOX_DRAWING][0], cell_attrs[0]) + LEFT_BORDER_BYTES
