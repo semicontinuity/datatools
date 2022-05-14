@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 
 class Buffer:
@@ -68,11 +68,28 @@ class Buffer:
 
                 _x += 1
 
-    def draw_attrs_box(self, x: int, y: int, width: int, height: int, mask: int):
+    def draw_code_point(self, x: int, y: int, code: int, mask: int = 0):
+        char_line = self.chars[y]
+        char_i = 2 * x
+        attr_line = self.attrs[y]
+        attr_i = 4 * x
+
+        attr_line[attr_i] |= mask
+        attr_i += 4
+
+        char_line[char_i] = code & 0xff
+        char_i += 1
+        char_line[char_i] = (code >> 8) & 0xff
+
+    def draw_attrs_box(self, x: int, y: int, width: int, height: int, mask: int, bg: Optional[Tuple[int, int, int]] = None):
         for j in range(height):
             line = self.attrs[y]
             for i in range(width):
                 line[(x + i) * 4] |= mask
+                if bg is not None:
+                    line[(x + i) * 4 + 1] = bg[0]
+                    line[(x + i) * 4 + 2] = bg[1]
+                    line[(x + i) * 4 + 3] = bg[2]
             y += 1
 
     def draw_bg_colors_box(self, x: int, y: int, width: int, height: int, r: int, g: int, b: int):
@@ -88,9 +105,9 @@ class Buffer:
         width = min(screen_width, self.width)
         height = min(screen_height, self.height)
         for y in range(height):
-            print(self.to_string(y, 0, width))
+            print(self.row_to_string(y, 0, width))
 
-    def to_string(self, y, x_from, x_to):
+    def row_to_string(self, y, x_from, x_to):
         s = ''
         prev_attr = -1
         prev_r = -1

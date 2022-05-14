@@ -28,7 +28,7 @@ class WGrid(WGridBase):
             self.goto(self.x, row)
             if line < self.buffer.height:
                 self.wr(
-                    self.buffer.to_string(line, self.x_shift, min(max(0, self.buffer.width - self.x_shift), self.width))
+                    self.buffer.row_to_string(line, self.x_shift, min(max(0, self.buffer.width - self.x_shift), self.width))
                 )
             line += 1
             row += 1
