@@ -27,8 +27,8 @@ class WMultiRenderer(WColumnRenderer):
     def __len__(self) -> int:
         return self.delegate().__len__()
 
-    def __call__(self, attrs, max_width, start, end, value, assistant_value, row) -> bytes:
-        return self.delegate().__call__(attrs, max_width, start, end, value, assistant_value, row)
+    def __call__(self, attrs, column_width, start, end, value, row) -> bytes:
+        return self.delegate().__call__(attrs, column_width, start, end, value, row)
 
     def delegate(self):
         return self.delegates[self.current]

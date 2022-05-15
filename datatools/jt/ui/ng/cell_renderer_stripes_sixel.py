@@ -32,7 +32,7 @@ class WStripesSixelCellRenderer(WColumnRenderer):
         return 1 if self.render_data.column_state.collapsed else self.max_content_width
         # return 1 if self.state.collapsed else self.chars_required_for_stripes(self.max_content_width) + 2
 
-    def __call__(self, row_attrs, max_width, start, end, value, assistant_value, row):
+    def __call__(self, attrs, column_width, start, end, value, row):
         if self.render_data.column_state.collapsed:
             # distinguish only empty
             cell_attrs = (COLORS2[ColorKey.BOX_DRAWING][1], None) if value is None or len(value) == 0 else COLORS2[ColorKey.TEXT]
@@ -46,13 +46,13 @@ class WStripesSixelCellRenderer(WColumnRenderer):
             if start == 0:
                 buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
                 buffer += LEFT_BORDER_BYTES
-            if start < max_width - 1 and end > 1:
+            if start < column_width - 1 and end > 1:
                 # Paint with default terminal background
                 # This is for Gnome Terminal, which ignores currently set BG color, and uses terminal default BG color
                 buffer += b'\x1b[49m'    # reset to default BG color
 
                 chars_from = 0 if start == 0 else start - 1
-                chars_to = max_width - 2 if end == max_width else end - 1
+                chars_to = column_width - 2 if end == column_width else end - 1
 
                 to = min(chars_to, self.chars_required_for_stripes(length))
                 painted_chars = self.append_stripes(colors, chars_from * self.STRIPES_PER_CHAR, to * self.STRIPES_PER_CHAR, buffer)
@@ -62,7 +62,7 @@ class WStripesSixelCellRenderer(WColumnRenderer):
                     buffer += cursor_forward_cmd(painted_chars)  # skip stripes
                 if painted_chars < chars_to:
                     buffer += b' ' * (chars_to - max(chars_from, painted_chars))
-            if end == max_width:
+            if end == column_width:
                 buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING])
                 buffer += b' '
 

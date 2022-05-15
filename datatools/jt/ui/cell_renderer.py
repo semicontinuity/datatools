@@ -20,7 +20,7 @@ class WColumnRenderer:
         """
         pass
 
-    def __call__(self, attrs, column_width, start, end, value, assistant_value, row: int) -> bytes:
+    def __call__(self, attrs, column_width, start, end, value, row: int) -> bytes:
         """
         Has to generate and return text buffer for the contents of the cell with the value 'value'.
         :param attrs:           combination of MASK_* constants

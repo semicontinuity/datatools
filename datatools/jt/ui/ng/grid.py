@@ -105,9 +105,11 @@ class WGrid(WGridBase):
                         append_spaces(buffer, column_x_to - x)
                     else:
                         buffer += renderer(
-                            (row_attrs | MASK_ROW_CURSOR) if is_under_cursor else row_attrs, column_width, start, end,
+                            (row_attrs | MASK_ROW_CURSOR) if is_under_cursor else row_attrs,
+                            column_width,
+                            start,
+                            end,
                             self.cell_value_f(line, column_index),
-                            self.cell_value_f(line, renderer.assistant()),
                             line
                         )
 

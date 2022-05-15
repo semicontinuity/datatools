@@ -5,7 +5,7 @@ from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererBase
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS2
-from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER, FULL_BLOCK
+from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_to_rgb, hash_code
 from datatools.tui.json2ansi_buffer import Buffer
 from datatools.tui.terminal import set_colors_cmd_bytes2
@@ -50,7 +50,7 @@ class WSeqDiagramCallCellRenderer(WColumnRenderer):
     def __len__(self):
         return max(1, len(self.order) * 3)
 
-    def __call__(self, row_attrs, column_width, start, end, value, assistant_value, row) -> bytes:
+    def __call__(self, attrs, column_width, start, end, value, row) -> bytes:
         val_from = self.value_from(row)
         val_to = self.value_to(row)
 

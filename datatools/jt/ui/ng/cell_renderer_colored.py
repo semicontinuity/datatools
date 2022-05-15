@@ -58,7 +58,7 @@ class WColoredTextCellRenderer(WColumnRenderer):
             return 0    # Declared in presentation file, but never occurring in the data
         return self.column_renderer.max_content_width + 2
 
-    def __call__(self, row_attrs, column_width, start, end, value, assistant_value, row) -> bytes:
+    def __call__(self, row_attrs, column_width, start, end, value, row) -> bytes:
         value = '' if value is None else str(value)
         length = len(value)
         text = str(value)
