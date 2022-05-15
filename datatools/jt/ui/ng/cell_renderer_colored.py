@@ -50,9 +50,6 @@ class WColoredTextCellRenderer(WColumnRenderer):
         self.column_renderer = column_renderer
         self.render_data = render_data
 
-    def assistant(self):
-        return self.column_renderer.assistant_column
-
     def __str__(self):
         return LEFT_BORDER + self.render_data.column_presentation.title if self.render_data.column_presentation.title else LEFT_BORDER
 
@@ -73,19 +70,20 @@ class WColoredTextCellRenderer(WColumnRenderer):
         if start == 0:
             buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
         if start < column_width - 1 and end > 1:
-            attrs = self.compute_cell_attrs(value, assistant_value)
+            category = self.render_data.named_cell_value_f(row, self.column_renderer.assistant_column)
+            attrs = self.compute_cell_attrs(value, category)
             buffer += set_colors_cmd_bytes2(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
         if end == column_width:
             buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + b' '
 
         return buffer
 
-    def compute_cell_attrs(self, value, assistant_value) -> Sequence[int]:
+    def compute_cell_attrs(self, value, category) -> Sequence[int]:
         text_attrs = COLORS2[ColorKey.TEXT]
         if value is None:
             return COLORS2[ColorKey.BOX_DRAWING][1], None
 
-        fg = self.compute_color(self.value_to_use(str(value), assistant_value))
+        fg = self.compute_color(self.value_to_use(str(value), category))
         return fg, text_attrs[1]
 
     def compute_color(self, value):
@@ -97,8 +95,8 @@ class WColoredTextCellRenderer(WColumnRenderer):
         else:
             return decode_rgb(self.column_renderer.color.lstrip('#'))
 
-    def value_to_use(self, value, assistant_value):
-        return assistant_value if assistant_value is not None else value
+    def value_to_use(self, value, category):
+        return category if category is not None else value
 
 
 class WColoredTextCellRendererPlain(WColoredTextCellRenderer):
