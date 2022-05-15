@@ -14,7 +14,7 @@ from datatools.tui.terminal import set_colors_cmd_bytes2
 
 @dataclass
 class ColumnRendererBase(ColumnRenderer):
-    assistant_column: str = None
+    category_column: str = None
     color: str = None
     
 
@@ -70,7 +70,7 @@ class WColoredTextCellRenderer(WColumnRenderer):
         if start == 0:
             buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
         if start < column_width - 1 and end > 1:
-            category = self.render_data.named_cell_value_f(row, self.column_renderer.assistant_column)
+            category = self.render_data.named_cell_value_f(row, self.column_renderer.category_column)
             attrs = self.compute_cell_attrs(value, category)
             buffer += set_colors_cmd_bytes2(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
         if end == column_width:
