@@ -89,31 +89,43 @@ class WColoredTextCellRenderer(WColumnRenderer):
         return fg, text_attrs[1]
 
     def compute_color(self, value):
+        pass
+
+    def text_color(self):
         if self.column_renderer.color is None:
             return COLORS2[ColorKey.TEXT][0]
         else:
-            return decode_rgb(self.column_renderer.color[1:])
+            return decode_rgb(self.column_renderer.color.lstrip('#'))
 
     def value_to_use(self, value, assistant_value):
         return assistant_value if assistant_value is not None else value
 
 
 class WColoredTextCellRendererPlain(WColoredTextCellRenderer):
-    pass
+    def compute_color(self, value):
+        return self.text_color()
 
 
 class WColoredTextCellRendererMapping(WColoredTextCellRenderer):
+    def __init__(self, column_renderer: ColumnRendererColoredMapping, render_data: RenderData):
+        super().__init__(column_renderer, render_data)
+        self.column_renderer = column_renderer
+
     def compute_color(self, value):
         color = self.column_renderer.colorMap.get(value)
         if color is not None:
-            return decode_rgb(color[1:])
+            return decode_rgb(color.lstrip('#'))
         else:
-            return super().compute_color(value)
+            return self.text_color()
 
 
 class WColoredTextCellRendererHash(WColoredTextCellRenderer):
+    def __init__(self, column_renderer: ColumnRendererColoredHash, render_data: RenderData):
+        super().__init__(column_renderer, render_data)
+        self.column_renderer = column_renderer
+
     def compute_color(self, value):
         if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:
-            return super().compute_color(value)
+            return self.text_color()
         else:
             return hash_to_rgb(hash_code(value), offset=128)
