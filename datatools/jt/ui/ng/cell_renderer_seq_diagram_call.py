@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass
 
 from datatools.jt.ui.cell_renderer import WColumnRenderer
@@ -21,26 +22,33 @@ class ColumnRendererSeqDiagramCall(ColumnRendererBase):
 
 
 class WSeqDiagramCallCellRenderer(WColumnRenderer):
-    def __init__(self, column_renderer: ColumnRendererSeqDiagramCall, render_data: RenderData):
 
-        # super().__init__(column_renderer, render_data)
+    def __init__(self, column_renderer: ColumnRendererSeqDiagramCall, render_data: RenderData):
         self.column_renderer = column_renderer
-        self.dictionary = {}
         self.render_data = render_data
 
-        for row in range(self.render_data.size):
-            self.add_to_dict(self.value_from(row))
-            self.add_to_dict(self.value_to(row))
+        occurrence = {}
+        rank = defaultdict(int)
 
-    def add_to_dict(self, val):
-        if val is not None and self.dictionary.get(val) is None:
-            self.dictionary[val] = len(self.dictionary)
+        def occurred(val, rank_delta):
+            if val is not None:
+                if occurrence.get(val) is None:
+                    occurrence[val] = len(occurrence)
+                rank[val] += rank_delta
+
+        for row in range(self.render_data.size):
+            occurred(self.value_from(row), -1)
+            occurred(self.value_to(row), +1)
+
+        layout = [value for value in occurrence]
+        layout.sort(key=lambda k: (rank[k], occurrence[k]))
+        self.order = {k: i for i, k in enumerate(layout)}
 
     def __str__(self):
         return LEFT_BORDER + self.render_data.column_presentation.title if self.render_data.column_presentation.title else LEFT_BORDER
 
     def __len__(self):
-        return max(1, len(self.dictionary)*3)
+        return max(1, len(self.order) * 3)
 
     def __call__(self, row_attrs, column_width, start, end, value, assistant_value, row) -> bytes:
         val_from = self.value_from(row)
@@ -50,8 +58,8 @@ class WSeqDiagramCallCellRenderer(WColumnRenderer):
         if start == 0:
             bb += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
 
-        index_of_val_from = self.dictionary.get(val_from)
-        index_of_val_to = self.dictionary.get(val_to)
+        index_of_val_from = self.order.get(val_from)
+        index_of_val_to = self.order.get(val_to)
 
         buffer = Buffer(column_width, 1)
 
