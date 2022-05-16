@@ -26,9 +26,23 @@ class WGrid(WGridBase):
         self.row_attrs_f = row_attrs_f
         self.x_shift = 0
         self.cursor_column = 0
+        self.column_ends = None
+        self.layout()
 
     def show_line(self, line_content, line):
         raise AssertionError
+
+    def invalidate(self):
+        self.layout()
+        self.redraw()
+
+    def layout(self):
+        column_ends = []
+        x = 0
+        for column_index in range(self.column_count):
+            x += len(self.column_cell_renderer_f(column_index))
+            column_ends.append(x)
+        self.column_ends = column_ends
 
     def redraw(self):
         self.before_redraw()
@@ -59,8 +73,11 @@ class WGrid(WGridBase):
         x = 0   # corresponds to the left border of the first column, might be off-screen
         for column_index in range(self.column_count):
             renderer: WColumnRenderer = self.column_cell_renderer_f(column_index)
-            column_width = len(renderer)
-            column_x_right = x + column_width
+
+            # column_width = len(renderer)
+            # column_x_right = x + column_width
+            column_x_right = self.column_ends[column_index]
+
             column_x_to = min(self.x_shift + self.width, column_x_right)
             if column_x_to > self.x_shift:
                 start = max(self.x_shift - x, 0)
@@ -83,7 +100,7 @@ class WGrid(WGridBase):
 
         return buffer
 
-    def render_line(self, line, is_under_cursor):
+    def render_line(self, line, is_under_cursor) -> bytearray:
         buffer = bytearray()
         if line < self.total_lines:
             row_attrs = self.row_attrs_f(line)
@@ -94,8 +111,13 @@ class WGrid(WGridBase):
             for column_index in range(self.column_count):
                 renderer: WColumnRenderer = self.column_cell_renderer_f(column_index)
 
-                column_width = len(renderer)
-                column_x_right = x + column_width
+                # column_width = len(renderer)
+                # column_x_right = x + column_width
+
+                column_x_right = self.column_ends[column_index]
+                column_x = self.column_ends[column_index - 1] if column_index > 0 else 0
+                column_width = column_x_right - column_x
+
                 column_x_to = min(self.x_shift + self.width, column_x_right)
 
                 if column_x_to > self.x_shift:
@@ -179,7 +201,7 @@ class WGrid(WGridBase):
         if column is None:
             return
         column.toggle()
-        self.redraw()
+        self.invalidate()
 
     def handle_typed_key(self, key):
         self.search_str += key.decode("utf-8")
