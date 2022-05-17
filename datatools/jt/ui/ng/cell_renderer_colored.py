@@ -6,7 +6,7 @@ from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS2
-from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
+from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, BOLD_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb, decode_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
@@ -66,6 +66,8 @@ class WColoredTextCellRenderer(WColumnRenderer):
         buffer = bytearray()
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES
+        if self.is_bold():
+            buffer += BOLD_BYTES
 
         if start == 0:
             buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
@@ -88,6 +90,9 @@ class WColoredTextCellRenderer(WColumnRenderer):
 
     def compute_color(self, value):
         pass
+
+    def is_bold(self):
+        return False
 
     def text_color(self):
         if self.column_renderer.color is None:
@@ -121,6 +126,7 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
     def __init__(self, column_renderer: ColumnRendererColoredHash, render_data: RenderData):
         super().__init__(column_renderer, render_data)
         self.column_renderer = column_renderer
+        self.bold = False
 
     def compute_color(self, value):
         if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:
@@ -128,5 +134,11 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
         else:
             return hash_to_rgb(hash_code(value), offset=128)
 
-    # def focus_gained(self, i):
-    #     raise Exception(i)
+    def focus_gained(self, i):
+        self.bold = True
+
+    def focus_lost(self, i):
+        self.bold = False
+
+    def is_bold(self):
+        return self.bold
