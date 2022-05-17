@@ -127,3 +127,6 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
             return self.text_color()
         else:
             return hash_to_rgb(hash_code(value), offset=128)
+
+    # def focus_gained(self, i):
+    #     raise Exception(i)

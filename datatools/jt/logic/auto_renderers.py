@@ -33,6 +33,17 @@ class WMultiRenderer(WColumnRenderer):
     def delegate(self):
         return self.delegates[self.current]
 
+    def focus_lost(self, line):
+        return self.invoke('focus_lost', line)
+
+    def focus_gained(self, line):
+        return self.invoke('focus_gained', line)
+
+    def invoke(self, name, *args):
+        renderer = self.delegates[self.current]
+        if hasattr(renderer, name):
+            return getattr(renderer, name)(*args)
+
 
 def make_renderers(
         column_metadata_map: Dict[str, ColumnMetadata],

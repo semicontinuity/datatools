@@ -220,6 +220,18 @@ class WGrid(WGridBase):
             self.cur_line = line
             self.redraw_lines(self.top_line, content_height)
 
+    def invoke_focus_change_listener(self, name):
+        renderer = self.column_cell_renderer_f(self.cursor_column)
+        if hasattr(renderer, name):
+            getattr(renderer, name)(self.cur_line)
+
+    def cursor_column_change(self, new):
+        self.cell_cursor_off()
+        self.column_cell_renderer_f(self.cursor_column).focus_lost(self.cur_line)
+        self.cursor_column = new
+        self.column_cell_renderer_f(self.cursor_column).focus_gained(self.cur_line)
+        self.cell_cursor_place()
+
     def handle_cursor_keys(self, key):
         # Cursor motion resets search string
         result = super().handle_cursor_keys(key)
@@ -229,14 +241,10 @@ class WGrid(WGridBase):
             max_x_shift = columns_width - self.width
             if key == KEY_CTRL_RIGHT:
                 if self.cursor_column < self.column_count - 1:
-                    self.cursor_column += 1
-                    self.cell_cursor_off()
-                    self.cell_cursor_place()
+                    self.cursor_column_change(self.cursor_column + 1)
             if key == KEY_CTRL_LEFT:
                 if self.cursor_column > 0:
-                    self.cursor_column -= 1
-                    self.cell_cursor_off()
-                    self.cell_cursor_place()
+                    self.cursor_column_change(self.cursor_column - 1)
             elif key == KEY_RIGHT:
                 if self.x_shift < max_x_shift:
                     self.x_shift += 1
