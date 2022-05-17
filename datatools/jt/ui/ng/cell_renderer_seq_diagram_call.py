@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererBase
 from datatools.jt.ui.ng.render_data import RenderData
-from datatools.jt.ui.themes import ColorKey, COLORS2
+from datatools.jt.ui.themes import ColorKey, COLORS2, DARK
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_to_rgb, hash_code
 from datatools.tui.json2ansi_buffer import Buffer
@@ -27,8 +27,9 @@ class WSeqDiagramCallCellRenderer(WColumnRenderer):
         self.column_renderer = column_renderer
         self.render_data = render_data
 
-        occurrence = {}
-        rank = defaultdict(int)
+        edges = set()           # Construct call graph, regardless the number of actual calls between "from" and "to"
+        occurrence = {}         # Take note, in which nodes have appeared
+        rank = defaultdict(int) # For each node, rank=count(incoming edges) - count(outgoing edges)
 
         def occurred(val, rank_delta):
             if val is not None:
@@ -36,10 +37,22 @@ class WSeqDiagramCallCellRenderer(WColumnRenderer):
                     occurrence[val] = len(occurrence)
                 rank[val] += rank_delta
 
-        for row in range(self.render_data.size):
-            occurred(self.value_from(row), -1)
-            occurred(self.value_to(row), +1)
+        def edge(val_from, val_to):
+            occurred(val_from, 0)
+            occurred(val_to, 0)
+            if val_to is not None and val_from is not None:
+                edges.add((val_from, val_to))
 
+        for row in range(self.render_data.size):
+            edge(val_from=self.value_from(row), val_to=self.value_to(row))
+
+        for f, t in edges:
+            occurred(f, -1)
+            occurred(t, +1)
+
+        # Layout the graph:
+        # - Nodes with higher rank (more pointed at) will be more on the right
+        # - Nodes with the same rank will be sorted according to their occurrence order
         layout = [value for value in occurrence]
         layout.sort(key=lambda k: (rank[k], occurrence[k]))
         self.order = {k: i for i, k in enumerate(layout)}
@@ -61,7 +74,7 @@ class WSeqDiagramCallCellRenderer(WColumnRenderer):
         index_of_val_from = self.order.get(val_from)
         index_of_val_to = self.order.get(val_to)
 
-        buffer = Buffer(column_width, 1)
+        buffer = Buffer(column_width, 1, DARK)
 
         def draw_block(index, val):
             if index is not None:
