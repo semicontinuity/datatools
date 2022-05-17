@@ -10,5 +10,6 @@ class RenderData:
     column_metadata: ColumnMetadata
     column_presentation: 'ColumnPresentation'
     column_state: ColumnState
+    column_key: str
     size: int
     named_cell_value_f: Callable[[int, str], Any]

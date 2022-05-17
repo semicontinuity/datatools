@@ -25,47 +25,73 @@ class WGridBase(Editor):
 
         if key == KEY_DOWN:
             if self.cur_line + 1 != self.total_lines:
+                old_line = self.cur_line
                 self.cur_line += 1
+                redraw = bool(self.cursor_line_changed(old_line, self.cur_line))
                 if self.cur_line >= self.top_line + self.height - self.y_top_offset - self.y_bottom_offset:  # cursor went beyond visible area
                     self.top_line += 1
-                    self.redraw_body()
+                    # self.redraw_body()
+                    self.redraw()
                     # scroll_region(2, 2 + content_height - 2)
                     # scroll_up()
                     # self.redraw_lines(self.top_line + content_height - 2, 2)
                 else:
-                    self.redraw_lines(self.cur_line - 1, 2)
+                    if redraw:
+                        self.redraw() # strange, redraw_body is not enough (footer disappears)
+                    else:
+                        self.redraw_lines(self.cur_line - 1, 2)
         elif key == KEY_UP:
             if self.cur_line > 0:
+                old_line = self.cur_line
                 self.cur_line -= 1
+                redraw = bool(self.cursor_line_changed(old_line, self.cur_line))
                 if self.cur_line < self.top_line:  # cursor went beyond visible area
                     self.top_line = self.cur_line
-                    self.redraw_body()
+                    # self.redraw_body()
+                    self.redraw()
                     # scroll_region(3, 3 + content_height - 2)
                     # scroll_down()
                     # self.redraw_lines(self.top_line, 2)
                 else:
-                    # better to re-draw just 2 changed lines!
-                    self.redraw_lines(self.cur_line, 2)
+                    if redraw:
+                        self.redraw() # strange, redraw_body is not enough (footer disappears)
+                    else:
+                        # better to re-draw just 2 changed lines!
+                        self.redraw_lines(self.cur_line, 2)
 
         elif key == KEY_PGDN:
             if self.cur_line + 1 != self.total_lines:  # if not on the very last line
                 remains = self.total_lines - (self.top_line + self.rows_view_height)
+                old_line = self.cur_line
                 if 0 < remains:
                     delta = min(remains, self.rows_view_height)
                     self.top_line += delta
                     self.cur_line = min(self.cur_line + delta,
                                         self.total_lines - 1) if delta > 0 else self.total_lines - 1
-                    self.redraw_body()
+                    self.cursor_line_changed(old_line, self.cur_line)
+                    # self.redraw_body()
+                    self.redraw()
                 else:  # everything must be visible already; must move cursor to the last line
                     self.cur_line = self.total_lines - 1
-                    self.redraw_lines(self.top_line, self.total_lines - self.top_line)
+                    redraw = bool(self.cursor_line_changed(old_line, self.cur_line))
+                    if redraw:
+                        self.redraw() # strange, redraw_body is not enough (footer disappears)
+                    else:
+                        # better to re-draw just min.number of changed lines!
+                        self.redraw_lines(self.top_line, self.total_lines - self.top_line)
+
         elif key == KEY_PGUP:
             if self.cur_line > 0:  # if not on the very first line
                 delta = min(self.top_line, self.rows_view_height)
                 self.top_line -= delta
+                old_line = self.cur_line
                 self.cur_line = max(self.cur_line - delta, 0) if delta > 0 else 0
-                # better to re-draw just 2 changed lines, if does not scroll
-                self.redraw_lines(self.top_line, min(self.rows_view_height, self.total_lines - self.top_line))
+                redraw = bool(self.cursor_line_changed(old_line, self.cur_line))
+                if redraw:
+                    self.redraw()  # strange, redraw_body is not enough (footer disappears)
+                else:
+                    # better to re-draw just min. number of changed lines, if does not scroll
+                    self.redraw_lines(self.top_line, min(self.rows_view_height, self.total_lines - self.top_line))
 
         elif key == KEY_CTRL_END:
             if self.cur_line + 1 != self.total_lines:  # if not on the very last line
@@ -85,6 +111,9 @@ class WGridBase(Editor):
                 self.redraw_content()
         else:
             return False
+
+    def cursor_line_changed(self, old_line, line) -> bool:
+        pass
 
     def redraw_content(self):
         self.before_redraw()

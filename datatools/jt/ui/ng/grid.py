@@ -117,12 +117,13 @@ class WGrid(WGridBase):
             for column_index in range(self.column_count):
                 self.render_cell(buffer, column_index, is_under_cursor, line, row_attrs)
 
+                # reset attributes
+                buffer += b'\x1b[0m'
+
                 x = self.column_x_end(column_index)
                 if self.column_x_start(column_index) >= self.x_shift + self.width:
                     break
 
-            # reset attributes
-            buffer += b'\x1b[0m'
             append_spaces(buffer, self.width - (x - self.x_shift))
         else:
             append_spaces(buffer, self.width)
@@ -218,16 +219,16 @@ class WGrid(WGridBase):
             self.cur_line = line
             self.redraw_lines(self.top_line, content_height)
 
-    def invoke_focus_change_listener(self, name):
-        renderer = self.column_cell_renderer_f(self.cursor_column)
-        if hasattr(renderer, name):
-            getattr(renderer, name)(self.cur_line)
+    def cursor_line_changed(self, old_line, line) -> bool:
+        return bool(self.column_cell_renderer_f(self.cursor_column).focus_moved(old_line, line))
 
     def cursor_column_change(self, new):
         self.cell_cursor_off()
-        self.column_cell_renderer_f(self.cursor_column).focus_lost(self.cur_line)
+        redraw = bool(self.column_cell_renderer_f(self.cursor_column).focus_lost(self.cur_line))
         self.cursor_column = new
-        self.column_cell_renderer_f(self.cursor_column).focus_gained(self.cur_line)
+        redraw |= bool(self.column_cell_renderer_f(self.cursor_column).focus_gained(self.cur_line))
+        if redraw:
+            self.redraw()  # only columns!
         self.cell_cursor_place()
 
     def handle_cursor_keys(self, key):

@@ -39,6 +39,9 @@ class WMultiRenderer(WColumnRenderer):
     def focus_gained(self, line):
         return self.invoke('focus_gained', line)
 
+    def focus_moved(self, old_line, line):
+        return self.invoke('focus_moved', old_line, line)
+
     def invoke(self, name, *args):
         renderer = self.delegates[self.current]
         if hasattr(renderer, name):
@@ -70,7 +73,7 @@ def make_renderers(
             raise ValueError(f'No renderers for {column_key}: {column_presentation}')
 
         column_state = ColumnState(False)
-        render_data = RenderData(column_metadata, column_presentation, column_state, size, named_cell_value_f)
+        render_data = RenderData(column_metadata, column_presentation, column_state, column_key, size, named_cell_value_f)
         for column_renderer in column_presentation.renderers:
             delegate = column_renderer.make_delegate(render_data)
             column_delegates.append(delegate)
