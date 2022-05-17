@@ -82,7 +82,7 @@ class WGrid(WGridBase):
 
             # column_width = len(renderer)
             # column_x_right = x + column_width
-            column_x_right = self.column_ends[column_index]
+            column_x_right = self.column_x_end(column_index)
 
             column_x_to = min(self.x_shift + self.width, column_x_right)
             if column_x_to > self.x_shift:
@@ -115,34 +115,10 @@ class WGrid(WGridBase):
 
             x = 0   # corresponds to the left border of the first column, might be off-screen
             for column_index in range(self.column_count):
-                renderer: WColumnRenderer = self.column_cell_renderer_f(column_index)
+                self.render_cell(buffer, column_index, is_under_cursor, line, row_attrs)
 
-                # column_width = len(renderer)
-                # column_x_right = x + column_width
-
-                column_x_right = self.column_ends[column_index]
-                column_x = self.column_ends[column_index - 1] if column_index > 0 else 0
-                column_width = column_x_right - column_x
-
-                column_x_to = min(self.x_shift + self.width, column_x_right)
-
-                if column_x_to > self.x_shift:
-                    start = max(self.x_shift - x, 0)
-                    end = column_x_to - x
-                    if line >= self.total_lines:
-                        append_spaces(buffer, column_x_to - x)
-                    else:
-                        buffer += renderer(
-                            (row_attrs | MASK_ROW_CURSOR) if is_under_cursor else row_attrs,
-                            column_width,
-                            start,
-                            end,
-                            self.cell_value_f(line, column_index),
-                            line
-                        )
-
-                x = column_x_right
-                if x >= self.x_shift + self.width:
+                x = self.column_x_end(column_index)
+                if self.column_x_start(column_index) >= self.x_shift + self.width:
                     break
 
             # reset attributes
@@ -152,6 +128,28 @@ class WGrid(WGridBase):
             append_spaces(buffer, self.width)
 
         return buffer
+
+    def render_cell(self, buffer, column_index, is_under_cursor, line, row_attrs):
+        renderer: WColumnRenderer = self.column_cell_renderer_f(column_index)
+        column_x_right = self.column_x_end(column_index)
+        column_x = self.column_x_start(column_index)
+        column_width = column_x_right - column_x
+        column_x_to = min(self.x_shift + self.width, column_x_right)
+
+        if column_x_to > self.x_shift:
+            start = max(self.x_shift - column_x, 0)
+            end = column_x_to - column_x
+            if line >= self.total_lines:
+                append_spaces(buffer, column_x_to - column_x)
+            else:
+                buffer += renderer(
+                    (row_attrs | MASK_ROW_CURSOR) if is_under_cursor else row_attrs,
+                    column_width,
+                    start,
+                    end,
+                    self.cell_value_f(line, column_index),
+                    line
+                )
 
     def handle_edit_key(self, key):
         if key in KEYS_TO_EXIT_CODES:
@@ -278,6 +276,12 @@ class WGrid(WGridBase):
 
     def compute_column_offset(self, column_index) -> int:
         return sum([len(self.column_cell_renderer_f(i)) for i in range(column_index)])
+
+    def column_x_start(self, column_index):
+        return self.column_x_end(column_index - 1) if column_index > 0 else 0
+
+    def column_x_end(self, column_index):
+        return self.column_ends[column_index]
 
     def search(self) -> Optional[int]:
         line = self.cur_line
