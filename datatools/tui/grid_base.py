@@ -1,5 +1,4 @@
 from picotui.editor import Editor
-from picotui.screen import Screen
 
 from datatools.jt.model.exit_codes_mapping import *
 
@@ -29,7 +28,7 @@ class WGridBase(Editor):
                 self.cur_line += 1
                 if self.cur_line >= self.top_line + self.height - self.y_top_offset - self.y_bottom_offset:  # cursor went beyond visible area
                     self.top_line += 1
-                    self.redraw_lines(self.top_line, self.rows_view_height)
+                    self.redraw_body()
                     # scroll_region(2, 2 + content_height - 2)
                     # scroll_up()
                     # self.redraw_lines(self.top_line + content_height - 2, 2)
@@ -40,7 +39,7 @@ class WGridBase(Editor):
                 self.cur_line -= 1
                 if self.cur_line < self.top_line:  # cursor went beyond visible area
                     self.top_line = self.cur_line
-                    self.redraw_lines(self.top_line, self.rows_view_height)
+                    self.redraw_body()
                     # scroll_region(3, 3 + content_height - 2)
                     # scroll_down()
                     # self.redraw_lines(self.top_line, 2)
@@ -56,7 +55,7 @@ class WGridBase(Editor):
                     self.top_line += delta
                     self.cur_line = min(self.cur_line + delta,
                                         self.total_lines - 1) if delta > 0 else self.total_lines - 1
-                    self.redraw_lines(self.top_line, self.rows_view_height)
+                    self.redraw_body()
                 else:  # everything must be visible already; must move cursor to the last line
                     self.cur_line = self.total_lines - 1
                     self.redraw_lines(self.top_line, self.total_lines - self.top_line)
@@ -89,8 +88,11 @@ class WGridBase(Editor):
 
     def redraw_content(self):
         self.before_redraw()
-        self.redraw_lines(self.top_line, self.rows_view_height)
+        self.redraw_body()
         self.after_redraw()
+
+    def redraw_body(self):
+        self.redraw_lines(self.top_line, self.rows_view_height)
 
     def redraw_lines(self, line, num_lines):
         self.before_redraw()

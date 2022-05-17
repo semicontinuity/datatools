@@ -46,15 +46,21 @@ class WGrid(WGridBase):
 
     def redraw(self):
         self.before_redraw()
-        self.redraw_content()
+        self.redraw_body()
         self.redraw_footer()
         self.after_redraw()
 
     def before_redraw(self):
+        self.cell_cursor_off()
+
+    def after_redraw(self):
+        self.cell_cursor_place()
+
+    def cell_cursor_off(self):
         if self.interactive:
             self.cursor(False)
 
-    def after_redraw(self):
+    def cell_cursor_place(self):
         if self.interactive:
             cursor_x = self.compute_column_offset(self.cursor_column) - self.x_shift
             if 0 <= cursor_x < self.width:
@@ -224,14 +230,13 @@ class WGrid(WGridBase):
             if key == KEY_CTRL_RIGHT:
                 if self.cursor_column < self.column_count - 1:
                     self.cursor_column += 1
-                    self.before_redraw()
-                    self.after_redraw()
+                    self.cell_cursor_off()
+                    self.cell_cursor_place()
             if key == KEY_CTRL_LEFT:
                 if self.cursor_column > 0:
                     self.cursor_column -= 1
-                    self.before_redraw()
-                    self.after_redraw()
-
+                    self.cell_cursor_off()
+                    self.cell_cursor_place()
             elif key == KEY_RIGHT:
                 if self.x_shift < max_x_shift:
                     self.x_shift += 1
