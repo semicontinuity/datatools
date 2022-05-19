@@ -122,8 +122,8 @@ class WGrid(WGridBase):
 
             x = 0   # corresponds to the left border of the first column, might be off-screen
             for column_index in range(self.column_count):
-                if row_attrs & MASK_ROW_EMPHASIZED:
-                    buffer += INVERTED_BYTES
+                # if row_attrs & MASK_ROW_EMPHASIZED:
+                #     buffer += INVERTED_BYTES
 
                 self.render_cell(buffer, column_index, is_under_cursor, line, row_attrs)
 
@@ -233,12 +233,17 @@ class WGrid(WGridBase):
         focus_handler = self.column_cell_renderer_f(self.cursor_column).focus_handler()
         return bool(focus_handler and focus_handler.focus_moved(old_line, line))
 
-    def cursor_column_change(self, new):
+    def cursor_column_change(self, new_column):
         self.cell_cursor_off()
+
         focus_handler = self.column_cell_renderer_f(self.cursor_column).focus_handler()
         redraw = bool(focus_handler and focus_handler.focus_lost(self.cur_line))
-        self.cursor_column = new
+
+        self.cursor_column = new_column
+
+        focus_handler = self.column_cell_renderer_f(self.cursor_column).focus_handler()
         redraw |= bool(focus_handler and focus_handler.focus_gained(self.cur_line))
+
         if redraw:
             self.redraw()  # only columns!
         self.cell_cursor_place()

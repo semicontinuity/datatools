@@ -10,6 +10,8 @@ class ColorKey(Enum):
     COLUMN_TITLE = 'COLUMN_TITLE'
     CURSOR = 'CURSOR'
     TEXT = 'TEXT'
+    DEF_BACKGROUND = 'DEF_BACKGROUND'
+    EMP_BACKGROUND = 'EMP_BACKGROUND'
 
 
 THEMES = {
@@ -51,3 +53,9 @@ THEMES2 = {
 
 COLORS = THEMES["dark"]
 COLORS2 = THEMES2["dark"]
+
+COLORS3 = {
+    ColorKey.BOX_DRAWING: (64, 96, 96),
+    ColorKey.DEF_BACKGROUND: DARK,
+    ColorKey.EMP_BACKGROUND: FOOTER_BG,
+}

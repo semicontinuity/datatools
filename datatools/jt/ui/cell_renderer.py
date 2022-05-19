@@ -1,3 +1,4 @@
+from datatools.jt.ui.themes import COLORS3, ColorKey
 from datatools.tui.box_drawing_chars import LEFT_BORDER
 
 
@@ -34,3 +35,7 @@ class WColumnRenderer:
         :param row:  index of the row being rendered
         """
         return 0
+
+    @staticmethod
+    def background_color(row_emphasized: bool):
+        return COLORS3[ColorKey.EMP_BACKGROUND] if row_emphasized else COLORS3[ColorKey.DEF_BACKGROUND]

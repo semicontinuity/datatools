@@ -1,5 +1,5 @@
 # For dark theme
-from typing import Optional
+from typing import Optional, Tuple
 
 
 def hash_code(s):
@@ -36,5 +36,5 @@ def is_color_value(c: Optional[str]):
     return c is not None and type(c) is str and c.startswith('#')
 
 
-def decode_rgb(s):
+def decode_rgb(s) -> Tuple[int, int, int]:
     return int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16)

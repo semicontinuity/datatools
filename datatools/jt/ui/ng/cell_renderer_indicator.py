@@ -35,9 +35,10 @@ class WIndicatorCellRenderer(WColumnRenderer):
         self.render_data = render_data
         self.bg = bg
         self.highlight = highlight
-        focus_handler = ColumnFocusHandlerHighlightRows(render_data)
-        self.focus_handler = lambda: focus_handler
-        self.__getitem__ = focus_handler.__getitem__
+        if highlight:
+            focus_handler = ColumnFocusHandlerHighlightRows(render_data)
+            self.focus_handler = lambda: focus_handler
+            self.__getitem__ = focus_handler.__getitem__
 
     def __len__(self):
         return 1
@@ -48,14 +49,14 @@ class WIndicatorCellRenderer(WColumnRenderer):
             buffer += DOUBLE_UNDERLINE_BYTES
         buffer += set_colors_cmd_bytes2(
             COLORS2[ColorKey.BOX_DRAWING][0],
-            self.bg_color(value)
+            self.bg_color(value, row_attrs & MASK_ROW_EMPHASIZED)
         )
         buffer += LEFT_BORDER_BYTES
         return buffer
 
-    def bg_color(self, value):
+    def bg_color(self, value, row_emphasized: bool):
         if value is None:
-            return COLORS2[ColorKey.BOX_DRAWING][1]
+            return super().background_color(row_emphasized)
 
         if self.bg is None:
             if type(value) is dict or type(value) is list:

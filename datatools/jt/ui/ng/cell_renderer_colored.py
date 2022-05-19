@@ -6,7 +6,7 @@ from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.column_focus_handler_highlight_rows import ColumnFocusHandlerHighlightRows
 from datatools.jt.ui.ng.render_data import RenderData
-from datatools.jt.ui.themes import ColorKey, COLORS2
+from datatools.jt.ui.themes import ColorKey, COLORS2, COLORS3
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, INVERTED_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb, decode_rgb
@@ -68,26 +68,28 @@ class WColoredTextCellRenderer(WColumnRenderer):
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES
 
+        category_value = self.render_data.named_cell_value_f(row, self.column_renderer.category_column)
+        fg, bg = self.compute_cell_attrs(value, self.value_to_use(str(value), category_value), row_attrs & MASK_ROW_EMPHASIZED)
+
+        # Optimize or use Buffer
         if start == 0:
-            buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
+            buffer += set_colors_cmd_bytes2(COLORS3[ColorKey.BOX_DRAWING], bg) + LEFT_BORDER_BYTES
         if start < column_width - 1 and end > 1:
-            category = self.render_data.named_cell_value_f(row, self.column_renderer.category_column)
-            attrs = self.compute_cell_attrs(value, category)
-            buffer += set_colors_cmd_bytes2(*attrs) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
+            buffer += set_colors_cmd_bytes2(fg, bg) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
         if end == column_width:
-            buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + b' '
+            buffer += set_colors_cmd_bytes2(fg, bg) + b' '    # trailing ' '
 
         return buffer
 
-    def compute_cell_attrs(self, value, category) -> Sequence[int]:
-        text_attrs = COLORS2[ColorKey.TEXT]
+    def compute_cell_attrs(self, value, text, row_emphasized: bool) -> Sequence[int]:
+        bg = super().background_color(row_emphasized)
         if value is None:
-            return COLORS2[ColorKey.BOX_DRAWING][1], None
+            return COLORS2[ColorKey.BOX_DRAWING][1], bg
 
-        fg = self.compute_color(self.value_to_use(str(value), category))
-        return fg, text_attrs[1]
+        fg = self.compute_fg_color(text)
+        return fg, bg
 
-    def compute_color(self, value):
+    def compute_fg_color(self, value):
         pass
 
     def text_color(self):
@@ -101,7 +103,7 @@ class WColoredTextCellRenderer(WColumnRenderer):
 
 
 class WColoredTextCellRendererPlain(WColoredTextCellRenderer):
-    def compute_color(self, value):
+    def compute_fg_color(self, value):
         return self.text_color()
 
 
@@ -110,7 +112,7 @@ class WColoredTextCellRendererMapping(WColoredTextCellRenderer):
         super().__init__(column_renderer, render_data)
         self.column_renderer = column_renderer
 
-    def compute_color(self, value):
+    def compute_fg_color(self, value):
         color = self.column_renderer.colorMap.get(value)
         if color is not None:
             return decode_rgb(color.lstrip('#'))
@@ -126,7 +128,7 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
         self.focus_handler = lambda: focus_handler
         self.__getitem__ = focus_handler.__getitem__
 
-    def compute_color(self, value):
+    def compute_fg_color(self, value):
         if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:
             return self.text_color()
         else:

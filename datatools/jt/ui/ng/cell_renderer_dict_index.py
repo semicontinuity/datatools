@@ -46,13 +46,12 @@ class WDictIndexCellRenderer(WColumnRenderer):
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES
 
-        index = self.dictionary.get(value)
+        index_of_value = self.dictionary.get(value)
+        
         for i in range(start, end):
-
-            buffer += set_colors_cmd_bytes2(
-                COLORS2[ColorKey.BOX_DRAWING][0],
-                hash_to_rgb(hash_code(value), offset=64) if index is not None and index == i else COLORS2[ColorKey.BOX_DRAWING][1]
-            )
+            fg = COLORS2[ColorKey.BOX_DRAWING][0]
+            bg = hash_to_rgb(hash_code(value), offset=64) if index_of_value is not None and index_of_value == i else super().background_color(row_attrs & MASK_ROW_EMPHASIZED)
+            buffer += set_colors_cmd_bytes2(fg, bg)
             buffer += (LEFT_BORDER_BYTES if i == 0 else b' ')
 
         return buffer

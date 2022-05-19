@@ -1,10 +1,11 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
+from datatools.jt.model.attributes import MASK_ROW_EMPHASIZED
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererBase
 from datatools.jt.ui.ng.render_data import RenderData
-from datatools.jt.ui.themes import ColorKey, COLORS2, DARK
+from datatools.jt.ui.themes import ColorKey, COLORS2, COLORS3
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_to_rgb, hash_code
 from datatools.tui.json2ansi_buffer import Buffer
@@ -63,18 +64,19 @@ class WSeqDiagramCallCellRenderer(WColumnRenderer):
     def __len__(self):
         return max(1, len(self.order) * 3)
 
-    def __call__(self, attrs, column_width, start, end, value, row) -> bytes:
+    def __call__(self, row_attrs, column_width, start, end, value, row) -> bytes:
         val_from = self.value_from(row)
         val_to = self.value_to(row)
+        bg = super().background_color(row_attrs & MASK_ROW_EMPHASIZED)
 
         bb = bytearray()
         if start == 0:
-            bb += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
+            bb += set_colors_cmd_bytes2(COLORS3[ColorKey.BOX_DRAWING], bg) + LEFT_BORDER_BYTES
 
         index_of_val_from = self.order.get(val_from)
         index_of_val_to = self.order.get(val_to)
 
-        buffer = Buffer(column_width, 1, DARK)
+        buffer = Buffer(column_width, 1, bg)
 
         def draw_block(index, val):
             if index is not None:
