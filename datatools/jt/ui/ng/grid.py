@@ -230,13 +230,15 @@ class WGrid(WGridBase):
             self.redraw_lines(self.top_line, content_height)
 
     def cursor_line_changed(self, old_line, line) -> bool:
-        return bool(self.column_cell_renderer_f(self.cursor_column).focus_moved(old_line, line))
+        focus_handler = self.column_cell_renderer_f(self.cursor_column).focus_handler()
+        return bool(focus_handler and focus_handler.focus_moved(old_line, line))
 
     def cursor_column_change(self, new):
         self.cell_cursor_off()
-        redraw = bool(self.column_cell_renderer_f(self.cursor_column).focus_lost(self.cur_line))
+        focus_handler = self.column_cell_renderer_f(self.cursor_column).focus_handler()
+        redraw = bool(focus_handler and focus_handler.focus_lost(self.cur_line))
         self.cursor_column = new
-        redraw |= bool(self.column_cell_renderer_f(self.cursor_column).focus_gained(self.cur_line))
+        redraw |= bool(focus_handler and focus_handler.focus_gained(self.cur_line))
         if redraw:
             self.redraw()  # only columns!
         self.cell_cursor_place()

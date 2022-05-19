@@ -4,6 +4,7 @@ from typing import Sequence, Dict
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_ROW_EMPHASIZED
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.ng.column_focus_handler_highlight_rows import ColumnFocusHandlerHighlightRows
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS2
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, INVERTED_BYTES
@@ -127,6 +128,9 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
         super().__init__(column_renderer, render_data)
         self.column_renderer = column_renderer
         self.keyword = ...
+        focus_handler = ColumnFocusHandlerHighlightRows(render_data)
+        self.focus_handler = lambda: focus_handler
+        self.__getitem__ = focus_handler.__getitem__
 
     def compute_color(self, value):
         if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:

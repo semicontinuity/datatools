@@ -4,6 +4,7 @@ from typing import Any, Optional, Tuple
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_ROW_EMPHASIZED
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
+from datatools.jt.ui.ng.column_focus_handler_highlight_rows import ColumnFocusHandlerHighlightRows
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES
@@ -35,6 +36,9 @@ class WIndicatorCellRenderer(WColumnRenderer):
         self.bg = bg
         self.keyword = ...
         self.highlight = highlight
+        focus_handler = ColumnFocusHandlerHighlightRows(render_data)
+        self.focus_handler = lambda: focus_handler
+        self.__getitem__ = focus_handler.__getitem__
 
     def __len__(self):
         return 1

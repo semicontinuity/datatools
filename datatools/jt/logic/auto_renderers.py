@@ -36,6 +36,9 @@ class WMultiRenderer(WColumnRenderer):
     def delegate(self):
         return self.delegates[self.current]
 
+    def focus_handler(self):
+        return self.invoke('focus_handler')
+
     def focus_lost(self, line):
         return self.invoke('focus_lost', line)
 
