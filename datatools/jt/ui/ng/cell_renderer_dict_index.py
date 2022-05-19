@@ -28,7 +28,6 @@ class WDictIndexCellRenderer(WColumnRenderer):
         self.render_data = render_data
         self.dictionary = render_data.column_metadata.dictionary
         self.title = render_data.column_presentation.title
-        self.keyword = ...
         focus_handler = ColumnFocusHandlerHighlightRows(render_data)
         self.focus_handler = lambda: focus_handler
         self.__getitem__ = focus_handler.__getitem__
@@ -57,19 +56,3 @@ class WDictIndexCellRenderer(WColumnRenderer):
             buffer += (LEFT_BORDER_BYTES if i == 0 else b' ')
 
         return buffer
-
-    def focus_gained(self, line):
-        self.keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
-        return True
-
-    def focus_lost(self, line):
-        self.keyword = ...
-        return True
-
-    def focus_moved(self, old_line, line):
-        new_keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
-        self.keyword = new_keyword
-        return True
-
-    def __getitem__(self, row):
-        return MASK_ROW_EMPHASIZED if self.render_data.named_cell_value_f(row, self.render_data.column_key) == self.keyword else 0

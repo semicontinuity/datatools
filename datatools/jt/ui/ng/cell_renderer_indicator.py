@@ -34,7 +34,6 @@ class WIndicatorCellRenderer(WColumnRenderer):
     def __init__(self, render_data: RenderData, bg: Optional[Tuple[int, int, int]], highlight):
         self.render_data = render_data
         self.bg = bg
-        self.keyword = ...
         self.highlight = highlight
         focus_handler = ColumnFocusHandlerHighlightRows(render_data)
         self.focus_handler = lambda: focus_handler
@@ -65,21 +64,3 @@ class WIndicatorCellRenderer(WColumnRenderer):
                 return hash_to_rgb(hash_code(value), offset=64)
         else:
             return self.bg
-
-    def focus_gained(self, line):
-        self.keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
-        return self.highlight
-
-    def focus_lost(self, line):
-        self.keyword = ...
-        return self.highlight
-
-    def focus_moved(self, old_line, line):
-        new_keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
-        self.keyword = new_keyword
-        return self.highlight
-
-    def __getitem__(self, row):
-        if not self.highlight:
-            return 0
-        return MASK_ROW_EMPHASIZED if self.render_data.named_cell_value_f(row, self.render_data.column_key) == self.keyword else 0
