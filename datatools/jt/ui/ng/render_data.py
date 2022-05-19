@@ -13,3 +13,4 @@ class RenderData:
     column_key: str
     size: int
     named_cell_value_f: Callable[[int, str], Any]
+    value: Callable[[int], Any] # does not work?

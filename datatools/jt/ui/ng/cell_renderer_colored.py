@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence, Dict
 
-from datatools.jt.model.attributes import MASK_ROW_CURSOR
+from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_ROW_EMPHASIZED
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.render_data import RenderData
@@ -66,8 +66,8 @@ class WColoredTextCellRenderer(WColumnRenderer):
         buffer = bytearray()
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES
-        if self.is_highlighted(value):
-            buffer += INVERTED_BYTES
+        # if self.is_highlighted(value):
+        #     buffer += INVERTED_BYTES
 
         if start == 0:
             buffer += set_colors_cmd_bytes2(*COLORS2[ColorKey.BOX_DRAWING]) + LEFT_BORDER_BYTES
@@ -91,8 +91,8 @@ class WColoredTextCellRenderer(WColumnRenderer):
     def compute_color(self, value):
         pass
 
-    def is_highlighted(self, value):
-        return False
+    # def is_highlighted(self, value):
+    #     return False
 
     def text_color(self):
         if self.column_renderer.color is None:
@@ -126,7 +126,7 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
     def __init__(self, column_renderer: ColumnRendererColoredHash, render_data: RenderData):
         super().__init__(column_renderer, render_data)
         self.column_renderer = column_renderer
-        self.keyword = None
+        self.keyword = ...
 
     def compute_color(self, value):
         if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:
@@ -139,12 +139,17 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
         return True
 
     def focus_lost(self, line):
-        self.keyword = None
+        self.keyword = ...
         return True
 
     def focus_moved(self, old_line, line):
-        self.keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
+        new_keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
+        self.keyword = new_keyword
         return True
+        # return self.keyword != new_keyword
 
-    def is_highlighted(self, value):
-        return value == self.keyword
+    # def is_highlighted(self, value):
+    #     return value == self.keyword
+
+    def __getitem__(self, row):
+        return MASK_ROW_EMPHASIZED if self.render_data.named_cell_value_f(row, self.render_data.column_key) == self.keyword else 0

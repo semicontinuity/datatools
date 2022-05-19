@@ -2,11 +2,11 @@ from typing import Optional
 
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
-from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
+from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE, MASK_ROW_EMPHASIZED
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.themes import FOOTER_BG
-from datatools.tui.ansi import ANSI_ATTR_OVERLINE
+from datatools.tui.ansi import ANSI_ATTR_OVERLINE, OVERLINE_BYTES, INVERTED_BYTES, NOT_INVERTED_BYTES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2
@@ -110,11 +110,21 @@ class WGrid(WGridBase):
         buffer = bytearray()
         if line < self.total_lines:
             row_attrs = self.row_attrs_f(line)
+
+            for column_index in range(self.column_count):
+                f = self.column_cell_renderer_f(column_index)
+                row_attrs |= f.__getitem__(line)
+
+            buffer += NOT_INVERTED_BYTES
+
             if row_attrs & MASK_OVERLINE:
-                buffer += b'\x1b[53m'
+                buffer += OVERLINE_BYTES
 
             x = 0   # corresponds to the left border of the first column, might be off-screen
             for column_index in range(self.column_count):
+                if row_attrs & MASK_ROW_EMPHASIZED:
+                    buffer += INVERTED_BYTES
+
                 self.render_cell(buffer, column_index, is_under_cursor, line, row_attrs)
 
                 # reset attributes

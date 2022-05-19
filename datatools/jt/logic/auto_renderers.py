@@ -30,6 +30,9 @@ class WMultiRenderer(WColumnRenderer):
     def __call__(self, attrs, column_width, start, end, value, row) -> bytes:
         return self.delegate().__call__(attrs, column_width, start, end, value, row)
 
+    def __getitem__(self, row):
+        return self.delegate().__getitem__(row)
+
     def delegate(self):
         return self.delegates[self.current]
 
@@ -73,7 +76,10 @@ def make_renderers(
             raise ValueError(f'No renderers for {column_key}: {column_presentation}')
 
         column_state = ColumnState(False)
-        render_data = RenderData(column_metadata, column_presentation, column_state, column_key, size, named_cell_value_f)
+        render_data = RenderData(
+            column_metadata, column_presentation, column_state, column_key, size, named_cell_value_f,
+            value=lambda row: named_cell_value_f(row, column_key)
+        )
         for column_renderer in column_presentation.renderers:
             delegate = column_renderer.make_delegate(render_data)
             column_delegates.append(delegate)

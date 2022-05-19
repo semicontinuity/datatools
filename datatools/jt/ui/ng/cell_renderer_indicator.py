@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional, Tuple
 
-from datatools.jt.model.attributes import MASK_ROW_CURSOR
+from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_ROW_EMPHASIZED
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.render_data import RenderData
@@ -17,17 +17,24 @@ from datatools.tui.terminal import set_colors_cmd_bytes2
 class ColumnRendererIndicator(ColumnRenderer):
     type = 'indicator'
     color: str = None
+    highlight: bool = None
 
     def make_delegate(self, render_data: RenderData):
-        return WIndicatorCellRenderer(self)
+        return WIndicatorCellRenderer(render_data, self.color_rgb(), self.highlight)
+
+    def color_rgb(self) -> Optional[Tuple[int, int, int]]:
+        if is_color_value(self.color):
+            return decode_rgb(self.color[1:])
 
 
 class WIndicatorCellRenderer(WColumnRenderer):
     bg: Any = None
 
-    def __init__(self, column_renderer: ColumnRendererIndicator):
-        if is_color_value(column_renderer.color):
-            self.bg = decode_rgb(column_renderer.color[1:])
+    def __init__(self, render_data: RenderData, bg: Optional[Tuple[int, int, int]], highlight):
+        self.render_data = render_data
+        self.bg = bg
+        self.keyword = ...
+        self.highlight = highlight
 
     def __len__(self):
         return 1
@@ -54,3 +61,21 @@ class WIndicatorCellRenderer(WColumnRenderer):
                 return hash_to_rgb(hash_code(value), offset=64)
         else:
             return self.bg
+
+    def focus_gained(self, line):
+        self.keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
+        return self.highlight
+
+    def focus_lost(self, line):
+        self.keyword = ...
+        return self.highlight
+
+    def focus_moved(self, old_line, line):
+        new_keyword = self.render_data.named_cell_value_f(line, self.render_data.column_key)
+        self.keyword = new_keyword
+        return self.highlight
+
+    def __getitem__(self, row):
+        if not self.highlight:
+            return 0
+        return MASK_ROW_EMPHASIZED if self.render_data.named_cell_value_f(row, self.render_data.column_key) == self.keyword else 0

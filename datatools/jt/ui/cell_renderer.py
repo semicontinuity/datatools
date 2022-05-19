@@ -27,3 +27,10 @@ class WColumnRenderer:
         :param column_width:    current width of the rendered column, as returned by __len__
         """
         pass
+
+    def __getitem__(self, row):
+        """
+        Has to return combination of MASK_* constants, that this renderer contributes to rendering of a row
+        :param row:  index of the row being rendered
+        """
+        return 0

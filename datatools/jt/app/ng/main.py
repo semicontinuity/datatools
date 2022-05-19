@@ -5,11 +5,11 @@ from datatools.json2ansi.app import make_json2ansi_applet
 from datatools.json2ansi.default_style import default_style
 from datatools.jt.app.app_kit import Applet, main, default_state
 from datatools.jt.app.classic.main import init_from_state
-from datatools.jt.model.exit_codes import *
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_renderers import make_renderers
 from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR_LINE_Y
+from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.ng.grid import WGrid
