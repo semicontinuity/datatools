@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import Sequence, Dict
 
-from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_ROW_EMPHASIZED
+from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_ROW_EMPHASIZED, MASK_OVERLINE
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.column_focus_handler_highlight_rows import ColumnFocusHandlerHighlightRows
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS2, COLORS3
-from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, INVERTED_BYTES
+from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, OVERLINE_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb, decode_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
@@ -67,6 +67,8 @@ class WColoredTextCellRenderer(WColumnRenderer):
         buffer = bytearray()
         if row_attrs & MASK_ROW_CURSOR:
             buffer += DOUBLE_UNDERLINE_BYTES
+        if row_attrs & MASK_OVERLINE:
+            buffer += OVERLINE_BYTES
 
         category_value = self.render_data.named_cell_value_f(row, self.column_renderer.category_column)
         fg, bg = self.compute_cell_attrs(value, self.value_to_use(str(value), category_value), row_attrs & MASK_ROW_EMPHASIZED)

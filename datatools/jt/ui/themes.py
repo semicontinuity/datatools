@@ -31,7 +31,8 @@ THEMES = {
     },
 }
 
-DARK = (16, 18, 18)
+DARK = (8, 9, 9)
+LIGHTER = (24, 26, 26)
 FOOTER_BG = (40, 40, 40)
 
 THEMES2 = {
@@ -57,5 +58,5 @@ COLORS2 = THEMES2["dark"]
 COLORS3 = {
     ColorKey.BOX_DRAWING: (64, 96, 96),
     ColorKey.DEF_BACKGROUND: DARK,
-    ColorKey.EMP_BACKGROUND: FOOTER_BG,
+    ColorKey.EMP_BACKGROUND: LIGHTER,
 }

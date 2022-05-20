@@ -53,7 +53,7 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
         [{"name": k, "renderer": "generic"} for k in root_column_names],
         [{"name": k, "renderer": "generic"} for k in leaf_column_names]
     ]
-    analyse_column_present = True
+    analyse_column_present = False
     for super_record in data:
         tg_data.append({k: v for k, v in super_record.items() if k != '_'})
 
@@ -62,8 +62,10 @@ def tdf_from_aggregated_json(data, base_folder, out_resource_name):
         i = i + 1
 
         leaf_df = pd.DataFrame.from_records(leaf)
-        if MSG_KIND_COLUMN not in leaf_df:
-            analyse_column_present = False
+        if MSG_KIND_COLUMN in leaf_df:
+            analyse_column_present = True
+        # if MSG_KIND_COLUMN not in leaf_df:
+        #     analyse_column_present = False
         leaves.append(
             TieredDataFrame(
                 base_folder, entry_name, schema_tiers[2:], leaf_df, [], fmt=INPUT_FORMAT
@@ -171,10 +173,13 @@ def annotate_group(tg_row, tg_tdf):
     singletons = compute_singletons_allow_runs(tg_tdf)
     debug('Analyzing transitions')
     transitions = Transitions(singletons)
+
     for tx_keys, tx_tdf in tg_tdf:
-        with transitions as tx:
-            for index, row in tx_tdf.node_df.iterrows():
-                tx(row[MSG_KIND_COLUMN])
+        if MSG_KIND_COLUMN in tx_tdf.node_df:
+            with transitions as tx:
+                for index, row in tx_tdf.node_df.iterrows():
+                    tx(row[MSG_KIND_COLUMN])
+
     milestones: Dict[str, Dict[str, int]] = pruned(transitions.singleton_transitions)
     item_occurs_in_transactions, milestones_in_transactions = occurrences(tg_tdf, milestones)
     transaction_codes: List[str] = [hash_code_hex8(hash(tuple(e))) for e in milestones_in_transactions]
@@ -187,6 +192,9 @@ def annotate_group(tg_row, tg_tdf):
     debug('Analyzing transitions (2)')
     transitions_2 = insight.logic.transitions2.Transitions()
     for tx_keys, tx_tdf in tg_tdf:
+        if MSG_KIND_COLUMN not in tx_tdf.node_df:
+            continue
+
         with transitions_2 as tx:
             for index, row in tx_tdf.node_df.iterrows():
                 tx(row[MSG_KIND_COLUMN])
@@ -318,6 +326,9 @@ def annotate_group(tg_row, tg_tdf):
 
     debug('Attaching annotation columns')
     for tx_keys, tx_tdf in tg_tdf:
+        if MSG_KIND_COLUMN not in tx_tdf.node_df:
+            continue
+
         tx_tdf.node_df['s'] = tx_tdf.node_df.apply(lambda r: '1' if r[MSG_KIND_COLUMN] in singletons else 0, axis=1)
         tx_tdf.node_df['xhash'] = tx_tdf.node_df.apply(item_code, axis=1)
         # tx_tdf.node_df['feature'] = tx_tdf.node_df.apply(lambda r: feature_codes.get(r['hash'], '*'), axis=1)
@@ -367,12 +378,13 @@ def compute_singletons_allow_runs(tg_tdf) -> Set[str]:
         debug('-------------------------------------------------------------')
 
         seen_items: Set[str] = set()
-        for item in collapse_repeats(traverse_tx_items(tx_tdf)):
-            if item in seen_items:
-                failed_singletons.add(item)
-            else:
-                singletons.add(item)
-            seen_items.add(item)
+        if MSG_KIND_COLUMN in tx_tdf.node_df:
+            for item in collapse_repeats(traverse_tx_items(tx_tdf)):
+                if item in seen_items:
+                    failed_singletons.add(item)
+                else:
+                    singletons.add(item)
+                seen_items.add(item)
     singletons -= failed_singletons
     return singletons
 
@@ -411,6 +423,9 @@ def occurrences(tg_tdf: TieredDataFrame, milestones: Container[str]) -> Tuple[Di
     for tx_keys, tx_tdf in tg_tdf:
         milestones_in_transaction: List[str] = []
         milestones_in_transactions.append(milestones_in_transaction)
+
+        if MSG_KIND_COLUMN not in tx_tdf.node_df:
+            continue
 
         for index, row in tx_tdf.node_df.iterrows():
             item = row[MSG_KIND_COLUMN]
