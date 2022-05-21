@@ -21,6 +21,7 @@ from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain,
 from datatools.jt.ui.ng.cell_renderer_dict_index import ColumnRendererDictIndexHashColored
 from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
 from datatools.jt.ui.ng.cell_renderer_seq_diagram_call import ColumnRendererSeqDiagramCall
+from datatools.jt.ui.ng.cell_renderer_seq_diagram_call2 import ColumnRendererSeqDiagramCall2
 from datatools.jt.ui.ng.cell_renderer_stripes_hashes import ColumnRendererStripesHashColored
 from datatools.jt.ui.ng.cell_renderer_stripes_time_series import ColumnRendererStripesTimeSeries
 from datatools.tui.picotui_patch import get_screen_size, patch_picotui
@@ -156,6 +157,7 @@ def load_data_bundle(params: Params, orig_data: List):
             ColumnRendererDictIndexHashColored.type: ColumnRendererDictIndexHashColored,
             ColumnRendererIndicator.type: ColumnRendererIndicator,
             ColumnRendererSeqDiagramCall.type: ColumnRendererSeqDiagramCall,
+            ColumnRendererSeqDiagramCall2.type: ColumnRendererSeqDiagramCall2,
             ColumnRendererStripesTimeSeries.type: ColumnRendererStripesTimeSeries,
             ColumnRendererStripesHashColored.type: ColumnRendererStripesHashColored
         }

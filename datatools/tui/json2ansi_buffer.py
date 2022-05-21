@@ -6,6 +6,7 @@ class Buffer:
     height: int
     chars: List[bytearray]  # every character is represented by 2 bytes (utf-16le)
     attrs: List[bytearray]  # for each character: 1 byte of attributes + 3 bytes for custom bg color (RGB)
+    default_fg_color: Optional[List[int]]  # RGB
     default_bg_color: Optional[List[int]]  # RGB
 
     MASK_NONE = 0x00
@@ -18,12 +19,13 @@ class Buffer:
 
     TAB_SIZE = 4
 
-    def __init__(self, width: int, height: int, default_bg_color: Optional[List[int]] = None):
+    def __init__(self, width: int, height: int, default_bg_color: Optional[List[int]] = None, default_fg_color: Optional[List[int]] = None):
         self.width = width
         self.height = height
         self.chars = [self.spaces(width) for _ in range(height)]
         self.attrs = [bytearray(4 * width) for _ in range(height)]
         self.default_bg_color = default_bg_color
+        self.default_fg_color = default_fg_color
 
     @staticmethod
     def spaces(width) -> bytearray:
@@ -134,15 +136,24 @@ class Buffer:
         return s + '\x1b[0;m'  # (for the last line only)
 
     def attr_to_ansi(self, attr, r, g, b):
-        codes: List[str] = ['37']
+        codes: List[str] = []
 
-        # ESC[48;2;{r};{g};{b}m Set background color as RGB.
-        def append_bg_rgb_color(r, g, b):
-            codes.append('48')
+        # ESC[x8;2;{r};{g};{b}m Set color as RGB.
+        def append_rgb_color(code, r, g, b):
+            codes.append(code)
             codes.append('2')
             codes.append(str(r))
             codes.append(str(g))
             codes.append(str(b))
+
+        def append_fg_rgb_color(r, g, b):
+            append_rgb_color('38', r, g, b)
+
+        def append_bg_rgb_color(r, g, b):
+            append_rgb_color('48', r, g, b)
+
+        if self.default_fg_color:
+            append_fg_rgb_color(*self.default_fg_color)
 
         if attr & self.MASK_BOLD:
             codes.append('1')

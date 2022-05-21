@@ -57,6 +57,7 @@ COLORS2 = THEMES2["dark"]
 
 COLORS3 = {
     ColorKey.BOX_DRAWING: (64, 96, 96),
+    ColorKey.TEXT: (192, 192, 192),
     ColorKey.DEF_BACKGROUND: DARK,
     ColorKey.EMP_BACKGROUND: LIGHTER,
 }
