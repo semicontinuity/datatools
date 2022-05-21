@@ -74,12 +74,12 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
         index_of_source_lane = self.order.get(source_lane)
         index_of_target_lane = self.order.get(target_lane)
 
-        buffer = Buffer(column_width, 1, super().background_color(row_attrs & MASK_ROW_EMPHASIZED), COLORS3[ColorKey.TEXT])
+        buffer = Buffer(column_width, 1, super().background_color(row_attrs & MASK_ROW_EMPHASIZED), COLORS3[ColorKey.BOX_DRAWING])
 
         def draw_block(index, val):
             if index is not None:
                 buffer.draw_attrs_box(
-                    1 + 3 * index, 0, 1, 1, Buffer.MASK_BG_CUSTOM,
+                    1 + 3 * index, 0, 1, 1, Buffer.MASK_BG_CUSTOM | Buffer.MASK_OVERLINE,
                     hash_to_rgb(hash_code(val or ''), offset=64)
                 )
 
@@ -90,13 +90,13 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
                     x_to = 3 * max(index_from, index_to) + 1
                     x = x_from
                     while x < x_to:
-                        buffer.draw_code_point(x, 0, ord('—'))
+                        buffer.draw_code_point(x, 0, ord('—'), Buffer.MASK_FG_EMPHASIZED)
                         x += 1
 
                     if index_to > index_from:
-                        buffer.draw_code_point(x_to - 1, 0, ord('►'))
+                        buffer.draw_code_point(x_to - 1, 0, ord('►'), Buffer.MASK_FG_EMPHASIZED)
                     else:
-                        buffer.draw_code_point(x_from, 0, ord('◄'))
+                        buffer.draw_code_point(x_from, 0, ord('◄'), Buffer.MASK_FG_EMPHASIZED)
 
         mask = Buffer.MASK_BG_CUSTOM
         if row_attrs & MASK_ROW_CURSOR: mask |= MASK_BOLD

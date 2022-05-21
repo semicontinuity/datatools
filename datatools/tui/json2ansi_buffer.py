@@ -111,7 +111,7 @@ class Buffer:
 
     def row_to_string(self, y, x_from, x_to):
         s = ''
-        prev_attr = -1
+        prev_attr = 0
         prev_r = -1
         prev_g = -1
         prev_b = -1
@@ -125,7 +125,7 @@ class Buffer:
 
             if attr != prev_attr or (
                     (attr & Buffer.MASK_BG_CUSTOM) != 0 and (r != prev_r or g != prev_g or b != prev_b)):
-                s += '\x1b[' + self.attr_to_ansi(attr, r, g, b) + 'm'
+                s += '\x1b[' + self.attr_to_ansi(attr, prev_attr, r, g, b) + 'm'
             s += c
 
             prev_attr = attr
@@ -135,7 +135,7 @@ class Buffer:
 
         return s + '\x1b[0;m'  # (for the last line only)
 
-    def attr_to_ansi(self, attr, r, g, b):
+    def attr_to_ansi(self, attr: int, prev_attr: int, r, g, b):
         codes: List[str] = []
 
         # ESC[x8;2;{r};{g};{b}m Set color as RGB.
@@ -155,23 +155,42 @@ class Buffer:
         if self.default_fg_color:
             append_fg_rgb_color(*self.default_fg_color)
 
-        if attr & self.MASK_BOLD:
-            codes.append('1')
-        if attr & self.MASK_ITALIC:
-            codes.append('3')
+        attr_diff = attr ^ prev_attr
+
+        if attr_diff & self.MASK_BOLD:
+            codes.append('1') if attr & self.MASK_BOLD else codes.append('21')
+        if attr_diff & self.MASK_ITALIC:
+            codes.append('3') if attr & self.MASK_ITALIC else codes.append('31')
+        if attr_diff & self.MASK_OVERLINE:
+            codes.append('53') if attr & self.MASK_OVERLINE else codes.append('55')
+
+        # if attr_diff & self.MASK_FG_EMPHASIZED:
+        #     if attr & self.MASK_FG_EMPHASIZED:
+        #         codes.append('97')  # bright white
+        #     else:
+        #         if self.default_fg_color is None:
+        #             codes.append('37')  # white
+        #         else:
+        #             append_fg_rgb_color(*self.default_fg_color)
+
+        # diff does not work?
+
+        if attr & self.MASK_FG_EMPHASIZED:
+            codes.append('38;5;250')  # bright gray
+        else:
+            if self.default_fg_color is None:
+                codes.append('37')  # white
+            else:
+                append_fg_rgb_color(*self.default_fg_color)
 
         if attr & self.MASK_BG_CUSTOM:
             append_bg_rgb_color(r, g, b)
         elif attr & self.MASK_BG_EMPHASIZED:
-            codes.append('48;5;237')
+            codes.append('48;5;237')    # dark gray
         else:
             if self.default_bg_color is None:
                 codes.append('40')  # black
             else:
                 append_bg_rgb_color(*self.default_bg_color)
 
-        if attr & self.MASK_FG_EMPHASIZED:
-            codes.append('97')
-        if attr & self.MASK_OVERLINE:
-            codes.append('53')
         return ';'.join(codes)
