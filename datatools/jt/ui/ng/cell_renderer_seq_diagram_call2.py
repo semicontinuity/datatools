@@ -37,7 +37,7 @@ class SimpleLayout:
         return len(self.layout)
 
     def __getitem__(self, key):
-        return self.lookup.get(key) if type(key) is str else (self.layout[key] if key < len(self.layout) else None)
+        return (self.layout[key] if key < len(self.layout) else None) if type(key) is int else self.lookup.get(key)
 
 
 class WSeqDiagramCallCellRenderer2(WColumnRenderer):
@@ -51,12 +51,12 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
         occurrence = {}           # Take note, in which nodes have appeared
         rank = defaultdict(int)   # For each node, rank=count(incoming edges) - count(outgoing edges)
 
-        def occurred(val, rank_delta):
-            if val is not None:
-                if occurrence.get(val) is None:
-                    occurrence[val] = len(occurrence)
-                rank[val] += rank_delta
-                return self.lane_layouts[val]
+        def occurred(lane_val, rank_delta):
+            if lane_val is not None:
+                if occurrence.get(lane_val) is None:
+                    occurrence[lane_val] = len(occurrence)
+                rank[lane_val] += rank_delta
+                return self.lane_layouts[lane_val]
 
         def edge(val_from, val_to, sub_val_from, sub_val_to):
             if val_from is not None:
@@ -124,7 +124,7 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
 
         def draw_block(lane_index, val):
             if lane_index is not None:
-                x = self.lane_start_offset(lane_index) + 1
+                x = self.lane_start_offset(lane_index) + self.lane_layouts[self.layout[lane_index]][val] * 3 + 1
                 buffer.draw_attrs_box(
                     x, 0, 1, 1, Buffer.MASK_BG_CUSTOM | Buffer.MASK_OVERLINE,
                     hash_to_rgb(hash_code(val or ''), offset=64)
