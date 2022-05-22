@@ -25,19 +25,29 @@ class ColumnRendererSeqDiagramCall2(ColumnRendererBase):
 
 class SimpleLayout:
     def __init__(self):
-        self.layout = []
         self.lookup = {}
+        self.offset = 0
+        self.length = 0
 
-    def __iadd__(self, val):
-        if val not in self.layout:  # O(N) OK for small data set
-            self.layout.append(val)
-            self.lookup[val] = len(self.lookup)
+    def add_node(self, val):
+        if val not in self.lookup:
+            self.lookup[val] = self.offset
+            self.offset += 1
+            self.length = max(self.length, self.offset)
+
+    def add_edge(self, val_from, val_to):
+        self.add_node(val_from)
+        self.offset = max(self.offset, 1)
+        self.add_node(val_to)
 
     def __len__(self):
-        return len(self.layout)
+        return self.length
 
     def __getitem__(self, key):
-        return (self.layout[key] if key < len(self.layout) else None) if type(key) is int else self.lookup.get(key)
+        return self.lookup.get(key)
+
+    def reset(self):
+        self.offset = 0
 
 
 class WSeqDiagramCallCellRenderer2(WColumnRenderer):
@@ -51,7 +61,7 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
         occurrence = {}           # Take note, in which nodes have appeared
         rank = defaultdict(int)   # For each node, rank=count(incoming edges) - count(outgoing edges)
 
-        def occurred(lane_val, rank_delta):
+        def occurred(lane_val, rank_delta) -> SimpleLayout:
             if lane_val is not None:
                 if occurrence.get(lane_val) is None:
                     occurrence[lane_val] = len(occurrence)
@@ -59,12 +69,19 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
                 return self.lane_layouts[lane_val]
 
         def edge(val_from, val_to, sub_val_from, sub_val_to):
-            if val_from is not None:
-                occurred(val_from, 0).__iadd__(sub_val_from)
-            if val_to is not None:
-                occurred(val_to, 0).__iadd__(sub_val_to)
             if val_to is not None and val_from is not None:
-                edges.add((val_from, val_to))
+                if val_to != val_from:
+                    edges.add((val_from, val_to))
+                    self.lane_layouts[val_from].reset()
+                    self.lane_layouts[val_to].reset()
+                    occurred(val_from, 0).add_node(sub_val_from)
+                    occurred(val_to, 0).add_node(sub_val_to)
+                else:
+                    occurred(val_from, 0).add_edge(sub_val_from, sub_val_to)
+            elif val_from is not None:
+                occurred(val_from, 0).add_node(sub_val_from)
+            elif val_to is not None:
+                occurred(val_to, 0).add_node(sub_val_to)
 
         for row in range(self.render_data.size):
             edge(
@@ -96,21 +113,13 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
     def __len__(self):
         return max(1, self.end_offsets[-1])
 
-    def lane_start_offset(self, lane):
-        return self.end_offsets[lane - 1] if lane > 0 else 0
+    def lane_start_offset(self, lane_index):
+        return self.end_offsets[lane_index - 1] if lane_index > 0 else 0
 
-    def lane_end_offset(self, lane):
-        return self.end_offsets[lane]
+    def lane_end_offset(self, lane_index):
+        return self.end_offsets[lane_index]
 
     def __call__(self, row_attrs, column_width, start, end, value, row) -> bytes:
-        source_lane = self.source_lane_value(row)
-        target_lane = self.target_lane_value(row)
-        source_sub_lane = self.source_sub_lane_value(row)
-        target_sub_lane = self.target_sub_lane_value(row)
-
-        index_of_source_lane = self.order.get(source_lane)
-        index_of_target_lane = self.order.get(target_lane)
-
         buffer = Buffer(column_width, 1, super().background_color(row_attrs & MASK_ROW_EMPHASIZED), COLORS3[ColorKey.BOX_DRAWING])
         mask = Buffer.MASK_BG_CUSTOM
         if row_attrs & MASK_ROW_CURSOR: mask |= MASK_BOLD
@@ -122,12 +131,13 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
                 mask, hash_to_rgb(hash_code(self.layout[lane]), offset=0)
             )
 
-        def draw_block(lane_index, val):
-            if lane_index is not None:
-                x = self.lane_start_offset(lane_index) + self.lane_layouts[self.layout[lane_index]][val] * 3 + 1
+        def draw_block(lane_val, lane_sub_val):
+            if lane_val is not None:
+                sub_val_offset = self.lane_layouts[lane_val][lane_sub_val]
+                x = self.lane_start_offset(self.order.get(lane_val)) + sub_val_offset * 3 + 1
                 buffer.draw_attrs_box(
                     x, 0, 1, 1, Buffer.MASK_BG_CUSTOM | Buffer.MASK_OVERLINE,
-                    hash_to_rgb(hash_code(val or ''), offset=64)
+                    hash_to_rgb(hash_code(lane_sub_val or ''), offset=64)
                 )
                 return x
 
@@ -147,7 +157,9 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
         for index in range(len(self.layout)):
             draw_lane(index)
 
-        draw_arrow(draw_block(index_of_source_lane, source_sub_lane), draw_block(index_of_target_lane, target_sub_lane))
+        draw_arrow(
+            draw_block(self.source_lane_value(row), self.source_sub_lane_value(row)),
+            draw_block(self.target_lane_value(row), self.target_sub_lane_value(row)))
         buffer.draw_code_point(0, 0, ord(LEFT_BORDER))
 
         return bytes(buffer.row_to_string(0, start, end), 'utf-8')
