@@ -7,7 +7,7 @@ from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererBase
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS3
 from datatools.tui.box_drawing_chars import LEFT_BORDER
-from datatools.tui.coloring import hash_to_rgb, hash_code
+from datatools.tui.coloring import hash_to_rgb, hash_code, hash_to_rgb_32
 from datatools.tui.json2ansi_buffer import Buffer
 
 
@@ -128,7 +128,7 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
             start_offset = self.lane_start_offset(lane)
             buffer.draw_attrs_box(
                 start_offset, 0, self.lane_end_offset(lane) - start_offset, 1,
-                mask, hash_to_rgb(hash_code(self.layout[lane]), offset=0)
+                mask, hash_to_rgb_32(hash_code(self.layout[lane]), offset=0)
             )
 
         def draw_block(lane_val, lane_sub_val):
