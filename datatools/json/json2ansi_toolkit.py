@@ -2,9 +2,9 @@ from typing import AnyStr
 
 from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_cross_column_attrs, hash_to_rgb_dark, \
     hash_code
-from datatools.tui.json2ansi_buffer import Buffer
 from datatools.json.structure_discovery import *
 from datatools.tui.box_drawing_chars import LEFT_BORDER
+from datatools.tui.json2ansi_buffer import Buffer
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 from datatools.util.text_util import geometry
@@ -234,7 +234,7 @@ class HeaderNode(TextCell):
         if is_uniform:
             return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_BOLD
         else:
-            return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED
+            return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_OVERLINE
 
 
 class PrimitiveNode(TextCell):

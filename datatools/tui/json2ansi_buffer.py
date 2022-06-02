@@ -125,7 +125,9 @@ class Buffer:
 
             if attr != prev_attr or (
                     (attr & Buffer.MASK_BG_CUSTOM) != 0 and (r != prev_r or g != prev_g or b != prev_b)):
-                s += '\x1b[' + self.attr_to_ansi(attr, prev_attr, r, g, b) + 'm'
+                codes = self.attr_to_ansi(attr, prev_attr, r, g, b)
+                if codes != '':
+                    s += '\x1b[' + codes + 'm'
             s += c
 
             prev_attr = attr
@@ -158,11 +160,11 @@ class Buffer:
         attr_diff = attr ^ prev_attr
 
         if attr_diff & self.MASK_BOLD:
-            codes.append('1') if attr & self.MASK_BOLD else codes.append('21')
+            codes.append('1' if (attr & self.MASK_BOLD) else '22')
         if attr_diff & self.MASK_ITALIC:
-            codes.append('3') if attr & self.MASK_ITALIC else codes.append('31')
+            codes.append('3' if (attr & self.MASK_ITALIC) else '23')
         if attr_diff & self.MASK_OVERLINE:
-            codes.append('53') if attr & self.MASK_OVERLINE else codes.append('55')
+            codes.append('53' if (attr & self.MASK_OVERLINE) else '55')
 
         # if attr_diff & self.MASK_FG_EMPHASIZED:
         #     if attr & self.MASK_FG_EMPHASIZED:
