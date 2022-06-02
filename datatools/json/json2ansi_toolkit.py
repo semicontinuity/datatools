@@ -234,7 +234,7 @@ class HeaderNode(TextCell):
         if is_uniform:
             return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_BOLD
         else:
-            return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED | Buffer.MASK_OVERLINE
+            return Buffer.MASK_FG_EMPHASIZED | Buffer.MASK_BG_EMPHASIZED
 
 
 class PrimitiveNode(TextCell):
