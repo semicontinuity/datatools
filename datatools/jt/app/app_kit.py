@@ -92,10 +92,10 @@ def main(applet_id, applet_f, g, router):
     fd_tui = infer_fd_tui()
     screen_size = with_raw_terminal(get_screen_size)  # works only before patch(?) in 'long pipe'
     patch_picotui(fd_tui, fd_tui)
-    do_main(applet_id, applet_f, g, router, screen_size)
+    sys.exit(do_main(applet_id, applet_f, g, router, screen_size))
 
 
-def app_loop(applet_f, applet_id, data_bundle, g, router, screen_size):
+def app_loop(applet_f, applet_id, data_bundle, g, router, screen_size) -> int:
     the_grid = g(screen_size, data_bundle)
     a = applet_f(applet_id, the_grid, data_bundle)
     applet_stack = [a]
