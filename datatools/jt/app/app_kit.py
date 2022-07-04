@@ -77,6 +77,8 @@ class Applet:
 def do_main(app_id, app_f, g, router, screen_size):
     params = parse_params(sys.argv)
     orig_data = load_data(params)
+    if len(orig_data) == 0:
+        sys.exit(255)
     data_bundle = load_data_bundle(params, orig_data)
 
     if params.quit:

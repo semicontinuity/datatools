@@ -1,6 +1,8 @@
 import json
 import os
 
+import yaml
+
 from datatools.util.logging import debug
 
 FD_METADATA_IN = 104
@@ -45,11 +47,10 @@ def env_or_read_fd_or_default(env, fd, default, use_env=True):
             env_var = os.environ.get(env)
             if env_var is not None:
                 debug(f'Reading from ENV {env}')
-                return json.loads(env_var)
-
+                return yaml.safe_load(env_var)
         with os.fdopen(fd, 'r') as f:
             debug(f'Reading from FD {fd}')
-            return json.load(f)
+            return yaml.safe_load(f)
     except Exception:
         return default
 
@@ -58,5 +59,7 @@ def write_fd_or_pass(fd, value):
     try:
         with os.fdopen(fd, 'w') as f:
             json.dump(value, f)
+            # yaml.safe_dump(value, stream=f, sort_keys=False)
     except Exception:
         pass
+
