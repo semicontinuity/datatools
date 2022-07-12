@@ -9,6 +9,8 @@ from .mono_sixel_buffer import MonoSixelBuffer
 
 def paint_points(points: List[Sequence[int]], width: int, height: int):
     sixel_buffer = MonoSixelBuffer(width, height)
+    for x, y in points:
+        sixel_buffer.add_point(x, y)
     os.write(1, sixel_buffer.to_bytes())
 
 
