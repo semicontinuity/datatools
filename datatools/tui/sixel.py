@@ -17,15 +17,16 @@ def sixel_supported() -> bool:
     return TCAP_SIXEL in read_tcaps()[1]
 
 
-def sixel_append_start_cmd(buffer: bytearray):
+def sixel_append_start_cmd(buffer: bytearray, p1=0, p2=0, p3=0):
     # DCS P1 ; P2; P3; q: P2=0 or 2 (default): 0 will be painted with the currently set BG color; 1: transparency
     buffer.append(0x1b)
     buffer.append(0x50)  # 'P'
-    sixel_append_number(buffer, 0)
-    buffer.append(0x3B)
-    sixel_append_number(buffer, 0)
-    buffer.append(0x3B)
-    sixel_append_number(buffer, 0)
+    sixel_append_number(buffer, p1)
+    buffer.append(0x3B)  # ';'
+    sixel_append_number(buffer, p2)
+    buffer.append(0x3B)  # ';'
+    sixel_append_number(buffer, p3)
+    buffer.append(0x3B)  # ';'
     buffer.append(0x71)  # 'q'
 
 
