@@ -3,17 +3,23 @@
 """
 Utility to convert directed graphs, specified in JSON, to dot format.
 
-Example JSONs:
+Examples of supported JSONs:
 
 {"A":["B", "C"]}
 
 {"A":{"B": 2, "C": null}}
 
 [ {"key":["A","X"], "value":[{"key":"B"}] } ]
+
+[["A", "B"], ["B", "C"]]
+
+[{"group1": ["a", "b"], "group2": ["c"]}, [["a", "c"], ["b", "c"]]]
+
 """
 
 import json
 import sys
+from typing import List, Set, Dict
 
 from graphviz import Digraph
 
@@ -25,7 +31,41 @@ def label(node):
         return str(node)
 
 
-# perhaps, can also support plain list of edges, like [["A", "B"], ["B", "C"]]
+def group_specs_and_edge_list_to_graph(groups: Dict, edges: List, **kwargs):
+    g = Digraph(**kwargs)
+    for group_name, group_nodes in groups.items():
+        with g.subgraph(name='cluster_' + group_name) as c:
+            c.attr(label=group_name)
+            for node in group_nodes:
+                c.node(node)
+
+    add_edge_list_to_graph(edges, g)
+    return g
+
+
+def edge_list_to_graph(edges, **kwargs):
+    g = Digraph(**kwargs)
+    add_nodes_from_edges(edges, g)
+    add_edge_list_to_graph(edges, g)
+    return g
+
+
+def add_nodes_from_edges(edges, g):
+    nodes: Set[str] = set()
+    for edge in edges:
+        node_1 = edge[0]
+        node_2 = edge[1]
+        nodes.add(node_1)
+        nodes.add(node_2)
+    for node in nodes:
+        g.node(str(node), label(node))
+
+
+def add_edge_list_to_graph(edges, g):
+    for edge in edges:
+        g.edge(str(edge[0]), str(edge[1]))
+
+
 def adj_lists_to_graph(adj_list_records, **kwargs):
     g = Digraph(**kwargs)
 
@@ -70,7 +110,20 @@ def to_graph(o):
     attr = {"node_attr": {'height': '0'}, "graph_attr": {"concentrate": "true"}}
 
     if type(o) is list:
-        return adj_lists_to_graph(o, **attr)
+        records: List = o
+        if len(records) == 2 and type(records[0]) is dict and type(records[1]) is list:
+            # Group specs + Edge list, e.g. [{"group1": ["a", "b"], "group2": ["c"]}, [["a", "c"], ["b", "c"]]]
+            return group_specs_and_edge_list_to_graph(records[0], records[1], **attr)
+        elif type(records[0]) is list:
+            if len(records) == 2 and type(records[0]) is dict and type(records[1]) is list:
+                # Group specs + Edge list, e.g. [{"group1": ["a", "b"], "group2": ["c"]}, [["a", "c"], ["b", "c"]]]
+                return group_specs_and_edge_list_to_graph(records[0], records[1], **attr)
+            else:
+                # List of edges, e.g  [["A", "B"], ["B", "C"]]
+                return edge_list_to_graph(records, **attr)
+        else:
+            # [ {"key":["A","X"], "value":[{"key":"B"}] } ]
+            return adj_lists_to_graph(o, **attr)
     if type(o) is dict:
         return adj_dict_to_graph(o, **attr)
     else:
