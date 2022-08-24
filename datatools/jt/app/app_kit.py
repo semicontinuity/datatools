@@ -78,18 +78,26 @@ class Applet:
 def do_main(app_id, app_f, g, router, screen_size):
     params = parse_params(sys.argv)
 
-    for orig_data in load_data(params):
-        if len(orig_data) == 0:
-            sys.exit(255)
-        data_bundle = load_data_bundle(params, orig_data)
+    def loop():
+        exit_code = None
+        data_bundle = None
 
-        if params.quit:
-            exit_code = with_raw_term(alt_screen=False, f=lambda: paint(g, data_bundle, screen_size))
-        else:
-            exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(app_f, app_id, data_bundle, g, router, screen_size))
+        for orig_data in load_data(params):
+            if len(orig_data) == 0:
+                sys.exit(255)
+            data_bundle = load_data_bundle(params, orig_data)
 
-        store_data_bundle(data_bundle)
-        return exit_code
+            if params.quit:
+                exit_code = with_raw_term(alt_screen=False, f=lambda: paint(g, data_bundle, screen_size))
+                break
+            else:
+                exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(app_f, app_id, data_bundle, g, router, screen_size))
+
+        return exit_code, data_bundle
+
+    exit_code, data_bundle = loop()
+    store_data_bundle(data_bundle)
+    return exit_code
 
 
 def main(applet_id, applet_f, g, router):
@@ -200,6 +208,18 @@ def load_data(params: Params):
             orig_data.append(j)
             i += 1
         yield orig_data
+    elif params.watch_mode:
+        i = 0
+        while True:
+            line = sys.stdin.readline()
+            if not line:
+                break
+            try:
+                yield json.loads(line)
+            except JSONDecodeError:
+                print(f"Cannot decode JSON line {i}: {line}", file=sys.stderr)
+                sys.exit(255)
+            i += 1
     else:
         data = sys.stdin.read()
         try:

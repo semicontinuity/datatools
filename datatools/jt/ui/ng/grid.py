@@ -68,8 +68,16 @@ class WGrid(WGridBase):
                 self.cursor(True)
 
     def redraw_footer(self):
-        self.goto(self.x, self.y + self.y_top_offset + min(self.rows_view_height, self.total_lines))
+        if self.interactive:
+            self.goto(self.x, self.y + self.y_top_offset + min(self.rows_view_height, self.total_lines))
+        # else:
+        #     self.wr('\n')
+
         self.wr(self.render_footer())
+
+        if not self.interactive:
+            self.wr('\n')
+
 
     def render_footer(self):
         buffer = bytearray()

@@ -128,8 +128,8 @@ class WGridBase(Editor):
         for c in range(num_lines):
             if self.interactive:
                 self.goto(self.x, self.line_y(line))  # skip border line, headers line
-            else:
-                self.wr('\n')
+            # else:
+            #     self.wr('\n')
             self.wr(self.render_line(line, self.cur_line == line))
             line += 1
         self.after_redraw()
