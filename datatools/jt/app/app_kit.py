@@ -1,6 +1,8 @@
 import json
+import os
 import signal
 import sys
+import threading
 from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import List
@@ -82,12 +84,27 @@ def do_main(app_id, app_f, g, router, screen_size):
         exit_code = None
         data_bundle = None
 
+        def read_stdin():
+            if os.read(2, 1) is not None:
+                return
+
+        if params.watch_mode:
+            # It seems, that in raw terminal mode Ctrl+C does not work - thus this ersartz kb handling to exit somehow
+            t = threading.Thread(target=read_stdin)
+            t.start()
+
         for orig_data in load_data(params):
             if len(orig_data) == 0:
                 sys.exit(255)
             data_bundle = load_data_bundle(params, orig_data)
 
-            if params.quit:
+            if params.watch_mode:
+                Screen.cls()
+                Screen.goto(0, 0)
+                exit_code = paint(g, data_bundle, screen_size)
+                if not t.is_alive():
+                    break
+            elif params.quit:
                 exit_code = paint(g, data_bundle, screen_size)
                 break
             else:
