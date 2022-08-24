@@ -88,14 +88,15 @@ def do_main(app_id, app_f, g, router, screen_size):
             data_bundle = load_data_bundle(params, orig_data)
 
             if params.quit:
-                exit_code = with_raw_term(alt_screen=False, f=lambda: paint(g, data_bundle, screen_size))
+                exit_code = paint(g, data_bundle, screen_size)
                 break
             else:
-                exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(app_f, app_id, data_bundle, g, router, screen_size))
+                exit_code = app_loop(app_f, app_id, data_bundle, g, router, screen_size)
 
         return exit_code, data_bundle
 
-    exit_code, data_bundle = loop()
+    # N.B: shows empty alt screen while data is being loaded, can be confusing
+    exit_code, data_bundle = with_raw_term(alt_screen=not params.quit, f=loop)
     store_data_bundle(data_bundle)
     return exit_code
 
