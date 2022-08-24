@@ -41,6 +41,8 @@ class WTimeSeriesStripesCellRenderer(WStripesSixelCellRenderer):
         self.color_mapping[...] = hash_to_rgb(0xFFFFFFFF, offset=128)    # default color
 
         max_bar_chars = self.max_content_width - 2
+        if max_bar_chars == 0:
+            max_bar_chars = 1   # hack
         self.bar, self.n_stripes, self.x_axis_amount_per_stripe = fit_time_bar(
             self.render_data.column_metadata.min_value,
             self.render_data.column_metadata.max_value, max_bar_chars, WStripesSixelCellRenderer.STRIPES_PER_CHAR)

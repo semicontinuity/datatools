@@ -36,6 +36,7 @@ from datatools.util.meta_io import write_presentation_or_pass, write_metadata_or
 class Params:
     title: str = None
     stream_mode: bool = None
+    watch_mode: bool = None
     compact: bool = None
     quit: bool = None
     env_presentation: bool = True
@@ -76,18 +77,19 @@ class Applet:
 
 def do_main(app_id, app_f, g, router, screen_size):
     params = parse_params(sys.argv)
-    orig_data = load_data(params)
-    if len(orig_data) == 0:
-        sys.exit(255)
-    data_bundle = load_data_bundle(params, orig_data)
 
-    if params.quit:
-        exit_code = with_raw_term(False, lambda: paint(g, data_bundle, screen_size))
-    else:
-        exit_code = with_raw_term(True, lambda: app_loop(app_f, app_id, data_bundle, g, router, screen_size))
+    for orig_data in load_data(params):
+        if len(orig_data) == 0:
+            sys.exit(255)
+        data_bundle = load_data_bundle(params, orig_data)
 
-    store_data_bundle(data_bundle)
-    return exit_code
+        if params.quit:
+            exit_code = with_raw_term(alt_screen=False, f=lambda: paint(g, data_bundle, screen_size))
+        else:
+            exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(app_f, app_id, data_bundle, g, router, screen_size))
+
+        store_data_bundle(data_bundle)
+        return exit_code
 
 
 def main(applet_id, applet_f, g, router):
@@ -197,11 +199,11 @@ def load_data(params: Params):
                 sys.exit(255)
             orig_data.append(j)
             i += 1
-        return orig_data
+        yield orig_data
     else:
         data = sys.stdin.read()
         try:
-            return json.loads(data)
+            yield json.loads(data)
         except JSONDecodeError as e:
             print("Cannot decode JSON", file=sys.stderr)
             print(e, file=sys.stderr)
@@ -217,6 +219,8 @@ def parse_params(argv) -> Params:
             params.title = sys.argv[a]
         elif sys.argv[a] == "-s":
             params.stream_mode = True
+        elif sys.argv[a] == "-w":
+            params.watch_mode = True
         elif sys.argv[a] == '-c':
             params.compact = True
         elif sys.argv[a] == '-q':
