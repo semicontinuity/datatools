@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.render_data import RenderData
@@ -25,7 +27,7 @@ class WStripesSixelCellRenderer(WColumnRenderer):
     def toggle(self):
         self.render_data.column_state.collapsed = not self.render_data.column_state.collapsed
 
-    def to_color_list(self, value):
+    def to_color_list(self, value) -> List:
         return []
 
     def __len__(self):
@@ -68,7 +70,7 @@ class WStripesSixelCellRenderer(WColumnRenderer):
 
             return buffer
 
-    def append_stripes(self, list_of_colors, start_stripe, end_stripe, buffer):
+    def append_stripes(self, list_of_colors: List[Tuple[int, int, int]], start_stripe, end_stripe, buffer):
         color_index = 0
         color_indices = {}
 
@@ -90,25 +92,34 @@ class WStripesSixelCellRenderer(WColumnRenderer):
         # Thus, only 3 "swim lanes are utilized + 2 "pixels" at the bottom are not painted.
         # For symmetry, 2 top pixels are also not painted, and the actual stripe geometry is:
         # 2 background pixels at the top + 16 pixels at the center + 2 background pixels at the bottom.
-        bits = 0b00111100   # 2 pixel at the top not painted + 4 pixels of the stripe
+        bits = 0b00111100   # 2 pixel at the top not painted + 4 pixels of the stripe (2 higher bits for command code)
         for j in range(3):
             color_index = -1
+            length = 0
+
             for i in range(start_stripe, end_stripe):
                 if i >= len(list_of_colors):
                     break
                 color = list_of_colors[i]
                 index = color_indices.get(color)
                 if index != color_index:
+                    if length > 0:
+                        sixel_append_repeated(buffer, length * self.SIXELS_PER_STRIPE, bits)
+                        length = 0
                     sixel_append_use_color(buffer, index)
                     color_index = index
-                sixel_append_repeated(buffer, self.SIXELS_PER_STRIPE, bits)
-            sixel_append_lf(buffer)
-            bits = 0b00111111   # all 6 pixels painted
+                length += 1
+
+            if length > 0:
+                sixel_append_repeated(buffer, length * self.SIXELS_PER_STRIPE, bits)
+            sixel_append_lf(buffer) # implicit CR?
+            bits = 0b00111111   # all 6 pixels painted in all swim lanes but the first one
 
         payload_sixels = (end_stripe - start_stripe) * self.SIXELS_PER_STRIPE
         if payload_sixels > 0:
             width_sixels = self.chars_required_for_sixels(payload_sixels) * self.SIXELS_PER_CHAR
             remaining_sixels = payload_sixels - width_sixels
+            # Well, it paints just one swim lane, don't we need 3?
             if remaining_sixels > 0:
                 sixel_append_repeated(buffer, remaining_sixels, 0)
                 payload_sixels += remaining_sixels

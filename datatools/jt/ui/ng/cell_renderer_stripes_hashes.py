@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.ng.cell_renderer_stripes_sixel import WStripesSixelCellRenderer
@@ -16,7 +17,7 @@ class ColumnRendererStripesHashColored(ColumnRenderer):
 
 class WStripesHashesCellRenderer(WStripesSixelCellRenderer):
 
-    def to_color_list(self, value):
+    def to_color_list(self, value) -> List:
         if value is None or len(value) == 0:
             return []
         elif type(value) is list:
