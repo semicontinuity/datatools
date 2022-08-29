@@ -50,7 +50,8 @@ def env_or_read_fd_or_default(env, fd, default, use_env=True):
                 return yaml.safe_load(env_var)
         with os.fdopen(fd, 'r') as f:
             debug(f'Reading from FD {fd}')
-            return yaml.safe_load(f)
+            data = yaml.safe_load(f)
+            return data if data is not None else default
     except Exception:
         return default
 
