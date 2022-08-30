@@ -8,7 +8,6 @@ from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
 from datatools.jt.ui.ng.cell_renderer_stripes_hashes import ColumnRendererStripesHashColored
 from datatools.jt.ui.ng.cell_renderer_stripes_time_series import ColumnRendererStripesTimeSeries
 from datatools.tui.coloring import hash_code, hash_to_rgb
-from datatools.util.logging import debug
 from datatools.util.time_bar_util import fit_time_bar
 
 POPULATED_RATIO = 0.66
@@ -23,7 +22,6 @@ def enrich_presentation(data, metadata: Metadata, presentation: Presentation) ->
         return presentation
 
     presentation = presentation.clone()
-    debug('presentation', presentation=presentation)
 
     if discover_columns:
         for key, column_metadata in metadata.columns.items():

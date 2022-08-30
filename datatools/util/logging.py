@@ -27,7 +27,10 @@ def debug(msg, **kwargs):
         j["message"] = msg
         print(json.dumps(j), file=DEBUG_FILE)
     elif DEBUG:
-        print(msg, str(kwargs), file=DEBUG_FILE)
+        if kwargs:
+            print(msg, str(kwargs), file=DEBUG_FILE)
+        else:
+            print(msg, file=DEBUG_FILE)
 
 
 def trace(value, title=''):

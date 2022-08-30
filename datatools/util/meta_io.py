@@ -44,13 +44,15 @@ def state_or_default(default):
 def env_or_read_fd_or_default(env, fd, default, use_env=True):
     try:
         if use_env:
-            env_var = os.environ.get(env)
-            if env_var is not None:
+            data = os.environ.get(env)
+            if data is not None:
                 debug(f'Reading from ENV {env}')
-                return yaml.safe_load(env_var)
+                debug(f'{data}')
+                return yaml.safe_load(data)
         with os.fdopen(fd, 'r') as f:
             debug(f'Reading from FD {fd}')
             data = yaml.safe_load(f)
+            debug(f'{data}')
             return data if data is not None else default
     except Exception:
         return default
