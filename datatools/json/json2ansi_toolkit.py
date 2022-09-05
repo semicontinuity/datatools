@@ -4,7 +4,7 @@ from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_c
     hash_code
 from datatools.json.structure_discovery import *
 from datatools.tui.box_drawing_chars import LEFT_BORDER
-from datatools.tui.json2ansi_buffer import Buffer
+from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.util.logging import stderr_print
 from datatools.util.table_util import *
 from datatools.util.text_util import geometry

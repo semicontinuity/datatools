@@ -5,10 +5,10 @@ from datatools.jt.model.attributes import MASK_ROW_EMPHASIZED
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererBase
 from datatools.jt.ui.ng.render_data import RenderData
-from datatools.jt.ui.themes import ColorKey, COLORS2, COLORS3
+from datatools.jt.ui.themes import ColorKey, COLORS3
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_to_rgb, hash_code
-from datatools.tui.json2ansi_buffer import Buffer
+from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.tui.terminal import set_colors_cmd_bytes2
 
 

@@ -8,7 +8,7 @@ from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS3
 from datatools.tui.box_drawing_chars import LEFT_BORDER
 from datatools.tui.coloring import hash_to_rgb, hash_code, hash_to_rgb_32
-from datatools.tui.json2ansi_buffer import Buffer
+from datatools.tui.buffer.json2ansi_buffer import Buffer
 
 
 @dataclass

@@ -12,7 +12,7 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
-from datatools.tui.json2ansi_buffer import Buffer
+from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import screen_size_or_default
