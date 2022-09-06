@@ -48,6 +48,35 @@ class BufferedRenderingContext(RenderingContext):
             self.fg_attr_line = self.context.fg_attrs[y]
             self.bg_attr_line = self.context.bg_attrs[y]
 
+        def cr_lf(self, x: int):
+            self.seek(x, self.y + 1)
+
+        def put_char(self, c: str, attrs: int):
+            if 0 <= self.y < self.context.height and 0 <= self.x < self.context.width:
+                priv_attrs = self.bg_attr_line[self.attr_i]
+                if self.context.fg_color:
+                    priv_attrs |= BufferedRenderingContext.MASK_FG_CUSTOM
+                    self.fg_attr_line[self.attr_i + 1] = self.context.fg_color[0]
+                    self.fg_attr_line[self.attr_i + 2] = self.context.fg_color[1]
+                    self.fg_attr_line[self.attr_i + 3] = self.context.fg_color[2]
+                if self.context.bg_color:
+                    priv_attrs |= BufferedRenderingContext.MASK_BG_CUSTOM
+                    self.bg_attr_line[self.attr_i + 1] = self.context.bg_color[0]
+                    self.bg_attr_line[self.attr_i + 2] = self.context.bg_color[1]
+                    self.bg_attr_line[self.attr_i + 3] = self.context.bg_color[2]
+
+                self.fg_attr_line[self.attr_i] |= attrs
+                self.bg_attr_line[self.attr_i] = priv_attrs
+                self.attr_i += 4
+
+                code = ord(c)
+                self.char_line[self.char_i] = code & 0xff
+                self.char_i += 1
+                self.char_line[self.char_i] = (code >> 8) & 0xff
+                self.char_i += 1
+
+            self.x += 1
+
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
@@ -98,80 +127,17 @@ class BufferedRenderingContext(RenderingContext):
         Draws texts
         """
         from_x = self.cursor.x
-        _x = self.cursor.x
-        _y = self.cursor.y
-        char_line = self.chars[_y]
-        char_i = 2 * _x
-        fg_attr_line = self.fg_attrs[_y]
-        bg_attr_line = self.bg_attrs[_y]
-        attr_i = 4 * _x
 
         for c in text:
             if c == '\n':
-                _x = from_x
-                _y += 1
-                if _y >= self.height:
-                    break
-                if 0 <= _y:
-                    char_line = self.chars[_y]
-                    char_i = 2 * _x
-                    fg_attr_line = self.fg_attrs[_y]
-                    bg_attr_line = self.bg_attrs[_y]
-                    attr_i = 4 * _x
+                self.cursor.cr_lf(from_x)
             elif c == '\t':
+                _x = self.cursor.x
                 to_x = from_x + (_x - from_x + BufferedRenderingContext.TAB_SIZE) // BufferedRenderingContext.TAB_SIZE * BufferedRenderingContext.TAB_SIZE
-                while _x < to_x:
-                    if 0 <= _y < self.height and 0 <= _x < self.width:
-                        priv_attrs = bg_attr_line[attr_i]
-                        if self.fg_color:
-                            priv_attrs |= BufferedRenderingContext.MASK_FG_CUSTOM
-                            bg_attr_line[attr_i] = priv_attrs
-                            fg_attr_line[attr_i + 1] = self.fg_color[0]
-                            fg_attr_line[attr_i + 2] = self.fg_color[1]
-                            fg_attr_line[attr_i + 3] = self.fg_color[2]
-                        if self.bg_color:
-                            priv_attrs |= BufferedRenderingContext.MASK_BG_CUSTOM
-                            bg_attr_line[attr_i + 1] = self.bg_color[0]
-                            bg_attr_line[attr_i + 2] = self.bg_color[1]
-                            bg_attr_line[attr_i + 3] = self.bg_color[2]
-
-                        fg_attr_line[attr_i] |= attrs
-                        bg_attr_line[attr_i] = priv_attrs
-                        attr_i += 4
-
-                        char_line[char_i] = 0x20    # lo(space)
-                        char_i += 1
-                        char_line[char_i] = 0x00    # hi(space)
-                        char_i += 1
-
-                    _x += 1
+                for i in range(_x, to_x):
+                    self.cursor.put_char(' ', attrs)
             else:
-                if 0 <= _y < self.height and 0 <= _x < self.width:
-                    priv_attrs = bg_attr_line[attr_i]
-                    if self.fg_color:
-                        priv_attrs |= BufferedRenderingContext.MASK_FG_CUSTOM
-                        fg_attr_line[attr_i + 1] = self.fg_color[0]
-                        fg_attr_line[attr_i + 2] = self.fg_color[1]
-                        fg_attr_line[attr_i + 3] = self.fg_color[2]
-                    if self.bg_color:
-                        priv_attrs |= BufferedRenderingContext.MASK_BG_CUSTOM
-                        bg_attr_line[attr_i + 1] = self.bg_color[0]
-                        bg_attr_line[attr_i + 2] = self.bg_color[1]
-                        bg_attr_line[attr_i + 3] = self.bg_color[2]
-
-                    fg_attr_line[attr_i] |= attrs
-                    bg_attr_line[attr_i] = priv_attrs
-                    attr_i += 4
-
-                    code = ord(c)
-                    char_line[char_i] = code & 0xff
-                    char_i += 1
-                    char_line[char_i] = (code >> 8) & 0xff
-                    char_i += 1
-
-                _x += 1
-
-        self.cursor.seek(_x, _y)
+                self.cursor.put_char(c, attrs)
 
     def row_slice_to_string(self, y, x_from, x_to):
         """ Coordinates must be valid """
