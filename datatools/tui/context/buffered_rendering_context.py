@@ -13,8 +13,6 @@ class BufferedRenderingContext(RenderingContext):
     bg_color_default: Union[int, List[int]] = 0  # indexed color or RGB
     fg_color_emphasized: Union[int, List[int]] = 3  # indexed color or RGB (3=yellow; 250=bright gray?)
     bg_color_emphasized: Union[int, List[int]] = 237  # indexed color or RGB (dark gray)
-    fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
-    bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
 
     MASK_NONE = 0x00
 
@@ -26,9 +24,12 @@ class BufferedRenderingContext(RenderingContext):
     TAB_SIZE = 4
 
     class Cursor:
-        context: 'BufferedRenderingContext'
         x: int
         y: int
+        fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+        bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+
+        context: 'BufferedRenderingContext'
         char_i: int
         attr_i: int
         char_line: bytearray
@@ -54,16 +55,16 @@ class BufferedRenderingContext(RenderingContext):
         def put_char(self, c: str, attrs: int):
             if 0 <= self.y < self.context.height and 0 <= self.x < self.context.width:
                 priv_attrs = self.bg_attr_line[self.attr_i]
-                if self.context.fg_color:
+                if self.fg_color:
                     priv_attrs |= BufferedRenderingContext.MASK_FG_CUSTOM
-                    self.fg_attr_line[self.attr_i + 1] = self.context.fg_color[0]
-                    self.fg_attr_line[self.attr_i + 2] = self.context.fg_color[1]
-                    self.fg_attr_line[self.attr_i + 3] = self.context.fg_color[2]
-                if self.context.bg_color:
+                    self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
+                    self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
+                    self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
+                if self.bg_color:
                     priv_attrs |= BufferedRenderingContext.MASK_BG_CUSTOM
-                    self.bg_attr_line[self.attr_i + 1] = self.context.bg_color[0]
-                    self.bg_attr_line[self.attr_i + 2] = self.context.bg_color[1]
-                    self.bg_attr_line[self.attr_i + 3] = self.context.bg_color[2]
+                    self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
+                    self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
+                    self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
 
                 self.fg_attr_line[self.attr_i] |= attrs
                 self.bg_attr_line[self.attr_i] = priv_attrs

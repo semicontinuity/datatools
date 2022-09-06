@@ -83,12 +83,12 @@ def demo_010():
     context = BufferedRenderingContext(10, 10)
     context.cursor.seek(5, 5)
 
-    context.fg_color = (128, 64, 64)
-    context.bg_color = (64, 128, 64)
+    context.cursor.fg_color = (128, 64, 64)
+    context.cursor.bg_color = (64, 128, 64)
     context.draw_text("Hello,\n")
 
-    context.fg_color = (64, 128, 64)
-    context.bg_color = (128, 64, 64)
+    context.cursor.fg_color = (64, 128, 64)
+    context.cursor.bg_color = (128, 64, 64)
     context.draw_text("world!")
     print(str(context) + "\x1b[0m\n")
 
