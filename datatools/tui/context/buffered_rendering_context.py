@@ -13,6 +13,8 @@ class BufferedRenderingContext(RenderingContext):
     bg_color_default: Union[int, List[int]] = 0  # indexed color or RGB
     fg_color_emphasized: Union[int, List[int]] = 3  # indexed color or RGB (3=yellow; 250=bright gray?)
     bg_color_emphasized: Union[int, List[int]] = 237  # indexed color or RGB (dark gray)
+    fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+    bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
 
     MASK_NONE = 0x00
 
@@ -69,6 +71,8 @@ class BufferedRenderingContext(RenderingContext):
 
     def draw_text_at(self, from_x: int, from_y: int, text: str, attrs: int = 0) -> Tuple[int, int]:
         """
+        Draws texts at the specified coordinates.
+        Does not modify cursor position.
         :return: x, y coordinates of cursor position after the text; if y is off-limits, y is set to height
         """
         _x = from_x
@@ -76,6 +80,7 @@ class BufferedRenderingContext(RenderingContext):
         char_line = self.chars[_y]
         char_i = 2 * _x
         fg_attr_line = self.fg_attrs[_y]
+        bg_attr_line = self.bg_attrs[_y]
         attr_i = 4 * _x
 
         for c in text:
@@ -88,12 +93,27 @@ class BufferedRenderingContext(RenderingContext):
                     char_line = self.chars[_y]
                     char_i = 2 * _x
                     fg_attr_line = self.fg_attrs[_y]
+                    bg_attr_line = self.bg_attrs[_y]
                     attr_i = 4 * _x
             elif c == '\t':
                 to_x = from_x + (_x - from_x + BufferedRenderingContext.TAB_SIZE) // BufferedRenderingContext.TAB_SIZE * BufferedRenderingContext.TAB_SIZE
                 while _x < to_x:
                     if 0 <= _y < self.height and 0 <= _x < self.width:
+                        priv_attrs = bg_attr_line[attr_i]
+                        if self.fg_color:
+                            priv_attrs |= BufferedRenderingContext.MASK_FG_CUSTOM
+                            bg_attr_line[attr_i] = priv_attrs
+                            fg_attr_line[attr_i + 1] = self.fg_color[0]
+                            fg_attr_line[attr_i + 2] = self.fg_color[1]
+                            fg_attr_line[attr_i + 3] = self.fg_color[2]
+                        if self.bg_color:
+                            priv_attrs |= BufferedRenderingContext.MASK_BG_CUSTOM
+                            bg_attr_line[attr_i + 1] = self.bg_color[0]
+                            bg_attr_line[attr_i + 2] = self.bg_color[1]
+                            bg_attr_line[attr_i + 3] = self.bg_color[2]
+
                         fg_attr_line[attr_i] |= attrs
+                        bg_attr_line[attr_i] = priv_attrs
                         attr_i += 4
 
                         char_line[char_i] = 0x20    # lo(space)
@@ -104,7 +124,20 @@ class BufferedRenderingContext(RenderingContext):
                     _x += 1
             else:
                 if 0 <= _y < self.height and 0 <= _x < self.width:
+                    priv_attrs = bg_attr_line[attr_i]
+                    if self.fg_color:
+                        priv_attrs |= BufferedRenderingContext.MASK_FG_CUSTOM
+                        fg_attr_line[attr_i + 1] = self.fg_color[0]
+                        fg_attr_line[attr_i + 2] = self.fg_color[1]
+                        fg_attr_line[attr_i + 3] = self.fg_color[2]
+                    if self.bg_color:
+                        priv_attrs |= BufferedRenderingContext.MASK_BG_CUSTOM
+                        bg_attr_line[attr_i + 1] = self.bg_color[0]
+                        bg_attr_line[attr_i + 2] = self.bg_color[1]
+                        bg_attr_line[attr_i + 3] = self.bg_color[2]
+
                     fg_attr_line[attr_i] |= attrs
+                    bg_attr_line[attr_i] = priv_attrs
                     attr_i += 4
 
                     code = ord(c)
