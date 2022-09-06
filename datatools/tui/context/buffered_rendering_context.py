@@ -25,12 +25,36 @@ class BufferedRenderingContext(RenderingContext):
 
     TAB_SIZE = 4
 
+    class Cursor:
+        context: 'BufferedRenderingContext'
+        x: int
+        y: int
+        char_i: int
+        attr_i: int
+        char_line: bytearray
+        fg_attr_line: bytearray
+        bg_attr_line: bytearray
+
+        def __init__(self, context):
+            self.context = context
+            self.seek(0, 0)
+
+        def seek(self, x: int, y: int):
+            self.x = x
+            self.y = y
+            self.char_i = 2 * x
+            self.attr_i = 4 * x
+            self.char_line = self.context.chars[y]
+            self.fg_attr_line = self.context.fg_attrs[y]
+            self.bg_attr_line = self.context.bg_attrs[y]
+
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
         self.chars = [self.spaces(width) for _ in range(height)]
         self.fg_attrs = [bytearray(4 * width) for _ in range(height)]
         self.bg_attrs = [bytearray(4 * width) for _ in range(height)]
+        self.cursor = BufferedRenderingContext.Cursor(self)
 
     @staticmethod
     def spaces(width) -> bytearray:
