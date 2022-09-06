@@ -93,14 +93,13 @@ class BufferedRenderingContext(RenderingContext):
                 # if i == box_x:
                 #     bg_line[i * 4] |= BufferedRenderingContext.MASK_CHANGED
 
-    def draw_text_at(self, from_x: int, from_y: int, text: str, attrs: int = 0) -> Tuple[int, int]:
+    def draw_text(self, text: str, attrs: int = 0):
         """
-        Draws texts at the specified coordinates.
-        Does not modify cursor position.
-        :return: x, y coordinates of cursor position after the text; if y is off-limits, y is set to height
+        Draws texts
         """
-        _x = from_x
-        _y = from_y
+        from_x = self.cursor.x
+        _x = self.cursor.x
+        _y = self.cursor.y
         char_line = self.chars[_y]
         char_i = 2 * _x
         fg_attr_line = self.fg_attrs[_y]
@@ -172,7 +171,7 @@ class BufferedRenderingContext(RenderingContext):
 
                 _x += 1
 
-        return _x, _y
+        self.cursor.seek(_x, _y)
 
     def row_slice_to_string(self, y, x_from, x_to):
         """ Coordinates must be valid """
