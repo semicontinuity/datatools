@@ -1,6 +1,3 @@
-from typing import Optional, Tuple
-
-
 class AbstractBufferWriter:
     x: int
     y: int
@@ -25,9 +22,7 @@ class AbstractBufferWriter:
     def put_char(self, c: str, attrs: int):
         pass
 
-    def draw_attrs_box_at(self, x: int, y: int, width: int, height: int, attrs: int = 0,
-                       fg: Optional[Tuple[int, int, int]] = None,
-                       bg: Optional[Tuple[int, int, int]] = None):
+    def draw_attrs_box_at(self, x: int, y: int, width: int, height: int, attrs: int = 0):
         pass
 
     def draw_text(self, text: str, attrs: int = 0):

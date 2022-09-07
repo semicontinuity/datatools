@@ -71,7 +71,9 @@ def demo_008():
     print('With emphasized FG over custom BG color box')
     buffer = Buffer(10, 10)
     writer = buffer.new_writer()
-    writer.draw_attrs_box_at(3, 3, 5, 5, bg=(30, 40, 50))
+    writer.bg_color = (30, 40, 50)
+    writer.draw_attrs_box_at(3, 3, 5, 5)
+    writer.bg_color = None
     writer.go_to(5, 5)
     writer.draw_text("Hello,\nworld!", AbstractBufferWriter.MASK_FG_EMPHASIZED)
     print(str(buffer) + "\x1b[0m\n")
@@ -81,7 +83,9 @@ def demo_009():
     print('With emphasized FG over custom FG color box')
     buffer = Buffer(10, 10)
     writer = buffer.new_writer()
-    writer.draw_attrs_box_at(3, 3, 5, 5, fg=(130, 30, 30))
+    writer.fg_color = (130, 30, 30)
+    writer.draw_attrs_box_at(3, 3, 5, 5)
+    writer.fg_color = None
     writer.go_to(5, 5)
     writer.draw_text("Hello,\nworld!", AbstractBufferWriter.MASK_FG_EMPHASIZED)
     print(str(buffer) + "\x1b[0m\n")

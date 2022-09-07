@@ -234,23 +234,21 @@ class BufferWriter(AbstractBufferWriter):
 
         self.x += 1
 
-    def draw_attrs_box_at(self, box_x: int, box_y: int, box_width: int, box_height: int, attrs: int = 0,
-                          fg: Optional[Tuple[int, int, int]] = None,
-                          bg: Optional[Tuple[int, int, int]] = None):
+    def draw_attrs_box_at(self, box_x: int, box_y: int, box_width: int, box_height: int, attrs: int = 0):
         for j in range(max(0, box_y), min(self.target.height, box_y + box_height)):
             fg_line = self.target.fg_attrs[j]
             bg_line = self.target.bg_attrs[j]
             for i in range(max(0, box_x), min(self.target.width, box_x + box_width)):
                 fg_line[i * 4] = attrs
-                if fg is not None:
+                if self.fg_color is not None:
                     bg_line[i * 4] = Buffer.MASK_FG_CUSTOM
-                    fg_line[i * 4 + 1] = fg[0]
-                    fg_line[i * 4 + 2] = fg[1]
-                    fg_line[i * 4 + 3] = fg[2]
-                if bg is not None:
+                    fg_line[i * 4 + 1] = self.fg_color[0]
+                    fg_line[i * 4 + 2] = self.fg_color[1]
+                    fg_line[i * 4 + 3] = self.fg_color[2]
+                if self.bg_color is not None:
                     bg_line[i * 4] = Buffer.MASK_BG_CUSTOM
-                    bg_line[i * 4 + 1] = bg[0]
-                    bg_line[i * 4 + 2] = bg[1]
-                    bg_line[i * 4 + 3] = bg[2]
+                    bg_line[i * 4 + 1] = self.bg_color[0]
+                    bg_line[i * 4 + 2] = self.bg_color[1]
+                    bg_line[i * 4 + 3] = self.bg_color[2]
                 # if i == box_x:
                 #     bg_line[i * 4] |= BufferedRenderingContext.MASK_CHANGED
