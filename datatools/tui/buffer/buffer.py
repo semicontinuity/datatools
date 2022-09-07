@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, Union
+from typing import Optional, List, Union
 
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 
@@ -216,21 +216,7 @@ class BufferWriter(AbstractBufferWriter):
 
     def put_char(self, c: str, attrs: int):
         if 0 <= self.y < self.target.height and 0 <= self.x < self.target.width:
-            priv_attrs = self.bg_attr_line[self.attr_i]
-            if self.fg_color:
-                priv_attrs |= Buffer.MASK_FG_CUSTOM
-                self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
-                self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
-                self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
-            if self.bg_color:
-                priv_attrs |= Buffer.MASK_BG_CUSTOM
-                self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
-                self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
-                self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
-
-            self.fg_attr_line[self.attr_i] |= attrs
-            self.bg_attr_line[self.attr_i] = priv_attrs
-            self.attr_i += 4
+            self._put_attrs(attrs)
 
             code = ord(c)
             self.char_line[self.char_i] = code & 0xff
@@ -252,20 +238,20 @@ class BufferWriter(AbstractBufferWriter):
         for j in range(from_y, to_y):
             self.go_to(from_x, j)
             for i in range(from_x, to_x):
-                priv_attrs = self.bg_attr_line[self.attr_i]
-                if self.fg_color is not None:
-                    priv_attrs |= Buffer.MASK_FG_CUSTOM
-                    self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
-                    self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
-                    self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
-                if self.bg_color is not None:
-                    priv_attrs |= Buffer.MASK_BG_CUSTOM
-                    self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
-                    self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
-                    self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
+                self._put_attrs(attrs)
 
-                self.fg_attr_line[self.attr_i] |= attrs
-                self.bg_attr_line[self.attr_i] = priv_attrs
-                self.attr_i += 4
-                # if i == box_x:
-                #     bg_line[i * 4] |= BufferedRenderingContext.MASK_CHANGED
+    def _put_attrs(self, attrs):
+        priv_attrs = self.bg_attr_line[self.attr_i]
+        if self.fg_color is not None:
+            priv_attrs |= Buffer.MASK_FG_CUSTOM
+            self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
+            self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
+            self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
+        if self.bg_color is not None:
+            priv_attrs |= Buffer.MASK_BG_CUSTOM
+            self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
+            self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
+            self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
+        self.fg_attr_line[self.attr_i] |= attrs
+        self.bg_attr_line[self.attr_i] = priv_attrs
+        self.attr_i += 4
