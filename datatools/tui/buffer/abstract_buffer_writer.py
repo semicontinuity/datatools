@@ -22,7 +22,7 @@ class AbstractBufferWriter:
     def put_char(self, c: str, attrs: int):
         pass
 
-    def draw_attrs_box_at(self, x: int, y: int, width: int, height: int, attrs: int = 0):
+    def draw_attrs_box(self, box_width: int, box_height: int, attrs: int = 0):
         pass
 
     def draw_text(self, text: str, attrs: int = 0):

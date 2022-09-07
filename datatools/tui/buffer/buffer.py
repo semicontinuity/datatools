@@ -202,8 +202,14 @@ class BufferWriter(AbstractBufferWriter):
 
     def go_to(self, x: int, y: int):
         super(BufferWriter, self).go_to(x, y)
+        self._go_to_y(y)
+        self._go_to_x(x)
+
+    def _go_to_x(self, x):
         self.char_i = 2 * x
         self.attr_i = 4 * x
+
+    def _go_to_y(self, y):
         self.char_line = self.target.chars[y]
         self.fg_attr_line = self.target.fg_attrs[y]
         self.bg_attr_line = self.target.bg_attrs[y]
@@ -234,21 +240,32 @@ class BufferWriter(AbstractBufferWriter):
 
         self.x += 1
 
-    def draw_attrs_box_at(self, box_x: int, box_y: int, box_width: int, box_height: int, attrs: int = 0):
-        for j in range(max(0, box_y), min(self.target.height, box_y + box_height)):
-            fg_line = self.target.fg_attrs[j]
-            bg_line = self.target.bg_attrs[j]
-            for i in range(max(0, box_x), min(self.target.width, box_x + box_width)):
-                fg_line[i * 4] = attrs
+    def draw_attrs_box(self, box_width: int, box_height: int, attrs: int = 0):
+        box_x = self.x
+        box_y = self.y
+
+        from_y = max(0, box_y)
+        to_y = min(self.target.height, box_y + box_height)
+        from_x = max(0, box_x)
+        to_x = min(self.target.width, box_x + box_width)
+
+        for j in range(from_y, to_y):
+            self.go_to(from_x, j)
+            for i in range(from_x, to_x):
+                priv_attrs = self.bg_attr_line[self.attr_i]
                 if self.fg_color is not None:
-                    bg_line[i * 4] = Buffer.MASK_FG_CUSTOM
-                    fg_line[i * 4 + 1] = self.fg_color[0]
-                    fg_line[i * 4 + 2] = self.fg_color[1]
-                    fg_line[i * 4 + 3] = self.fg_color[2]
+                    priv_attrs |= Buffer.MASK_FG_CUSTOM
+                    self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
+                    self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
+                    self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
                 if self.bg_color is not None:
-                    bg_line[i * 4] = Buffer.MASK_BG_CUSTOM
-                    bg_line[i * 4 + 1] = self.bg_color[0]
-                    bg_line[i * 4 + 2] = self.bg_color[1]
-                    bg_line[i * 4 + 3] = self.bg_color[2]
+                    priv_attrs |= Buffer.MASK_BG_CUSTOM
+                    self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
+                    self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
+                    self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
+
+                self.fg_attr_line[self.attr_i] |= attrs
+                self.bg_attr_line[self.attr_i] = priv_attrs
+                self.attr_i += 4
                 # if i == box_x:
                 #     bg_line[i * 4] |= BufferedRenderingContext.MASK_CHANGED
