@@ -3,80 +3,6 @@ from typing import Optional, List, Tuple, Union
 from datatools.tui.context.rendering_context import AbstractBuffer
 
 
-class Cursor:
-    x: int
-    y: int
-    fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
-    bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
-
-    target: 'Buffer'
-    char_i: int
-    attr_i: int
-    char_line: bytearray
-    fg_attr_line: bytearray
-    bg_attr_line: bytearray
-
-    def __init__(self, target: 'Buffer'):
-        self.target = target
-        self.seek(0, 0)
-
-    def seek(self, x: int, y: int):
-        self.x = x
-        self.y = y
-        self.char_i = 2 * x
-        self.attr_i = 4 * x
-        self.char_line = self.target.chars[y]
-        self.fg_attr_line = self.target.fg_attrs[y]
-        self.bg_attr_line = self.target.bg_attrs[y]
-
-    def cr_lf(self, x: int):
-        self.seek(x, self.y + 1)
-
-    def put_char(self, c: str, attrs: int):
-        if 0 <= self.y < self.target.height and 0 <= self.x < self.target.width:
-            priv_attrs = self.bg_attr_line[self.attr_i]
-            if self.fg_color:
-                priv_attrs |= Buffer.MASK_FG_CUSTOM
-                self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
-                self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
-                self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
-            if self.bg_color:
-                priv_attrs |= Buffer.MASK_BG_CUSTOM
-                self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
-                self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
-                self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
-
-            self.fg_attr_line[self.attr_i] |= attrs
-            self.bg_attr_line[self.attr_i] = priv_attrs
-            self.attr_i += 4
-
-            code = ord(c)
-            self.char_line[self.char_i] = code & 0xff
-            self.char_i += 1
-            self.char_line[self.char_i] = (code >> 8) & 0xff
-            self.char_i += 1
-
-        self.x += 1
-
-    def draw_text(self, text: str, attrs: int = 0):
-        """
-        Draws texts
-        """
-        from_x = self.x
-
-        for c in text:
-            if c == '\n':
-                self.cr_lf(from_x)
-            elif c == '\t':
-                _x = self.x
-                to_x = from_x + (
-                        _x - from_x + Buffer.TAB_SIZE) // Buffer.TAB_SIZE * Buffer.TAB_SIZE
-                for i in range(_x, to_x):
-                    self.put_char(' ', attrs)
-            else:
-                self.put_char(c, attrs)
-
-
 class Buffer(AbstractBuffer):
     width: int
     height: int
@@ -103,10 +29,9 @@ class Buffer(AbstractBuffer):
         self.chars = [self.spaces(width) for _ in range(height)]
         self.fg_attrs = [bytearray(4 * width) for _ in range(height)]
         self.bg_attrs = [bytearray(4 * width) for _ in range(height)]
-        self.cursor = self.new_writer()
 
     def new_writer(self):
-        return Cursor(self)
+        return Writer(self)
 
     @staticmethod
     def spaces(width) -> bytearray:
@@ -282,3 +207,77 @@ class Buffer(AbstractBuffer):
         maybe_adjust_fg_color()
 
         return ';'.join(codes)
+
+
+class Writer:
+    x: int
+    y: int
+    fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+    bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+
+    target: Buffer
+    char_i: int
+    attr_i: int
+    char_line: bytearray
+    fg_attr_line: bytearray
+    bg_attr_line: bytearray
+
+    def __init__(self, target: Buffer):
+        self.target = target
+        self.go_to(0, 0)
+
+    def go_to(self, x: int, y: int):
+        self.x = x
+        self.y = y
+        self.char_i = 2 * x
+        self.attr_i = 4 * x
+        self.char_line = self.target.chars[y]
+        self.fg_attr_line = self.target.fg_attrs[y]
+        self.bg_attr_line = self.target.bg_attrs[y]
+
+    def cr_lf(self, x: int):
+        self.go_to(x, self.y + 1)
+
+    def put_char(self, c: str, attrs: int):
+        if 0 <= self.y < self.target.height and 0 <= self.x < self.target.width:
+            priv_attrs = self.bg_attr_line[self.attr_i]
+            if self.fg_color:
+                priv_attrs |= Buffer.MASK_FG_CUSTOM
+                self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
+                self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
+                self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
+            if self.bg_color:
+                priv_attrs |= Buffer.MASK_BG_CUSTOM
+                self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
+                self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
+                self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
+
+            self.fg_attr_line[self.attr_i] |= attrs
+            self.bg_attr_line[self.attr_i] = priv_attrs
+            self.attr_i += 4
+
+            code = ord(c)
+            self.char_line[self.char_i] = code & 0xff
+            self.char_i += 1
+            self.char_line[self.char_i] = (code >> 8) & 0xff
+            self.char_i += 1
+
+        self.x += 1
+
+    def draw_text(self, text: str, attrs: int = 0):
+        """
+        Draws texts
+        """
+        from_x = self.x
+
+        for c in text:
+            if c == '\n':
+                self.cr_lf(from_x)
+            elif c == '\t':
+                _x = self.x
+                to_x = from_x + (
+                        _x - from_x + Buffer.TAB_SIZE) // Buffer.TAB_SIZE * Buffer.TAB_SIZE
+                for i in range(_x, to_x):
+                    self.put_char(' ', attrs)
+            else:
+                self.put_char(c, attrs)
