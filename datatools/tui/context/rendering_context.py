@@ -1,7 +1,7 @@
-from typing import Optional, List, Tuple, Union
+from typing import Optional, Tuple
 
 
-class RenderingContext:
+class AbstractBuffer:
     MASK_NONE = 0x00
 
     MASK_BOLD = 0x01

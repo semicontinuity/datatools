@@ -1,9 +1,83 @@
 from typing import Optional, List, Tuple, Union
 
-from datatools.tui.context.rendering_context import RenderingContext
+from datatools.tui.context.rendering_context import AbstractBuffer
 
 
-class BufferedRenderingContext(RenderingContext):
+class Cursor:
+    x: int
+    y: int
+    fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+    bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+
+    target: 'Buffer'
+    char_i: int
+    attr_i: int
+    char_line: bytearray
+    fg_attr_line: bytearray
+    bg_attr_line: bytearray
+
+    def __init__(self, target: 'Buffer'):
+        self.target = target
+        self.seek(0, 0)
+
+    def seek(self, x: int, y: int):
+        self.x = x
+        self.y = y
+        self.char_i = 2 * x
+        self.attr_i = 4 * x
+        self.char_line = self.target.chars[y]
+        self.fg_attr_line = self.target.fg_attrs[y]
+        self.bg_attr_line = self.target.bg_attrs[y]
+
+    def cr_lf(self, x: int):
+        self.seek(x, self.y + 1)
+
+    def put_char(self, c: str, attrs: int):
+        if 0 <= self.y < self.target.height and 0 <= self.x < self.target.width:
+            priv_attrs = self.bg_attr_line[self.attr_i]
+            if self.fg_color:
+                priv_attrs |= Buffer.MASK_FG_CUSTOM
+                self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
+                self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
+                self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
+            if self.bg_color:
+                priv_attrs |= Buffer.MASK_BG_CUSTOM
+                self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
+                self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
+                self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
+
+            self.fg_attr_line[self.attr_i] |= attrs
+            self.bg_attr_line[self.attr_i] = priv_attrs
+            self.attr_i += 4
+
+            code = ord(c)
+            self.char_line[self.char_i] = code & 0xff
+            self.char_i += 1
+            self.char_line[self.char_i] = (code >> 8) & 0xff
+            self.char_i += 1
+
+        self.x += 1
+
+    def draw_text(self, text: str, attrs: int = 0):
+        """
+        Draws texts
+        """
+        from_x = self.x
+
+        for c in text:
+            if c == '\n':
+                self.cr_lf(from_x)
+            elif c == '\t':
+                _x = self.x
+                to_x = from_x + (
+                        _x - from_x + Buffer.TAB_SIZE) // Buffer.TAB_SIZE * Buffer.TAB_SIZE
+                for i in range(_x, to_x):
+                    self.put_char(' ', attrs)
+            else:
+                self.put_char(c, attrs)
+
+
+class Buffer(AbstractBuffer):
     width: int
     height: int
     chars: List[bytearray]  # every character is represented by 2 bytes (utf-16le)
@@ -23,85 +97,16 @@ class BufferedRenderingContext(RenderingContext):
 
     TAB_SIZE = 4
 
-    class Cursor:
-        x: int
-        y: int
-        fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
-        bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
-
-        context: 'BufferedRenderingContext'
-        char_i: int
-        attr_i: int
-        char_line: bytearray
-        fg_attr_line: bytearray
-        bg_attr_line: bytearray
-
-        def __init__(self, context):
-            self.context = context
-            self.seek(0, 0)
-
-        def seek(self, x: int, y: int):
-            self.x = x
-            self.y = y
-            self.char_i = 2 * x
-            self.attr_i = 4 * x
-            self.char_line = self.context.chars[y]
-            self.fg_attr_line = self.context.fg_attrs[y]
-            self.bg_attr_line = self.context.bg_attrs[y]
-
-        def cr_lf(self, x: int):
-            self.seek(x, self.y + 1)
-
-        def put_char(self, c: str, attrs: int):
-            if 0 <= self.y < self.context.height and 0 <= self.x < self.context.width:
-                priv_attrs = self.bg_attr_line[self.attr_i]
-                if self.fg_color:
-                    priv_attrs |= BufferedRenderingContext.MASK_FG_CUSTOM
-                    self.fg_attr_line[self.attr_i + 1] = self.fg_color[0]
-                    self.fg_attr_line[self.attr_i + 2] = self.fg_color[1]
-                    self.fg_attr_line[self.attr_i + 3] = self.fg_color[2]
-                if self.bg_color:
-                    priv_attrs |= BufferedRenderingContext.MASK_BG_CUSTOM
-                    self.bg_attr_line[self.attr_i + 1] = self.bg_color[0]
-                    self.bg_attr_line[self.attr_i + 2] = self.bg_color[1]
-                    self.bg_attr_line[self.attr_i + 3] = self.bg_color[2]
-
-                self.fg_attr_line[self.attr_i] |= attrs
-                self.bg_attr_line[self.attr_i] = priv_attrs
-                self.attr_i += 4
-
-                code = ord(c)
-                self.char_line[self.char_i] = code & 0xff
-                self.char_i += 1
-                self.char_line[self.char_i] = (code >> 8) & 0xff
-                self.char_i += 1
-
-            self.x += 1
-
-        def draw_text(self, text: str, attrs: int = 0):
-            """
-            Draws texts
-            """
-            from_x = self.x
-
-            for c in text:
-                if c == '\n':
-                    self.cr_lf(from_x)
-                elif c == '\t':
-                    _x = self.x
-                    to_x = from_x + (_x - from_x + BufferedRenderingContext.TAB_SIZE) // BufferedRenderingContext.TAB_SIZE * BufferedRenderingContext.TAB_SIZE
-                    for i in range(_x, to_x):
-                        self.put_char(' ', attrs)
-                else:
-                    self.put_char(c, attrs)
-
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
         self.chars = [self.spaces(width) for _ in range(height)]
         self.fg_attrs = [bytearray(4 * width) for _ in range(height)]
         self.bg_attrs = [bytearray(4 * width) for _ in range(height)]
-        self.cursor = BufferedRenderingContext.Cursor(self)
+        self.cursor = self.new_writer()
+
+    def new_writer(self):
+        return Cursor(self)
 
     @staticmethod
     def spaces(width) -> bytearray:
@@ -128,12 +133,12 @@ class BufferedRenderingContext(RenderingContext):
             for i in range(max(0, box_x), min(self.width, box_x + box_width)):
                 fg_line[i * 4] = attrs
                 if fg is not None:
-                    bg_line[i * 4] = BufferedRenderingContext.MASK_FG_CUSTOM
+                    bg_line[i * 4] = Buffer.MASK_FG_CUSTOM
                     fg_line[i * 4 + 1] = fg[0]
                     fg_line[i * 4 + 2] = fg[1]
                     fg_line[i * 4 + 3] = fg[2]
                 if bg is not None:
-                    bg_line[i * 4] = BufferedRenderingContext.MASK_BG_CUSTOM
+                    bg_line[i * 4] = Buffer.MASK_BG_CUSTOM
                     bg_line[i * 4 + 1] = bg[0]
                     bg_line[i * 4 + 2] = bg[1]
                     bg_line[i * 4 + 3] = bg[2]
@@ -167,16 +172,16 @@ class BufferedRenderingContext(RenderingContext):
             bg_g = self.bg_attrs[y][4 * x + 2]
             bg_b = self.bg_attrs[y][4 * x + 3]
 
-            attr_diff = (BufferedRenderingContext.MASK_FG_CUSTOM | BufferedRenderingContext.MASK_BG_CUSTOM) if x == x_from else attr ^ prev_attr
-            priv_attr_diff = (RenderingContext.MASK_FG_EMPHASIZED | RenderingContext.MASK_BG_EMPHASIZED) if x == x_from else priv_attr ^ prev_priv_attr
+            attr_diff = (Buffer.MASK_FG_CUSTOM | Buffer.MASK_BG_CUSTOM) if x == x_from else attr ^ prev_attr
+            priv_attr_diff = (AbstractBuffer.MASK_FG_EMPHASIZED | AbstractBuffer.MASK_BG_EMPHASIZED) if x == x_from else priv_attr ^ prev_priv_attr
 
             if not attr_diff and not priv_attr_diff:
-                fg_changed = (priv_attr & BufferedRenderingContext.MASK_FG_CUSTOM) != 0 and (prev_fg_r != fg_r or prev_fg_g != fg_g or prev_fg_b != fg_b)
-                bg_changed = (priv_attr & BufferedRenderingContext.MASK_BG_CUSTOM) != 0 and (prev_bg_r != bg_r or prev_bg_g != bg_g or prev_bg_b != bg_b)
+                fg_changed = (priv_attr & Buffer.MASK_FG_CUSTOM) != 0 and (prev_fg_r != fg_r or prev_fg_g != fg_g or prev_fg_b != fg_b)
+                bg_changed = (priv_attr & Buffer.MASK_BG_CUSTOM) != 0 and (prev_bg_r != bg_r or prev_bg_g != bg_g or prev_bg_b != bg_b)
                 if bg_changed:
-                    priv_attr_diff |= BufferedRenderingContext.MASK_BG_CUSTOM
+                    priv_attr_diff |= Buffer.MASK_BG_CUSTOM
                 if fg_changed:
-                    priv_attr_diff |= BufferedRenderingContext.MASK_FG_CUSTOM
+                    priv_attr_diff |= Buffer.MASK_FG_CUSTOM
             if attr_diff or priv_attr_diff:
                 codes = self.attr_to_ansi(attr, attr_diff, priv_attr, priv_attr_diff, fg_r, fg_g, fg_b, bg_r, bg_g, bg_b)
                 if codes != '':
