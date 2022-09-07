@@ -21,8 +21,6 @@ class Buffer:
     MASK_BG_CUSTOM = 0x20
     MASK_CHANGED = 0x80
 
-    TAB_SIZE = 4
-
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
@@ -188,8 +186,6 @@ class Buffer:
 
 
 class BufferWriter(AbstractBufferWriter):
-    x: int
-    y: int
     fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
     bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
 
@@ -205,16 +201,12 @@ class BufferWriter(AbstractBufferWriter):
         self.go_to(0, 0)
 
     def go_to(self, x: int, y: int):
-        self.x = x
-        self.y = y
+        super(BufferWriter, self).go_to(x, y)
         self.char_i = 2 * x
         self.attr_i = 4 * x
         self.char_line = self.target.chars[y]
         self.fg_attr_line = self.target.fg_attrs[y]
         self.bg_attr_line = self.target.bg_attrs[y]
-
-    def cr_lf(self, x: int):
-        self.go_to(x, self.y + 1)
 
     def put_char(self, c: str, attrs: int):
         if 0 <= self.y < self.target.height and 0 <= self.x < self.target.width:
@@ -241,24 +233,6 @@ class BufferWriter(AbstractBufferWriter):
             self.char_i += 1
 
         self.x += 1
-
-    def draw_text(self, text: str, attrs: int = 0):
-        """
-        Draws texts
-        """
-        from_x = self.x
-
-        for c in text:
-            if c == '\n':
-                self.cr_lf(from_x)
-            elif c == '\t':
-                _x = self.x
-                to_x = from_x + (
-                        _x - from_x + Buffer.TAB_SIZE) // Buffer.TAB_SIZE * Buffer.TAB_SIZE
-                for i in range(_x, to_x):
-                    self.put_char(' ', attrs)
-            else:
-                self.put_char(c, attrs)
 
     def draw_attrs_box_at(self, box_x: int, box_y: int, box_width: int, box_height: int, attrs: int = 0,
                           fg: Optional[Tuple[int, int, int]] = None,

@@ -2,6 +2,11 @@ from typing import Optional, Tuple
 
 
 class AbstractBufferWriter:
+    x: int
+    y: int
+
+    TAB_SIZE = 4
+
     MASK_NONE = 0x00
 
     MASK_BOLD = 0x01
@@ -11,6 +16,13 @@ class AbstractBufferWriter:
     MASK_OVERLINE = 0x80
 
     def go_to(self, x: int, y: int):
+        self.x = x
+        self.y = y
+
+    def cr_lf(self, x: int):
+        self.go_to(x, self.y + 1)
+
+    def put_char(self, c: str, attrs: int):
         pass
 
     def draw_attrs_box_at(self, x: int, y: int, width: int, height: int, attrs: int = 0,
@@ -25,4 +37,16 @@ class AbstractBufferWriter:
         :param text: multi-line text to draw (can contain '\n' and '\t')
         :param attrs: additional attributes to be applied
         """
-        pass
+        from_x = self.x
+
+        for c in text:
+            if c == '\n':
+                self.cr_lf(from_x)
+            elif c == '\t':
+                _x = self.x
+                to_x = from_x + (
+                        _x - from_x + self.TAB_SIZE) // self.TAB_SIZE * self.TAB_SIZE
+                for i in range(_x, to_x):
+                    self.put_char(' ', attrs)
+            else:
+                self.put_char(c, attrs)
