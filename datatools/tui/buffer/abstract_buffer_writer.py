@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 
-class AbstractBuffer:
+class AbstractBufferWriter:
     MASK_NONE = 0x00
 
     MASK_BOLD = 0x01
@@ -10,7 +10,10 @@ class AbstractBuffer:
     MASK_BG_EMPHASIZED = 0x20
     MASK_OVERLINE = 0x80
 
-    def draw_attrs_box_at(self, x: int, y: int, width: int, height: int, attrs: int,
+    def go_to(self, x: int, y: int):
+        pass
+
+    def draw_attrs_box_at(self, x: int, y: int, width: int, height: int, attrs: int = 0,
                        fg: Optional[Tuple[int, int, int]] = None,
                        bg: Optional[Tuple[int, int, int]] = None):
         pass

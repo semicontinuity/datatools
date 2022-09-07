@@ -1,9 +1,9 @@
 from typing import Optional, List, Tuple, Union
 
-from datatools.tui.context.rendering_context import AbstractBuffer
+from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 
 
-class Buffer(AbstractBuffer):
+class Buffer:
     width: int
     height: int
     chars: List[bytearray]  # every character is represented by 2 bytes (utf-16le)
@@ -16,7 +16,7 @@ class Buffer(AbstractBuffer):
 
     MASK_NONE = 0x00
 
-    # BG attr byte
+    # priv attr byte
     MASK_FG_CUSTOM = 0x10
     MASK_BG_CUSTOM = 0x20
     MASK_CHANGED = 0x80
@@ -30,8 +30,8 @@ class Buffer(AbstractBuffer):
         self.fg_attrs = [bytearray(4 * width) for _ in range(height)]
         self.bg_attrs = [bytearray(4 * width) for _ in range(height)]
 
-    def new_writer(self):
-        return Writer(self)
+    def new_writer(self) -> AbstractBufferWriter:
+        return BufferWriter(self)
 
     @staticmethod
     def spaces(width) -> bytearray:
@@ -47,28 +47,6 @@ class Buffer(AbstractBuffer):
     def __str__(self):
         # Reset attrs after each line, otherwise the line will be filled with BG color when terminal window scrolls
         return ''.join([self.row_slice_to_string(y, 0, self.width) + '\x1b[0m\n' for y in range(self.height)])
-
-    def draw_attrs_box_at(self, box_x: int, box_y: int, box_width: int, box_height: int,
-                          attrs: int = 0,
-                          fg: Optional[Tuple[int, int, int]] = None,
-                          bg: Optional[Tuple[int, int, int]] = None):
-        for j in range(max(0, box_y), min(self.height, box_y + box_height)):
-            fg_line = self.fg_attrs[j]
-            bg_line = self.bg_attrs[j]
-            for i in range(max(0, box_x), min(self.width, box_x + box_width)):
-                fg_line[i * 4] = attrs
-                if fg is not None:
-                    bg_line[i * 4] = Buffer.MASK_FG_CUSTOM
-                    fg_line[i * 4 + 1] = fg[0]
-                    fg_line[i * 4 + 2] = fg[1]
-                    fg_line[i * 4 + 3] = fg[2]
-                if bg is not None:
-                    bg_line[i * 4] = Buffer.MASK_BG_CUSTOM
-                    bg_line[i * 4 + 1] = bg[0]
-                    bg_line[i * 4 + 2] = bg[1]
-                    bg_line[i * 4 + 3] = bg[2]
-                # if i == box_x:
-                #     bg_line[i * 4] |= BufferedRenderingContext.MASK_CHANGED
 
     def row_slice_to_string(self, y, x_from, x_to):
         """ Coordinates must be valid """
@@ -98,7 +76,7 @@ class Buffer(AbstractBuffer):
             bg_b = self.bg_attrs[y][4 * x + 3]
 
             attr_diff = (Buffer.MASK_FG_CUSTOM | Buffer.MASK_BG_CUSTOM) if x == x_from else attr ^ prev_attr
-            priv_attr_diff = (AbstractBuffer.MASK_FG_EMPHASIZED | AbstractBuffer.MASK_BG_EMPHASIZED) if x == x_from else priv_attr ^ prev_priv_attr
+            priv_attr_diff = (AbstractBufferWriter.MASK_FG_EMPHASIZED | AbstractBufferWriter.MASK_BG_EMPHASIZED) if x == x_from else priv_attr ^ prev_priv_attr
 
             if not attr_diff and not priv_attr_diff:
                 fg_changed = (priv_attr & Buffer.MASK_FG_CUSTOM) != 0 and (prev_fg_r != fg_r or prev_fg_g != fg_g or prev_fg_b != fg_b)
@@ -171,8 +149,8 @@ class Buffer(AbstractBuffer):
                 append_bg_rgb_color(bg_r, bg_g, bg_b)
                 return
 
-            emphasized_bg_changed = attr_diff & self.MASK_BG_EMPHASIZED
-            emphasized_bg = attr & self.MASK_BG_EMPHASIZED
+            emphasized_bg_changed = attr_diff & AbstractBufferWriter.MASK_BG_EMPHASIZED
+            emphasized_bg = attr & AbstractBufferWriter.MASK_BG_EMPHASIZED
             if (custom_bg_changed or emphasized_bg_changed) and emphasized_bg and not custom_bg:
                 append_bg_color(self.bg_color_emphasized)
                 return
@@ -187,8 +165,8 @@ class Buffer(AbstractBuffer):
                 append_fg_rgb_color(fg_r, fg_g, fg_b)
                 return
 
-            emphasized_fg_changed = attr_diff & self.MASK_FG_EMPHASIZED
-            emphasized_fg = attr & self.MASK_FG_EMPHASIZED
+            emphasized_fg_changed = attr_diff & AbstractBufferWriter.MASK_FG_EMPHASIZED
+            emphasized_fg = attr & AbstractBufferWriter.MASK_FG_EMPHASIZED
             if (custom_fg_changed or emphasized_fg_changed) and emphasized_fg and not custom_fg:
                 append_fg_color(self.fg_color_emphasized)
                 return
@@ -196,12 +174,12 @@ class Buffer(AbstractBuffer):
             if (custom_fg_changed or emphasized_fg_changed) and not custom_fg and not emphasized_fg:
                 append_fg_color(self.fg_color_default)
 
-        if attr_diff & self.MASK_BOLD:
-            codes.append('1' if (attr & self.MASK_BOLD) else '22')
-        if attr_diff & self.MASK_ITALIC:
-            codes.append('3' if (attr & self.MASK_ITALIC) else '23')
-        if attr_diff & self.MASK_OVERLINE:
-            codes.append('53' if (attr & self.MASK_OVERLINE) else '55')
+        if attr_diff & AbstractBufferWriter.MASK_BOLD:
+            codes.append('1' if (attr & AbstractBufferWriter.MASK_BOLD) else '22')
+        if attr_diff & AbstractBufferWriter.MASK_ITALIC:
+            codes.append('3' if (attr & AbstractBufferWriter.MASK_ITALIC) else '23')
+        if attr_diff & AbstractBufferWriter.MASK_OVERLINE:
+            codes.append('53' if (attr & AbstractBufferWriter.MASK_OVERLINE) else '55')
 
         maybe_adjust_bg_color()
         maybe_adjust_fg_color()
@@ -209,7 +187,7 @@ class Buffer(AbstractBuffer):
         return ';'.join(codes)
 
 
-class Writer:
+class BufferWriter(AbstractBufferWriter):
     x: int
     y: int
     fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
@@ -281,3 +259,24 @@ class Writer:
                     self.put_char(' ', attrs)
             else:
                 self.put_char(c, attrs)
+
+    def draw_attrs_box_at(self, box_x: int, box_y: int, box_width: int, box_height: int, attrs: int = 0,
+                          fg: Optional[Tuple[int, int, int]] = None,
+                          bg: Optional[Tuple[int, int, int]] = None):
+        for j in range(max(0, box_y), min(self.target.height, box_y + box_height)):
+            fg_line = self.target.fg_attrs[j]
+            bg_line = self.target.bg_attrs[j]
+            for i in range(max(0, box_x), min(self.target.width, box_x + box_width)):
+                fg_line[i * 4] = attrs
+                if fg is not None:
+                    bg_line[i * 4] = Buffer.MASK_FG_CUSTOM
+                    fg_line[i * 4 + 1] = fg[0]
+                    fg_line[i * 4 + 2] = fg[1]
+                    fg_line[i * 4 + 3] = fg[2]
+                if bg is not None:
+                    bg_line[i * 4] = Buffer.MASK_BG_CUSTOM
+                    bg_line[i * 4 + 1] = bg[0]
+                    bg_line[i * 4 + 2] = bg[1]
+                    bg_line[i * 4 + 3] = bg[2]
+                # if i == box_x:
+                #     bg_line[i * 4] |= BufferedRenderingContext.MASK_CHANGED
