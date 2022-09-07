@@ -78,6 +78,23 @@ class BufferedRenderingContext(RenderingContext):
 
             self.x += 1
 
+        def draw_text(self, text: str, attrs: int = 0):
+            """
+            Draws texts
+            """
+            from_x = self.x
+
+            for c in text:
+                if c == '\n':
+                    self.cr_lf(from_x)
+                elif c == '\t':
+                    _x = self.x
+                    to_x = from_x + (_x - from_x + BufferedRenderingContext.TAB_SIZE) // BufferedRenderingContext.TAB_SIZE * BufferedRenderingContext.TAB_SIZE
+                    for i in range(_x, to_x):
+                        self.put_char(' ', attrs)
+                else:
+                    self.put_char(c, attrs)
+
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
@@ -122,23 +139,6 @@ class BufferedRenderingContext(RenderingContext):
                     bg_line[i * 4 + 3] = bg[2]
                 # if i == box_x:
                 #     bg_line[i * 4] |= BufferedRenderingContext.MASK_CHANGED
-
-    def draw_text(self, text: str, attrs: int = 0):
-        """
-        Draws texts
-        """
-        from_x = self.cursor.x
-
-        for c in text:
-            if c == '\n':
-                self.cursor.cr_lf(from_x)
-            elif c == '\t':
-                _x = self.cursor.x
-                to_x = from_x + (_x - from_x + BufferedRenderingContext.TAB_SIZE) // BufferedRenderingContext.TAB_SIZE * BufferedRenderingContext.TAB_SIZE
-                for i in range(_x, to_x):
-                    self.cursor.put_char(' ', attrs)
-            else:
-                self.cursor.put_char(c, attrs)
 
     def row_slice_to_string(self, y, x_from, x_to):
         """ Coordinates must be valid """

@@ -36,7 +36,7 @@ class AnsiToolkit:
     def page_node(self, j):
         return PageNode(self.node(j, self.discovery.object_descriptor(j)), "", self.style.background_color)
 
-    def node(self, j, descriptor: Descriptor):
+    def node(self, j, descriptor: Descriptor) -> Block:
         if descriptor.is_any():
             descriptor = self.discovery.object_descriptor(j)
 
@@ -178,7 +178,7 @@ class AnsiToolkit:
 
 
 class PageNode:
-    def __init__(self, root, title, background_color: Optional[List[int]] = None):
+    def __init__(self, root: Block, title, background_color: Optional[List[int]] = None):
         self.root = root
         self.title = title
         self.background_color = background_color
