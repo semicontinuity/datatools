@@ -19,6 +19,7 @@ Examples of supported JSONs:
 
 import json
 import sys
+from collections import defaultdict
 from typing import List, Set, Dict
 
 from graphviz import Digraph
@@ -29,6 +30,32 @@ def label(node):
         return '|'.join(str(e) for e in node)
     else:
         return str(node)
+
+
+# List of edges with qualified vertex names, e.g  [["g1.A", "g2.B"], ["g2.B", "g2.C"]] => 2 groups exist, g1 and g2
+def qualified_edge_list_to_graph(edges: List, **kwargs):
+    groups = defaultdict(set)
+    new_edges: List = []
+    for edge in edges:
+        edge_spec_from = edge[0]
+        group_and_node_from = edge_spec_from.split(".")
+        if len(group_and_node_from) == 2:
+            node_from = group_and_node_from[1]
+            groups[group_and_node_from[0]].add(node_from)
+        else:
+            node_from = edge_spec_from
+
+        edge_spec_to = edge[1]
+        group_and_node_to = edge_spec_to.split(".")
+        if len(group_and_node_to) == 2:
+            node_to = group_and_node_to[1]
+            groups[group_and_node_to[0]].add(node_to)
+        else:
+            node_to = edge_spec_to
+
+        new_edges.append([node_from, node_to])
+
+    return group_specs_and_edge_list_to_graph(groups, new_edges)
 
 
 def group_specs_and_edge_list_to_graph(groups: Dict, edges: List, **kwargs):
@@ -120,7 +147,8 @@ def to_graph(o):
                 return group_specs_and_edge_list_to_graph(records[0], records[1], **attr)
             else:
                 # List of edges, e.g  [["A", "B"], ["B", "C"]]
-                return edge_list_to_graph(records, **attr)
+                # return edge_list_to_graph(records, **attr)
+                return qualified_edge_list_to_graph(records, **attr)
         else:
             # [ {"key":["A","X"], "value":[{"key":"B"}] } ]
             return adj_lists_to_graph(o, **attr)
