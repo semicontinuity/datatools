@@ -1,7 +1,7 @@
-from datatools.jv.model.JElement import JElement
+from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
-class JBoolean(JElement):
+class JBoolean(JPrimitiveElement):
     value: bool
 
     def __init__(self, value: bool):

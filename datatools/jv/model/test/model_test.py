@@ -17,3 +17,10 @@ def test__build_model_number():
 
 def test__build_model_boolean():
     assert repr(build_model(False)) == 'false'
+
+
+def test__build_model_object():
+    assert [str(e) for e in build_model({}).elements()] == [
+        '{',
+        '}',
+    ]

@@ -1,5 +1,5 @@
-from datatools.jv.model import JElement
+from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
-class JNull(JElement):
+class JNull(JPrimitiveElement):
     def __repr__(self): return "null"

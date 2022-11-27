@@ -1,7 +1,7 @@
-from datatools.jv.model import JElement
+from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
-class JNumber(JElement):
+class JNumber(JPrimitiveElement):
     value: float
 
     def __init__(self, value: float):

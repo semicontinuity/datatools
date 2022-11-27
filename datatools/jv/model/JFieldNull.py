@@ -1,5 +1,5 @@
-from datatools.jv.model.JField import JField
+from datatools.jv.model.JObjectField import JElement, JObjectField
 
 
-class JFieldNull(JField):
+class JFieldNull(JObjectField):
     pass

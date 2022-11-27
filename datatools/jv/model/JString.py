@@ -1,7 +1,7 @@
-from datatools.jv.model import JElement
+from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
-class JString(JElement):
+class JString(JPrimitiveElement):
     value: str
 
     def __init__(self, value: str):

@@ -1,5 +1,5 @@
-from datatools.jv.model.JField import JField
+from datatools.jv.model.JObjectField import JElement
 
 
-class JFieldBoolean(JField):
+class JFieldBoolean(JElement):
     pass
