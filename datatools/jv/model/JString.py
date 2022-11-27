@@ -4,11 +4,16 @@ from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 class JString(JPrimitiveElement):
     value: str
 
-    def __init__(self, value: str):
+    def __init__(self, value, indent=0, has_trailing_comma=False) -> None:
+        super().__init__(indent, has_trailing_comma)
         self.value = value
 
     def __repr__(self):
-        return '"' + ''.join([JString.escape(c) for c in self.value]) + '"'
+        return JString.value_repr(self.value)
+
+    @staticmethod
+    def value_repr(value):
+        return '"' + ''.join([JString.escape(c) for c in value]) + '"'
 
     @staticmethod
     def escape(c: str):
