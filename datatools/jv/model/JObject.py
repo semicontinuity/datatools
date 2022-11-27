@@ -17,5 +17,6 @@ class JObject(JElement):
 
     def elements(self):
         yield self.start
+        yield from self.fields.elements()
         yield self.end
 

@@ -8,4 +8,4 @@ class JElement:
 
     def elements(self): pass
 
-    def format(self): return ' ' * self.indent + str(self) + (',' if self.has_trailing_comma else '')
+    def __str__(self): return ' ' * self.indent + repr(self) + (',' if self.has_trailing_comma else '')

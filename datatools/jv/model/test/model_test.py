@@ -19,8 +19,17 @@ def test__build_model_boolean():
     assert repr(build_model(False)) == 'false'
 
 
-def test__build_model_object():
+def test__build_model_object_1():
     assert [str(e) for e in build_model({}).elements()] == [
         '{',
+        '}',
+    ]
+
+
+def test__build_model_object_2():
+    j = {"a": None}
+    assert [str(e) for e in build_model(j).elements()] == [
+        '{',
+        '"a": null',
         '}',
     ]
