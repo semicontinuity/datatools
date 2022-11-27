@@ -33,6 +33,7 @@ def build_object_fields_model(j, indent) -> JObjectFields:
     size = len(j)
     for k, v in j.items():
         model.fields.append(build_object_field_model(k, v, indent, i < size - 1))
+        i += 1
     return model
 
 

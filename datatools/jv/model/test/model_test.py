@@ -33,7 +33,7 @@ def test__build_model_object_2():
     }
     assert [str(e) for e in build_model(j).elements()] == [
         '{',
-        ' "a": null',
-        ' "b": "string"',
+        '  "a": null,',
+        '  "b": "string"',
         '}',
     ]
