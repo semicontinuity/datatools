@@ -30,12 +30,16 @@ def test__build_model_object_2():
     j = {
         "a": None,
         "b": "string",
-        "c": 1.7
+        "c": 1.7,
+        "d": False,
+        "e": True,
     }
     assert [str(e) for e in build_model(j).elements()] == [
         '{',
         '  "a": null,',
         '  "b": "string",',
-        '  "c": 1.7',
+        '  "c": 1.7,',
+        '  "d": false,',
+        '  "e": true',
         '}',
     ]

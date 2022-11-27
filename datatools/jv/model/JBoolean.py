@@ -9,4 +9,8 @@ class JBoolean(JPrimitiveElement):
         self.value = value
 
     def __repr__(self):
-        return "true" if self.value else "false"
+        return self.value_repr(self.value)
+
+    @staticmethod
+    def value_repr(value):
+        return "true" if value else "false"
