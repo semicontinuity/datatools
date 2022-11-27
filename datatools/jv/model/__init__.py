@@ -1,6 +1,7 @@
 from datatools.jv.model.JBoolean import JBoolean
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JFieldNull import JFieldNull
+from datatools.jv.model.JFieldNumber import JFieldNumber
 from datatools.jv.model.JFieldString import JFieldString
 from datatools.jv.model.JNull import JNull
 from datatools.jv.model.JNumber import JNumber
@@ -23,6 +24,8 @@ def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectFi
         return JFieldNull(k, indent, has_trailing_comma)
     elif type(v) is str:
         return JFieldString(v, k, indent, has_trailing_comma)
+    elif type(v) is int or type(v) is float:
+        return JFieldNumber(v, k, indent, has_trailing_comma)
 
 
 def build_object_fields_model(j, indent) -> JObjectFields:
@@ -41,15 +44,13 @@ def build_model(j, indent=0, has_trailing_comma=False) -> JElement:
     model = None
 
     if j is None:
-        model = JNull()
+        model = JNull(indent, has_trailing_comma)
     elif type(j) is str:
         model = JString(j, indent, has_trailing_comma)
-    elif type(j) is int:
-        model = JNumber(j)
-    elif type(j) is float:
-        model = JNumber(j)
+    elif type(j) is int or type(j) is float:
+        model = JNumber(j, indent, has_trailing_comma)
     elif type(j) is bool:
-        model = JBoolean(j)
+        model = JBoolean(j, indent, has_trailing_comma)
     elif type(j) is dict:
         model = JObject(indent, has_trailing_comma)
         model.fields = build_object_fields_model(j, indent + INDENT)

@@ -29,11 +29,13 @@ def test__build_model_object_1():
 def test__build_model_object_2():
     j = {
         "a": None,
-        "b": "string"
+        "b": "string",
+        "c": 1.7
     }
     assert [str(e) for e in build_model(j).elements()] == [
         '{',
         '  "a": null,',
-        '  "b": "string"',
+        '  "b": "string",',
+        '  "c": 1.7',
         '}',
     ]
