@@ -106,3 +106,18 @@ def test__build_model_complex_0():
         '  }',
         ']',
     ]
+
+
+def test__build_model_complex_1():
+    j = {
+        "array": [
+            1
+        ]
+    }
+    assert [str(e) for e in build_model(j).elements()] == [
+        '{',
+        '  "array": [',
+        '    1',
+        '  ]',
+        '}',
+    ]

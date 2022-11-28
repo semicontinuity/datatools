@@ -3,6 +3,7 @@ from typing import List
 from datatools.jv.model.JArray import JArray
 from datatools.jv.model.JBoolean import JBoolean
 from datatools.jv.model.JElement import JElement
+from datatools.jv.model.JFieldArray import JFieldArray
 from datatools.jv.model.JFieldBoolean import JFieldBoolean
 from datatools.jv.model.JFieldNull import JFieldNull
 from datatools.jv.model.JFieldNumber import JFieldNumber
@@ -28,6 +29,8 @@ def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectFi
         return JFieldBoolean(v, k, indent, has_trailing_comma)
     elif type(v) is dict:
         return JFieldObject(k, build_object_fields_models(v, indent + INDENT), indent, has_trailing_comma)
+    elif type(v) is list:
+        return JFieldArray(k, build_array_items_models(v, indent + INDENT), indent, has_trailing_comma)
 
 
 def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
