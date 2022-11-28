@@ -69,8 +69,40 @@ def test__build_model_object_3():
     ]
 
 
-def test__build_model_array_1():
+def test__build_model_array_0():
     assert [str(e) for e in build_model([]).elements()] == [
         '[',
+        ']',
+    ]
+
+
+def test__build_model_array_1():
+    j = [
+        None,
+        "string",
+        True,
+        17,
+    ]
+    assert [str(e) for e in build_model(j).elements()] == [
+        '[',
+        '  null,',
+        '  "string",',
+        '  true,',
+        '  17',
+        ']',
+    ]
+
+
+def test__build_model_complex_0():
+    j = [
+        {
+            "a": 1
+        }
+    ]
+    assert [str(e) for e in build_model(j).elements()] == [
+        '[',
+        '  {',
+        '    "a": 1',
+        '  }',
         ']',
     ]
