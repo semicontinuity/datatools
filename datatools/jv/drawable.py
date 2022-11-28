@@ -25,6 +25,11 @@ class Drawable:
     def row_to_string(self, y, x_from, x_to):
         if y < len(self.elements):
             s = str(self.elements[y])
+            # STRING CONTAINS ANSI SEQUENCES. USE BUFFER!
             return s[x_from:x_to] + ' ' * (x_to - len(s))
         else:
             return ' ' * (x_to - x_from)
+
+    def indent(self, y) -> int:
+        if y < len(self.elements):
+            return self.elements[y].indent

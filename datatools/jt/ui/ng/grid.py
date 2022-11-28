@@ -2,11 +2,11 @@ from typing import Optional
 
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
-from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE, MASK_ROW_EMPHASIZED
+from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.themes import FOOTER_BG
-from datatools.tui.ansi import ANSI_ATTR_OVERLINE, OVERLINE_BYTES, INVERTED_BYTES, NOT_INVERTED_BYTES
+from datatools.tui.ansi import ANSI_ATTR_OVERLINE, OVERLINE_BYTES, NOT_INVERTED_BYTES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2

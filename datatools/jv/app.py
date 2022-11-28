@@ -46,7 +46,6 @@ def auto_position(screen_buffer, state):
 
 
 def grid(drawable: Drawable, grid_context: GridContext) -> WGrid:
-
     g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, drawable, grid_context.interactive)
     g.total_lines = drawable.height
     return g

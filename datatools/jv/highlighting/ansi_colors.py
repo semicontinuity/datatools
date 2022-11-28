@@ -1,4 +1,4 @@
-from datatools.tui.ansi_str import ansi_cmd_set_fg, ANSI_CMD_ATTR_RESET
+from datatools.tui.ansi_str import ansi_cmd_set_fg, ANSI_CMD_ATTR_RESET, ANSI_CMD_ATTR_NOT_BOLD, ANSI_CMD_DEFAULT_FG
 
 C_BLACK = 0
 C_RED = 1
@@ -43,11 +43,11 @@ class Highlighting:
 
 class ConsoleHighlighting(Highlighting):
 
-    def ansi_reset_attrs(self): return ANSI_CMD_ATTR_RESET
+    def ansi_reset_attrs(self): return ANSI_CMD_DEFAULT_FG + ANSI_CMD_ATTR_NOT_BOLD
 
-    def ansi_set_attrs_field_colon(self): return ANSI_CMD_ATTR_RESET
+    def ansi_set_attrs_field_colon(self): return ANSI_CMD_DEFAULT_FG + ANSI_CMD_ATTR_NOT_BOLD
 
-    def ansi_set_attrs_comma(self): return ANSI_CMD_ATTR_RESET
+    def ansi_set_attrs_comma(self): return ANSI_CMD_DEFAULT_FG + ANSI_CMD_ATTR_NOT_BOLD
 
     def ansi_set_attrs_field_name(self): return ansi_cmd_set_fg(C_YELLOW)
 

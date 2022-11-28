@@ -1,4 +1,10 @@
+ANSI_CMD_DEFAULT_FG = '\x1b[39m'
+ANSI_CMD_ATTR_NOT_BOLD = '\x1b[22m'
+
 ANSI_CMD_ATTR_RESET = '\x1b[0;22m'
+
+ANSI_CMD_ATTR_INVERTED = '\x1b[7m'
+ANSI_CMD_ATTR_NOT_INVERTED = '\x1b[27m'
 
 
 def ansi_cmd_set_fg(fg: int):
