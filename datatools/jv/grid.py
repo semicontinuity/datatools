@@ -20,17 +20,8 @@ class WGrid(WGridBase):
     def redraw(self):
         self.redraw_content()
 
-    def redraw_lines(self, start_line, num_lines):
-        line = start_line
-        row = (start_line - self.top_line) + self.y + self.y_top_offset  # skip border line, headers line
-        for c in range(num_lines):
-            self.goto(self.x, row)
-            if line < self.drawable.height:
-                self.wr(
-                    self.drawable.row_to_string(line, self.x_shift, min(max(0, self.drawable.width - self.x_shift), self.width))
-                )
-            line += 1
-            row += 1
+    def render_line(self, line, is_under_cursor):
+        return self.drawable.row_to_string(line, self.x_shift, min(max(0, self.drawable.width - self.x_shift), self.width))
 
     def handle_edit_key(self, key):
         if key in KEYS_TO_EXIT_CODES:
