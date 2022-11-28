@@ -23,5 +23,8 @@ class Drawable:
         self.elements = elements
 
     def row_to_string(self, y, x_from, x_to):
-        s = str(self.elements[y])
-        return s[x_from:x_to] + ' ' * (x_to - len(s))
+        if y < len(self.elements):
+            s = str(self.elements[y])
+            return s[x_from:x_to] + ' ' * (x_to - len(s))
+        else:
+            return ' ' * (x_to - x_from)
