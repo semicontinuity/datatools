@@ -30,6 +30,14 @@ class Highlighting:
 
     def ansi_set_attrs_field_name(self): return ''
 
+    def ansi_set_attrs_null(self): return ''
+
+    def ansi_set_attrs_true(self): return ''
+
+    def ansi_set_attrs_false(self): return ''
+
+    def ansi_set_attrs_number(self): return ''
+
     def ansi_set_attrs_string(self): return ''
 
 
@@ -43,4 +51,12 @@ class ConsoleHighlighting(Highlighting):
 
     def ansi_set_attrs_field_name(self): return ansi_cmd_set_fg(C_YELLOW)
 
-    def ansi_set_attrs_string(self): return ansi_cmd_set_fg(C_CYAN)
+    def ansi_set_attrs_null(self): return ansi_cmd_set_fg(C_B_MAGENTA)
+
+    def ansi_set_attrs_true(self): return ansi_cmd_set_fg(C_B_GREEN)
+
+    def ansi_set_attrs_false(self): return ansi_cmd_set_fg(C_B_BLUE)
+
+    def ansi_set_attrs_number(self): return ansi_cmd_set_fg(C_B_RED)
+
+    def ansi_set_attrs_string(self): return ansi_cmd_set_fg(C_B_CYAN)

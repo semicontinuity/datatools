@@ -1,3 +1,4 @@
+from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.JObjectFieldPrimitive import JObjectFieldPrimitive
 
 
@@ -9,4 +10,4 @@ class JFieldNumber(JObjectFieldPrimitive):
         self.value = value
 
     def __repr__(self):
-        return str(self.value)
+        return JNumber.value_repr(self.value)

@@ -1,3 +1,4 @@
+from datatools.jv.highlighting.ansi_colors import Highlighting
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
@@ -9,4 +10,8 @@ class JNumber(JPrimitiveElement):
         self.value = value
 
     def __repr__(self):
-        return str(self.value)
+        return JNumber.value_repr(self.value)
+
+    @staticmethod
+    def value_repr(value):
+        return Highlighting.CURRENT.ansi_set_attrs_number() + str(value)

@@ -1,3 +1,4 @@
+from datatools.jv.model.JObjectField import JObjectField
 from datatools.jv.model.JElement import JElement
 
 
@@ -9,4 +10,4 @@ class JFieldArrayStart(JElement):
         self.name = name
 
     def __str__(self):
-        return ' ' * self.indent + f'"{self.name}": ['
+        return ' ' * self.indent + JObjectField.field_name_repr(self.name) + '['

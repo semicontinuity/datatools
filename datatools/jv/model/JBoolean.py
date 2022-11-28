@@ -1,3 +1,4 @@
+from datatools.jv.highlighting.ansi_colors import Highlighting
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
@@ -13,4 +14,5 @@ class JBoolean(JPrimitiveElement):
 
     @staticmethod
     def value_repr(value):
-        return "true" if value else "false"
+        return Highlighting.CURRENT.ansi_set_attrs_true() + "true" if value \
+            else Highlighting.CURRENT.ansi_set_attrs_false() + "false"
