@@ -26,7 +26,7 @@ def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectFi
     elif type(v) is bool:
         return JFieldBoolean(v, k, indent, has_trailing_comma)
     elif type(v) is dict:
-        return JFieldObject(k, build_object_fields_model2(v, indent + INDENT), indent, has_trailing_comma)
+        return JFieldObject(k, build_object_fields_model(v, indent + INDENT), indent, has_trailing_comma)
 
 
 def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
@@ -39,10 +39,10 @@ def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
     elif type(v) is bool:
         return JBoolean(v, indent, has_trailing_comma)
     elif type(v) is dict:
-        return JObject(build_object_fields_model2(v, indent + INDENT), indent, has_trailing_comma)
+        return JObject(build_object_fields_model(v, indent + INDENT), indent, has_trailing_comma)
 
 
-def build_object_fields_model2(j, indent) -> List[JObjectField]:
+def build_object_fields_model(j, indent) -> List[JObjectField]:
     fields = []
     i = 0
     size = len(j)
