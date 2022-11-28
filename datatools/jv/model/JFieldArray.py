@@ -17,8 +17,8 @@ class JFieldArray(JObjectField):
         self.items = items
         self.end = JFieldArrayEnd(indent, has_trailing_comma)
 
-    def elements(self):
+    def __iter__(self):
         yield self.start
         for field in self.items:
-            yield from field.elements()
+            yield from field
         yield self.end

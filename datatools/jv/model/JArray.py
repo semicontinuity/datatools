@@ -17,9 +17,9 @@ class JArray(JElement):
         self.items = items
         self.end = JArrayEnd(indent, has_trailing_comma)
 
-    def elements(self):
+    def __iter__(self):
         yield self.start
         for item in self.items:
-            yield from item.elements()
+            yield from item.__iter__()
         yield self.end
 

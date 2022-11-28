@@ -7,7 +7,7 @@ class JObjectFieldPrimitive(JObjectField):
     def __init__(self, name: str, indent=0, has_trailing_comma=False) -> None:
         super().__init__(name, indent, has_trailing_comma)
 
-    def elements(self):
+    def __iter__(self):
         yield self
 
     def __str__(self):

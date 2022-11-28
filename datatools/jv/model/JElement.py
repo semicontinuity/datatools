@@ -6,6 +6,6 @@ class JElement:
         self.indent = indent
         self.has_trailing_comma = has_trailing_comma
 
-    def elements(self): pass
+    def __iter__(self): pass
 
     def __str__(self): return ' ' * self.indent + repr(self) + (',' if self.has_trailing_comma else '')

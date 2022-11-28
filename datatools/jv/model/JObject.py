@@ -18,9 +18,9 @@ class JObject(JElement):
         self.fields = fields
         self.end = JObjectEnd(indent, has_trailing_comma)
 
-    def elements(self):
+    def __iter__(self):
         yield self.start
         for field in self.fields:
-            yield from field.elements()
+            yield from field
         yield self.end
 

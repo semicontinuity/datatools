@@ -4,8 +4,7 @@ import json
 import sys
 from dataclasses import dataclass
 
-from datatools.json.json2ansi_toolkit import Style, AnsiToolkit
-from datatools.json.structure_discovery import Discovery
+from datatools.json.json2ansi_toolkit import Style
 from datatools.json2ansi.default_style import default_style
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
@@ -13,7 +12,7 @@ from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
 from datatools.jv.drawable import Drawable
 from datatools.jv.grid import WGrid
-from datatools.tui.buffer.json2ansi_buffer import Buffer
+from datatools.jv.model import build_model
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import screen_size_or_default
@@ -69,10 +68,7 @@ def do_make_json2ansi_applet(grid_context, j, popup, drawable: Drawable, state):
 
 
 def paint_data(j, style) -> Drawable:
-    drawable = Drawable()
-    drawable.height = 100
-    drawable.width = 20
-    return drawable
+    return Drawable(build_model(j))
 
 
 def main():

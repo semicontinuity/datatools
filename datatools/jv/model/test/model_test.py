@@ -20,7 +20,7 @@ def test__build_model_boolean():
 
 
 def test__build_model_object_1():
-    assert [str(e) for e in build_model({}).elements()] == [
+    assert [str(e) for e in build_model({})] == [
         '{',
         '}',
     ]
@@ -34,7 +34,7 @@ def test__build_model_object_2():
         "d": False,
         "e": True,
     }
-    assert [str(e) for e in build_model(j).elements()] == [
+    assert [str(e) for e in build_model(j)] == [
         '{',
         '  "a": null,',
         '  "b": "string",',
@@ -55,7 +55,7 @@ def test__build_model_object_3():
             "b4": 17,
         },
     }
-    assert [str(e) for e in build_model(j).elements()] == [
+    assert [str(e) for e in build_model(j)] == [
         '{',
         '  "a": {',
         '  },',
@@ -70,7 +70,7 @@ def test__build_model_object_3():
 
 
 def test__build_model_array_0():
-    assert [str(e) for e in build_model([]).elements()] == [
+    assert [str(e) for e in build_model([])] == [
         '[',
         ']',
     ]
@@ -83,7 +83,7 @@ def test__build_model_array_1():
         True,
         17,
     ]
-    assert [str(e) for e in build_model(j).elements()] == [
+    assert [str(e) for e in build_model(j)] == [
         '[',
         '  null,',
         '  "string",',
@@ -99,7 +99,7 @@ def test__build_model_complex_0():
             "a": 1
         }
     ]
-    assert [str(e) for e in build_model(j).elements()] == [
+    assert [str(e) for e in build_model(j)] == [
         '[',
         '  {',
         '    "a": 1',
@@ -114,7 +114,7 @@ def test__build_model_complex_1():
             1
         ]
     }
-    assert [str(e) for e in build_model(j).elements()] == [
+    assert [str(e) for e in build_model(j)] == [
         '{',
         '  "array": [',
         '    1',
@@ -130,7 +130,7 @@ def test__build_model_complex_2():
             "a": 1
         }
     ]
-    assert [str(e) for e in build_model(j).elements()] == [
+    assert [str(e) for e in build_model(j)] == [
         '[',
         '  null,',
         '  {',
@@ -150,7 +150,7 @@ def test__build_model_complex_3():
             }
         ]
     }
-    assert [str(e) for e in build_model(j).elements()] == [
+    assert [str(e) for e in build_model(j)] == [
         '{',
         '  "int": 1,',
         '  "array": [',
