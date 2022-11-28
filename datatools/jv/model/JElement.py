@@ -1,3 +1,6 @@
+from datatools.jv.highlighting.ansi_colors import Highlighting
+
+
 class JElement:
     indent: int
     has_trailing_comma: bool
@@ -8,4 +11,7 @@ class JElement:
 
     def __iter__(self): pass
 
-    def __str__(self): return ' ' * self.indent + repr(self) + (',' if self.has_trailing_comma else '')
+    def __str__(self):
+        return ' ' * self.indent + repr(self) +\
+               (Highlighting.CURRENT.ansi_set_attrs_comma() + ',' if self.has_trailing_comma else '') +\
+               Highlighting.CURRENT.ansi_reset_attrs()

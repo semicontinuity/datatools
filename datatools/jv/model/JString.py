@@ -1,3 +1,4 @@
+from datatools.jv.highlighting.ansi_colors import Highlighting
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
@@ -13,7 +14,7 @@ class JString(JPrimitiveElement):
 
     @staticmethod
     def value_repr(value):
-        return '"' + ''.join([JString.escape(c) for c in value]) + '"'
+        return Highlighting.CURRENT.ansi_set_attrs_string() + '"' + ''.join([JString.escape(c) for c in value]) + '"'
 
     @staticmethod
     def escape(c: str):

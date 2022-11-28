@@ -12,6 +12,7 @@ from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
 from datatools.jv.drawable import Drawable
 from datatools.jv.grid import WGrid
+from datatools.jv.highlighting.ansi_colors import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
@@ -97,4 +98,5 @@ def data():
 
 
 if __name__ == "__main__":
+    Highlighting.CURRENT = ConsoleHighlighting()
     main()

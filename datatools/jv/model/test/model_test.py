@@ -1,4 +1,8 @@
+from datatools.jv.highlighting.ansi_colors import Highlighting
 from datatools.jv.model import build_model
+
+
+Highlighting.CURRENT = Highlighting()
 
 
 def test__build_model_null():
