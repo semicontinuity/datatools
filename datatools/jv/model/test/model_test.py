@@ -43,3 +43,18 @@ def test__build_model_object_2():
         '  "e": true',
         '}',
     ]
+
+
+def test__build_model_object_3():
+    j = {
+        "a": {},
+        "b": {},
+    }
+    assert [str(e) for e in build_model(j).elements()] == [
+        '{',
+        '  "a": {',
+        '  },',
+        '  "b": {',
+        '  }',
+        '}',
+    ]

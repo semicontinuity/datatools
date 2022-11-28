@@ -12,7 +12,7 @@ class JObject(JElement):
 
     def __init__(self, indent=0, has_trailing_comma=False) -> None:
         super().__init__(indent, has_trailing_comma)
-        self.start = JObjectStart(indent, has_trailing_comma)
+        self.start = JObjectStart(indent)
         self.end = JObjectEnd(indent, has_trailing_comma)
 
     def elements(self):

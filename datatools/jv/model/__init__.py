@@ -3,6 +3,7 @@ from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JFieldBoolean import JFieldBoolean
 from datatools.jv.model.JFieldNull import JFieldNull
 from datatools.jv.model.JFieldNumber import JFieldNumber
+from datatools.jv.model.JFieldObject import JFieldObject
 from datatools.jv.model.JFieldString import JFieldString
 from datatools.jv.model.JNull import JNull
 from datatools.jv.model.JNumber import JNumber
@@ -29,6 +30,10 @@ def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectFi
         return JFieldNumber(v, k, indent, has_trailing_comma)
     elif type(v) is bool:
         return JFieldBoolean(v, k, indent, has_trailing_comma)
+    elif type(v) is dict:
+        model = JFieldObject(k, indent, has_trailing_comma)
+        model.fields = build_object_fields_model(v, indent + INDENT)
+        return model
 
 
 def build_object_fields_model(j, indent) -> JObjectFields:
@@ -44,20 +49,15 @@ def build_object_fields_model(j, indent) -> JObjectFields:
 
 
 def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
-    model = None
-
     if v is None:
-        model = JNull(indent, has_trailing_comma)
+        return JNull(indent, has_trailing_comma)
     elif type(v) is str:
-        model = JString(v, indent, has_trailing_comma)
+        return JString(v, indent, has_trailing_comma)
     elif type(v) is int or type(v) is float:
-        model = JNumber(v, indent, has_trailing_comma)
+        return JNumber(v, indent, has_trailing_comma)
     elif type(v) is bool:
-        model = JBoolean(v, indent, has_trailing_comma)
+        return JBoolean(v, indent, has_trailing_comma)
     elif type(v) is dict:
-        model = JObject(indent, has_trailing_comma)
-        model.fields = build_object_fields_model(v, indent + INDENT)
-
-    model.indent = indent
-    model.has_trailing_comma = has_trailing_comma
-    return model
+        obj = JObject(indent, has_trailing_comma)
+        obj.fields = build_object_fields_model(v, indent + INDENT)
+        return obj
