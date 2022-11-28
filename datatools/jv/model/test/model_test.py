@@ -121,3 +121,43 @@ def test__build_model_complex_1():
         '  ]',
         '}',
     ]
+
+
+def test__build_model_complex_2():
+    j = [
+        None,
+        {
+            "a": 1
+        }
+    ]
+    assert [str(e) for e in build_model(j).elements()] == [
+        '[',
+        '  null,',
+        '  {',
+        '    "a": 1',
+        '  }',
+        ']',
+    ]
+
+
+def test__build_model_complex_3():
+    j = {
+        "int": 1,
+        "array": [
+            1,
+            {
+                "f": True
+            }
+        ]
+    }
+    assert [str(e) for e in build_model(j).elements()] == [
+        '{',
+        '  "int": 1,',
+        '  "array": [',
+        '    1,',
+        '    {',
+        '      "f": true',
+        '    }',
+        '  ]',
+        '}',
+    ]
