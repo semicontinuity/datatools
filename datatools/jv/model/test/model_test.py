@@ -67,3 +67,10 @@ def test__build_model_object_3():
         '  }',
         '}',
     ]
+
+
+def test__build_model_array_1():
+    assert [str(e) for e in build_model([]).elements()] == [
+        '[',
+        ']',
+    ]

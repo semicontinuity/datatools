@@ -1,5 +1,6 @@
 from typing import List
 
+from datatools.jv.model.JArray import JArray
 from datatools.jv.model.JBoolean import JBoolean
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JFieldBoolean import JFieldBoolean
@@ -26,7 +27,7 @@ def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectFi
     elif type(v) is bool:
         return JFieldBoolean(v, k, indent, has_trailing_comma)
     elif type(v) is dict:
-        return JFieldObject(k, build_object_fields_model(v, indent + INDENT), indent, has_trailing_comma)
+        return JFieldObject(k, build_object_fields_models(v, indent + INDENT), indent, has_trailing_comma)
 
 
 def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
@@ -39,10 +40,12 @@ def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
     elif type(v) is bool:
         return JBoolean(v, indent, has_trailing_comma)
     elif type(v) is dict:
-        return JObject(build_object_fields_model(v, indent + INDENT), indent, has_trailing_comma)
+        return JObject(build_object_fields_models(v, indent + INDENT), indent, has_trailing_comma)
+    elif type(v) is list:
+        return JArray(build_array_items_models(v, indent + INDENT), indent, has_trailing_comma)
 
 
-def build_object_fields_model(j, indent) -> List[JObjectField]:
+def build_object_fields_models(j, indent) -> List[JObjectField]:
     fields = []
     i = 0
     size = len(j)
@@ -50,3 +53,13 @@ def build_object_fields_model(j, indent) -> List[JObjectField]:
         fields.append(build_object_field_model(k, v, indent, i < size - 1))
         i += 1
     return fields
+
+
+def build_array_items_models(j, indent) -> List[JElement]:
+    items = []
+    i = 0
+    size = len(j)
+    for v in j:
+        items.append(build_model(v, indent, i < size - 1))
+        i += 1
+    return items
