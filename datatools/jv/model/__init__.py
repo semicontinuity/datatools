@@ -11,16 +11,9 @@ from datatools.jv.model.JNull import JNull
 from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JObjectField import JObjectField
-from datatools.jv.model.JObjectFields import JObjectFields
 from datatools.jv.model.JString import JString
 
 INDENT = 2
-
-
-def set_attrs(model: JElement, indent: int, has_trailing_comma: bool):
-    model.indent = indent
-    model.has_trailing_comma = has_trailing_comma
-    return model
 
 
 def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectField:
@@ -36,28 +29,6 @@ def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectFi
         return JFieldObject(k, build_object_fields_model2(v, indent + INDENT), indent, has_trailing_comma)
 
 
-def build_object_fields_model(j, indent) -> JObjectFields:
-    model = JObjectFields()
-
-    model.fields = []
-    i = 0
-    size = len(j)
-    for k, v in j.items():
-        model.fields.append(build_object_field_model(k, v, indent, i < size - 1))
-        i += 1
-    return model
-
-
-def build_object_fields_model2(j, indent) -> List[JObjectField]:
-    fields = []
-    i = 0
-    size = len(j)
-    for k, v in j.items():
-        fields.append(build_object_field_model(k, v, indent, i < size - 1))
-        i += 1
-    return fields
-
-
 def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
     if v is None:
         return JNull(indent, has_trailing_comma)
@@ -68,6 +39,14 @@ def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
     elif type(v) is bool:
         return JBoolean(v, indent, has_trailing_comma)
     elif type(v) is dict:
-        obj = JObject(indent, has_trailing_comma)
-        obj.fields = build_object_fields_model(v, indent + INDENT)
-        return obj
+        return JObject(build_object_fields_model2(v, indent + INDENT), indent, has_trailing_comma)
+
+
+def build_object_fields_model2(j, indent) -> List[JObjectField]:
+    fields = []
+    i = 0
+    size = len(j)
+    for k, v in j.items():
+        fields.append(build_object_field_model(k, v, indent, i < size - 1))
+        i += 1
+    return fields
