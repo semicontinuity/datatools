@@ -12,8 +12,5 @@ class JFieldBoolean(JObjectFieldPrimitive):
         super().__init__(name, indent, has_trailing_comma)
         self.value = value
 
-    def __repr__(self):
-        return JBoolean.value_repr(self.value)
-
     def rich_text(self) -> Tuple[AnyStr, Style]:
         return JBoolean.rich_text_for(self.value)

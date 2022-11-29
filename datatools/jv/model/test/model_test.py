@@ -1,30 +1,33 @@
-from datatools.jv.highlighting.ansi_colors import Highlighting
-from datatools.jv.model import build_model
-
+from datatools.jv.highlighting.highlighting import Highlighting
+from datatools.jv.model import build_model, JElement
 
 Highlighting.CURRENT = Highlighting()
 
 
+def to_strings(model: JElement):
+    return [''.join([span[0] for span in e.spans()]) for e in model]
+
+
 def test__build_model_null():
-    assert repr(build_model(None)) == 'null'
+    assert to_strings(build_model(None)) == ['null']
 
 
 def test__build_model_str():
-    assert repr(build_model("string")) == '"string"'
-    assert repr(build_model("complex\n\t_string")) == '"complex\\n\\t_string"'
+    assert to_strings(build_model("string")) == ['"string"']
+    assert to_strings(build_model("complex\n\t_string")) == ['"complex\\n\\t_string"']
 
 
 def test__build_model_number():
-    assert repr(build_model(1.17)) == '1.17'
-    assert repr(build_model(3)) == '3'
+    assert to_strings(build_model(1.17)) == ['1.17']
+    assert to_strings(build_model(3)) == ['3']
 
 
 def test__build_model_boolean():
-    assert repr(build_model(False)) == 'false'
+    assert to_strings(build_model(False)) == ['false']
 
 
 def test__build_model_object_1():
-    assert [str(e) for e in build_model({})] == [
+    assert to_strings(build_model({})) == [
         '{',
         '}',
     ]
@@ -38,7 +41,7 @@ def test__build_model_object_2():
         "d": False,
         "e": True,
     }
-    assert [str(e) for e in build_model(j)] == [
+    assert to_strings(build_model(j)) == [
         '{',
         '  "a": null,',
         '  "b": "string",',
@@ -59,7 +62,7 @@ def test__build_model_object_3():
             "b4": 17,
         },
     }
-    assert [str(e) for e in build_model(j)] == [
+    assert to_strings(build_model(j)) == [
         '{',
         '  "a": {',
         '  },',
@@ -74,7 +77,7 @@ def test__build_model_object_3():
 
 
 def test__build_model_array_0():
-    assert [str(e) for e in build_model([])] == [
+    assert to_strings(build_model([])) == [
         '[',
         ']',
     ]
@@ -87,7 +90,7 @@ def test__build_model_array_1():
         True,
         17,
     ]
-    assert [str(e) for e in build_model(j)] == [
+    assert to_strings(build_model(j)) == [
         '[',
         '  null,',
         '  "string",',
@@ -103,7 +106,7 @@ def test__build_model_complex_0():
             "a": 1
         }
     ]
-    assert [str(e) for e in build_model(j)] == [
+    assert to_strings(build_model(j)) == [
         '[',
         '  {',
         '    "a": 1',
@@ -118,7 +121,7 @@ def test__build_model_complex_1():
             1
         ]
     }
-    assert [str(e) for e in build_model(j)] == [
+    assert to_strings(build_model(j)) == [
         '{',
         '  "array": [',
         '    1',
@@ -134,7 +137,7 @@ def test__build_model_complex_2():
             "a": 1
         }
     ]
-    assert [str(e) for e in build_model(j)] == [
+    assert to_strings(build_model(j)) == [
         '[',
         '  null,',
         '  {',
@@ -154,7 +157,7 @@ def test__build_model_complex_3():
             }
         ]
     }
-    assert [str(e) for e in build_model(j)] == [
+    assert to_strings(build_model(j)) == [
         '{',
         '  "int": 1,',
         '  "array": [',
