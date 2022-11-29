@@ -1,5 +1,8 @@
-from datatools.jv.model.JString import JString
+from typing import Tuple, AnyStr
+
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model.JObjectFieldPrimitive import JObjectFieldPrimitive
+from datatools.jv.model.JString import JString
 
 
 class JFieldString(JObjectFieldPrimitive):
@@ -12,3 +15,5 @@ class JFieldString(JObjectFieldPrimitive):
     def __repr__(self):
         return JString.value_repr(self.value)
 
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return JString.rich_text_for(self.value)

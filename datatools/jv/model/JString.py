@@ -1,4 +1,7 @@
+from typing import Tuple, AnyStr
+
 from datatools.jv.highlighting.ansi_colors import Highlighting
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
@@ -15,6 +18,13 @@ class JString(JPrimitiveElement):
     @staticmethod
     def value_repr(value):
         return Highlighting.CURRENT.ansi_set_attrs_string() + '"' + ''.join([JString.escape(c) for c in value]) + '"'
+
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return JString.rich_text_for(self.value)
+
+    @staticmethod
+    def rich_text_for(s: AnyStr) -> Tuple[AnyStr, Style]:
+        return s, Highlighting.CURRENT.for_string()
 
     @staticmethod
     def escape(c: str):

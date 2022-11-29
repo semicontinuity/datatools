@@ -1,4 +1,7 @@
+from typing import Tuple, AnyStr, List
+
 from datatools.jv.highlighting.ansi_colors import Highlighting
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model.JObjectField import JObjectField
 
 
@@ -16,3 +19,6 @@ class JObjectFieldPrimitive(JObjectField):
                repr(self) + \
                (Highlighting.CURRENT.ansi_set_attrs_comma() + ',' if self.has_trailing_comma else '') + \
                Highlighting.CURRENT.ansi_reset_attrs()
+
+    def spans(self) -> List[Tuple[AnyStr, Style]]:
+        return JObjectField.spans_for_field_name(self.indent, self.name) + [self.rich_text()] + self.rich_text_comma()

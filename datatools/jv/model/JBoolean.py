@@ -1,4 +1,7 @@
+from typing import Iterable, Tuple, AnyStr
+
 from datatools.jv.highlighting.ansi_colors import Highlighting
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
@@ -10,9 +13,19 @@ class JBoolean(JPrimitiveElement):
         self.value = value
 
     def __repr__(self):
-        return self.value_repr(self.value)
+        return JBoolean.value_repr(self.value)
 
     @staticmethod
     def value_repr(value):
-        return Highlighting.CURRENT.ansi_set_attrs_true() + "true" if value \
+        return Highlighting.CURRENT.ansi_set_attrs_true() + "true" \
+            if value \
             else Highlighting.CURRENT.ansi_set_attrs_false() + "false"
+
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return JBoolean.rich_text_for(self.value)
+
+    @staticmethod
+    def rich_text_for(value: bool) -> Tuple[AnyStr, Style]:
+        return ("true", Highlighting.CURRENT.for_true()) \
+            if value \
+            else ("false", Highlighting.CURRENT.for_false())

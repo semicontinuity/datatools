@@ -1,3 +1,7 @@
+from typing import Tuple, AnyStr
+
+from datatools.jv.highlighting.ansi_colors import Highlighting
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.JObjectFieldPrimitive import JObjectFieldPrimitive
 
@@ -11,3 +15,6 @@ class JFieldNumber(JObjectFieldPrimitive):
 
     def __repr__(self):
         return JNumber.value_repr(self.value)
+
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return "null", Highlighting.CURRENT.for_null()

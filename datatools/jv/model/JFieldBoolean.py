@@ -1,3 +1,6 @@
+from typing import AnyStr, Tuple
+
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model import JBoolean
 from datatools.jv.model.JObjectFieldPrimitive import JObjectFieldPrimitive
 
@@ -11,3 +14,6 @@ class JFieldBoolean(JObjectFieldPrimitive):
 
     def __repr__(self):
         return JBoolean.value_repr(self.value)
+
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return JBoolean.rich_text_for(self.value)

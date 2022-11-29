@@ -1,4 +1,7 @@
+from typing import Tuple, AnyStr
+
 from datatools.jv.highlighting.ansi_colors import Highlighting
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
@@ -15,3 +18,6 @@ class JNumber(JPrimitiveElement):
     @staticmethod
     def value_repr(value):
         return Highlighting.CURRENT.ansi_set_attrs_number() + str(value)
+
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return str(self.value), Highlighting.CURRENT.for_number()

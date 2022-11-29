@@ -1,6 +1,11 @@
+from typing import Optional, List
+
+
 class AbstractBufferWriter:
     x: int
     y: int
+    fg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
+    bg_color: Optional[List[int]] = None  # RGB only (extend to support indexed color)
 
     TAB_SIZE = 4
 

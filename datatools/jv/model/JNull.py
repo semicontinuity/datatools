@@ -1,3 +1,7 @@
+from typing import Tuple, AnyStr
+
+from datatools.jv.highlighting.ansi_colors import Highlighting
+from datatools.jv.highlighting.rich_text import Style
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 
 
@@ -9,3 +13,5 @@ class JNull(JPrimitiveElement):
     def __repr__(self):
         return "null"
 
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return "null", Highlighting.CURRENT.for_null()

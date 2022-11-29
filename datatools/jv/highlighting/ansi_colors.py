@@ -1,4 +1,6 @@
-from datatools.tui.ansi_str import ansi_cmd_set_fg, ANSI_CMD_ATTR_RESET, ANSI_CMD_ATTR_NOT_BOLD, ANSI_CMD_DEFAULT_FG
+from datatools.jv.highlighting.rich_text import Style
+from datatools.tui.ansi_str import ansi_cmd_set_fg, ANSI_CMD_ATTR_NOT_BOLD, ANSI_CMD_DEFAULT_FG
+from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 
 C_BLACK = 0
 C_RED = 1
@@ -40,6 +42,26 @@ class Highlighting:
 
     def ansi_set_attrs_string(self): return ''
 
+    def for_null(self) -> Style: return Style()
+
+    def for_true(self) -> Style: return Style()
+
+    def for_false(self) -> Style: return Style()
+
+    def for_number(self) -> Style: return Style()
+
+    def for_string(self) -> Style: return Style()
+
+    def for_comma(self) -> Style: return Style()
+
+    def for_colon(self) -> Style: return Style()
+
+    def for_field_name(self) -> Style: return Style()
+
+    def for_curly_braces(self) -> Style: return Style()
+
+    def for_square_brackets(self) -> Style: return Style()
+
 
 class ConsoleHighlighting(Highlighting):
 
@@ -60,3 +82,15 @@ class ConsoleHighlighting(Highlighting):
     def ansi_set_attrs_number(self): return ansi_cmd_set_fg(C_B_RED)
 
     def ansi_set_attrs_string(self): return ansi_cmd_set_fg(C_B_CYAN)
+
+    def for_null(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (255, 0, 255))
+
+    def for_true(self): return Style(AbstractBufferWriter.MASK_BOLD, (0, 255, 0))
+
+    def for_false(self): return Style(AbstractBufferWriter.MASK_BOLD, (0, 0, 255))
+
+    def for_number(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (255, 0, 0))
+
+    def for_string(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (0, 255, 255))
+
+    def for_field_name(self): return Style(AbstractBufferWriter.MASK_NONE, (128, 128, 0))
