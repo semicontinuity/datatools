@@ -17,4 +17,4 @@ class JFieldNumber(JObjectFieldPrimitive):
         return JNumber.value_repr(self.value)
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return "null", Highlighting.CURRENT.for_null()
+        return str(self.value), Highlighting.CURRENT.for_number()

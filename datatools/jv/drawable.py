@@ -1,5 +1,6 @@
 from typing import List
 
+from datatools.jv.highlighting.rich_text import render_substr
 from datatools.jv.model import JElement
 
 
@@ -24,9 +25,12 @@ class Drawable:
 
     def row_to_string(self, y, x_from, x_to):
         if y < len(self.elements):
-            s = str(self.elements[y])
+            # s = str(self.elements[y])
             # STRING CONTAINS ANSI SEQUENCES. USE BUFFER!
-            return s[x_from:x_to] + ' ' * (x_to - len(s))
+            # return s[x_from:x_to] + ' ' * (x_to - len(s))
+
+            return render_substr(self.elements[y].spans(), x_from, x_to)
+
         else:
             return ' ' * (x_to - x_from)
 

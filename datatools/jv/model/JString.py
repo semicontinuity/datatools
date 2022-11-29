@@ -23,8 +23,8 @@ class JString(JPrimitiveElement):
         return JString.rich_text_for(self.value)
 
     @staticmethod
-    def rich_text_for(s: AnyStr) -> Tuple[AnyStr, Style]:
-        return s, Highlighting.CURRENT.for_string()
+    def rich_text_for(value: AnyStr) -> Tuple[AnyStr, Style]:
+        return '"' + ''.join([JString.escape(c) for c in value]) + '"', Highlighting.CURRENT.for_string()
 
     @staticmethod
     def escape(c: str):

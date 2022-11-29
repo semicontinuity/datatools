@@ -83,14 +83,14 @@ class ConsoleHighlighting(Highlighting):
 
     def ansi_set_attrs_string(self): return ansi_cmd_set_fg(C_B_CYAN)
 
-    def for_null(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (255, 0, 255))
+    def for_null(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (192, 0, 192))
 
-    def for_true(self): return Style(AbstractBufferWriter.MASK_BOLD, (0, 255, 0))
+    def for_true(self): return Style(AbstractBufferWriter.MASK_BOLD, (64, 192, 64))
 
-    def for_false(self): return Style(AbstractBufferWriter.MASK_BOLD, (0, 0, 255))
+    def for_false(self): return Style(AbstractBufferWriter.MASK_BOLD, (64, 64, 192))
 
-    def for_number(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (255, 0, 0))
+    def for_number(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (192, 64, 64))
 
-    def for_string(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (0, 255, 255))
+    def for_string(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (64, 160, 192))
 
-    def for_field_name(self): return Style(AbstractBufferWriter.MASK_NONE, (128, 128, 0))
+    def for_field_name(self): return Style(AbstractBufferWriter.MASK_NONE, (160, 128, 0))

@@ -22,4 +22,3 @@ class JArray(JElement):
         for item in self.items:
             yield from item.__iter__()
         yield self.end
-
