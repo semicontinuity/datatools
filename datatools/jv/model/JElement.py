@@ -16,6 +16,9 @@ class JElement:
 
     def rich_text(self) -> Tuple[AnyStr, Style]: pass
 
+    def rich_text_length(self) -> int:
+        return sum((len(span[0]) for span in self.spans()))
+
     def spans(self) -> List[Tuple[AnyStr, Style]]:
         return [(' ' * self.indent, Style()), self.rich_text()] + self.rich_text_comma()
 

@@ -15,7 +15,7 @@ class Drawable:
         elements = []
 
         for element in v:
-            width = max(width, len(str(element)))
+            width = max(width, element.rich_text_length())
             height += 1
             elements.append(element)
 
