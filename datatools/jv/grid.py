@@ -2,7 +2,6 @@ from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_U
 
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jv.drawable import Drawable
-from datatools.tui.ansi_str import ANSI_CMD_ATTR_INVERTED, ANSI_CMD_ATTR_NOT_INVERTED
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME
 
@@ -37,7 +36,7 @@ class WGrid(WGridBase):
             self.cursor(True)
 
     def render_line(self, line, is_under_cursor):
-        return self.drawable.row_to_string(line, self.x_shift, min(max(0, self.drawable.width - self.x_shift), self.width))
+        return self.drawable.row_to_string(line, self.x_shift, self.x_shift + self.width)
 
     def handle_edit_key(self, key):
         if key in KEYS_TO_EXIT_CODES:
