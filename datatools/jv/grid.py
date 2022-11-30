@@ -32,8 +32,10 @@ class WGrid(WGridBase):
 
     def cell_cursor_place(self):
         if self.interactive:
-            self.goto(self.drawable.indent(self.cur_line), self.cur_line - self.top_line + self.y)
-            self.cursor(True)
+            cursor_x = self.drawable.indent(self.cur_line) - self.x_shift
+            if cursor_x >= 0:
+                self.goto(cursor_x, self.cur_line - self.top_line + self.y)
+                self.cursor(True)
 
     def render_line(self, line, is_under_cursor):
         return self.drawable.row_to_string(line, self.x_shift, self.x_shift + self.width)
