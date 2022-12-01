@@ -16,8 +16,10 @@ class Drawable:
 
         for element in v:
             width = max(width, element.rich_text_length())
-            height += 1
             elements.append(element)
+            height += 1
+
+        v.layout(0)
 
         self.width = width
         self.height = height
@@ -32,3 +34,13 @@ class Drawable:
     def indent(self, y) -> int:
         if y < len(self.elements):
             return self.elements[y].indent
+
+    def parent_line_of(self, line) -> int:
+        element = self.elements[line]
+        while True:
+            if element.parent is None:
+                return 0
+            elif element.parent.line != element.line:
+                return element.parent.line
+            else:
+                element = element.parent

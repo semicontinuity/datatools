@@ -21,3 +21,14 @@ class JFieldArray(JObjectField):
         for field in self.items:
             yield from field
         yield self.end
+
+    def layout(self, line: int) -> int:
+        self.line = line
+
+        line = self.start.layout(line)
+
+        for item in self.items:
+            line = item.layout(line)
+
+        return self.end.layout(line)
+

@@ -3,7 +3,8 @@ from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_U
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jv.drawable import Drawable
 from datatools.tui.grid_base import WGridBase
-from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME
+from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
+    KEY_CTRL_RIGHT
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -51,11 +52,11 @@ class WGrid(WGridBase):
 
         content_width = self.drawable.width
         content_height = self.drawable.height
-        if key == KEY_RIGHT:
+        if key == KEY_CTRL_RIGHT:
             if self.x_shift + self.width < content_width:
                 self.x_shift += 1
                 self.redraw_content()
-        elif key == KEY_LEFT:
+        elif key == KEY_CTRL_LEFT:
             if self.x_shift > 0:
                 self.x_shift -= 1
                 self.redraw_content()
@@ -101,3 +102,10 @@ class WGrid(WGridBase):
             if self.x_shift > 0:
                 self.x_shift = max(0, self.x_shift - HORIZONTAL_PAGE_SIZE)
                 self.redraw_content()
+
+        elif key == KEY_LEFT:
+            line = self.drawable.parent_line_of(self.cur_line)
+            if line < self.top_line:
+                self.top_line = line
+            self.cur_line = line
+            self.redraw_content()

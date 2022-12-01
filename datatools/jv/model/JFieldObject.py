@@ -20,3 +20,13 @@ class JFieldObject(JObjectField):
         for field in self.fields:
             yield from field
         yield self.end
+
+    def layout(self, line: int):
+        self.line = line
+
+        line = self.start.layout(line)
+
+        for item in self.fields:
+            line = item.layout(line)
+
+        return self.end.layout(line)
