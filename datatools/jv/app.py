@@ -68,7 +68,7 @@ def do_make_json2ansi_applet(grid_context, j, popup, drawable: Drawable, state):
 
 
 def paint_data(j, style) -> Drawable:
-    return Drawable(build_model(j))
+    return Drawable(build_model(None, j))
 
 
 def main():

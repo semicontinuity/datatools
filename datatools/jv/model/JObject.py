@@ -12,10 +12,9 @@ class JObject(JElement):
     fields: List[JObjectField]
     end: JObjectEnd
 
-    def __init__(self, fields: List[JObjectField], indent=0, has_trailing_comma=False) -> None:
+    def __init__(self, indent=0, has_trailing_comma=False) -> None:
         super().__init__(indent, has_trailing_comma)
         self.start = JObjectStart(indent)
-        self.fields = fields
         self.end = JObjectEnd(indent, has_trailing_comma)
 
     def __iter__(self):

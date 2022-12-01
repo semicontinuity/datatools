@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from datatools.jv.model.JArray import JArray
 from datatools.jv.model.JBoolean import JBoolean
@@ -18,7 +18,13 @@ from datatools.jv.model.JString import JString
 INDENT = 2
 
 
-def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectField:
+def build_object_field_model(parent: JElement, k: str, v, indent, has_trailing_comma) -> JObjectField:
+    model = build_object_field_model_raw(k, v, indent, has_trailing_comma)
+    model.parent = parent
+    return model
+
+
+def build_object_field_model_raw(k: str, v, indent, has_trailing_comma) -> JObjectField:
     if v is None:
         return JFieldNull(k, indent, has_trailing_comma)
     elif type(v) is str:
@@ -28,12 +34,22 @@ def build_object_field_model(k: str, v, indent, has_trailing_comma) -> JObjectFi
     elif type(v) is bool:
         return JFieldBoolean(v, k, indent, has_trailing_comma)
     elif type(v) is dict:
-        return JFieldObject(k, build_object_fields_models(v, indent + INDENT), indent, has_trailing_comma)
+        model = JFieldObject(k, indent, has_trailing_comma)
+        model.fields = build_object_fields_models(model, v, indent + INDENT)
+        return model
     elif type(v) is list:
-        return JFieldArray(k, build_array_items_models(v, indent + INDENT), indent, has_trailing_comma)
+        array = JFieldArray(k, indent, has_trailing_comma)
+        array.items = build_array_items_models(array, v, indent + INDENT)
+        return array
 
 
-def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
+def build_model(parent: Optional[JElement], v, indent=0, has_trailing_comma=False) -> JElement:
+    model = build_model_raw(v, indent, has_trailing_comma)
+    model.parent = parent
+    return model
+
+
+def build_model_raw(v, indent=0, has_trailing_comma=False) -> JElement:
     if v is None:
         return JNull(indent, has_trailing_comma)
     elif type(v) is str:
@@ -43,26 +59,30 @@ def build_model(v, indent=0, has_trailing_comma=False) -> JElement:
     elif type(v) is bool:
         return JBoolean(v, indent, has_trailing_comma)
     elif type(v) is dict:
-        return JObject(build_object_fields_models(v, indent + INDENT), indent, has_trailing_comma)
+        object = JObject(indent, has_trailing_comma)
+        object.fields = build_object_fields_models(object, v, indent + INDENT)
+        return object
     elif type(v) is list:
-        return JArray(build_array_items_models(v, indent + INDENT), indent, has_trailing_comma)
+        array = JArray(indent, has_trailing_comma)
+        array.items = build_array_items_models(array, v, indent + INDENT)
+        return array
 
 
-def build_object_fields_models(j, indent) -> List[JObjectField]:
+def build_object_fields_models(parent: JElement, j, indent: int) -> List[JObjectField]:
     fields = []
     i = 0
     size = len(j)
     for k, v in j.items():
-        fields.append(build_object_field_model(k, v, indent, i < size - 1))
+        fields.append(build_object_field_model(parent, k, v, indent, i < size - 1))
         i += 1
     return fields
 
 
-def build_array_items_models(j, indent) -> List[JElement]:
+def build_array_items_models(parent: JElement, j, indent: int) -> List[JElement]:
     items = []
     i = 0
     size = len(j)
     for v in j:
-        items.append(build_model(v, indent, i < size - 1))
+        items.append(build_model(parent, v, indent, i < size - 1))
         i += 1
     return items

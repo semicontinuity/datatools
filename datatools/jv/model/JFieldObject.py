@@ -10,10 +10,9 @@ class JFieldObject(JObjectField):
     fields: List[JObjectField]
     end: JFieldObjectEnd
 
-    def __init__(self, name: str, fields: List[JObjectField], indent=0, has_trailing_comma=False) -> None:
+    def __init__(self, name: str, indent=0, has_trailing_comma=False) -> None:
         super().__init__(name, indent, has_trailing_comma)
         self.start = JFieldObjectStart(name, indent)
-        self.fields = fields
         self.end = JFieldObjectEnd(indent, has_trailing_comma)
 
     def __iter__(self):

@@ -11,10 +11,9 @@ class JArray(JElement):
     items: List[JElement]
     end: JArrayEnd
 
-    def __init__(self, items: List[JElement], indent=0, has_trailing_comma=False) -> None:
+    def __init__(self, indent=0, has_trailing_comma=False) -> None:
         super().__init__(indent, has_trailing_comma)
         self.start = JArrayStart(indent)
-        self.items = items
         self.end = JArrayEnd(indent, has_trailing_comma)
 
     def __iter__(self):

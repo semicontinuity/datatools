@@ -7,6 +7,7 @@ from datatools.jv.highlighting.rich_text import Style
 class JElement:
     indent: int
     has_trailing_comma: bool
+    parent: 'JElement'
 
     def __init__(self, indent=0, has_trailing_comma=False) -> None:
         self.indent = indent
