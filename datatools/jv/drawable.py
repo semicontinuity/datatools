@@ -57,3 +57,6 @@ class Drawable:
         parent = self.parent_of(line)
         parent.collapsed = True
         return parent.line
+
+    def expand(self, line):
+        self.elements[line].collapsed = False

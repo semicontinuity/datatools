@@ -16,7 +16,6 @@ class WGrid(WGridBase):
         self.drawable = drawable
 
     def layout(self):
-        self.drawable.layout()
         self.total_lines = self.drawable.height
 
     def show_line(self, line_content, line):
@@ -109,8 +108,14 @@ class WGrid(WGridBase):
 
         elif key == KEY_LEFT:
             line = self.drawable.collapse(self.cur_line)
+            self.drawable.layout()
             self.layout()
             if line < self.top_line:
                 self.top_line = line
             self.cur_line = line
+            self.redraw_content()
+        elif key == KEY_RIGHT:
+            self.drawable.expand(self.cur_line)
+            self.drawable.layout()
+            self.layout()
             self.redraw_content()
