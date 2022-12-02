@@ -15,6 +15,9 @@ class WGrid(WGridBase):
         self.drawable = drawable
         self.x_shift = 0
 
+    def init(self):
+        self.total_lines = self.drawable.height
+
     def show_line(self, line_content, line):
         raise AssertionError
 
