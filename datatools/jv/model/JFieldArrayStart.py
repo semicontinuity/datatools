@@ -14,4 +14,4 @@ class JFieldArrayStart(JElement):
         self.name = name
 
     def spans(self) -> List[Tuple[AnyStr, Style]]:
-        return JObjectField.spans_for_field_name(self.indent, self.name) + [('[', Highlighting.CURRENT.for_curly_braces())]
+        return JObjectField.spans_for_field_name(self.indent, self.name) + [('[', Highlighting.CURRENT.for_square_brackets())]
