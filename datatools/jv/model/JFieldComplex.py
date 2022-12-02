@@ -1,5 +1,6 @@
 from typing import List
 
+from datatools.jv.model.JComplexElement import JComplexElement
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JObjectField import JObjectField
 
@@ -31,6 +32,15 @@ class JFieldComplex(JObjectField):
             return line
 
     def optimize_layout(self, height):
-        if self.size > height:
-            for element in self.elements:
-                element.collapsed = True
+        # Size of primitive or collapsed element is 1
+        # The excessive size is 'budget' to fill with expanded elements
+        budget = height - 2 - len(self.elements)
+        sorted_elements = sorted(self.elements, key=lambda e: e.size)
+        for e in sorted_elements:
+            # raise Exception(e)
+            if e.size == 1:
+                continue
+            e.optimize_layout(height)
+            if e.size - 1 > budget:  # 1 is already accounted for in len(self.elements)
+                e.collapsed = True
+            budget -= (e.size - 1)
