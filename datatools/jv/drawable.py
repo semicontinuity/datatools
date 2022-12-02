@@ -14,7 +14,7 @@ class Drawable:
     def __init__(self, v: JElement) -> None:
         self.v = v
 
-    def layout(self) -> None:
+    def layout(self):
         width = 0
         height = 0
         elements = []
@@ -25,10 +25,12 @@ class Drawable:
             height += 1
 
         self.v.layout(0)
-
         self.width = width
         self.height = height
         self.elements = elements
+
+    def optimize_layout(self, height):
+        self.v.optimize_layout(height)
 
     def row_to_string(self, y, x_from, x_to):
         if y < len(self.elements):

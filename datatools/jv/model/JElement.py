@@ -35,3 +35,5 @@ class JElement:
 
     def rich_text_comma(self) -> List[Tuple[AnyStr, Style]]:
         return [(',', Highlighting.CURRENT.for_comma())] if self.has_trailing_comma else []
+
+    def optimize_layout(self, height): pass

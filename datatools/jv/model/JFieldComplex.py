@@ -30,3 +30,7 @@ class JFieldComplex(JObjectField):
             self.size = line - self.line
             return line
 
+    def optimize_layout(self, height):
+        if self.size > height:
+            for element in self.elements:
+                element.collapsed = True

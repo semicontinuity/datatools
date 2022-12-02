@@ -54,6 +54,8 @@ def make_json_tree_applet(j, state=None, popup: bool = False):
     grid_context = GridContext(0, 0, screen_width, screen_height)
     drawable = Drawable(build_model(None, j))
     drawable.layout()
+    drawable.optimize_layout(screen_height)
+    drawable.layout()
     return do_make_json_tree_applet(grid_context, j, popup, drawable, state)
 
 
@@ -64,8 +66,6 @@ def do_make_json_tree_applet(grid_context, j, popup, drawable: Drawable, state):
         DataBundle(j, Metadata(), Presentation(), state),
         popup
     )
-
-
 
 
 def main():
