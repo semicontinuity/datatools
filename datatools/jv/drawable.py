@@ -52,13 +52,13 @@ class Drawable:
             else:
                 element = element.parent
 
-    def parent_line_of(self, line) -> int:
-        return self.parent_of(line).line
-
     def collapse(self, line) -> int:
-        parent = self.parent_of(line)
-        parent.collapsed = True
-        return parent.line
+        parent = self.elements[line].parent
+        if parent is not None:
+            parent.collapsed = True
+            return parent.line
+        else:
+            return line
 
     def expand(self, line):
         self.elements[line].collapsed = False
