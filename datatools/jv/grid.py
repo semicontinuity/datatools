@@ -108,7 +108,8 @@ class WGrid(WGridBase):
                 self.redraw_content()
 
         elif key == KEY_LEFT:
-            line = self.drawable.parent_line_of(self.cur_line)
+            line = self.drawable.collapse(self.cur_line)
+            self.layout()
             if line < self.top_line:
                 self.top_line = line
             self.cur_line = line
