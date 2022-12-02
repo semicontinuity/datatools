@@ -36,13 +36,13 @@ def build_object_field_model_raw(k: str, v, indent, has_trailing_comma) -> JObje
     elif type(v) is dict:
         obj = JFieldObject(k, indent, has_trailing_comma)
         obj.start.parent = obj
-        obj.fields = build_object_fields_models(obj, v, indent + INDENT)
+        obj.elements = build_object_fields_models(obj, v, indent + INDENT)
         obj.end.parent = obj
         return obj
     elif type(v) is list:
         array = JFieldArray(k, indent, has_trailing_comma)
         array.start.parent = array
-        array.items = build_array_items_models(array, v, indent + INDENT)
+        array.elements = build_array_items_models(array, v, indent + INDENT)
         array.end.parent = array
         return array
 
@@ -65,13 +65,13 @@ def build_model_raw(v, indent=0, has_trailing_comma=False) -> JElement:
     elif type(v) is dict:
         obj = JObject(indent, has_trailing_comma)
         obj.start.parent = obj
-        obj.fields = build_object_fields_models(obj, v, indent + INDENT)
+        obj.elements = build_object_fields_models(obj, v, indent + INDENT)
         obj.end.parent = obj
         return obj
     elif type(v) is list:
         array = JArray(indent, has_trailing_comma)
         array.start.parent = array
-        array.items = build_array_items_models(array, v, indent + INDENT)
+        array.elements = build_array_items_models(array, v, indent + INDENT)
         array.end.parent = array
         return array
 

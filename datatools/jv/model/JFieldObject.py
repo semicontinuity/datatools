@@ -9,7 +9,7 @@ from datatools.jv.model.JObjectField import JObjectField
 
 class JFieldObject(JObjectField):
     start: JFieldObjectStart
-    fields: List[JObjectField]
+    elements: List[JObjectField]
     end: JFieldObjectEnd
 
     def __init__(self, name: str, indent=0, has_trailing_comma=False) -> None:
@@ -22,7 +22,7 @@ class JFieldObject(JObjectField):
             yield self
         else:
             yield self.start
-            for field in self.fields:
+            for field in self.elements:
                 yield from field
             yield self.end
 
@@ -36,6 +36,6 @@ class JFieldObject(JObjectField):
         else:
             self.line = line
             line = self.start.layout(line)
-            for item in self.fields:
+            for item in self.elements:
                 line = item.layout(line)
             return self.end.layout(line)
