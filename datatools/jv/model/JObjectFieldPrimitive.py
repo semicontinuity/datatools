@@ -13,4 +13,4 @@ class JObjectFieldPrimitive(JObjectField):
         yield self
 
     def spans(self) -> List[Tuple[AnyStr, Style]]:
-        return JObjectField.spans_for_field_name(self.indent, self.name) + [self.rich_text()] + self.rich_text_comma()
+        return JObjectField.spans_for_field_name(self.indent, self.name) + [self.rich_text()] + self.spans_for_comma()

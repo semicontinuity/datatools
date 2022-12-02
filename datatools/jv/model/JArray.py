@@ -11,7 +11,7 @@ class JArray(JComplexElement):
     """ Top-level array """
 
     def __init__(self, indent=0, has_trailing_comma=False) -> None:
-        super().__init__(indent, has_trailing_comma)
+        super().__init__(None, indent, has_trailing_comma)
         self.start = JArrayStart(indent)
         self.end = JArrayEnd(indent, has_trailing_comma)
 

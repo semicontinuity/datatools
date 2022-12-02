@@ -1,6 +1,5 @@
 from typing import List
 
-from datatools.jv.model.JComplexElement import JComplexElement
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JObjectField import JObjectField
 

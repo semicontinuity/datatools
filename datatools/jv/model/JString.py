@@ -8,8 +8,8 @@ from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 class JString(JPrimitiveElement):
     value: str
 
-    def __init__(self, value, indent=0, has_trailing_comma=False) -> None:
-        super().__init__(indent, has_trailing_comma)
+    def __init__(self, name, value, indent=0, has_trailing_comma=False) -> None:
+        super().__init__(name, indent, has_trailing_comma)
         self.value = value
 
     def rich_text(self) -> Tuple[AnyStr, Style]:

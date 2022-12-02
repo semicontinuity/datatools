@@ -1,10 +1,12 @@
-from typing import AnyStr, Tuple, List
+from typing import AnyStr, Tuple, List, Optional
 
 from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.jv.highlighting.rich_text import Style
 
 
 class JElement:
+    name: Optional[str]
+
     indent: int
     has_trailing_comma: bool
 
@@ -13,7 +15,8 @@ class JElement:
     size: int
     collapsed: bool
 
-    def __init__(self, indent=0, has_trailing_comma=False) -> None:
+    def __init__(self, name: Optional[str] = None, indent=0, has_trailing_comma=False) -> None:
+        self.name = name
         self.indent = indent
         self.has_trailing_comma = has_trailing_comma
         self.collapsed = False
@@ -31,9 +34,23 @@ class JElement:
         return sum((len(span[0]) for span in self.spans()))
 
     def spans(self) -> List[Tuple[AnyStr, Style]]:
-        return [(' ' * self.indent, Style()), self.rich_text()] + self.rich_text_comma()
+        return [(' ' * self.indent, Style())] + self.spans_for_field_label() + [self.rich_text()] + self.spans_for_comma()
 
-    def rich_text_comma(self) -> List[Tuple[AnyStr, Style]]:
+    def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
+        return [
+            (f'"{self.name}"', Highlighting.CURRENT.for_field_name()), (': ', Highlighting.CURRENT.for_colon())
+        ] if self.name is not None else []
+
+    def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
         return [(',', Highlighting.CURRENT.for_comma())] if self.has_trailing_comma else []
 
     def optimize_layout(self, height): pass
+
+    @staticmethod
+    def spans_for_field_name(indent: int, name: str) -> List[Tuple[AnyStr, Style]]:
+        """ Renders beginning of the string """
+        return [
+            (' ' * indent, Style()),
+            (f'"{name}"', Highlighting.CURRENT.for_field_name()),
+            (': ', Highlighting.CURRENT.for_colon())
+        ]

@@ -55,13 +55,13 @@ def build_model(parent: Optional[JElement], v, indent=0, has_trailing_comma=Fals
 
 def build_model_raw(v, indent=0, has_trailing_comma=False) -> JElement:
     if v is None:
-        return JNull(indent, has_trailing_comma)
+        return JNull(None, indent, has_trailing_comma)
     elif type(v) is str:
-        return JString(v, indent, has_trailing_comma)
+        return JString(None, v, indent, has_trailing_comma)
     elif type(v) is int or type(v) is float:
-        return JNumber(v, indent, has_trailing_comma)
+        return JNumber(None, v, indent, has_trailing_comma)
     elif type(v) is bool:
-        return JBoolean(v, indent, has_trailing_comma)
+        return JBoolean(None, v, indent, has_trailing_comma)
     elif type(v) is dict:
         obj = JObject(indent, has_trailing_comma)
         obj.start.parent = obj

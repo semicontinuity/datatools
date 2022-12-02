@@ -8,7 +8,7 @@ from datatools.jv.model import JElement
 class JObjectStart(JElement):
 
     def __init__(self, indent=0) -> None:
-        super().__init__(indent)
+        super().__init__(None, indent)
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
         return '{', Highlighting.CURRENT.for_curly_braces()

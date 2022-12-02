@@ -10,7 +10,7 @@ class JFieldArrayStart(JElement):
     name: str
 
     def __init__(self, name: str, indent=0) -> None:
-        super().__init__(indent)
+        super().__init__(None, indent)
         self.name = name
 
     def spans(self) -> List[Tuple[AnyStr, Style]]:
