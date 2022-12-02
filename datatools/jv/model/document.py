@@ -4,7 +4,7 @@ from datatools.jv.highlighting.rich_text import render_substr
 from datatools.jv.model import JElement
 
 
-class Drawable:
+class Document:
     v: JElement
 
     width: int

@@ -1,7 +1,7 @@
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP
 
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.jv.drawable import Drawable
+from datatools.jv.model.document import Document
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
     KEY_CTRL_RIGHT
@@ -10,7 +10,7 @@ HORIZONTAL_PAGE_SIZE = 8
 
 
 class WGrid(WGridBase):
-    def __init__(self, x: int, y: int, width, height, drawable: Drawable, interactive=True):
+    def __init__(self, x: int, y: int, width, height, drawable: Document, interactive=True):
         super().__init__(x, y, width, height, 0, 0, interactive)
         self.x_shift = 0
         self.drawable = drawable
