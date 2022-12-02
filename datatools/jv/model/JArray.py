@@ -12,13 +12,11 @@ class JArray(JElement):
     start: JArrayStart
     items: List[JElement]
     end: JArrayEnd
-    collapsed: bool
 
     def __init__(self, indent=0, has_trailing_comma=False) -> None:
         super().__init__(indent, has_trailing_comma)
         self.start = JArrayStart(indent)
         self.end = JArrayEnd(indent, has_trailing_comma)
-        self.collapsed = False
 
     def __iter__(self):
         if self.collapsed:

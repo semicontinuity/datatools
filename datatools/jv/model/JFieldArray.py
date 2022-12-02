@@ -12,13 +12,11 @@ class JFieldArray(JObjectField):
     start: JFieldArrayStart
     items: List[JElement]
     end: JFieldArrayEnd
-    collapsed: bool
 
     def __init__(self, name: str, indent=0, has_trailing_comma=False) -> None:
         super().__init__(name, indent, has_trailing_comma)
         self.start = JFieldArrayStart(name, indent)
         self.end = JFieldArrayEnd(indent, has_trailing_comma)
-        self.collapsed = False
 
     def __iter__(self):
         if self.collapsed:

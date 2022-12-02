@@ -13,13 +13,11 @@ class JObject(JElement):
     start: JObjectStart
     fields: List[JObjectField]
     end: JObjectEnd
-    collapsed: bool
 
     def __init__(self, indent=0, has_trailing_comma=False) -> None:
         super().__init__(indent, has_trailing_comma)
         self.start = JObjectStart(indent)
         self.end = JObjectEnd(indent, has_trailing_comma)
-        self.collapsed = False
 
     def __iter__(self):
         if self.collapsed:

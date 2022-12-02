@@ -11,13 +11,11 @@ class JFieldObject(JObjectField):
     start: JFieldObjectStart
     fields: List[JObjectField]
     end: JFieldObjectEnd
-    collapsed: bool
 
     def __init__(self, name: str, indent=0, has_trailing_comma=False) -> None:
         super().__init__(name, indent, has_trailing_comma)
         self.start = JFieldObjectStart(name, indent)
         self.end = JFieldObjectEnd(indent, has_trailing_comma)
-        self.collapsed = False
 
     def __iter__(self):
         if self.collapsed:
