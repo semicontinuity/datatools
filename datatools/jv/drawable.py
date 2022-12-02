@@ -35,12 +35,20 @@ class Drawable:
         if y < len(self.elements):
             return self.elements[y].indent
 
-    def parent_line_of(self, line) -> int:
+    def parent_of(self, line) -> JElement:
         element = self.elements[line]
         while True:
             if element.parent is None:
-                return 0
+                return element
             elif element.parent.line != element.line:
-                return element.parent.line
+                return element.parent
             else:
                 element = element.parent
+
+    def parent_line_of(self, line) -> int:
+        return self.parent_of(line).line
+
+    def collapse(self, line) -> int:
+        parent = self.parent_of(line)
+        parent.collapsed = True
+        return parent.line
