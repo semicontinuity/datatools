@@ -45,12 +45,3 @@ class JElement:
         return [(',', Highlighting.CURRENT.for_comma())] if self.has_trailing_comma else []
 
     def optimize_layout(self, height): pass
-
-    @staticmethod
-    def spans_for_field_name(indent: int, name: str) -> List[Tuple[AnyStr, Style]]:
-        """ Renders beginning of the string """
-        return [
-            (' ' * indent, Style()),
-            (f'"{name}"', Highlighting.CURRENT.for_field_name()),
-            (': ', Highlighting.CURRENT.for_colon())
-        ]
