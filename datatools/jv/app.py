@@ -4,8 +4,6 @@ import json
 import sys
 from dataclasses import dataclass
 
-from datatools.json.json2ansi_toolkit import Style
-from datatools.json2ansi.default_style import default_style
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.metadata import Metadata
@@ -29,20 +27,19 @@ class GridContext:
     interactive: bool = True
 
 
-def auto_position(screen_buffer, state):
+def auto_position(drawable, state):
     screen_width, screen_height = screen_size_or_default()
     if "anchor" in state:
         anchor_y = state["anchor"]["y"]
         if anchor_y > screen_height / 2:
-            y = anchor_y - screen_buffer.height
+            y = anchor_y - drawable.height
         else:
             y = anchor_y + 1
-        x = max(0, (screen_width - screen_buffer.width) // 2)
+        x = max(0, (screen_width - drawable.width) // 2)
     else:
         y = 0
         x = 0
-    grid_context = GridContext(x, y, screen_width, screen_height)
-    return grid_context
+    return GridContext(x, y, screen_width, screen_height)
 
 
 def grid(drawable: Drawable, grid_context: GridContext) -> WGrid:
@@ -51,14 +48,16 @@ def grid(drawable: Drawable, grid_context: GridContext) -> WGrid:
     return g
 
 
-def make_json2ansi_applet(j, style: Style = default_style(), state=None, popup: bool = False):
+def make_json_tree_applet(j, state=None, popup: bool = False):
     state = {} if state is None else state
-    drawable = paint_data(j, style)
-    grid_context = auto_position(drawable, state)
-    return do_make_json2ansi_applet(grid_context, j, popup, drawable, state)
+    screen_width, screen_height = screen_size_or_default()
+    grid_context = GridContext(0, 0, screen_width, screen_height)
+    drawable = Drawable(build_model(None, j))
+    drawable.layout()
+    return do_make_json_tree_applet(grid_context, j, popup, drawable, state)
 
 
-def do_make_json2ansi_applet(grid_context, j, popup, drawable: Drawable, state):
+def do_make_json_tree_applet(grid_context, j, popup, drawable: Drawable, state):
     return Applet(
         'json2ansi',
         grid(drawable, grid_context),
@@ -67,10 +66,6 @@ def do_make_json2ansi_applet(grid_context, j, popup, drawable: Drawable, state):
     )
 
 
-def paint_data(j, style) -> Drawable:
-    drawable = Drawable(build_model(None, j))
-    drawable.layout()
-    return drawable
 
 
 def main():
@@ -89,7 +84,7 @@ def main():
 
 
 def do_main():
-    return run(lambda: make_json2ansi_applet(data()).run())
+    return run(lambda: make_json_tree_applet(data()).run())
 
 
 def data():

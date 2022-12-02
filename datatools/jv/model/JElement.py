@@ -10,6 +10,7 @@ class JElement:
 
     parent: 'JElement'
     line: int
+    size: int
     collapsed: bool
 
     def __init__(self, indent=0, has_trailing_comma=False) -> None:
@@ -21,6 +22,7 @@ class JElement:
 
     def layout(self, line: int) -> int:
         self.line = line
+        self.size = 1
         return line + 1
 
     def rich_text(self) -> Tuple[AnyStr, Style]: pass

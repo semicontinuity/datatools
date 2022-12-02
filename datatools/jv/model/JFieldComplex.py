@@ -26,5 +26,7 @@ class JFieldComplex(JObjectField):
             line = self.start.layout(line)
             for item in self.elements:
                 line = item.layout(line)
-            return self.end.layout(line)
+            line = self.end.layout(line)
+            self.size = line - self.line
+            return line
 
