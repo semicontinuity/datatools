@@ -4,11 +4,7 @@ from datatools.jv.model.JArray import JArray
 from datatools.jv.model.JBoolean import JBoolean
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JFieldArray import JFieldArray
-from datatools.jv.model.JFieldBoolean import JFieldBoolean
-from datatools.jv.model.JFieldNull import JFieldNull
-from datatools.jv.model.JFieldNumber import JFieldNumber
 from datatools.jv.model.JFieldObject import JFieldObject
-from datatools.jv.model.JFieldString import JFieldString
 from datatools.jv.model.JNull import JNull
 from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.JObject import JObject
@@ -18,21 +14,21 @@ from datatools.jv.model.JString import JString
 INDENT = 2
 
 
-def build_object_field_model(parent: JElement, k: str, v, indent, has_trailing_comma) -> JObjectField:
+def build_object_field_model(parent: JElement, k: str, v, indent, has_trailing_comma) -> JElement:
     model = build_object_field_model_raw(k, v, indent, has_trailing_comma)
     model.parent = parent
     return model
 
 
-def build_object_field_model_raw(k: str, v, indent, has_trailing_comma) -> JObjectField:
+def build_object_field_model_raw(k: str, v, indent, has_trailing_comma) -> JElement:
     if v is None:
-        return JFieldNull(k, indent, has_trailing_comma)
+        return JNull(k, indent, has_trailing_comma)
     elif type(v) is str:
-        return JFieldString(v, k, indent, has_trailing_comma)
+        return JString(k, v, indent, has_trailing_comma)
     elif type(v) is int or type(v) is float:
-        return JFieldNumber(v, k, indent, has_trailing_comma)
+        return JNumber(k, v, indent, has_trailing_comma)
     elif type(v) is bool:
-        return JFieldBoolean(v, k, indent, has_trailing_comma)
+        return JBoolean(k, v, indent, has_trailing_comma)
     elif type(v) is dict:
         obj = JFieldObject(k, indent, has_trailing_comma)
         obj.start.parent = obj
