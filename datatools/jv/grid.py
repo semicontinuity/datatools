@@ -12,10 +12,11 @@ HORIZONTAL_PAGE_SIZE = 8
 class WGrid(WGridBase):
     def __init__(self, x: int, y: int, width, height, drawable: Drawable, interactive=True):
         super().__init__(x, y, width, height, 0, 0, interactive)
-        self.drawable = drawable
         self.x_shift = 0
+        self.drawable = drawable
 
-    def init(self):
+    def layout(self):
+        self.drawable.layout()
         self.total_lines = self.drawable.height
 
     def show_line(self, line_content, line):

@@ -5,21 +5,26 @@ from datatools.jv.model import JElement
 
 
 class Drawable:
+    v: JElement
+
     width: int
     height: int
     elements: List[JElement]
 
     def __init__(self, v: JElement) -> None:
+        self.v = v
+
+    def layout(self) -> None:
         width = 0
         height = 0
         elements = []
 
-        for element in v:
+        for element in self.v:
             width = max(width, element.rich_text_length())
             elements.append(element)
             height += 1
 
-        v.layout(0)
+        self.v.layout(0)
 
         self.width = width
         self.height = height
