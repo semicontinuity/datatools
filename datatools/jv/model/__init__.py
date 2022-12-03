@@ -20,7 +20,7 @@ def build_model(parent: Optional[JElement], k: Optional[str], v, indent=0, has_t
 
 def build_model_raw(k: Optional[str], v, indent, has_trailing_comma) -> JValueElement:
     if v is None:
-        return JNull(k, indent, has_trailing_comma)
+        return JNull(k, None, indent, has_trailing_comma)
     elif type(v) is str:
         return JString(k, v, indent, has_trailing_comma)
     elif type(v) is int or type(v) is float:

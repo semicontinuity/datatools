@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Optional
+from typing import TypeVar, Generic, Optional, List
 
 from datatools.jv.model.JElement import JElement
 
@@ -13,3 +13,5 @@ class JValueElement(Generic[V], JElement):
         super().__init__(name, indent, has_trailing_comma)
         self.value = value
         self.packed_size = 1
+
+    def sub_elements(self) -> List['JValueElement']: pass

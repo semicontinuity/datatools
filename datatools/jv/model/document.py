@@ -30,7 +30,7 @@ class Document:
         self.elements = elements
 
     def optimize_layout(self, height):
-        self.v.optimize_layout(height)
+        self.v.optimize_layout(height * 3 / 2)
 
     def row_to_string(self, y, x_from, x_to):
         if y < len(self.elements):
