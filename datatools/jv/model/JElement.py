@@ -41,7 +41,7 @@ class JElement:
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [
-            (f'"{self.key}"', (Style(0, hash_to_rgb(hash_code(self.key))))),
+            (f'"{self.key}"', Highlighting.CURRENT.for_field_label(self.key)),
             (': ', Highlighting.CURRENT.for_colon())
         ] if self.key is not None else []
 

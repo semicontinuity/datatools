@@ -7,17 +7,18 @@ from datatools.jv.model.JNull import JNull
 from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
+from datatools.jv.model.JValueElement import JValueElement
 
 INDENT = 2
 
 
-def build_model(parent: Optional[JElement], k: Optional[str], v, indent=0, has_trailing_comma=False) -> JElement:
+def build_model(parent: Optional[JElement], k: Optional[str], v, indent=0, has_trailing_comma=False) -> JValueElement:
     model = build_model_raw(k, v, indent, has_trailing_comma)
     model.parent = parent
     return model
 
 
-def build_model_raw(k: Optional[str], v, indent, has_trailing_comma) -> JElement:
+def build_model_raw(k: Optional[str], v, indent, has_trailing_comma) -> JValueElement:
     if v is None:
         return JNull(k, indent, has_trailing_comma)
     elif type(v) is str:
@@ -28,15 +29,15 @@ def build_model_raw(k: Optional[str], v, indent, has_trailing_comma) -> JElement
         return JBoolean(k, v, indent, has_trailing_comma)
     elif type(v) is dict:
         obj = JObject(k, indent, has_trailing_comma)
-        obj.elements = build_object_fields_models(obj, v, indent + INDENT)
+        obj.set_elements(build_object_fields_models(obj, v, indent + INDENT))
         return obj
     elif type(v) is list:
         array = JArray(k, indent, has_trailing_comma)
-        array.elements = build_array_items_models(array, v, indent + INDENT)
+        array.set_elements(build_array_items_models(array, v, indent + INDENT))
         return array
 
 
-def build_object_fields_models(parent: JElement, j, indent: int) -> List[JElement]:
+def build_object_fields_models(parent: JValueElement, j, indent: int) -> List[JValueElement]:
     fields = []
     i = 0
     size = len(j)
@@ -46,7 +47,7 @@ def build_object_fields_models(parent: JElement, j, indent: int) -> List[JElemen
     return fields
 
 
-def build_array_items_models(parent: JElement, j, indent: int) -> List[JElement]:
+def build_array_items_models(parent: JValueElement, j, indent: int) -> List[JValueElement]:
     items = []
     i = 0
     size = len(j)

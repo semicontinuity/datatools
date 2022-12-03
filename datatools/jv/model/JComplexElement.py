@@ -9,8 +9,12 @@ V = TypeVar('V')
 
 class JComplexElement(Generic[V], JValueElement[V]):
     start: JElement
-    elements: List[JElement]
+    elements: List[JValueElement]
     end: JElement
+
+    def set_elements(self, elements: List[JValueElement]):
+        self.elements = elements
+        self.packed_size = 1 + len(elements) + 1
 
     def __iter__(self):
         if self.collapsed:
