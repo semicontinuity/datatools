@@ -38,11 +38,14 @@ def build_model_raw(k: Optional[str], v, indent, has_trailing_comma) -> JValueEl
 
 
 def build_object_fields_models(parent: JValueElement, j, indent: int) -> List[JValueElement]:
+    max_field_name_length = 0 if len(j) is 0 else max(len(k) for k in j)
     fields = []
     i = 0
     size = len(j)
     for k, v in j.items():
-        fields.append(build_model(parent, k, v, indent, i < size - 1))
+        model = build_model(parent, k, v, indent, i < size - 1)
+        model.padding = max_field_name_length - len(k) + 1
+        fields.append(model)
         i += 1
     return fields
 

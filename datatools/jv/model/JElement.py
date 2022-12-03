@@ -1,16 +1,14 @@
 from typing import AnyStr, Tuple, List, Optional
 
-from datatools.json.coloring import hash_to_rgb_dark
 from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.jv.highlighting.rich_text import Style
-from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
-from datatools.tui.coloring import hash_to_rgb, hash_code
 
 
 class JElement:
-    key: Optional[str]
 
     indent: int
+    key: Optional[str]
+    padding: int
     has_trailing_comma: bool
 
     parent: 'JElement'
@@ -23,6 +21,7 @@ class JElement:
         self.indent = indent
         self.has_trailing_comma = has_trailing_comma
         self.collapsed = False
+        self.padding = 0
 
     def __iter__(self): pass
 
@@ -41,8 +40,8 @@ class JElement:
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [
-            (f'"{self.key}"', Highlighting.CURRENT.for_field_label(self.key)),
-            (': ', Highlighting.CURRENT.for_colon())
+            (f'"{self.key}"' + ' ' * self.padding, Highlighting.CURRENT.for_field_label(self.key)),
+            (': ', Highlighting.CURRENT.for_colon()),
         ] if self.key is not None else []
 
     def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
