@@ -1,9 +1,13 @@
 from typing import List
+from typing import TypeVar, Generic
 
 from datatools.jv.model.JElement import JElement
+from datatools.jv.model.JValueElement import JValueElement
+
+V = TypeVar('V')
 
 
-class JComplexElement(JElement):
+class JComplexElement(Generic[V], JValueElement[V]):
     start: JElement
     elements: List[JElement]
     end: JElement

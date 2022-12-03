@@ -10,9 +10,11 @@ from datatools.jv.model.JComplexElement import JComplexElement
 class JArray(JComplexElement):
 
     def __init__(self, name: Optional[str], indent=0, has_trailing_comma=False) -> None:
-        super().__init__(name, indent, has_trailing_comma)
+        super().__init__(name, None, indent, has_trailing_comma)
         self.start = JArrayStart(name, indent)
+        self.start.parent = self
         self.end = JArrayEnd(indent, has_trailing_comma)
+        self.end.parent = self
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
         return '[…]', Highlighting.CURRENT.for_square_brackets()

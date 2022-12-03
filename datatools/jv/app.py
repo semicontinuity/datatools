@@ -52,7 +52,7 @@ def make_json_tree_applet(j, state=None, popup: bool = False):
     state = {} if state is None else state
     screen_width, screen_height = screen_size_or_default()
     grid_context = GridContext(0, 0, screen_width, screen_height)
-    drawable = Document(build_model(None, j))
+    drawable = Document(build_model(None, None, j))
     drawable.layout()
     drawable.optimize_layout(screen_height)
     drawable.layout()
