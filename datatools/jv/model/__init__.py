@@ -15,6 +15,7 @@ INDENT = 2
 def build_model(parent: Optional[JElement], k: Optional[str], v, indent=0, has_trailing_comma=False) -> JValueElement:
     model = build_model_raw(k, v, indent, has_trailing_comma)
     model.parent = parent
+    model.collapsed = True
     return model
 
 

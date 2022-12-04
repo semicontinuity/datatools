@@ -16,7 +16,7 @@ class JComplexElement(Generic[V], JValueElement[V]):
         self.elements = elements
         self.packed_size = 1 + len(elements) + 1
 
-    def sub_elements(self) -> List['JValueElement']:
+    def sub_elements(self) -> List[JValueElement]:
         return self.elements
 
     def __iter__(self):
@@ -41,39 +41,29 @@ class JComplexElement(Generic[V], JValueElement[V]):
             return line
 
     def optimize_layout(self, height):
-        import heapq
+        # Initially, assume, that this element will be populated with only collapsed sub-elements
+        budget = height - self.packed_size
+        candidates = list(self.elements)
+        next_candidates = []
 
-        # can add 'depth' as first priority component
-        q = [((element.packed_size, 0, i), element) for i, element in enumerate(self.elements)]
-        heapq.heapify(q)
+        while True:
+            for e in sorted(candidates, key=lambda e: e.packed_size):
+                # Let's see if packed e fits into the budget (return 1 for collapsed element height back to the budget)
+                if e.packed_size < budget + 1:
+                    e.collapsed = False
+                    budget -= (e.packed_size - 1)
 
-        i = len(q)
-        budget = height - 2
+                    for ee in e.sub_elements():
+                        ee.collapsed = True
+                        next_candidates.append(ee)
+                else:
+                    e.collapsed = True
 
-        while len(q) > 0:
-            element_tuple = heapq.heappop(q)
-            element = element_tuple[1]
-            if element.packed_size > budget:
-                element.collapsed = True
-                budget -= 1
-            else:
-                element.collapsed = False
-                budget -= element.packed_size
-                for sub_element in element.sub_elements():
-                    sub_element.collapsed = True
-                    heapq.heappush(q, ((sub_element.packed_size, sub_element.size, i), sub_element))
-                    i += 1
+            if budget <= 0 or len(next_candidates) == 0:
+                break
+            candidates = next_candidates
+            next_candidates.clear()
 
-    # def optimize_layout(self, height):
-    #     # Size of primitive or collapsed element is 1
-    #     # The excessive size is 'budget' to fill with expanded elements
-    #     budget = height - 2 - len(self.elements)
-    #     sorted_elements = sorted(self.elements, key=lambda e: e.size)
-    #     for e in sorted_elements:
-    #         if e.size == 1:
-    #             continue
-    #
-    #         e.optimize_layout(height)
-    #         if e.size - 1 > budget:  # 1 is already accounted for in len(self.elements)
-    #             e.collapsed = True
-    #         budget -= (e.size - 1)
+        for e in next_candidates:
+            if e.size > 1:
+                e.optimize_layout(height)
