@@ -49,6 +49,9 @@ class JComplexElement(Generic[V], JValueElement[V]):
         while True:
             for e in sorted(candidates, key=lambda e: e.packed_size):
                 # Let's see if packed e fits into the budget (return 1 for collapsed element height back to the budget)
+                if budget <= 0:
+                    break
+
                 if e.packed_size < budget + 1:
                     e.collapsed = False
                     budget -= (e.packed_size - 1)
@@ -62,7 +65,7 @@ class JComplexElement(Generic[V], JValueElement[V]):
             if budget <= 0 or len(next_candidates) == 0:
                 break
             candidates = next_candidates
-            next_candidates.clear()
+            next_candidates = []
 
         for e in next_candidates:
             if e.size > 1:
