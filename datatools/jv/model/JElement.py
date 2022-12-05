@@ -48,3 +48,6 @@ class JElement:
         return [(',', Highlighting.CURRENT.for_comma())] if self.has_trailing_comma else []
 
     def optimize_layout(self, height): pass
+
+    def expand_recursive(self):
+        self.collapsed = False

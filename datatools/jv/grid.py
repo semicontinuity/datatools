@@ -1,4 +1,4 @@
-from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB
 
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jv.model.document import Document
@@ -13,10 +13,10 @@ class WGrid(WGridBase):
     def __init__(self, x: int, y: int, width, height, drawable: Document, interactive=True):
         super().__init__(x, y, width, height, 0, 0, interactive)
         self.x_shift = 0
-        self.drawable = drawable
+        self.document = drawable
 
     def layout(self):
-        self.total_lines = self.drawable.height
+        self.total_lines = self.document.height
 
     def show_line(self, line_content, line):
         raise AssertionError
@@ -36,13 +36,13 @@ class WGrid(WGridBase):
 
     def cell_cursor_place(self):
         if self.interactive:
-            cursor_x = self.drawable.indent(self.cur_line) - self.x_shift
+            cursor_x = self.document.indent(self.cur_line) - self.x_shift
             if cursor_x >= 0:
                 self.goto(cursor_x, self.cur_line - self.top_line + self.y)
                 self.cursor(True)
 
     def render_line(self, line, is_under_cursor):
-        return self.drawable.row_to_string(line, self.x_shift, self.x_shift + self.width)
+        return self.document.row_to_string(line, self.x_shift, self.x_shift + self.width)
 
     def handle_edit_key(self, key):
         if key in KEYS_TO_EXIT_CODES:
@@ -53,8 +53,8 @@ class WGrid(WGridBase):
         if result is None or result:
             return
 
-        content_width = self.drawable.width
-        content_height = self.drawable.height
+        content_width = self.document.width
+        content_height = self.document.height
         if key == KEY_CTRL_RIGHT:
             if self.x_shift + self.width < content_width:
                 self.x_shift += 1
@@ -107,15 +107,28 @@ class WGrid(WGridBase):
                 self.redraw_content()
 
         elif key == KEY_LEFT:
-            line = self.drawable.collapse(self.cur_line)
-            self.drawable.layout()
+            line = self.document.collapse(self.cur_line)
+            self.document.layout()
             self.layout()
+
             if line < self.top_line:
                 self.top_line = line
             self.cur_line = line
+
             self.redraw_content()
         elif key == KEY_RIGHT:
-            self.drawable.expand(self.cur_line)
-            self.drawable.layout()
+            self.document.expand(self.cur_line)
+            self.document.layout()
+            self.layout()
+            self.redraw_content()
+        elif key == KEY_TAB:
+            line = self.document.expand_recursive(self.cur_line)
+
+            if line < self.top_line:
+                self.top_line = line
+            elif line >= self.top_line + self.height:
+                self.top_line = line - self.height + 1
+
+            self.cur_line = line
             self.layout()
             self.redraw_content()

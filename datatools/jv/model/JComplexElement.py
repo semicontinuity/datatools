@@ -70,3 +70,9 @@ class JComplexElement(Generic[V], JValueElement[V]):
         for e in next_candidates:
             if e.size > 1:
                 e.optimize_layout(height)
+
+    def expand_recursive(self):
+        super(JComplexElement, self).expand_recursive()
+        for element in self.elements:
+            element.expand_recursive()
+

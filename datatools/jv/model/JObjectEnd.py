@@ -2,10 +2,10 @@ from typing import Tuple, AnyStr
 
 from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.jv.highlighting.rich_text import Style
-from datatools.jv.model import JElement
+from datatools.jv.model.JSyntaxElement import JSyntaxElement
 
 
-class JObjectEnd(JElement):
+class JObjectEnd(JSyntaxElement):
 
     def __init__(self, indent=0, has_trailing_comma=False) -> None:
         super().__init__(None, indent, has_trailing_comma)
