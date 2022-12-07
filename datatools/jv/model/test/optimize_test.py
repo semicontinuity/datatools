@@ -19,6 +19,6 @@ def test__optimize__1():
             }
         }
     ]
-    model = build_model(None, None, j)
+    model = build_model(j, None, None)
     model.optimize_layout(100)
     model.collapsed = False

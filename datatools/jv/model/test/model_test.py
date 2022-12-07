@@ -1,10 +1,10 @@
 from datatools.jv.highlighting.highlighting import Highlighting
-from datatools.jv.model import build_model, JElement
+from datatools.jv.model import build_model, JValueElement
 
 Highlighting.CURRENT = Highlighting()
 
 
-def to_strings(model: JElement):
+def to_strings(model: JValueElement):
     return [''.join([span[0] for span in e.spans()]) for e in model]
 
 
@@ -43,11 +43,11 @@ def test__build_model_object_2():
     }
     assert to_strings(build_model(j)) == [
         '{',
-        '  "a": null,',
-        '  "b": "string",',
-        '  "c": 1.7,',
-        '  "d": false,',
-        '  "e": true',
+        '  "a" : null,',
+        '  "b" : "string",',
+        '  "c" : 1.7,',
+        '  "d" : false,',
+        '  "e" : true',
         '}',
     ]
 
@@ -67,10 +67,10 @@ def test__build_model_object_3():
         '  "a": {',
         '  },',
         '  "b": {',
-        '    "b1": null,',
-        '    "b2": "string",',
-        '    "b3": true,',
-        '    "b4": 17',
+        '    "b1" : null,',
+        '    "b2" : "string",',
+        '    "b3" : true,',
+        '    "b4" : 17',
         '  }',
         '}',
     ]
@@ -109,7 +109,7 @@ def test__build_model_complex_0():
     assert to_strings(build_model(j)) == [
         '[',
         '  {',
-        '    "a": 1',
+        '    "a" : 1',
         '  }',
         ']',
     ]
@@ -141,7 +141,7 @@ def test__build_model_complex_2():
         '[',
         '  null,',
         '  {',
-        '    "a": 1',
+        '    "a" : 1',
         '  }',
         ']',
     ]
@@ -157,13 +157,14 @@ def test__build_model_complex_3():
             }
         ]
     }
+    # TODO
     assert to_strings(build_model(j)) == [
         '{',
-        '  "int": 1,',
+        '  "int"   : 1,',
         '  "array": [',
         '    1,',
         '    {',
-        '      "f": true',
+        '      "f" : true',
         '    }',
         '  ]',
         '}',

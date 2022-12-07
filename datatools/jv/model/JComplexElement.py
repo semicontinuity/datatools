@@ -76,3 +76,7 @@ class JComplexElement(Generic[V], JValueElement[V]):
         for element in self.elements:
             element.expand_recursive()
 
+    def set_collapsed_recursive(self, collapsed: bool):
+        super(JComplexElement, self).set_collapsed_recursive(collapsed)
+        for element in self.elements:
+            element.set_collapsed_recursive(collapsed)

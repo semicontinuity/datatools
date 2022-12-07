@@ -52,7 +52,8 @@ def make_json_tree_applet(j, state=None, popup: bool = False):
     state = {} if state is None else state
     screen_width, screen_height = screen_size_or_default()
     grid_context = GridContext(0, 0, screen_width, screen_height)
-    model = build_model(None, None, j)
+    model = build_model(j)
+    model.set_collapsed_recursive(True)
     model.collapsed = False
     drawable = Document(model)
     drawable.layout()

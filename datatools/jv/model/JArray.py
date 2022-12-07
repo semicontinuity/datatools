@@ -9,11 +9,11 @@ from datatools.jv.model.JComplexElement import JComplexElement
 
 class JArray(JComplexElement):
 
-    def __init__(self, name: Optional[str], indent=0, has_trailing_comma=False) -> None:
-        super().__init__(name, None, indent, has_trailing_comma)
-        self.start = JArrayStart(name, indent)
+    def __init__(self, key: Optional[str], indent=0, last_in_parent=True) -> None:
+        super().__init__(None, key, indent, last_in_parent)
+        self.start = JArrayStart(key, indent=indent)
         self.start.parent = self
-        self.end = JArrayEnd(indent, has_trailing_comma)
+        self.end = JArrayEnd(None, indent=indent, last_in_parent=last_in_parent)
         self.end.parent = self
 
     def rich_text(self) -> Tuple[AnyStr, Style]:

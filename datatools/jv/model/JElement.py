@@ -9,17 +9,17 @@ class JElement:
     indent: int
     key: Optional[str]
     padding: int
-    has_trailing_comma: bool
+    last_in_parent: bool
 
     parent: 'JElement'
     line: int
     size: int
     collapsed: bool
 
-    def __init__(self, name: Optional[str] = None, indent=0, has_trailing_comma=False) -> None:
-        self.key = name
+    def __init__(self, key: Optional[str] = None, indent=0, last_in_parent=True) -> None:
+        self.key = key
         self.indent = indent
-        self.has_trailing_comma = has_trailing_comma
+        self.last_in_parent = last_in_parent
         self.collapsed = False
         self.padding = 0
 
@@ -45,9 +45,12 @@ class JElement:
         ] if self.key is not None else []
 
     def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
-        return [(',', Highlighting.CURRENT.for_comma())] if self.has_trailing_comma else []
+        return [] if self.last_in_parent else [(',', Highlighting.CURRENT.for_comma())]
 
     def optimize_layout(self, height): pass
 
     def expand_recursive(self):
         self.collapsed = False
+
+    def set_collapsed_recursive(self, collapsed: bool):
+        self.collapsed = collapsed
