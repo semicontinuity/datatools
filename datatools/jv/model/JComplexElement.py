@@ -71,11 +71,6 @@ class JComplexElement(Generic[V], JValueElement[V]):
             if e.size > 1:
                 e.optimize_layout(height)
 
-    def expand_recursive(self):
-        super(JComplexElement, self).expand_recursive()
-        for element in self.elements:
-            element.expand_recursive()
-
     def set_collapsed_recursive(self, collapsed: bool):
         super(JComplexElement, self).set_collapsed_recursive(collapsed)
         for element in self.elements:

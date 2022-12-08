@@ -65,6 +65,6 @@ class Document:
 
     def expand_recursive(self, line) -> int:
         element = self.elements[line]
-        element.expand_recursive()
+        element.set_collapsed_recursive(False)
         self.layout()
         return element.line

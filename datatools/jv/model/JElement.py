@@ -49,8 +49,5 @@ class JElement:
 
     def optimize_layout(self, height): pass
 
-    def expand_recursive(self):
-        self.collapsed = False
-
     def set_collapsed_recursive(self, collapsed: bool):
         self.collapsed = collapsed
