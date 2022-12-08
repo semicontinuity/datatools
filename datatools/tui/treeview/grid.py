@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB
 
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
@@ -132,3 +134,18 @@ class WGrid(WGridBase):
             self.cur_line = line
             self.layout()
             self.redraw_content()
+
+
+@dataclass
+class GridContext:
+    x: int
+    y: int
+    width: int
+    height: int
+    interactive: bool = True
+
+
+def grid(drawable: TreeDocument, grid_context: GridContext) -> WGrid:
+    g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, drawable, grid_context.interactive)
+    g.layout()
+    return g
