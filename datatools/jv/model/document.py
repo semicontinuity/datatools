@@ -1,6 +1,6 @@
 from typing import List
 
-from datatools.jv.highlighting.rich_text import render_substr
+from datatools.tui.treeview.rich_text import render_substr
 from datatools.jv.model import JElement
 
 
@@ -20,7 +20,7 @@ class Document:
         elements = []
 
         for element in self.v:
-            width = max(width, element.rich_text_length())
+            width = max(width, element.text_length())
             elements.append(element)
             height += 1
 

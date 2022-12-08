@@ -1,4 +1,4 @@
-from datatools.jv.highlighting.rich_text import Style, render_substr
+from datatools.tui.treeview.rich_text import Style, render_substr
 from datatools.tui.ansi_str import ANSI_CMD_DEFAULT_FG, ANSI_CMD_ATTR_NOT_BOLD
 
 

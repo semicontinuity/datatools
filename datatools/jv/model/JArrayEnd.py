@@ -1,7 +1,7 @@
 from typing import AnyStr, Tuple
 
 from datatools.jv.highlighting.highlighting import Highlighting
-from datatools.jv.highlighting.rich_text import Style
+from datatools.tui.treeview.rich_text import Style
 from datatools.jv.model.JSyntaxElement import JSyntaxElement
 
 

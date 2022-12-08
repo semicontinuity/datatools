@@ -1,7 +1,7 @@
 from typing import Tuple, AnyStr, Optional
 
 from datatools.jv.highlighting.highlighting import Highlighting
-from datatools.jv.highlighting.rich_text import Style
+from datatools.tui.treeview.rich_text import Style
 from datatools.jv.model.JArrayEnd import JArrayEnd
 from datatools.jv.model.JArrayStart import JArrayStart
 from datatools.jv.model.JComplexElement import JComplexElement
