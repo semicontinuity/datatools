@@ -53,7 +53,7 @@ def cursor_position_or_default(default=(0, 0)):
 def read_tcaps() -> Tuple[int, List[int]]:
     """
     Return terminal ID (e.g. 6 for VT100, 65 for VT525) + list of capabilities
-    Must be invoked in RAW mode
+    Must be invoked in RAW model
     """
     resp = query_terminal(b"\x1b[c")
     parts = resp[3:-1].split(b';')

@@ -28,8 +28,6 @@ class TreeNode:
     def text_length(self) -> int:
         return sum((len(span[0]) for span in self.spans()))
 
-    def rich_text(self) -> Tuple[AnyStr, Style]: pass
-
     def spans(self) -> List[Tuple[AnyStr, Style]]:
         pass
 

@@ -8,8 +8,8 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
-from datatools.jv.model.document import Document
-from datatools.jv.grid import WGrid
+from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.grid import WGrid
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
 from datatools.tui.picotui_patch import patch_picotui
@@ -42,7 +42,7 @@ def auto_position(drawable, state):
     return GridContext(x, y, screen_width, screen_height)
 
 
-def grid(drawable: Document, grid_context: GridContext) -> WGrid:
+def grid(drawable: TreeDocument, grid_context: GridContext) -> WGrid:
     g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, drawable, grid_context.interactive)
     g.layout()
     return g
@@ -55,14 +55,14 @@ def make_json_tree_applet(j, state=None, popup: bool = False):
     model = build_model(j)
     model.set_collapsed_recursive(True)
     model.collapsed = False
-    drawable = Document(model)
+    drawable = TreeDocument(model)
     drawable.layout()
     drawable.optimize_layout(screen_height)
     drawable.layout()
     return do_make_json_tree_applet(grid_context, j, popup, drawable, state)
 
 
-def do_make_json_tree_applet(grid_context, j, popup, drawable: Document, state):
+def do_make_json_tree_applet(grid_context, j, popup, drawable: TreeDocument, state):
     return Applet(
         'json2ansi',
         grid(drawable, grid_context),

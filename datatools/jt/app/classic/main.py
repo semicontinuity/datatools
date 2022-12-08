@@ -3,7 +3,7 @@
 # A tool for interactive selection of a row from TextUI-style table.
 #
 # arguments:
-# [-s]: streaming mode
+# [-s]: streaming model
 # [-t title]: title
 # [json]: json with stripe colors specification
 # like '{"column name":{"0":"ff0000", "1":"00ff00", "2":"8080ff"}}'

@@ -2,7 +2,7 @@ from typing import AnyStr, Tuple, List, Optional
 
 from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.tui.treeview.rich_text import Style
-from datatools.tui.treeview.model.TreeNode import TreeNode
+from datatools.tui.treeview.treenode import TreeNode
 
 
 class JElement(TreeNode):
@@ -28,3 +28,5 @@ class JElement(TreeNode):
 
     def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
         return [] if self.last_in_parent else [(',', Highlighting.CURRENT.for_comma())]
+
+    def rich_text(self) -> Tuple[AnyStr, Style]: pass
