@@ -21,13 +21,16 @@ class FsTreeNode(TreeNode):
         self.packed_size = 1
 
     def spans(self) -> List[Tuple[AnyStr, Style]]:
-        return self.spans_for_indent() + [self.rich_text()]
+        return self.parent.indent_spans() + self.pre_text_spans() + [self.rich_text()]
 
-    def spans_for_indent(self) -> List[Tuple[AnyStr, Style]]:
-        if self.indent == 0:
-            return []
-        else:
-            return [(' ' * (self.indent - 2) + ('└─' if self.last_in_parent else '├─'), Style())]
+    def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
+        pass
+
+    def own_spans(self) -> List[Tuple[AnyStr, Style]]:
+        pass
+
+    def pre_text_spans(self) -> List[Tuple[AnyStr, Style]]:
+        pass
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
         return self.name, Style()
@@ -66,6 +69,21 @@ class FsFolder(FsTreeNode):
             self.size = line - self.line
             return line
 
+    def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
+        return self.parent.indent_spans() + self.own_spans()
+
+    def own_spans(self) -> List[Tuple[AnyStr, Style]]:
+        if self.parent is None or type(self.parent) is FsInvisibleRoot:
+            return []
+        else:
+            return [('  ' if self.last_in_parent else '│ ', Style())]
+
+    def pre_text_spans(self) -> List[Tuple[AnyStr, Style]]:
+        if self.parent is None or type(self.parent) is FsInvisibleRoot:
+            return []
+        else:
+            return [(('╘═' if self.collapsed else '└─') if self.last_in_parent else ('╞═' if self.collapsed else '├─'), Style())]
+
 
 class FsInvisibleRoot(FsFolder):
 
@@ -83,6 +101,9 @@ class FsInvisibleRoot(FsFolder):
             line = item.layout(line)
         self.size = line - self.line
         return line
+
+    def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
+        return []
 
 
 def make_model(path: Path, parent: FsFolder = None, indent: int = 0, last: bool = True):
