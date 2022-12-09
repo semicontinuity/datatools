@@ -15,3 +15,13 @@ class FsTreeDocument(TreeDocument):
             node = node.parent
             if node is self.root:
                 return self.root_folder + '/' + '/'.join(reversed(path))
+
+    def collapse(self, line) -> int:
+        element = self.rows[line]
+        if element.collapsed:
+            element = element.parent
+        if element is not None:
+            element.collapsed = True
+            return element.line
+        else:
+            return line

@@ -7,6 +7,7 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
+from datatools.jv.document import JDocument
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
 from datatools.tui.picotui_patch import patch_picotui
@@ -24,7 +25,7 @@ def make_json_tree_applet(j, state=None, popup: bool = False):
     model = build_model(j)
     model.set_collapsed_recursive(True)
     model.collapsed = False
-    document = TreeDocument(model)
+    document = JDocument(model)
     document.layout()
     document.optimize_layout(screen_height)
     document.layout()
