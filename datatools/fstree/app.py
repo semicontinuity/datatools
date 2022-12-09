@@ -2,11 +2,8 @@
 
 import sys
 
+from datatools.applet import Applet
 from datatools.fstree.model.fs_folder import FsFolder
-from datatools.jt.app.app_kit import Applet
-from datatools.jt.model.data_bundle import DataBundle
-from datatools.jt.model.metadata import Metadata
-from datatools.jt.model.presentation import Presentation
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import screen_size_or_default
@@ -43,14 +40,13 @@ def make_fs_tree_applet():
     document.layout()
     document.optimize_layout(screen_height)
     document.layout()
-    return do_make_fs_tree_applet(grid_context, None, False, document, {})
+    return do_make_fs_tree_applet(grid_context, False, document)
 
 
-def do_make_fs_tree_applet(grid_context, value, popup, drawable: TreeDocument, state):
+def do_make_fs_tree_applet(grid_context, popup, document: TreeDocument):
     return Applet(
         'fs',
-        grid(drawable, grid_context),
-        DataBundle(value, Metadata(), Presentation(), state),
+        grid(document, grid_context),
         popup
     )
 
