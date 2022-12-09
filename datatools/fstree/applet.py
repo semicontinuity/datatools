@@ -4,7 +4,6 @@ from picotui.screen import Screen
 
 from datatools.fstree.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.fstree.fs_tree_document import FsTreeDocument
-from datatools.fstree.model.fs_folder import FsFolder
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ESCAPE, EXIT_CODE_ENTER
 from datatools.tui.treeview.grid import WGrid
 

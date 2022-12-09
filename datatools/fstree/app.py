@@ -5,46 +5,12 @@ from pathlib import Path
 
 from datatools.fstree.applet import Applet
 from datatools.fstree.fs_tree_document import FsTreeDocument
-from datatools.fstree.model.fs_folder import FsFolder
+from datatools.fstree.model import make_model
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview.grid import GridContext, grid
 from datatools.tui.tui_fd import infer_fd_tui
-
-
-def make_model(path: Path, parent: FsFolder = None, indent: int = 0, last: bool = True):
-    folder = FsFolder(path.name, indent, last)
-
-    children = []
-    sub_paths = [sub_path for sub_path in path.iterdir() if sub_path.is_dir()]
-
-    for i, sub_path in enumerate(sub_paths):
-        children.append(make_model(sub_path, folder, indent + 2, i == len(sub_paths) - 1))
-
-    folder.parent = parent
-    folder.set_elements(children)
-    return folder
-
-
-def sample_model():
-    folder = FsFolder("folder")
-
-    children = []
-
-    c1 = FsFolder("c1", indent=2, last_in_parent=False)
-    c1.set_elements([])
-    c1.parent = folder
-    children.append(c1)
-
-    c2 = FsFolder("c2", indent=2)
-    c2.set_elements([])
-    c2.parent = folder
-    children.append(c2)
-
-    folder.parent = None
-    folder.set_elements(children)
-    return folder
 
 
 def make_fs_tree_applet(root: str):
