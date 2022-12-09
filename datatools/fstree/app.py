@@ -2,7 +2,8 @@
 
 import sys
 
-from datatools.applet import Applet
+from datatools.fstree.applet import Applet
+from datatools.fstree.fs_tree_document import FsTreeDocument
 from datatools.fstree.model.fs_folder import FsFolder
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
@@ -35,19 +36,19 @@ def sample_model():
 def make_fs_tree_applet():
     screen_width, screen_height = screen_size_or_default()
     grid_context = GridContext(0, 0, screen_width, screen_height)
-    model = sample_model()
-    document = TreeDocument(model)
+    folder = sample_model()
+    document = FsTreeDocument(folder, "/path")
     document.layout()
     document.optimize_layout(screen_height)
     document.layout()
-    return do_make_fs_tree_applet(grid_context, False, document)
+    return do_make_fs_tree_applet(grid_context, document)
 
 
-def do_make_fs_tree_applet(grid_context, popup, document: TreeDocument):
+def do_make_fs_tree_applet(grid_context, document: FsTreeDocument):
     return Applet(
         'fs',
         grid(document, grid_context),
-        popup
+        document
     )
 
 

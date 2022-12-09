@@ -1,7 +1,11 @@
 import signal
 
+from picotui.screen import Screen
+
 from datatools.fstree.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.tui.exit_codes_v2 import EXIT_CODE_ESCAPE
+from datatools.fstree.fs_tree_document import FsTreeDocument
+from datatools.fstree.model.fs_folder import FsFolder
+from datatools.tui.exit_codes_v2 import EXIT_CODE_ESCAPE, EXIT_CODE_ENTER
 from datatools.tui.treeview.grid import WGrid
 
 
@@ -9,10 +13,10 @@ class Applet:
     g: WGrid
     popup: bool
 
-    def __init__(self, app_id, g, popup: bool = False):
+    def __init__(self, app_id, g, document: FsTreeDocument):
         self.app_id = app_id
         self.g = g
-        self.popup = popup
+        self.document = document
         signal.signal(signal.SIGWINCH, self.handle_sigwinch)
 
     def handle_sigwinch(self, signalNumber, frame):
@@ -27,4 +31,6 @@ class Applet:
     def run(self):
         res = self.g.loop()
         exit_code = KEYS_TO_EXIT_CODES.get(res)
+        if exit_code == EXIT_CODE_ENTER:
+            print(self.document.get_selected_path(self.g.cur_line))
         return exit_code if exit_code is not None else EXIT_CODE_ESCAPE

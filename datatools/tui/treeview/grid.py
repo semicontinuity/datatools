@@ -38,7 +38,7 @@ class WGrid(WGridBase):
 
     def cell_cursor_place(self):
         if self.interactive:
-            cursor_x = self.document.indent(self.cur_line) - self.x_shift
+            cursor_x = self.document.rows[self.cur_line].indent - self.x_shift
             if cursor_x >= 0:
                 self.goto(cursor_x, self.cur_line - self.top_line + self.y)
                 self.cursor(True)
