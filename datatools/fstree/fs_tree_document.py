@@ -13,5 +13,5 @@ class FsTreeDocument(TreeDocument):
         while True:
             path.append(node.name)
             node = node.parent
-            if node is None:
+            if node is self.root:
                 return self.root_folder + '/' + '/'.join(reversed(path))

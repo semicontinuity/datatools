@@ -1,7 +1,7 @@
 from typing import List
 
-from datatools.tui.treeview.rich_text import render_substr
 from datatools.tui.treeview.treenode import TreeNode
+from datatools.tui.treeview.rich_text import render_substr
 
 
 class TreeDocument:

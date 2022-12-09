@@ -57,25 +57,44 @@ class FsFolder(FsTreeNode):
                 yield from field
 
     def layout(self, line: int) -> int:
+        line = super().layout(line)
         if self.collapsed:
-            return super().layout(line)
+            return line
         else:
-            self.line = line
             for item in self.elements:
                 line = item.layout(line)
             self.size = line - self.line
             return line
 
 
+class FsInvisibleRoot(FsFolder):
+
+    def set_elements(self, elements: List[FsTreeNode]):
+        self.elements = elements
+        self.packed_size = len(elements)
+
+    def __iter__(self):
+        for field in self.elements:
+           yield from field
+
+    def layout(self, line: int) -> int:
+        self.line = line
+        for item in self.elements:
+            line = item.layout(line)
+        self.size = line - self.line
+        return line
+
+
 def make_model(path: Path, parent: FsFolder = None, indent: int = 0, last: bool = True):
     folder = FsFolder(path.name, indent, last)
+    folder.parent = parent
+    populate_children(folder, path, indent + 2)
+    return folder
 
+
+def populate_children(folder, path, indent = 0):
     children = []
     sub_paths = [sub_path for sub_path in path.iterdir() if sub_path.is_dir()]
-
     for i, sub_path in enumerate(sub_paths):
-        children.append(make_model(sub_path, folder, indent + 2, i == len(sub_paths) - 1))
-
-    folder.parent = parent
+        children.append(make_model(sub_path, folder, indent, i == len(sub_paths) - 1))
     folder.set_elements(children)
-    return folder

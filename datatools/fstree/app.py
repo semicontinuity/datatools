@@ -5,7 +5,7 @@ from pathlib import Path
 
 from datatools.fstree.applet import Applet
 from datatools.fstree.fs_tree_document import FsTreeDocument
-from datatools.fstree.model import make_model
+from datatools.fstree.model import FsFolder, populate_children, FsInvisibleRoot
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import screen_size_or_default
@@ -16,8 +16,10 @@ from datatools.tui.tui_fd import infer_fd_tui
 def make_fs_tree_applet(root: str):
     screen_width, screen_height = screen_size_or_default()
     grid_context = GridContext(0, 0, screen_width, screen_height)
-    folder = make_model(Path(root))
-    document = FsTreeDocument(folder, root)
+    path = Path(root)
+    model_root = FsInvisibleRoot(path.name)
+    populate_children(model_root, path)
+    document = FsTreeDocument(model_root, root)
     document.layout()
     document.optimize_layout(screen_height)
     document.layout()
