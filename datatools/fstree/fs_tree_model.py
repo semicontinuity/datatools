@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import AnyStr, Tuple, List
 
-from datatools.tui.treeview.treenode import TreeNode
 from datatools.tui.treeview.rich_text import Style
+from datatools.tui.treeview.treenode import TreeNode
 
 
 class FsTreeNode(TreeNode):
@@ -33,7 +33,10 @@ class FsTreeNode(TreeNode):
         pass
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return self.name, Style()
+        return self.name, Style(fg=(192, 192, 192))
+
+    def line_style(self):
+        return Style(fg=(64, 64, 64))
 
 
 class FsFolder(FsTreeNode):
@@ -76,13 +79,13 @@ class FsFolder(FsTreeNode):
         if self.parent is None or type(self.parent) is FsInvisibleRoot:
             return []
         else:
-            return [('  ' if self.last_in_parent else '│ ', Style())]
+            return [('  ' if self.last_in_parent else '│ ', self.line_style())]
 
     def pre_text_spans(self) -> List[Tuple[AnyStr, Style]]:
         if self.parent is None or type(self.parent) is FsInvisibleRoot:
             return []
         else:
-            return [(('╘═' if self.collapsed else '└─') if self.last_in_parent else ('╞═' if self.collapsed else '├─'), Style())]
+            return [(('╘═' if self.collapsed else '└─') if self.last_in_parent else ('╞═' if self.collapsed else '├─'), self.line_style())]
 
 
 class FsInvisibleRoot(FsFolder):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from datatools.fstree.applet import Applet
 from datatools.fstree.fs_tree_document import FsTreeDocument
-from datatools.fstree.model import FsFolder, populate_children, FsInvisibleRoot
+from datatools.fstree.fs_tree_model import FsFolder, populate_children, FsInvisibleRoot
 from datatools.fstree.run_grid import run_grid
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
