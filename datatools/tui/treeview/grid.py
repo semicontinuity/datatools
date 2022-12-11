@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB, KEY_ESC
 
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
@@ -22,6 +22,7 @@ class WGrid(WGridBase):
 
     def layout(self):
         self.total_lines = self.document.height
+        self.dynamic_helper.request_height(self.total_lines)
 
     def show_line(self, line_content, line):
         raise AssertionError
