@@ -6,22 +6,29 @@ from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
     KEY_CTRL_RIGHT
+from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
 from datatools.tui.treeview.treedocument import TreeDocument
 
 HORIZONTAL_PAGE_SIZE = 8
 
 
 class WGrid(WGridBase):
-    def __init__(self, x: int, y: int, width, height, drawable: TreeDocument, interactive=True):
+    dynamic_helper: DynamicEditorSupport
+
+    def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):
         super().__init__(x, y, width, height, 0, 0, interactive)
         self.x_shift = 0
-        self.document = drawable
+        self.document = document
 
     def layout(self):
         self.total_lines = self.document.height
 
     def show_line(self, line_content, line):
         raise AssertionError
+
+    def clear(self):
+        self.attr_reset()
+        self.clear_box(self.x, self.y, self.width, self.height)
 
     def redraw(self):
         self.redraw_content()
@@ -117,6 +124,7 @@ class WGrid(WGridBase):
                 self.top_line = line
             self.cur_line = line
 
+            self.clear()
             self.redraw_content()
         elif key == KEY_RIGHT:
             self.document.expand(self.cur_line)
@@ -145,7 +153,9 @@ class GridContext:
     interactive: bool = True
 
 
-def grid(drawable: TreeDocument, grid_context: GridContext) -> WGrid:
-    g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, drawable, grid_context.interactive)
+def grid(document: TreeDocument, grid_context: GridContext) -> WGrid:
+    g = WGrid(grid_context.x, grid_context.y, document.width, document.height, document, grid_context.interactive)
+    dynamic_helper = DynamicEditorSupport(grid_context.height, g)
+    g.dynamic_helper = dynamic_helper
     g.layout()
     return g

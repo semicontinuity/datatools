@@ -32,10 +32,10 @@ def make_json_tree_applet(j, state=None, popup: bool = False):
     return do_make_json_tree_applet(grid_context, j, popup, document, state)
 
 
-def do_make_json_tree_applet(grid_context, j, popup, drawable: TreeDocument, state):
+def do_make_json_tree_applet(grid_context, j, popup, document: TreeDocument, state):
     return Applet(
-        'json2ansi',
-        grid(drawable, grid_context),
+        'jv',
+        grid(document, grid_context),
         DataBundle(j, Metadata(), Presentation(), state),
         popup
     )

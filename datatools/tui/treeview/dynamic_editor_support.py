@@ -3,7 +3,7 @@ from picotui.editor import Editor
 from datatools.tui.picotui_util import *
 
 
-class DynamicDialog:
+class DynamicEditorSupport:
     def __init__(self, screen_height: int, target: Editor):
         self.screen_height = screen_height
         self.target = target
