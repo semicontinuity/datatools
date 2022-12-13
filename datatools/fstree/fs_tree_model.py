@@ -118,7 +118,7 @@ def make_model(path: Path, parent: FsFolder = None, indent: int = 0, last: bool 
 
 def populate_children(folder, path, indent = 0):
     children = []
-    sub_paths = [sub_path for sub_path in path.iterdir() if sub_path.is_dir()]
+    sub_paths = [sub_path for sub_path in sorted(path.iterdir()) if sub_path.is_dir()]
     for i, sub_path in enumerate(sub_paths):
         children.append(make_model(sub_path, folder, indent, i == len(sub_paths) - 1))
     folder.set_elements(children)
