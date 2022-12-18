@@ -3,6 +3,8 @@
 import json
 import sys
 
+from picotui.defs import KEY_ENTER
+
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.document import JDocument
@@ -26,13 +28,6 @@ def make_json_tree_applet(document, popup: bool = False):
     return do_make_json_tree_applet(grid_context, popup, document)
 
 
-def make_document(j):
-    model = build_model(j)
-    model.set_collapsed_recursive(True)
-    model.collapsed = False
-    return JDocument(model)
-
-
 def do_make_json_tree_applet(grid_context, popup, document: TreeDocument):
     return Applet(
         'jv',
@@ -42,7 +37,7 @@ def do_make_json_tree_applet(grid_context, popup, document: TreeDocument):
     )
 
 
-def with_alternate_screen():
+def with_alternate_screen(delegate):
     fd_tui = infer_fd_tui()
     patch_picotui(fd_tui, fd_tui)
 
@@ -50,7 +45,7 @@ def with_alternate_screen():
         cursor_position_save()
         Screen.init_tty()
         screen_alt()
-        return with_prepared_screen(lambda: make_json_tree_applet(make_document(data())).run())
+        return with_prepared_screen(delegate)
     finally:
         screen_regular()
         Screen.deinit_tty()
@@ -63,6 +58,27 @@ def data():
     return json.loads(s)
 
 
+def make_document(j):
+    model = build_model(j)
+    model.set_collapsed_recursive(True)
+    model.collapsed = False
+    return JDocument(model)
+
+
+def loop(document):
+    g = make_json_tree_applet(document).g
+    key_code = g.loop()
+    if key_code != KEY_ENTER:
+        return 1, None
+    else:
+        return 0, document.selected_value(g.cur_line)
+
+
 if __name__ == "__main__":
     Highlighting.CURRENT = ConsoleHighlighting()
-    with_alternate_screen()
+    document = make_document(data())    # must consume stdin first
+
+    exit_code, output = with_alternate_screen(lambda: loop(document))
+    if output is not None:
+        print(json.dumps(output))
+    sys.exit(exit_code)

@@ -97,7 +97,8 @@ def main():
 
 
 def do_main():
-    return with_prepared_screen(lambda: make_json2ansi_applet(data()).run())
+    j = data()  # must consume stdin first
+    return with_prepared_screen(lambda: make_json2ansi_applet(j).run())
 
 
 def data():
