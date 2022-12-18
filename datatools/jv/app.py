@@ -10,6 +10,8 @@ from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.document import JDocument
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
+from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE
+from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.picotui_util import with_prepared_screen
@@ -68,17 +70,19 @@ def make_document(j):
 def loop(document):
     g = make_json_tree_applet(document).g
     key_code = g.loop()
-    if key_code != KEY_ENTER:
-        return 1, None
+    if key_code == KEY_ENTER:
+        return EXIT_CODE_ENTER, json.dumps(document.selected_value(g.cur_line))
+    elif key_code == KEY_ALT_ENTER:
+        return MODIFIER_ALT + EXIT_CODE_ENTER, document.selected_path(g.cur_line)
     else:
-        return 0, document.selected_value(g.cur_line)
+        return EXIT_CODE_ESCAPE, None
 
 
 if __name__ == "__main__":
     Highlighting.CURRENT = ConsoleHighlighting()
-    document = make_document(data())    # must consume stdin first
+    doc = make_document(data())    # must consume stdin first
 
-    exit_code, output = with_alternate_screen(lambda: loop(document))
+    exit_code, output = with_alternate_screen(lambda: loop(doc))
     if output is not None:
-        print(json.dumps(output))
+        print(output)
     sys.exit(exit_code)

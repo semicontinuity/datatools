@@ -24,7 +24,7 @@ class JElement(TreeNode):
         return [
             (f'"{self.key}"' + ' ' * self.padding, Highlighting.CURRENT.for_field_label(self.key)),
             (': ', Highlighting.CURRENT.for_colon()),
-        ] if self.key is not None else []
+        ] if self.key is not None and type(self.key) is not int else []
 
     def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
         return [] if self.last_in_parent else [(',', Highlighting.CURRENT.for_comma())]
@@ -32,3 +32,7 @@ class JElement(TreeNode):
     def rich_text(self) -> Tuple[AnyStr, Style]: pass
 
     def get_value(self): pass
+
+    def get_value_element(self): pass
+
+    def get_selector(self): pass

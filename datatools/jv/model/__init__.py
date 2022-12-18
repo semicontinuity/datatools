@@ -53,9 +53,8 @@ def build_object_fields_models(v, indent: int, parent: JValueElement) -> List[JV
 
 def build_array_items_models(v, indent: int, parent: JValueElement) -> List[JValueElement]:
     items = []
-    i = 0
     size = len(v)
-    for v in v:
-        items.append(build_model(v, None, indent, i >= size - 1, parent))
+    for i, v in enumerate(v):
+        items.append(build_model(v, i, indent, i >= size - 1, parent))
         i += 1
     return items
