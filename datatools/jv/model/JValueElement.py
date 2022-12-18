@@ -15,3 +15,7 @@ class JValueElement(Generic[V], JElement):
         self.packed_size = 1
 
     def sub_elements(self) -> List['JValueElement']: pass
+
+    def get_value(self) -> V:
+        return self.value
+

@@ -29,11 +29,11 @@ def build_model_raw(v, k: Optional[str], indent: int, last_in_parent=True) -> JV
     elif type(v) is bool:
         return JBoolean(v, k, indent, last_in_parent)
     elif type(v) is dict:
-        obj = JObject(k, indent, last_in_parent)
+        obj = JObject(v, k, indent, last_in_parent)
         obj.set_elements(build_object_fields_models(v, indent + INDENT, obj))
         return obj
     elif type(v) is list:
-        array = JArray(k, indent, last_in_parent)
+        array = JArray(v, k, indent, last_in_parent)
         array.set_elements(build_array_items_models(v, indent + INDENT, array))
         return array
 

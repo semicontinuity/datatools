@@ -107,7 +107,7 @@ def with_alt_screen(f):
         cursor_position_restore()
 
 
-def run(delegate, alt_screen=True):
+def with_prepared_screen(delegate, alt_screen=True):
     try:
         screen_prepare(alt_screen)
         return delegate()

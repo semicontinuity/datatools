@@ -30,3 +30,5 @@ class JElement(TreeNode):
         return [] if self.last_in_parent else [(',', Highlighting.CURRENT.for_comma())]
 
     def rich_text(self) -> Tuple[AnyStr, Style]: pass
+
+    def get_value(self): pass

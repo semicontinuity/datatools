@@ -10,3 +10,6 @@ class JDocument(TreeDocument):
             return parent.line
         else:
             return line
+
+    def selected_value(self, line) -> int:
+        return self.rows[line].get_value()

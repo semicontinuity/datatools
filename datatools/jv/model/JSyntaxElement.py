@@ -7,3 +7,6 @@ class JSyntaxElement(JElement):
         super(JSyntaxElement, self).set_collapsed_recursive(collapsed)
         if self.parent is not None:
             self.parent.set_collapsed_recursive(collapsed)
+
+    def get_value(self):
+        return self.parent.value
