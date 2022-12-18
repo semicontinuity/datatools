@@ -109,7 +109,7 @@ class Buffer:
         for y in range(height):
             print(self.row_to_string(y, 0, width))
 
-    def row_to_string(self, y, x_from, x_to):
+    def row_to_string(self, y, x_from, x_to) -> str:
         s = ''
         prev_attr = 0
         prev_r = -1

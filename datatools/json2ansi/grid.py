@@ -1,7 +1,7 @@
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP
 
-from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
+from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME
 
@@ -27,9 +27,10 @@ class WGrid(WGridBase):
         for c in range(num_lines):
             self.goto(self.x, row)
             if line < self.buffer.height:
-                self.wr(
-                    self.buffer.row_to_string(line, self.x_shift, min(max(0, self.buffer.width - self.x_shift), self.width))
-                )
+                x_to = min(self.buffer.width, self.width + self.x_shift)
+                self.wr(self.buffer.row_to_string(line, self.x_shift, x_to))
+                if x_to < self.width:
+                    self.wr(' ' * (self.width - x_to))
             line += 1
             row += 1
 
