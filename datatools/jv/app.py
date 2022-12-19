@@ -16,7 +16,7 @@ from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.picotui_util import with_prepared_screen
 from datatools.tui.terminal import screen_size_or_default
-from datatools.tui.treeview.grid import GridContext, grid
+from datatools.tui.treeview.grid import GridContext, grid, WGrid
 from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.tui.tui_fd import infer_fd_tui
 
@@ -33,7 +33,7 @@ def make_json_tree_applet(document, popup: bool = False):
 def do_make_json_tree_applet(grid_context, popup, document: TreeDocument):
     return Applet(
         'jv',
-        grid(document, grid_context),
+        grid(document, grid_context, WGrid),
         DataBundle(None, None, None, None),
         popup
     )

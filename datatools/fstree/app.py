@@ -7,7 +7,7 @@ from datatools.fstree.fs_tree_document import FsTreeDocument
 from datatools.fstree.fs_tree_model import populate_children, FsInvisibleRoot
 from datatools.fstree.run_grid import run_grid
 from datatools.tui.picotui_patch import patch_picotui
-from datatools.tui.treeview.grid import GridContext, grid
+from datatools.tui.treeview.grid import GridContext, grid, WGrid
 
 
 def make_document(root: str, screen_height: int):
@@ -22,7 +22,7 @@ def make_document(root: str, screen_height: int):
 
 
 def make_grid(screen_height, screen_width, cursor_y, cursor_x):
-    return grid(make_document(sys.argv[1], screen_height), GridContext(0, cursor_y, screen_width, screen_height))
+    return grid(make_document(sys.argv[1], screen_height), GridContext(0, cursor_y, screen_width, screen_height), WGrid)
 
 
 def main():
