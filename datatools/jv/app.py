@@ -8,6 +8,7 @@ from picotui.defs import KEY_ENTER
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.document import JDocument
+from datatools.jv.grid import JGrid
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE
@@ -16,7 +17,7 @@ from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.picotui_util import with_prepared_screen
 from datatools.tui.terminal import screen_size_or_default
-from datatools.tui.treeview.grid import GridContext, grid, WGrid
+from datatools.tui.treeview.grid import GridContext, grid
 from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.tui.tui_fd import infer_fd_tui
 
@@ -33,7 +34,7 @@ def make_json_tree_applet(document, popup: bool = False):
 def do_make_json_tree_applet(grid_context, popup, document: TreeDocument):
     return Applet(
         'jv',
-        grid(document, grid_context, WGrid),
+        grid(document, grid_context, JGrid),
         DataBundle(None, None, None, None),
         popup
     )
