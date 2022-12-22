@@ -7,6 +7,8 @@ def get_pipe_peer_env_var(name):
     pipe_id = os.readlink(f'/proc/{pid}/fd/1').removeprefix("pipe:[").removesuffix("]")
     pgid = os.getpgid(pid)
     peer_pid = get_pipe_peer_pid(pgid, pipe_id)
+    if peer_pid is None:
+        return None
     return get_env_var(peer_pid, name)
 
 

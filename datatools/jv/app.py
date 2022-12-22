@@ -20,6 +20,7 @@ from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview.grid import GridContext, grid
 from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.tui.tui_fd import infer_fd_tui
+from datatools.util.object_exporter import init_object_exporter
 
 
 def make_json_tree_applet(document, popup: bool = False):
@@ -80,6 +81,7 @@ def loop(document):
 
 
 if __name__ == "__main__":
+    init_object_exporter()
     Highlighting.CURRENT = ConsoleHighlighting()
     doc = make_document(data())    # must consume stdin first
 
