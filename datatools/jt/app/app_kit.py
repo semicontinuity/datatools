@@ -26,7 +26,7 @@ from datatools.jt.ui.ng.cell_renderer_stripes_hashes import ColumnRendererStripe
 from datatools.jt.ui.ng.cell_renderer_stripes_time_series import ColumnRendererStripesTimeSeries
 from datatools.tui.picotui_patch import get_screen_size, patch_picotui
 from datatools.tui.picotui_util import with_raw_term, screen_unprepare, screen_prepare
-from datatools.tui.terminal import with_raw_terminal
+from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.tui.tui_fd import infer_fd_tui
 from datatools.util.meta_io import metadata_or_default, presentation_or_default, state_or_default, write_state_or_pass
 from datatools.util.meta_io import write_presentation_or_pass, write_metadata_or_pass
@@ -38,8 +38,8 @@ class Params:
     stream_mode: bool = None
     watch_mode: bool = None
     compact: bool = None
-    quit: bool = None
-    env_presentation: bool = True
+    print: bool = None
+    pretty_print: bool = None
 
 
 # NB: we do not need to keep data_bundle; better to return state from run()
@@ -87,8 +87,10 @@ def do_main(app_id, app_f, g, router, screen_size):
                 sys.exit(255)
             data_bundle = load_data_bundle(params, orig_data)
 
-            if params.quit:
-                exit_code = with_raw_term(alt_screen=False, f=lambda: paint(g, data_bundle, screen_size))
+            if params.print or params.pretty_print:
+                if params.pretty_print: print()
+                exit_code = paint(g, data_bundle, with_raw_terminal(read_screen_size))
+                if params.pretty_print: print()
                 break
             else:
                 exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(app_f, app_id, data_bundle, g, router, screen_size))
@@ -152,7 +154,7 @@ def paint(g, data_bundle: DataBundle, screen_size):
 
 def load_data_bundle(params: Params, orig_data: List):
     raw_metadata = metadata_or_default(default={})
-    raw_presentation = presentation_or_default(default={}, use_env=params.env_presentation)
+    raw_presentation = presentation_or_default(default={})
     state = state_or_default(default=default_state())
 
     if len(raw_metadata) == 0 and len(raw_presentation) == 0 and params.compact:
@@ -243,9 +245,9 @@ def parse_params(argv) -> Params:
             params.watch_mode = True
         elif sys.argv[a] == '-c':
             params.compact = True
-        elif sys.argv[a] == '-q':
-            params.quit = True
+        elif sys.argv[a] == '-p':
+            params.print = True
         elif sys.argv[a] == '-P':
-            params.env_presentation = False
+            params.pretty_print = True
         a += 1
     return params
