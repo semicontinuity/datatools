@@ -3,7 +3,7 @@ import json
 
 from datatools.json2ansi.app import make_json2ansi_applet
 from datatools.json2ansi.default_style import default_style
-from datatools.jt.app.app_kit import Applet, main, default_state
+from datatools.jt.app.app_kit import Applet, app_kit_main, default_state
 from datatools.jt.app.classic.main import init_from_state
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
@@ -88,4 +88,4 @@ def nested_table_applet(cell_j, column_contents_metadata: Metadata, column_conte
 
 
 if __name__ == "__main__":
-    main('jtng', Applet, grid, app_router)
+    app_kit_main('jtng', Applet, grid, app_router)

@@ -3,7 +3,7 @@ import signal
 import sys
 from dataclasses import dataclass
 from json import JSONDecodeError
-from typing import List
+from typing import List, Callable, Tuple
 
 from picotui.screen import Screen
 
@@ -24,6 +24,7 @@ from datatools.jt.ui.ng.cell_renderer_seq_diagram_call import ColumnRendererSeqD
 from datatools.jt.ui.ng.cell_renderer_seq_diagram_call2 import ColumnRendererSeqDiagramCall2
 from datatools.jt.ui.ng.cell_renderer_stripes_hashes import ColumnRendererStripesHashColored
 from datatools.jt.ui.ng.cell_renderer_stripes_time_series import ColumnRendererStripesTimeSeries
+from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_patch import get_screen_size, patch_picotui
 from datatools.tui.picotui_util import with_raw_term, screen_unprepare, screen_prepare
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
@@ -75,7 +76,7 @@ class Applet:
         return exit_code if exit_code is not None else EXIT_CODE_ESCAPE
 
 
-def do_main(app_id, app_f, g, router, screen_size):
+def do_main(app_id, applet_f: Callable[[], Applet], grid_f, router, screen_size):
     params = parse_params(sys.argv)
 
     def loop():
@@ -89,11 +90,11 @@ def do_main(app_id, app_f, g, router, screen_size):
 
             if params.print or params.pretty_print:
                 if params.pretty_print: print()
-                exit_code = paint(g, data_bundle, with_raw_terminal(read_screen_size))
+                exit_code = paint(grid_f, data_bundle, with_raw_terminal(read_screen_size))
                 if params.pretty_print: print()
                 break
             else:
-                exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(app_f, app_id, data_bundle, g, router, screen_size))
+                exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(applet_f, app_id, data_bundle, grid_f, router, screen_size))
 
         return exit_code, data_bundle
 
@@ -102,11 +103,11 @@ def do_main(app_id, app_f, g, router, screen_size):
     return exit_code
 
 
-def main(applet_id, applet_f, g, router):
+def app_kit_main(applet_id, applet_f: Callable[[], Applet], grid_f, router: Callable[[Applet, int], Applet]):
     fd_tui = infer_fd_tui()
     screen_size = with_raw_terminal(get_screen_size)  # works only before patch(?) in 'long pipe'
     patch_picotui(fd_tui, fd_tui)
-    sys.exit(do_main(applet_id, applet_f, g, router, screen_size))
+    sys.exit(do_main(applet_id, applet_f, grid_f, router, screen_size))
 
 
 def app_loop(applet_f, applet_id, data_bundle, g, router, screen_size) -> int:
@@ -144,9 +145,9 @@ def app_loop(applet_f, applet_id, data_bundle, g, router, screen_size) -> int:
     return exit_code
 
 
-def paint(g, data_bundle: DataBundle, screen_size):
+def paint(grid_f: Callable[[Tuple[int, int], DataBundle], WGridBase], data_bundle: DataBundle, screen_size):
     screen_size = screen_size[0], len(data_bundle.orig_data) + 1
-    the_grid = g(screen_size, data_bundle)
+    the_grid = grid_f(screen_size, data_bundle)
     the_grid.cur_line = -1
     the_grid.interactive = False
     the_grid.redraw()

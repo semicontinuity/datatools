@@ -21,7 +21,7 @@
 import json
 from typing import List
 
-from datatools.jt.app.app_kit import Applet, main
+from datatools.jt.app.app_kit import Applet, app_kit_main
 from datatools.jt.app.classic.pack_columns import pick_displayed_columns
 from datatools.jt.logic.auto_column_renderers import column_renderers
 from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE
@@ -73,4 +73,4 @@ def app_router(app, exit_code):
 
 
 if __name__ == "__main__":
-    main('jt', Applet, grid, app_router)
+    app_kit_main('jt', Applet, grid, app_router)
