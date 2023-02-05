@@ -5,7 +5,7 @@ from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_c
 from datatools.json.structure_discovery import *
 from datatools.tui.box_drawing_chars import LEFT_BORDER
 from datatools.tui.buffer.json2ansi_buffer import Buffer
-from datatools.util.logging import stderr_print
+from datatools.util.logging import stderr_print, debug
 from datatools.util.table_util import *
 from datatools.util.text_util import geometry
 
@@ -34,19 +34,27 @@ class AnsiToolkit:
         AnsiToolkit.instance = self
 
     def page_node(self, j):
-        return PageNode(self.node(j, self.discovery.object_descriptor(j)), "", self.style.background_color)
+        return PageNode(self.block(j), "", self.style.background_color)
+
+    def block(self, j):
+        return self.node(j, self.discovery.object_descriptor(j))
 
     def node(self, j, descriptor: Descriptor) -> Block:
+        debug("node", j=j)
         if descriptor.is_any():
+            debug("node", descriptor={"is_any": True})
             descriptor = self.discovery.object_descriptor(j)
 
         if descriptor.is_primitive():
+            debug("node", descriptor={"is_primitive": True})
             return self.primitive(j)
 
         if not descriptor.is_not_empty():
+            debug("node", descriptor={"is_empty": True})
             return self.empty()
 
         elif descriptor.is_uniform():
+            debug("node", descriptor={"is_uniform":True})
             # if descriptor.item.is_uniform() and descriptor.length is not None and descriptor.item.length is not None:
             #     return self.matrix_node(j, descriptor)
 
@@ -68,12 +76,16 @@ class AnsiToolkit:
                 elif len(j) > 1:
                     return self.array(j, descriptor)
         if descriptor.is_dict():
+            debug("node", descriptor={"is_dict": True})
             return self.object_node(j.items(), lambda key: descriptor.items()[key]) if j else self.empty()
         elif descriptor.is_list() and len(j) == 1 and descriptor.item.is_dict():
+            debug("node", descriptor={"is_list": True, "length": 1})
             return self.list_of_single_record(j[0], descriptor.item)    # TODO: add [0] to show that it's a list
         elif descriptor.is_list():
+            debug("node", descriptor={"is_list": True})
             return self.list_of_multi_record(j, descriptor)
         elif descriptor.is_uniform() and descriptor.length == 1 and descriptor.item.is_dict():
+            debug("node", descriptor={"is_uniform":True, "is_list": True, "length": 1})
             return self.list_of_single_record(j[0], descriptor.item)    # TODO: add [0] to show that it's a list
         else:
             stderr_print(type(descriptor))
@@ -133,8 +145,10 @@ class AnsiToolkit:
 
 
     def uniform_table_node2(self, j, descriptor: Descriptor):
+        debug("uniform_table_node2", descriptor=type(descriptor))
         row_paths = compute_row_paths(j, descriptor)
         item_descriptor = descriptor.inner_item()
+        debug("uniform_table_node2", item_descriptor=item_descriptor)
         column_paths = compute_column_paths(item_descriptor)
 
         row_headers = row_headers_node_for_paths(j, descriptor)

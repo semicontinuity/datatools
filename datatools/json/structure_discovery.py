@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Tuple, Hashable
 
+from datatools.util.logging import debug
+
 
 @dataclass
 class Descriptor:
@@ -69,8 +71,12 @@ class PrimitiveDescriptor(Descriptor):
 
 @dataclass
 class MappingDescriptor(Descriptor):
+    """ Descriptor for any complex type: list or dict """
     entries: Dict[Hashable, Descriptor]
+
     kind: str
+    """ Kind of mapping: list or dict """
+
     uniform: bool
     length: Optional[int] = None
 
@@ -178,9 +184,12 @@ class MappingDescriptor(Descriptor):
 
     def inner_item(self) -> Descriptor:
         item = self.item
-        if type(item) is MappingDescriptor and item.kind == 'dict': # TODO
+        if type(item) is MappingDescriptor and item.is_dict(): # TODO
             return item
-        return item.inner_item() if item.is_uniform() else item
+        elif item.is_uniform():
+            return item.inner_item()
+        else:
+            return item
 
 
 class Discovery:
@@ -245,16 +254,18 @@ def compute_column_paths0(descriptor: Descriptor, path: List[str], result: List[
             result.append(tuple(child_path))
 
 
-def compute_row_paths(j, descriptor: Descriptor) -> List[Tuple[str]]:
+def compute_row_paths(j, descriptor: MappingDescriptor) -> List[Tuple[str]]:
     result = []
     compute_row_paths0(j, descriptor, [], result)
     return result
 
 
-def compute_row_paths0(j, descriptor: Descriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
+def compute_row_paths0(j, descriptor: MappingDescriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
+    debug("compute_row_paths0", descriptor=type(descriptor))
     for key, value in descriptor.enumerate_entries(j):
+        debug("compute_row_paths0", key=key, value=value)
         child_path = path + [key]
-        if descriptor.item.is_uniform() and descriptor.item.kind == 'list':
+        if descriptor.item.is_uniform() and descriptor.item.is_list():
             compute_row_paths0(value, descriptor.item, child_path, result)
         else:
             result.append(tuple(child_path))
