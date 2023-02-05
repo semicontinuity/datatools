@@ -25,14 +25,15 @@ def test__table__1():
     discovery = Discovery()
     descriptor = discovery.object_descriptor(j)
 
-    assert compute_row_paths(j, descriptor) == [("a", 0), ("a", 1), ("b", 0), ("b", 1)]
-
     inner_item= descriptor.inner_item()
     assert inner_item == MappingDescriptor(
         {'x': PrimitiveDescriptor('int'), 'y': PrimitiveDescriptor('int')}, kind='dict', uniform=True, length=2
     )
 
     assert compute_column_paths(inner_item) == [("x",), ("y",)]
+
+    paths = compute_row_paths(j, descriptor)
+    assert paths == [("a", 0), ("a", 1), ("b", 0), ("b", 1)]
 
 
 ########################################################################################################################
@@ -46,8 +47,14 @@ def test__table__2():
     toolkit = AnsiToolkit(Discovery(), default_style())
     descriptor = toolkit.discovery.object_descriptor(j)
 
-    # assert compute_row_paths(j, descriptor) == [("a",), ("b",)]
+    inner_item = descriptor.inner_item()
+    print(inner_item)
 
-    # inner_item = descriptor.inner_item()
-    # print(inner_item)
-    # assert compute_column_paths(inner_item) == [("x",), ("y",)]
+    r = compute_row_paths(j, descriptor)
+    assert r == [("a",), ("b",)]
+
+    paths = compute_column_paths(inner_item)
+    assert paths == [(0,)]
+
+    node = toolkit.node(j, descriptor)
+    print(node)

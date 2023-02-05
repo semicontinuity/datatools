@@ -147,7 +147,8 @@ class AnsiToolkit:
     def uniform_table_node2(self, j, descriptor: Descriptor):
         debug("uniform_table_node2", descriptor=type(descriptor))
         row_paths = compute_row_paths(j, descriptor)
-        item_descriptor = descriptor.inner_item()
+        # item_descriptor = descriptor.inner_item()
+        item_descriptor = descriptor.item
         debug("uniform_table_node2", item_descriptor=item_descriptor)
         column_paths = compute_column_paths(item_descriptor)
 
@@ -242,6 +243,15 @@ class TextCell(Block):
 class HeaderNode(TextCell):
     def __init__(self, key, is_uniform):
         super().__init__(str(key), self.attr_for(is_uniform), AnsiToolkit.instance.style.header)
+
+    # TODO
+    def compute_widths(self) -> List[int]:
+        self.compute_width()
+        return [self.width]
+
+    # TODO
+    def set_min_widths(self, sizes: List[int]):
+        pass
 
     @staticmethod
     def attr_for(is_uniform):

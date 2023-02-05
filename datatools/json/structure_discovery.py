@@ -184,12 +184,18 @@ class MappingDescriptor(Descriptor):
 
     def inner_item(self) -> Descriptor:
         item = self.item
-        if type(item) is MappingDescriptor and item.is_dict(): # TODO
-            return item
-        elif item.is_uniform():
-            return item.inner_item()
+        # if type(item) is MappingDescriptor and (not item.is_uniform() or ): # TODO
+        #     return item
+        if type(item) is PrimitiveDescriptor or not item.is_uniform(): # TODO
+            return self
         else:
-            return item
+            return item.inner_item()
+        # if type(item) is MappingDescriptor and item.is_dict(): # TODO
+        #     return item
+        # elif item.is_uniform():
+        #     return item.inner_item()
+        # else:
+        #     return item
 
 
 class Discovery:
@@ -262,13 +268,18 @@ def compute_row_paths(j, descriptor: MappingDescriptor) -> List[Tuple[str]]:
 
 def compute_row_paths0(j, descriptor: MappingDescriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
     debug("compute_row_paths0", descriptor=type(descriptor))
+    if type(descriptor.item) is PrimitiveDescriptor or not descriptor.item.is_uniform():
+        result.append(tuple(path))
+        return
+
     for key, value in descriptor.enumerate_entries(j):
         debug("compute_row_paths0", key=key, value=value)
         child_path = path + [key]
-        if descriptor.item.is_uniform() and descriptor.item.is_list():
-            compute_row_paths0(value, descriptor.item, child_path, result)
-        else:
-            result.append(tuple(child_path))
+        # if descriptor.item.is_uniform() and descriptor.item.is_list():
+        #     compute_row_paths0(value, descriptor.item, child_path, result)
+        # else:
+        #     result.append(tuple(child_path))
+        compute_row_paths0(value, descriptor.item, child_path, result)
 
 
 def child_by_path(value, path: Tuple[Hashable, ...]) -> Optional[Hashable]:
