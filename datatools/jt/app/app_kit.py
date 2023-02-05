@@ -78,6 +78,11 @@ class Applet:
 
 def do_main(app_id, applet_f: Callable[[], Applet], grid_f, router, screen_size):
     params = parse_params(sys.argv)
+    screen_width = screen_size[0]
+
+    if not(params.print or params.pretty_print):
+        fd_tui = infer_fd_tui()
+        patch_picotui(fd_tui, fd_tui)
 
     def loop():
         exit_code = None
@@ -90,7 +95,13 @@ def do_main(app_id, applet_f: Callable[[], Applet], grid_f, router, screen_size)
 
             if params.print or params.pretty_print:
                 if params.pretty_print: print()
-                exit_code = paint(grid_f, data_bundle, with_raw_terminal(read_screen_size))
+
+                the_grid = grid_f((screen_width, len(data_bundle.orig_data) + 1), data_bundle)
+                the_grid.width = min(the_grid.width, screen_width)
+                the_grid.cur_line = -1
+                the_grid.interactive = False
+                the_grid.redraw()
+
                 if params.pretty_print: print()
                 break
             else:
@@ -104,9 +115,7 @@ def do_main(app_id, applet_f: Callable[[], Applet], grid_f, router, screen_size)
 
 
 def app_kit_main(applet_id, applet_f: Callable[[], Applet], grid_f, router: Callable[[Applet, int], Applet]):
-    fd_tui = infer_fd_tui()
     screen_size = with_raw_terminal(get_screen_size)  # works only before patch(?) in 'long pipe'
-    patch_picotui(fd_tui, fd_tui)
     sys.exit(do_main(applet_id, applet_f, grid_f, router, screen_size))
 
 
@@ -143,14 +152,6 @@ def app_loop(applet_f, applet_id, data_bundle, g, router, screen_size) -> int:
             applet_stack.append(the_applet)  # was popped, restore
             applet_stack.append(new_applet)
     return exit_code
-
-
-def paint(grid_f: Callable[[Tuple[int, int], DataBundle], WGridBase], data_bundle: DataBundle, screen_size):
-    screen_size = screen_size[0], len(data_bundle.orig_data) + 1
-    the_grid = grid_f(screen_size, data_bundle)
-    the_grid.cur_line = -1
-    the_grid.interactive = False
-    the_grid.redraw()
 
 
 def load_data_bundle(params: Params, orig_data: List):

@@ -85,7 +85,10 @@ if __name__ == "__main__":
     Highlighting.CURRENT = ConsoleHighlighting()
     doc = make_document(data())    # must consume stdin first
 
-    exit_code, output = with_alternate_screen(lambda: loop(doc))
-    if output is not None:
-        print(output)
-    sys.exit(exit_code)
+    if '-p' in sys.argv:
+        make_json_tree_applet(doc).g.redraw()
+    else:
+        exit_code, output = with_alternate_screen(lambda: loop(doc))
+        if output is not None:
+            print(output)
+        sys.exit(exit_code)

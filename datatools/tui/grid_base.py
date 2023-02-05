@@ -131,6 +131,8 @@ class WGridBase(Editor):
             # else:
             #     self.wr('\n')
             self.wr(self.render_line(line, self.cur_line == line))
+            if not self.interactive:
+                self.wr('\n')
             line += 1
         self.after_redraw()
 
