@@ -1,15 +1,16 @@
-from typing import Callable, Tuple, Optional
+from typing import Tuple, Optional
 
 from picotui.defs import KEY_ENTER, KEY_ESC
 
 from datatools.fstree.exit_codes_mapping import KEYS_TO_EXIT_CODES
+from datatools.fstree.fs_tree_document import FsTreeDocument
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE
 from datatools.tui.picotui_patch import cursor_position
 from datatools.tui.picotui_util import *
-from datatools.tui.treeview.grid import WGrid
+from datatools.tui.treeview.grid import WGrid, grid, GridContext
 
 
-def run_grid(grid_supplier: Callable[[int, int, int, int], WGrid]) -> Tuple[int, Optional[str]]:
+def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
     g = None
     try:
         Screen.init_tty()
@@ -18,7 +19,8 @@ def run_grid(grid_supplier: Callable[[int, int, int, int], WGrid]) -> Tuple[int,
         screen_width, screen_height = Screen.screen_size()
         cursor_y, cursor_x = cursor_position()
 
-        g = grid_supplier(screen_height, screen_width, cursor_y, cursor_x)
+        document.layout_for_height(screen_height)
+        g = grid(document, GridContext(cursor_x, cursor_y, screen_width, screen_height), WGrid)
         res = g.loop()
         if res == KEY_ENTER:
             return EXIT_CODE_ENTER, g.document.get_selected_path(g.cur_line)

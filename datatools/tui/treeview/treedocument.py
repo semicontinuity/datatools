@@ -14,6 +14,11 @@ class TreeDocument:
     def __init__(self, root: TreeNode) -> None:
         self.root = root
 
+    def layout_for_height(self, height: int):
+        self.layout()
+        self.optimize_layout(height)
+        self.layout()
+
     def layout(self):
         width = 0
         height = 0
