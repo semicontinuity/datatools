@@ -7,7 +7,7 @@ from datatools.fstree.fs_tree_document import FsTreeDocument
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE
 from datatools.tui.picotui_patch import cursor_position
 from datatools.tui.picotui_util import *
-from datatools.tui.treeview.grid import WGrid, grid, GridContext
+from datatools.tui.treeview.grid import grid, GridContext
 
 
 def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
@@ -20,7 +20,7 @@ def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
         cursor_y, cursor_x = cursor_position()
 
         document.layout_for_height(screen_height)
-        g = grid(document, GridContext(cursor_x, cursor_y, screen_width, screen_height), WGrid)
+        g = grid(document, GridContext(cursor_x, cursor_y, screen_width, screen_height))
         res = g.loop()
         if res == KEY_ENTER:
             return EXIT_CODE_ENTER, g.document.get_selected_path(g.cur_line)

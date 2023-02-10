@@ -154,9 +154,8 @@ class GridContext:
     interactive: bool = True
 
 
-def grid(document: TreeDocument, grid_context: GridContext, grid_f) -> WGrid:
-    g = grid_f(grid_context.x, grid_context.y, grid_context.width, grid_context.height, document, grid_context.interactive)
-    dynamic_helper = DynamicEditorSupport(grid_context.height, g)
-    g.dynamic_helper = dynamic_helper
+def grid(document: TreeDocument, grid_context: GridContext) -> WGrid:
+    g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, document, grid_context.interactive)
+    g.dynamic_helper = DynamicEditorSupport(grid_context.height, g)
     g.layout()
     return g
