@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from stat import S_ISVTX, S_ISGID, S_ISUID
 from typing import AnyStr, Tuple, List
 
 from datatools.tui.treeview.rich_text import Style
@@ -13,12 +15,15 @@ class FsTreeNode(TreeNode):
 
     packed_size: int
 
+    st_mode: int
+
     def __init__(self, name: str, indent=0, last_in_parent=True) -> None:
         super().__init__(last_in_parent)
         self.name = name
         self.indent = indent
         self.padding = 0
         self.packed_size = 1
+        self.st_mode = 0
 
     def spans(self) -> List[Tuple[AnyStr, Style]]:
         return self.parent.indent_spans() + self.pre_text_spans() + [self.rich_text()]
@@ -33,7 +38,17 @@ class FsTreeNode(TreeNode):
         pass
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return self.name, Style(fg=(192, 192, 192))
+        return self.name, self.text_style()
+
+    def text_style(self):
+        if self.st_mode & S_ISVTX:
+            return Style(fg=(64, 255, 64))
+        elif self.st_mode & S_ISGID:
+            return Style(fg=(255, 255, 64))
+        elif self.st_mode & S_ISUID:
+            return Style(fg=(255, 64, 64))
+        else:
+            return Style(fg=(192, 192, 192))
 
     def line_style(self):
         return Style(fg=(64, 64, 64))
@@ -109,16 +124,17 @@ class FsInvisibleRoot(FsFolder):
         return []
 
 
-def make_model(path: Path, parent: FsFolder = None, indent: int = 0, last: bool = True):
-    folder = FsFolder(path.name, indent, last)
-    folder.parent = parent
-    populate_children(folder, path, indent + 2)
-    return folder
+def make_model(path: Path, parent: FsFolder = None, indent: int = 0, st_mode: int = 0, last: bool = True):
+    model_folder = FsFolder(path.name, indent, last)
+    model_folder.parent = parent
+    model_folder.st_mode = st_mode
+    populate_children(model_folder, path, indent + 2)
+    return model_folder
 
 
-def populate_children(folder, path, indent = 0):
+def populate_children(model_folder: FsFolder, path: Path, indent = 0):
     children = []
     sub_paths = [sub_path for sub_path in sorted(path.iterdir()) if sub_path.is_dir()]
     for i, sub_path in enumerate(sub_paths):
-        children.append(make_model(sub_path, folder, indent, i == len(sub_paths) - 1))
-    folder.set_elements(children)
+        children.append(make_model(sub_path, model_folder, indent, sub_path.stat().st_mode, i == len(sub_paths) - 1))
+    model_folder.set_elements(children)

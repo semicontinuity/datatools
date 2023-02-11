@@ -1,10 +1,10 @@
 from typing import Tuple, Optional
 
-from picotui.defs import KEY_ENTER, KEY_ESC
+from picotui.defs import KEY_ENTER, KEY_ESC, KEY_DELETE
 
 from datatools.fstree.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.fstree.fs_tree_document import FsTreeDocument
-from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE
+from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE, EXIT_CODE_DELETE
 from datatools.tui.picotui_patch import cursor_position
 from datatools.tui.picotui_util import *
 from datatools.tui.treeview.grid import grid, GridContext
@@ -20,10 +20,12 @@ def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
         cursor_y, cursor_x = cursor_position()
 
         document.layout_for_height(screen_height)
-        g = grid(document, GridContext(cursor_x, cursor_y, screen_width, screen_height))
+        g = grid(document, GridContext(0, cursor_y, screen_width, screen_height))
         res = g.loop()
         if res == KEY_ENTER:
             return EXIT_CODE_ENTER, g.document.get_selected_path(g.cur_line)
+        elif res == KEY_DELETE:
+            return EXIT_CODE_DELETE, g.document.get_selected_path(g.cur_line)
         elif res == KEY_ESC:
             return EXIT_CODE_ESCAPE, None
         else:

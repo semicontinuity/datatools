@@ -10,9 +10,9 @@ from datatools.tui.picotui_patch import patch_picotui
 
 
 def make_document(root: str) -> FsTreeDocument:
-    path = Path(root)
-    model_root = FsInvisibleRoot(path.name)
-    populate_children(model_root, path)
+    root_path = Path(root)
+    model_root = FsInvisibleRoot(root_path.name)
+    populate_children(model_root, root_path)
     return FsTreeDocument(model_root, root)
 
 
