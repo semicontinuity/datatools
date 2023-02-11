@@ -35,7 +35,7 @@ def make_json_tree_applet(document, popup: bool = False):
 def do_make_json_tree_applet(grid_context, popup, document: TreeDocument):
     return Applet(
         'jv',
-        grid(document, grid_context, JGrid),
+        grid(document, grid_context),
         DataBundle(None, None, None, None),
         popup
     )
