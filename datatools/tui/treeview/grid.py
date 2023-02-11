@@ -1,6 +1,12 @@
+import os
+import select
+import sys
 from dataclasses import dataclass
+from queue import Queue
+from threading import Thread, Event
 
-from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB, KEY_ESC
+from picotui.defs import KEYMAP as _KEYMAP
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB
 
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
@@ -12,13 +18,14 @@ from datatools.tui.treeview.treedocument import TreeDocument
 HORIZONTAL_PAGE_SIZE = 8
 
 
-class WGrid(WGridBase):
+class WGrid(WGridBase, Thread):
     dynamic_helper: DynamicEditorSupport
 
     def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):
         super().__init__(x, y, width, height, 0, 0, interactive)
         self.x_shift = 0
         self.document = document
+        self.event_queue = Queue()
 
     def layout(self):
         self.total_lines = self.document.height
@@ -143,6 +150,74 @@ class WGrid(WGridBase):
             self.cur_line = line
             self.layout()
             self.redraw_content()
+
+    def request_redraw(self):
+        self.event_queue.put(...)
+
+    def loop(self):
+        self.redraw()
+        input_reader = InputReader(self.event_queue)
+        input_reader.start()
+        while True:
+            key = self.event_queue.get()
+            if key is ...:
+                self.redraw()
+                continue
+
+            res = self.handle_input(key)
+
+            if res is not None and res is not True:
+                input_reader.stop()
+                return res
+
+
+class InputReader(Thread):
+
+    def __init__(self, event_queue: Queue):
+        Thread.__init__(self)
+        self.event_queue = event_queue
+        self._stop = Event()
+        self.kbuf = b""
+
+    def run(self):
+        while not self.stopped():
+            key = self.get_input()
+            if key is None:
+                continue
+            self.event_queue.put(key)
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.is_set()
+
+    def get_input(self):
+        f = sys.stderr
+        if self.kbuf:
+            key = self.kbuf[0:1]
+            self.kbuf = self.kbuf[1:]
+        else:
+            r, w, e = select.select([f], [], [], 0.05)
+            if f in r:
+                key = os.read(2, 32)
+                if key[0] != 0x1b:
+                    key = key.decode()
+                    self.kbuf = key[1:].encode()
+                    key = key[0:1].encode()
+            else:
+                return None
+
+        key = _KEYMAP.get(key, key)
+
+        if isinstance(key, bytes) and key.startswith(b"\x1b[M") and len(key) == 6:
+            if key[3] != 32:
+                return None
+            row = key[5] - 33
+            col = key[4] - 33
+            return [col, row]
+
+        return key
 
 
 @dataclass
