@@ -16,15 +16,21 @@ def make_document(root: str) -> FsTreeDocument:
     return FsTreeDocument(model_root, root)
 
 
-def main():
+def main(root):
     patch_picotui(2, 2)
-    exit_code, path = run_grid(make_document(sys.argv[1]))
+    exit_code, path = run_grid(make_document(root))
     if path is not None:
         print(path)
     sys.exit(exit_code)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    paths = [p for p in sys.argv[1:] if not p.startswith('-')]
+    if len(paths) == 0:
+        root = '.'
+    elif len(paths) == 1:
+        root = paths[0]
+    else:
         sys.exit(1)
-    main()
+
+    main(root)
