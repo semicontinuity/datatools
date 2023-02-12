@@ -157,7 +157,7 @@ class WGrid(WGridBase, Thread):
 
     def loop(self):
         self.redraw()
-        input_reader = InputReader(self.event_queue)
+        input_reader = InputEventReader(self.event_queue)
         input_reader.start()
         while True:
             key = self.event_queue.get()
@@ -172,7 +172,7 @@ class WGrid(WGridBase, Thread):
                 return res
 
 
-class InputReader(Thread):
+class InputEventReader(Thread):
 
     def __init__(self, event_queue: Queue):
         Thread.__init__(self)

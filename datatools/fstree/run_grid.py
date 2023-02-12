@@ -23,13 +23,13 @@ def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
         g = grid(document, GridContext(0, cursor_y, screen_width, screen_height))
         res = g.loop()
         if res == KEY_ENTER:
-            return EXIT_CODE_ENTER, g.document.get_selected_path(g.cur_line)
+            return EXIT_CODE_ENTER, document.get_selected_path(g.cur_line)
         elif res == KEY_DELETE:
-            return EXIT_CODE_DELETE, g.document.get_selected_path(g.cur_line)
+            return EXIT_CODE_DELETE, document.get_selected_path(g.cur_line)
         elif res == KEY_ESC:
             return EXIT_CODE_ESCAPE, None
         else:
-            return KEYS_TO_EXIT_CODES.get(res) or EXIT_CODE_ESCAPE, g.document.get_selected_path(g.cur_line)
+            return KEYS_TO_EXIT_CODES.get(res) or EXIT_CODE_ESCAPE, document.get_selected_path(g.cur_line)
     finally:
         Screen.attr_reset()
         if g is not None:

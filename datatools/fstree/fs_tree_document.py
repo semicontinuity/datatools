@@ -1,20 +1,36 @@
+from pathlib import Path
+from typing import List
+
+from datatools.fstree.fs_tree_model import FsInvisibleRoot, populate_children
 from datatools.tui.treeview.treedocument import TreeDocument
-from datatools.tui.treeview.treenode import TreeNode
 
 
 class FsTreeDocument(TreeDocument):
-    def __init__(self, root: TreeNode, root_folder: str) -> None:
-        super().__init__(root)
+
+    def __init__(self, root_folder: str) -> None:
+        root_path = Path(root_folder)
+        root_node = FsInvisibleRoot(root_path.name)
+        populate_children(root_node, root_path)
+        super().__init__(root_node)
         self.root_folder = root_folder
+        self.root_path = root_path
+
+    # should return True if it was actually refreshed
+    def refresh(self):
+        populate_children(self.root, self.root_path)
 
     def get_selected_path(self, line) -> str:
-        path = []
+        return self.root_folder + '/' + '/'.join(self.selected_path(line))
+
+    # does not work for empty dirs, fix
+    def selected_path(self, line) -> List[str]:
+        path: List[str] = []
         node = self.rows[line]
         while True:
             path.append(node.name)
             node = node.parent
             if node is self.root:
-                return self.root_folder + '/' + '/'.join(reversed(path))
+                return list(reversed(path))
 
     def collapse(self, line) -> int:
         element = self.rows[line]

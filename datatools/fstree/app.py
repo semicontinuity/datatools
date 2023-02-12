@@ -1,30 +1,46 @@
 #!/usr/bin/env python3
 
 import sys
-from pathlib import Path
+from threading import Thread, Event
+from time import sleep
 
 from datatools.fstree.fs_tree_document import FsTreeDocument
-from datatools.fstree.fs_tree_model import populate_children, FsInvisibleRoot
 from datatools.fstree.run_grid import run_grid
 from datatools.tui.picotui_patch import patch_picotui
 
 
-def make_document(root: str) -> FsTreeDocument:
-    root_path = Path(root)
-    model_root = FsInvisibleRoot(root_path.name)
-    populate_children(model_root, root_path)
-    return FsTreeDocument(model_root, root)
+class PeriodicDocumentRefresher(Thread):
+
+    def __init__(self, document: FsTreeDocument):
+        Thread.__init__(self)
+        self._stop = Event()
+        self.document = document
+
+    def run(self):
+        while True:
+            self.document.refresh()
+            if self._stop.wait(2):
+                break
+
+    def stop(self):
+        self._stop.set()
 
 
-def main(root):
+def do_main(root: str):
     patch_picotui(2, 2)
-    exit_code, path = run_grid(make_document(root))
+    document = FsTreeDocument(root)
+    refresher = PeriodicDocumentRefresher(document)
+
+    refresher.start()
+    exit_code, path = run_grid(document)
     if path is not None:
         print(path)
+    refresher.stop()
+
     sys.exit(exit_code)
 
 
-if __name__ == "__main__":
+def main():
     paths = [p for p in sys.argv[1:] if not p.startswith('-')]
     if len(paths) == 0:
         root = '.'
@@ -32,5 +48,8 @@ if __name__ == "__main__":
         root = paths[0]
     else:
         sys.exit(1)
+    do_main(root)
 
-    main(root)
+
+if __name__ == "__main__":
+    main()
