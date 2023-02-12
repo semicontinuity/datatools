@@ -2,7 +2,6 @@
 
 import sys
 from threading import Thread, Event
-from time import sleep
 
 from datatools.fstree.fs_tree_document import FsTreeDocument
 from datatools.fstree.run_grid import run_grid
@@ -18,9 +17,9 @@ class PeriodicDocumentRefresher(Thread):
 
     def run(self):
         while True:
-            self.document.refresh()
             if self._stop.wait(2):
                 break
+            self.document.refresh()
 
     def stop(self):
         self._stop.set()

@@ -21,6 +21,8 @@ def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
 
         document.layout_for_height(screen_height)
         g = grid(document, GridContext(0, cursor_y, screen_width, screen_height))
+        document.listener = g
+
         res = g.loop()
         if res == KEY_ENTER:
             return EXIT_CODE_ENTER, document.get_selected_path(g.cur_line)
