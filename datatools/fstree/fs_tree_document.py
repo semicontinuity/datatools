@@ -22,8 +22,9 @@ class FsTreeDocument(TreeDocument):
     # should return True if it was actually refreshed
     def refresh(self):
         populate_children(self.root, self.root_path)
-        self.layout()
         if self.listener is not None:
+            self.layout_for_height(self.listener.dynamic_helper.screen_height)
+            self.listener.layout()
             self.listener.request_redraw()
 
     def get_selected_path(self, line) -> str:

@@ -69,7 +69,7 @@ def make_document(j):
     return JDocument(model)
 
 
-def loop(document):
+def loop(document: JDocument):
     g = make_json_tree_applet(document).g
     key_code = g.loop()
     if key_code == KEY_ENTER:
