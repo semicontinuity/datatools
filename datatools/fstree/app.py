@@ -28,6 +28,9 @@ class PeriodicDocumentRefresher(Thread):
 def do_main(root: str):
     patch_picotui(2, 2)
     document = FsTreeDocument(root)
+    if document.root.packed_size == 0:
+        sys.exit(1)
+
     refresher = PeriodicDocumentRefresher(document)
 
     refresher.start()

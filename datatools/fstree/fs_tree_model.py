@@ -1,8 +1,9 @@
-import os
 from pathlib import Path
-from stat import S_ISVTX, S_ISGID, S_ISUID
+from pathlib import Path
+from stat import S_IXOTH
 from typing import AnyStr, Tuple, List
 
+from datatools.fstree.palette import PALETTE_ALT
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
@@ -41,14 +42,8 @@ class FsTreeNode(TreeNode):
         return self.name, self.text_style()
 
     def text_style(self):
-        if self.st_mode & S_ISVTX:
-            return Style(fg=(64, 255, 64))
-        elif self.st_mode & S_ISGID:
-            return Style(fg=(255, 255, 64))
-        elif self.st_mode & S_ISUID:
-            return Style(fg=(255, 64, 64))
-        else:
-            return Style(fg=(192, 192, 192))
+        color_idx = ((self.st_mode >> 9) & 7) | ((self.st_mode & S_IXOTH) << 3)
+        return Style(fg=PALETTE_ALT[color_idx])
 
     def line_style(self):
         return Style(fg=(64, 64, 64))

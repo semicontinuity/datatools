@@ -4,7 +4,8 @@ from picotui.defs import KEY_ENTER, KEY_ESC, KEY_DELETE
 
 from datatools.fstree.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.fstree.fs_tree_document import FsTreeDocument
-from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE, EXIT_CODE_DELETE
+from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE, EXIT_CODE_DELETE, MODIFIER_ALT
+from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.picotui_patch import cursor_position
 from datatools.tui.picotui_util import *
 from datatools.tui.treeview.grid import grid, GridContext
@@ -26,6 +27,8 @@ def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
         res = g.loop()
         if res == KEY_ENTER:
             return EXIT_CODE_ENTER, document.get_selected_path(g.cur_line)
+        elif res == KEY_ALT_ENTER:
+            return (EXIT_CODE_ENTER | MODIFIER_ALT), document.get_selected_path(g.cur_line)
         elif res == KEY_DELETE:
             return EXIT_CODE_DELETE, document.get_selected_path(g.cur_line)
         elif res == KEY_ESC:
