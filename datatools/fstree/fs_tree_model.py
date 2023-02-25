@@ -9,6 +9,7 @@ from datatools.tui.treeview.treenode import TreeNode
 
 class FsTreeNode(TreeNode):
 
+    path: Path
     indent: int
     name: str
     padding: int
@@ -17,8 +18,9 @@ class FsTreeNode(TreeNode):
 
     st_mode: int
 
-    def __init__(self, name: str, indent=0, last_in_parent=True) -> None:
+    def __init__(self, path: Path, name: str, indent=0, last_in_parent=True) -> None:
         super().__init__(last_in_parent)
+        self.path = path
         self.name = name
         self.indent = indent
         self.padding = 0
@@ -47,26 +49,50 @@ class FsTreeNode(TreeNode):
     def line_style(self):
         return Style(fg=(64, 64, 64))
 
+    def refresh(self):
+        pass
+
 
 class FsFolder(FsTreeNode):
     elements: List[FsTreeNode]
 
-    def populate_children(self, path: Path, indent=0):
+    def __init__(self, path: Path, name: str, indent=0, last_in_parent=True) -> None:
+        super().__init__(path, name, indent, last_in_parent)
+        self.elements = []
+
+    def refresh(self):
+        self.st_mode = self.path.stat().st_mode
+
+        sub_paths = [sub_path for sub_path in sorted(self.path.iterdir()) if sub_path.is_dir()]
+
+        new_names = set(sub_path.name for sub_path in sub_paths)
+        existing_names = set(element.name for element in self.elements)
+        added_names = new_names - existing_names
+        name_to_element = {element.name: element for element in self.elements}
+
+        if len(self.elements) > 0:
+            self.elements[len(self.elements) - 1].last_in_parent = False
+
         children = []
-        sub_paths = [sub_path for sub_path in sorted(path.iterdir()) if sub_path.is_dir()]
         for i, sub_path in enumerate(sub_paths):
-            children.append(
-                make_model(sub_path, self, indent, sub_path.stat().st_mode, i == len(sub_paths) - 1))
+            if sub_path.name in added_names:
+                model = FsFolder(sub_path, sub_path.name, self.indent, False)
+                model.parent = self
+            else:
+                model = name_to_element[sub_path.name]
+            model.refresh()
+            model.last_in_parent = i == len(sub_paths) - 1
+            children.append(model)
         self.set_elements(children)
+
+    def set_elements(self, elements: List[FsTreeNode]):
+        self.elements = elements
+        self.packed_size = 1 + len(elements)
 
     def set_collapsed_recursive(self, collapsed: bool):
         super(FsFolder, self).set_collapsed_recursive(collapsed)
         for element in self.elements:
             element.set_collapsed_recursive(collapsed)
-
-    def set_elements(self, elements: List[FsTreeNode]):
-        self.elements = elements
-        self.packed_size = 1 + len(elements)
 
     def sub_elements(self) -> List[FsTreeNode]:
         return self.elements
@@ -124,11 +150,3 @@ class FsInvisibleRoot(FsFolder):
 
     def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
         return []
-
-
-def make_model(path: Path, parent: FsFolder = None, indent: int = 0, st_mode: int = 0, last: bool = True):
-    model_folder = FsFolder(path.name, indent, last)
-    model_folder.parent = parent
-    model_folder.st_mode = st_mode
-    model_folder.populate_children(path, indent + 2)
-    return model_folder

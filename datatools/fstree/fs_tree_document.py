@@ -12,8 +12,8 @@ class FsTreeDocument(TreeDocument):
 
     def __init__(self, root_folder: str) -> None:
         root_path = Path(root_folder)
-        root_node = FsInvisibleRoot(root_path.name)
-        root_node.populate_children(root_path)
+        root_node = FsInvisibleRoot(root_path, root_path.name)
+        root_node.refresh()
         super().__init__(root_node)
         self.root_folder = root_folder
         self.root_path = root_path
@@ -21,7 +21,7 @@ class FsTreeDocument(TreeDocument):
 
     # should return True if it was actually refreshed
     def refresh(self):
-        self.root.populate_children(self.root_path)
+        self.root.refresh()
         if self.listener is not None:
             self.layout_for_height(self.listener.dynamic_helper.screen_height)
             self.listener.layout()
