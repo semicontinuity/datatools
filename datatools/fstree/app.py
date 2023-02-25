@@ -25,19 +25,24 @@ class PeriodicDocumentRefresher(Thread):
         self._stop.set()
 
 
-def do_main(root: str):
+def do_main(root: str, watch: bool):
     patch_picotui(2, 2)
     document = FsTreeDocument(root)
     if document.root.packed_size == 0:
         sys.exit(1)
 
-    refresher = PeriodicDocumentRefresher(document)
+    if watch:
+        refresher = PeriodicDocumentRefresher(document)
 
-    refresher.start()
-    exit_code, path = run_grid(document)
-    if path is not None:
-        print(path)
-    refresher.stop()
+        refresher.start()
+        exit_code, path = run_grid(document)
+        if path is not None:
+            print(path)
+        refresher.stop()
+    else:
+        exit_code, path = run_grid(document)
+        if path is not None:
+            print(path)
 
     sys.exit(exit_code)
 
@@ -50,7 +55,7 @@ def main():
         root = paths[0]
     else:
         sys.exit(1)
-    do_main(root)
+    do_main(root, watch='-w' in sys.argv[1:])
 
 
 if __name__ == "__main__":

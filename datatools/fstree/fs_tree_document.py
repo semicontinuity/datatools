@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 
-from datatools.fstree.fs_tree_model import FsInvisibleRoot, populate_children
+from datatools.fstree.fs_tree_model import FsInvisibleRoot
 from datatools.tui.treeview.grid import WGrid
 from datatools.tui.treeview.treedocument import TreeDocument
 
@@ -13,7 +13,7 @@ class FsTreeDocument(TreeDocument):
     def __init__(self, root_folder: str) -> None:
         root_path = Path(root_folder)
         root_node = FsInvisibleRoot(root_path.name)
-        populate_children(root_node, root_path)
+        root_node.populate_children(root_path)
         super().__init__(root_node)
         self.root_folder = root_folder
         self.root_path = root_path
@@ -21,7 +21,7 @@ class FsTreeDocument(TreeDocument):
 
     # should return True if it was actually refreshed
     def refresh(self):
-        populate_children(self.root, self.root_path)
+        self.root.populate_children(self.root_path)
         if self.listener is not None:
             self.layout_for_height(self.listener.dynamic_helper.screen_height)
             self.listener.layout()

@@ -1,5 +1,4 @@
 from pathlib import Path
-from pathlib import Path
 from stat import S_IXOTH
 from typing import AnyStr, Tuple, List
 
@@ -51,6 +50,14 @@ class FsTreeNode(TreeNode):
 
 class FsFolder(FsTreeNode):
     elements: List[FsTreeNode]
+
+    def populate_children(self, path: Path, indent=0):
+        children = []
+        sub_paths = [sub_path for sub_path in sorted(path.iterdir()) if sub_path.is_dir()]
+        for i, sub_path in enumerate(sub_paths):
+            children.append(
+                make_model(sub_path, self, indent, sub_path.stat().st_mode, i == len(sub_paths) - 1))
+        self.set_elements(children)
 
     def set_collapsed_recursive(self, collapsed: bool):
         super(FsFolder, self).set_collapsed_recursive(collapsed)
@@ -106,7 +113,7 @@ class FsInvisibleRoot(FsFolder):
 
     def __iter__(self):
         for field in self.elements:
-           yield from field
+            yield from field
 
     def layout(self, line: int) -> int:
         self.line = line
@@ -123,13 +130,5 @@ def make_model(path: Path, parent: FsFolder = None, indent: int = 0, st_mode: in
     model_folder = FsFolder(path.name, indent, last)
     model_folder.parent = parent
     model_folder.st_mode = st_mode
-    populate_children(model_folder, path, indent + 2)
+    model_folder.populate_children(path, indent + 2)
     return model_folder
-
-
-def populate_children(model_folder: FsFolder, path: Path, indent = 0):
-    children = []
-    sub_paths = [sub_path for sub_path in sorted(path.iterdir()) if sub_path.is_dir()]
-    for i, sub_path in enumerate(sub_paths):
-        children.append(make_model(sub_path, model_folder, indent, sub_path.stat().st_mode, i == len(sub_paths) - 1))
-    model_folder.set_elements(children)
