@@ -7,6 +7,15 @@ from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
 
+def rmdir(directory):
+    for item in directory.iterdir():
+        if item.is_dir():
+            rmdir(item)
+        else:
+            item.unlink()
+    directory.rmdir()
+
+
 class FsTreeNode(TreeNode):
 
     path: Path
@@ -52,6 +61,12 @@ class FsTreeNode(TreeNode):
 
     def refresh(self):
         pass
+
+    def mark(self):
+        self.path.chmod(self.path.stat().st_mode | S_IXGRP)
+
+    def unmark(self):
+        self.path.chmod(self.path.stat().st_mode & ~S_IXGRP)
 
 
 class FsFolder(FsTreeNode):
@@ -130,6 +145,9 @@ class FsFolder(FsTreeNode):
             return []
         else:
             return [(('╘═' if self.collapsed else '└─') if self.last_in_parent else ('╞═' if self.collapsed else '├─'), self.line_style())]
+
+    def delete(self):
+        rmdir(self.path)
 
 
 class FsInvisibleRoot(FsFolder):

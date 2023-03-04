@@ -50,15 +50,23 @@ class FsTreeDocument(TreeDocument):
         else:
             return line
 
+    def delete(self, line):
+        node = self.get_node(line)
+        if node is not None:
+            node.delete()
+            self.refresh()
+
     def mark(self, line):
-        if node := self.get_node(line) is not None:
-            return
-        self.refresh()
+        node = self.get_node(line)
+        if node is not None:
+            node.mark()
+            self.refresh()
 
     def unmark(self, line):
-        if node := self.get_node(line) is not None:
-            return
-        self.refresh()
+        node = self.get_node(line)
+        if node is not None:
+            node.unmark()
+            self.refresh()
 
     def get_node(self, line) -> Optional[FsFolder]:
         return None if line < 0 or line >= self.height else self.rows[line]

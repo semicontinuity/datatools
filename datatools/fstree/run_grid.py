@@ -14,7 +14,9 @@ from datatools.tui.treeview.grid import grid, GridContext, WGrid
 class FsTreeGrid(WGrid):
 
     def handle_edit_key(self, key):
-        if key == KEY_ALT_INSERT:
+        if key == KEY_DELETE:
+            self.document.delete(self.cur_line)
+        elif key == KEY_ALT_INSERT:
             self.document.mark(self.cur_line)
         elif key == KEY_ALT_DELETE:
             self.document.unmark(self.cur_line)
