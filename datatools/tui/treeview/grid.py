@@ -62,11 +62,7 @@ class WGrid(WGridBase, Thread):
         return self.document.row_to_string(line, self.x_shift, self.x_shift + self.width)
 
     def handle_edit_key(self, key):
-        if key == KEY_ALT_INSERT:
-            self.mark()
-        elif key == KEY_ALT_DELETE:
-            self.unmark()
-        elif key in KEYS_TO_EXIT_CODES:
+        if key in KEYS_TO_EXIT_CODES:
             return key
 
     def handle_cursor_keys(self, key):

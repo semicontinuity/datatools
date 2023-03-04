@@ -36,3 +36,6 @@ class TreeNode:
 
     def set_collapsed_recursive(self, collapsed: bool):
         self.collapsed = collapsed
+
+    def custom_action(self, action: str, line: int):
+        pass

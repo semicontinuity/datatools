@@ -5,14 +5,21 @@ from picotui.defs import KEY_ENTER, KEY_ESC, KEY_DELETE
 from datatools.fstree.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.fstree.fs_tree_document import FsTreeDocument
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE, EXIT_CODE_DELETE, MODIFIER_ALT
-from datatools.tui.picotui_keys import KEY_ALT_ENTER
+from datatools.tui.picotui_keys import KEY_ALT_ENTER, KEY_ALT_INSERT, KEY_ALT_DELETE
 from datatools.tui.picotui_patch import cursor_position
 from datatools.tui.picotui_util import *
 from datatools.tui.treeview.grid import grid, GridContext, WGrid
 
 
 class FsTreeGrid(WGrid):
-    pass
+
+    def handle_edit_key(self, key):
+        if key == KEY_ALT_INSERT:
+            self.document.mark(self.cur_line)
+        elif key == KEY_ALT_DELETE:
+            self.document.unmark(self.cur_line)
+        else:
+            return super().handle_edit_key(key)
 
 
 def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
@@ -25,7 +32,7 @@ def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
         cursor_y, cursor_x = cursor_position()
 
         document.layout_for_height(screen_height)
-        g = grid(document, GridContext(0, cursor_y, screen_width, screen_height))
+        g = grid(document, GridContext(0, cursor_y, screen_width, screen_height), FsTreeGrid)
         document.listener = g
 
         res = g.loop()

@@ -1,5 +1,6 @@
 KEY_INSERT = b'\x1b[2~'
 KEY_ALT_INSERT = b'\x1b[2;3~'
+KEY_ALT_DELETE = b'\x1b[3;3~'
 KEY_ALT_ENTER = b'\x1b\x0d'
 
 KEY_ALT_RIGHT = b'\x1b[1;3C'
@@ -73,6 +74,3 @@ KEY_ALT_SHIFT_8 = b'\x1b*'
 KEY_ALT_SHIFT_9 = b'\x1b('
 
 KEY_CTRL_SPACE = b'\x00'
-
-KEY_ALT_INSERT = b'\x1b\x5b\x32\x3b\x33\x7e'
-KEY_ALT_DELETE = b'\x1b\x7f'

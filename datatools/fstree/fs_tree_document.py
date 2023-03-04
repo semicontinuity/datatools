@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
-from datatools.fstree.fs_tree_model import FsInvisibleRoot
+from datatools.fstree.fs_tree_model import FsInvisibleRoot, FsFolder
 from datatools.tui.treeview.grid import WGrid
 from datatools.tui.treeview.treedocument import TreeDocument
 
@@ -49,3 +49,16 @@ class FsTreeDocument(TreeDocument):
             return element.line
         else:
             return line
+
+    def mark(self, line):
+        if node := self.get_node(line) is not None:
+            return
+        self.refresh()
+
+    def unmark(self, line):
+        if node := self.get_node(line) is not None:
+            return
+        self.refresh()
+
+    def get_node(self, line) -> Optional[FsFolder]:
+        return None if line < 0 or line >= self.height else self.rows[line]
