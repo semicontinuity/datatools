@@ -8,7 +8,11 @@ from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE, EXIT_
 from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.picotui_patch import cursor_position
 from datatools.tui.picotui_util import *
-from datatools.tui.treeview.grid import grid, GridContext
+from datatools.tui.treeview.grid import grid, GridContext, WGrid
+
+
+class FsTreeGrid(WGrid):
+    pass
 
 
 def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:

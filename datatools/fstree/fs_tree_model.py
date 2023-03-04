@@ -1,5 +1,5 @@
 from pathlib import Path
-from stat import S_IXOTH
+from stat import S_IXOTH, S_IXGRP
 from typing import AnyStr, Tuple, List
 
 from datatools.fstree.palette import PALETTE_ALT
@@ -43,8 +43,9 @@ class FsTreeNode(TreeNode):
         return self.name, self.text_style()
 
     def text_style(self):
+        is_bold = self.st_mode & S_IXGRP
         color_idx = ((self.st_mode >> 9) & 7) | ((self.st_mode & S_IXOTH) << 3)
-        return Style(fg=PALETTE_ALT[color_idx])
+        return Style(attr=(0x01 if is_bold else 0x00), fg=PALETTE_ALT[color_idx])
 
     def line_style(self):
         return Style(fg=(64, 64, 64))

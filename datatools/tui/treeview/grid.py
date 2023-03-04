@@ -11,7 +11,7 @@ from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_U
 from datatools.jt.model.exit_codes_mapping_v2 import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
-    KEY_CTRL_RIGHT
+    KEY_CTRL_RIGHT, KEY_ALT_DELETE, KEY_ALT_INSERT
 from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
 from datatools.tui.treeview.treedocument import TreeDocument
 
@@ -62,7 +62,11 @@ class WGrid(WGridBase, Thread):
         return self.document.row_to_string(line, self.x_shift, self.x_shift + self.width)
 
     def handle_edit_key(self, key):
-        if key in KEYS_TO_EXIT_CODES:
+        if key == KEY_ALT_INSERT:
+            self.mark()
+        elif key == KEY_ALT_DELETE:
+            self.unmark()
+        elif key in KEYS_TO_EXIT_CODES:
             return key
 
     def handle_cursor_keys(self, key):
@@ -170,6 +174,12 @@ class WGrid(WGridBase, Thread):
                 input_reader.stop()
                 return res
 
+    def mark(self):
+        pass
+
+    def unmark(self):
+        pass
+
 
 class InputEventReader(Thread):
 
@@ -229,8 +239,8 @@ class GridContext:
     interactive: bool = True
 
 
-def grid(document: TreeDocument, grid_context: GridContext) -> WGrid:
-    g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, document, grid_context.interactive)
+def grid(document: TreeDocument, grid_context: GridContext, grid_class=WGrid) -> WGrid:
+    g = grid_class(grid_context.x, grid_context.y, grid_context.width, grid_context.height, document, grid_context.interactive)
     g.dynamic_helper = DynamicEditorSupport(grid_context.height, g)
     g.layout()
     return g
