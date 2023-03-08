@@ -11,7 +11,7 @@ from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_U
 from datatools.jt.model.exit_codes_mapping_v2 import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
-    KEY_CTRL_RIGHT, KEY_ALT_DELETE, KEY_ALT_INSERT
+    KEY_CTRL_RIGHT
 from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
 from datatools.tui.treeview.treedocument import TreeDocument
 
@@ -20,12 +20,14 @@ HORIZONTAL_PAGE_SIZE = 8
 
 class WGrid(WGridBase, Thread):
     dynamic_helper: DynamicEditorSupport
+    x_shift: int  # horizontal view shift size
 
     def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):
         super().__init__(x, y, width, height, 0, 0, interactive)
         self.x_shift = 0
         self.document = document
         self.event_queue = Queue()
+        self.total_lines = 0
 
     def layout(self):
         self.total_lines = self.document.height
@@ -236,7 +238,7 @@ class GridContext:
 
 
 def grid(document: TreeDocument, grid_context: GridContext, grid_class=WGrid) -> WGrid:
-    g = grid_class(grid_context.x, grid_context.y, grid_context.width, grid_context.height, document, grid_context.interactive)
+    g = grid_class(grid_context.x, grid_context.y, grid_context.width, min(grid_context.height, document.height), document, grid_context.interactive)
     g.dynamic_helper = DynamicEditorSupport(grid_context.height, g)
     g.layout()
     return g

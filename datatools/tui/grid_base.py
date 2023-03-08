@@ -1,19 +1,27 @@
 from picotui.editor import Editor
 
 from datatools.jt.model.exit_codes_mapping import *
+from datatools.util.logging import debug
 
 
 class WGridBase(Editor):
+    """
+    Base class for grid-like widgets.
+    Contains "top", "contents" and "bottom" parts.
+    total_lines can be greater than the size of contents.
+    """
+    total_lines: int
     y_top_offset: int
     y_bottom_offset: int
     rows_view_height: int
     interactive: bool = True
 
-    def __init__(self, x: int, y: int, width, height, y_top_offset, y_bottom_offset, interactive=True):
+    def __init__(self, x: int, y: int, width: int, height: int, y_top_offset, y_bottom_offset, interactive=True):
         super().__init__(x, y, width, height)
         self.y_top_offset = y_top_offset
         self.y_bottom_offset = y_bottom_offset
         self.rows_view_height = self.height - self.y_top_offset - self.y_bottom_offset
+        debug('WGridBase', rows_view_height=self.rows_view_height, height=self.height)
         self.interactive = interactive
 
     def handle_mouse(self, x, y):
@@ -121,6 +129,7 @@ class WGridBase(Editor):
         self.after_redraw()
 
     def redraw_body(self):
+        debug('redraw_body', total_lines=self.total_lines, top_line=self.top_line, rows_view_height=self.rows_view_height)
         self.redraw_lines(self.top_line, self.rows_view_height)
 
     def redraw_lines(self, line, num_lines):

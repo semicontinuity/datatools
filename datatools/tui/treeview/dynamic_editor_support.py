@@ -1,6 +1,7 @@
 from picotui.editor import Editor
 
 from datatools.tui.picotui_util import *
+from datatools.util.logging import debug
 
 
 class DynamicEditorSupport:
@@ -8,14 +9,19 @@ class DynamicEditorSupport:
         self.screen_height = screen_height
         self.target = target
 
-    def request_height(self, height):
+    def request_height(self, desired_height):
+        """
+        Changes geometry of the target Editor, trying to change its height to the desired value.
+        """
+        debug('request_height', desired_height=desired_height)
         old_h = self.target.height
-        self.target.height = min(height, self.screen_height)
+        self.target.height = min(desired_height, self.screen_height)
         if old_h > self.target.height:
             self.clear_box(self.target.x, self.target.y + self.target.height, self.target.width, old_h - self.target.height)
 
         overshoot = max(self.target.y + self.target.height - self.screen_height, 0)
         if overshoot > 0:
+            debug('request_height', overshoot=overshoot)
             Screen.goto(0, self.screen_height - 1)
             for _ in range(overshoot):
                 Screen.wr('\r\n')
