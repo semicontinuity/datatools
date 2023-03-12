@@ -14,6 +14,7 @@ from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END
     KEY_CTRL_RIGHT
 from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
 from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.util.logging import debug
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -32,6 +33,7 @@ class WGrid(WGridBase, Thread):
     def layout(self):
         self.total_lines = self.document.height
         self.dynamic_helper.request_height(self.total_lines)
+        debug('WGrid.layout', total_lines=self.total_lines, height=self.height)
 
     def show_line(self, line_content, line):
         raise AssertionError

@@ -1,11 +1,10 @@
-from picotui.editor import Editor
-
+from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_util import *
 from datatools.util.logging import debug
 
 
 class DynamicEditorSupport:
-    def __init__(self, screen_height: int, target: Editor):
+    def __init__(self, screen_height: int, target: WGridBase):
         self.screen_height = screen_height
         self.target = target
 
@@ -13,12 +12,14 @@ class DynamicEditorSupport:
         """
         Changes geometry of the target Editor, trying to change its height to the desired value.
         """
-        debug('request_height', desired_height=desired_height)
+        debug('request_height', desired_height=desired_height, screen_height=self.screen_height)
         old_h = self.target.height
-        self.target.height = min(desired_height, self.screen_height)
+        self.target.set_height(min(desired_height, self.screen_height))
         if old_h > self.target.height:
+            # view has shrunk
             self.clear_box(self.target.x, self.target.y + self.target.height, self.target.width, old_h - self.target.height)
 
+        debug('request_height', target_y=self.target.y, target_height=self.target.height)
         overshoot = max(self.target.y + self.target.height - self.screen_height, 0)
         if overshoot > 0:
             debug('request_height', overshoot=overshoot)

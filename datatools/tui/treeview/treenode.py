@@ -8,8 +8,8 @@ class TreeNode:
     last_in_parent: bool
 
     parent: Optional['TreeNode']
-    line: int
-    size: int
+    line: int  # y position (in lines)
+    size: int  # size (in lines)
     collapsed: bool
 
     def __init__(self, last_in_parent=True) -> None:

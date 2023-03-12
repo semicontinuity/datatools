@@ -20,9 +20,13 @@ class WGridBase(Editor):
         super().__init__(x, y, width, height)
         self.y_top_offset = y_top_offset
         self.y_bottom_offset = y_bottom_offset
+        self.set_height(height)
+        self.interactive = interactive
+
+    def set_height(self, height):
+        self.height = height
         self.rows_view_height = self.height - self.y_top_offset - self.y_bottom_offset
         debug('WGridBase', rows_view_height=self.rows_view_height, height=self.height)
-        self.interactive = interactive
 
     def handle_mouse(self, x, y):
         pass
@@ -124,12 +128,13 @@ class WGridBase(Editor):
         pass
 
     def redraw_content(self):
+        debug('WGridBase.redraw_content')
         self.before_redraw()
         self.redraw_body()
         self.after_redraw()
 
     def redraw_body(self):
-        debug('redraw_body', total_lines=self.total_lines, top_line=self.top_line, rows_view_height=self.rows_view_height)
+        debug('WGridBase.redraw_body', total_lines=self.total_lines, top_line=self.top_line, rows_view_height=self.rows_view_height)
         self.redraw_lines(self.top_line, self.rows_view_height)
 
     def redraw_lines(self, line, num_lines):

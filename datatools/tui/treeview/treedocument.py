@@ -20,6 +20,7 @@ class TreeDocument:
         self.layout()
 
     def layout(self):
+        # Iterate over visible child nodes (recursively) to compute geometry
         width = 0
         height = 0
         rows = []
@@ -29,10 +30,12 @@ class TreeDocument:
             rows.append(row)
             height += 1
 
-        self.root.layout(0)
+        self.rows = rows
         self.width = width
         self.height = height
-        self.rows = rows
+
+        # Assign positions to each visible line (recursively)
+        self.root.layout(0)
 
     def optimize_layout(self, height):
         self.root.optimize_layout(height)

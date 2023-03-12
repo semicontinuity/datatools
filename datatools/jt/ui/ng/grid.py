@@ -10,6 +10,7 @@ from datatools.tui.ansi import ANSI_ATTR_OVERLINE, OVERLINE_BYTES, NOT_INVERTED_
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2
+from datatools.util.logging import debug
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -45,6 +46,7 @@ class WGrid(WGridBase):
         self.column_ends = column_ends
 
     def redraw(self):
+        debug('WGrid.redraw')
         self.before_redraw()
         self.redraw_body()
         self.redraw_footer()
