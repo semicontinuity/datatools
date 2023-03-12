@@ -1,5 +1,5 @@
 from pathlib import Path
-from stat import S_IXOTH, S_IXGRP
+from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH
 from typing import AnyStr, Tuple, List
 
 from datatools.fstree.palette import PALETTE_ALT
@@ -52,9 +52,10 @@ class FsTreeNode(TreeNode):
         return self.name, self.text_style()
 
     def text_style(self):
-        is_bold = self.st_mode & S_IXGRP
-        color_idx = ((self.st_mode >> 9) & 7) | ((self.st_mode & S_IXOTH) << 3)
-        return Style(attr=(0x01 if is_bold else 0x00), fg=PALETTE_ALT[color_idx])
+        is_bold = self.st_mode & S_IXOTH
+        is_italic = self.st_mode & S_IWOTH
+        color_idx = ((self.st_mode & S_IROTH) << 1) | ((self.st_mode & S_IRWXG) >> 3)
+        return Style(attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00), fg=PALETTE_ALT[color_idx])
 
     def line_style(self):
         return Style(fg=(64, 64, 64))
@@ -63,10 +64,12 @@ class FsTreeNode(TreeNode):
         pass
 
     def mark(self):
-        self.path.chmod(self.path.stat().st_mode | S_IXGRP)
+        # Sets bold
+        self.path.chmod(self.path.stat().st_mode | S_IXOTH)
 
     def unmark(self):
-        self.path.chmod(self.path.stat().st_mode & ~S_IXGRP)
+        # Clears bold
+        self.path.chmod(self.path.stat().st_mode & ~S_IXOTH)
 
 
 class FsFolder(FsTreeNode):
