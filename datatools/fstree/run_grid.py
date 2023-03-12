@@ -15,11 +15,19 @@ class FsTreeGrid(WGrid):
 
     def handle_edit_key(self, key):
         if key == KEY_DELETE:
-            self.document.delete(self.cur_line)
+            node = self.document.get_node(self.cur_line)
+            node.delete()
+            self.document.refresh()
+            if self.document.root.is_empty():
+                return KEY_ESC
         elif key == KEY_ALT_INSERT:
-            self.document.mark(self.cur_line)
+            node = self.document.get_node(self.cur_line)
+            node.mark()
+            self.document.refresh()
         elif key == KEY_ALT_DELETE:
-            self.document.unmark(self.cur_line)
+            node = self.document.get_node(self.cur_line)
+            node.unmark()
+            self.document.refresh()
         else:
             return super().handle_edit_key(key)
 

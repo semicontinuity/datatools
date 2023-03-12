@@ -169,3 +169,6 @@ class FsInvisibleRoot(FsFolder):
 
     def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
         return []
+
+    def is_empty(self) -> bool:
+        return len(self.elements) == 0

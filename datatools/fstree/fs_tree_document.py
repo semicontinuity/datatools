@@ -22,7 +22,7 @@ class FsTreeDocument(TreeDocument):
     # should return True if it was actually refreshed
     def refresh(self):
         self.root.refresh()
-        if self.listener is not None:
+        if self.listener is not None and not self.root.is_empty():
             self.layout_for_height(self.listener.dynamic_helper.screen_height)
             self.listener.layout()
             self.listener.request_redraw()
@@ -49,24 +49,6 @@ class FsTreeDocument(TreeDocument):
             return element.line
         else:
             return line
-
-    def delete(self, line):
-        node = self.get_node(line)
-        if node is not None:
-            node.delete()
-            self.refresh()
-
-    def mark(self, line):
-        node = self.get_node(line)
-        if node is not None:
-            node.mark()
-            self.refresh()
-
-    def unmark(self, line):
-        node = self.get_node(line)
-        if node is not None:
-            node.unmark()
-            self.refresh()
 
     def get_node(self, line) -> Optional[FsFolder]:
         return None if line < 0 or line >= self.height else self.rows[line]
