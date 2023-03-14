@@ -48,6 +48,7 @@ KEY_CTRL_F10 = b'\x1b[21;5~'
 KEY_CTRL_F11 = b'\x1b[23;5~'
 KEY_CTRL_F12 = b'\x1b[24;5~'
 
+KEY_F11 = b'\x1b[23~'
 KEY_F12 = b'\x1b[24~'
 KEY_ALT_F12 = b'\x1b[24;3~'
 
