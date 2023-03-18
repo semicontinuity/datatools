@@ -32,6 +32,7 @@ class WGrid(WGridBase, Thread):
 
     def layout(self):
         self.total_lines = self.document.height
+        self.cur_line = min(self.cur_line, self.document.height - 1)
         self.dynamic_helper.request_height(self.total_lines)
         debug('WGrid.layout', total_lines=self.total_lines, height=self.height)
 
