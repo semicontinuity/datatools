@@ -1,3 +1,4 @@
+import os, re
 from pathlib import Path
 from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH
 from typing import AnyStr, Tuple, List
@@ -6,8 +7,10 @@ from datatools.fstree.palette import PALETTE_ALT
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
+NAME_PATTERN = re.compile(os.getenv("NAME_PATTERN", "^.+$"))
 
-def rmdir(directory):
+
+def rmdir(directory: Path):
     for item in directory.iterdir():
         if item.is_dir():
             rmdir(item)
@@ -82,7 +85,8 @@ class FsFolder(FsTreeNode):
     def refresh(self):
         self.st_mode = self.path.stat().st_mode
 
-        sub_paths = [sub_path for sub_path in sorted(self.path.iterdir()) if sub_path.is_dir()]
+        sub_paths = [sub_path for sub_path in sorted(self.path.iterdir()) if sub_path.is_dir() and NAME_PATTERN.match(
+            sub_path.name)]
 
         new_names = set(sub_path.name for sub_path in sub_paths)
         existing_names = set(element.name for element in self.elements)
