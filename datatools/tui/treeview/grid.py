@@ -36,6 +36,17 @@ class WGrid(WGridBase, Thread):
         self.dynamic_helper.request_height(self.total_lines)
         debug('WGrid.layout', total_lines=self.total_lines, height=self.height)
 
+    def ensure_visible(self, line: int):
+        if line is not None:
+            if line >= self.top_line + self.height:
+                delta = line - self.cur_line
+                self.top_line = min(self.top_line + delta, self.document.height - self.height)
+            elif line < self.top_line:
+                delta = self.cur_line - line
+                self.top_line = max(self.top_line - delta, 0)
+            self.cur_line = line
+            self.redraw_body()  # optimize
+
     def show_line(self, line_content, line):
         raise AssertionError
 

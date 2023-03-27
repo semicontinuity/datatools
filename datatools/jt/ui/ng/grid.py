@@ -80,7 +80,6 @@ class WGrid(WGridBase):
         if not self.interactive:
             self.wr('\n')
 
-
     def render_footer(self):
         buffer = bytearray()
         buffer += ansi_attr_bytes(ANSI_ATTR_OVERLINE)
