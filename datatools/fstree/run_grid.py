@@ -34,7 +34,7 @@ class FsTreeGrid(WGrid):
             node = self.document.get_node(self.cur_line)
             node.unmark()
             self.document.refresh()
-        if key == KEY_BACKSPACE:
+        elif key == KEY_BACKSPACE:
             self.search_str = None
         else:
             result = super().handle_edit_key(key)
