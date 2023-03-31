@@ -75,3 +75,4 @@ KEY_ALT_SHIFT_8 = b'\x1b*'
 KEY_ALT_SHIFT_9 = b'\x1b('
 
 KEY_CTRL_SPACE = b'\x00'
+KEY_CTRL_ALT_SPACE = b'\x1b\x00'
