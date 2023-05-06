@@ -2,11 +2,13 @@ from typing import Dict
 
 from datatools.json.util import is_primitive
 from datatools.jt.model.metadata import ColumnMetadata, STEREOTYPE_UNKNOWN, STEREOTYPE_TIME_SERIES, Metadata
+from datatools.util.logging import debug
 from datatools.util.time_series_util import time_series_list_summary
 from datatools.util.time_util import infer_timestamp_format
 
 
 def enrich_metadata(data, metadata: Metadata) -> Metadata:
+    debug('enrich_metadata')
     infer_metadata_time_fields(data, metadata)
     infer_metadata1(data, metadata.columns)
     return metadata
