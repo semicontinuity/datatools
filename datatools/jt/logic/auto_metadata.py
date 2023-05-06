@@ -8,13 +8,14 @@ from datatools.util.time_util import infer_timestamp_format
 
 
 def enrich_metadata(data, metadata: Metadata) -> Metadata:
-    debug('enrich_metadata')
     infer_metadata_time_fields(data, metadata)
+    debug('enrich_metadata', metadata_columns=metadata.columns.keys())
     infer_metadata1(data, metadata.columns)
     return metadata
 
 
 def infer_metadata_time_fields(data, metadata):
+    debug('infer_metadata_time_fields', metadata_columns_keys=metadata.columns.keys())
     timestamp_formats = infer_metadata0(data, metadata.columns)
     good_timestamp_formats = [(k, v) for k, v in timestamp_formats.items() if v != '']
     if len(good_timestamp_formats) == 1:
@@ -50,8 +51,11 @@ def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
 
                     descriptor = time_series_list_summary(value)
                     if descriptor is not None:
-                        update_time_series_metadata(column_metadata, descriptor)
+                        if not update_time_series_metadata(column_metadata, descriptor):
+                            debug('infer_metadata0', value=value)
                         continue
+
+                debug('infer_metadata0', key=key, stereotype=STEREOTYPE_UNKNOWN)
                 column_metadata.stereotype = STEREOTYPE_UNKNOWN
             else:
                 column_metadata.type = 'primitive'
@@ -67,26 +71,36 @@ def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
     return timestamp_formats
 
 
-def update_time_series_metadata(column_metadata: ColumnMetadata, descriptor):
+def update_time_series_metadata(column_metadata: ColumnMetadata, descriptor) -> bool:
     if column_metadata.stereotype is None:
+        # First occurrence
         column_metadata.stereotype = STEREOTYPE_TIME_SERIES
         column_metadata.time_series_timestamp_field = descriptor[0]
         column_metadata.time_series_timestamp_format = descriptor[1]
         column_metadata.min_value = descriptor[2]
         column_metadata.max_value = descriptor[3]
-        return
+        return True
 
-    if column_metadata.stereotype == STEREOTYPE_TIME_SERIES \
-            and column_metadata.time_series_timestamp_field == descriptor[0]\
-            and column_metadata.time_series_timestamp_format == descriptor[1]:
-        column_metadata.min_value = accumulate(min, column_metadata.min_value, descriptor[2])
-        column_metadata.max_value = accumulate(max, column_metadata.max_value, descriptor[3])
-        return
+    if column_metadata.stereotype == STEREOTYPE_TIME_SERIES:
+        # Subsequent occurrences:
+        if descriptor[0] == column_metadata.time_series_timestamp_field and descriptor[1] == column_metadata.time_series_timestamp_format:
+            column_metadata.min_value = accumulate(min, column_metadata.min_value, descriptor[2])
+            column_metadata.max_value = accumulate(max, column_metadata.max_value, descriptor[3])
+            return True
+        else:
+            debug(
+                'infer_metadata0',
+                timestamp_field=descriptor[0],
+                prev_timestamp_field=column_metadata.time_series_timestamp_field,
+                timestamp_format=descriptor[1],
+                prev_timestamp_format=column_metadata.time_series_timestamp_format,
+            )
 
     column_metadata.stereotype = STEREOTYPE_UNKNOWN
     column_metadata.time_series_timestamp_format = None
     column_metadata.min_value = None
     column_metadata.max_value = None
+    return False
 
 
 def infer_metadata1(data, column_metadata_map):
