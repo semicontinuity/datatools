@@ -10,13 +10,13 @@ from datatools.tui.treeview.treenode import TreeNode
 NAME_PATTERN = re.compile(os.getenv("NAME_PATTERN", "^.+$"))
 
 
-def rmdir(directory: Path):
-    for item in directory.iterdir():
-        if item.is_dir():
-            rmdir(item)
-        else:
-            item.unlink()
-    directory.rmdir()
+def remove(path: Path):
+    if path.is_file() or path.is_symlink():
+        path.unlink()
+    elif path.is_dir():
+        for item in path.iterdir():
+            remove(item)
+        path.rmdir()
 
 
 class FsTreeNode(TreeNode):
@@ -154,7 +154,7 @@ class FsFolder(FsTreeNode):
             return [(('╘═' if self.collapsed else '└─') if self.last_in_parent else ('╞═' if self.collapsed else '├─'), self.line_style())]
 
     def delete(self):
-        rmdir(self.path)
+        remove(self.path)
 
 
 class FsInvisibleRoot(FsFolder):
