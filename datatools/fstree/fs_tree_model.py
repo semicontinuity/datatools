@@ -1,4 +1,6 @@
-import os, re
+import importlib
+import os
+import re
 from pathlib import Path
 from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH
 from typing import AnyStr, Tuple, List, Callable
@@ -12,6 +14,15 @@ NAME_PATTERN = re.compile(os.getenv("NAME_PATTERN", "^.+$"))
 
 def default_predicate(f: Path) -> bool:
     return bool(NAME_PATTERN.match(f.name))
+
+
+predicate_func_module = os.getenv("PREDICATE_FUNC_MODULE")
+predicate_func_name = os.getenv("PREDICATE_FUNC_NAME")
+
+if predicate_func_module and predicate_func_name:
+    predicate_f = getattr(importlib.import_module(predicate_func_module), predicate_func_name)
+else:
+    predicate_f = default_predicate
 
 
 def remove(path: Path):
@@ -106,7 +117,7 @@ class FsFolder(FsTreeNode):
         children = []
         for i, sub_path in enumerate(sub_paths):
             if sub_path.name in added_names:
-                model = FsFolder(sub_path, sub_path.name, self.indent, last_in_parent=False, predicate=default_predicate)
+                model = FsFolder(sub_path, sub_path.name, self.indent, last_in_parent=False, predicate=predicate_f)
                 model.parent = self
             else:
                 model = name_to_element[sub_path.name]
