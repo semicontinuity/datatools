@@ -1,13 +1,17 @@
 import os, re
 from pathlib import Path
 from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH
-from typing import AnyStr, Tuple, List
+from typing import AnyStr, Tuple, List, Callable
 
 from datatools.fstree.palette import PALETTE_ALT
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
 NAME_PATTERN = re.compile(os.getenv("NAME_PATTERN", "^.+$"))
+
+
+def default_predicate(f: Path) -> bool:
+    return bool(NAME_PATTERN.match(f.name))
 
 
 def remove(path: Path):
@@ -77,16 +81,19 @@ class FsTreeNode(TreeNode):
 
 class FsFolder(FsTreeNode):
     elements: List[FsTreeNode]
+    predicate: Callable[[Path], bool]
 
-    def __init__(self, path: Path, name: str, indent=0, last_in_parent=True) -> None:
+    def __init__(self, path: Path, name: str, indent=0, last_in_parent=True, predicate: Callable[[Path], bool] = lambda p: True) -> None:
         super().__init__(path, name, indent, last_in_parent)
+        self.predicate = predicate
         self.elements = []
 
     def refresh(self):
         self.st_mode = self.path.stat().st_mode
 
-        sub_paths = [sub_path for sub_path in sorted(self.path.iterdir()) if sub_path.is_dir() and NAME_PATTERN.match(
-            sub_path.name)]
+        sub_paths = [
+            sub_path for sub_path in sorted(self.path.iterdir()) if sub_path.is_dir() and self.predicate(sub_path)
+        ]
 
         new_names = set(sub_path.name for sub_path in sub_paths)
         existing_names = set(element.name for element in self.elements)
@@ -99,7 +106,7 @@ class FsFolder(FsTreeNode):
         children = []
         for i, sub_path in enumerate(sub_paths):
             if sub_path.name in added_names:
-                model = FsFolder(sub_path, sub_path.name, self.indent, False)
+                model = FsFolder(sub_path, sub_path.name, self.indent, last_in_parent=False, predicate=default_predicate)
                 model.parent = self
             else:
                 model = name_to_element[sub_path.name]

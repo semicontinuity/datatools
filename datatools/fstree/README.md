@@ -1,3 +1,9 @@
+#### Running
+
+* Arg: folder
+* Env var `NAME_PATTERN`
+
+
 #### Coloring
 
 Using permission bits.
