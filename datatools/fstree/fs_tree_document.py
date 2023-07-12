@@ -1,3 +1,6 @@
+import importlib
+import os
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -6,13 +9,29 @@ from datatools.tui.treeview.grid import WGrid
 from datatools.tui.treeview.treedocument import TreeDocument
 
 
+NAME_PATTERN = re.compile(os.getenv("NAME_PATTERN", "^.+$"))
+
+
+def default_predicate(f: Path) -> bool:
+    return bool(NAME_PATTERN.match(f.name))
+
+
+predicate_func_module = os.getenv("PREDICATE_FUNC_MODULE")
+predicate_func_name = os.getenv("PREDICATE_FUNC_NAME")
+
+if predicate_func_module and predicate_func_name:
+    predicate_f = getattr(importlib.import_module(predicate_func_module), predicate_func_name)
+else:
+    predicate_f = default_predicate
+
+
 class FsTreeDocument(TreeDocument):
 
     listener: WGrid
 
     def __init__(self, root_folder: str) -> None:
         root_path = Path(root_folder)
-        root_node = FsInvisibleRoot(root_path, root_path.name)
+        root_node = FsInvisibleRoot(root_path, root_path.name, predicate=predicate_f)
         root_node.refresh()
         super().__init__(root_node)
         self.root_folder = root_folder
