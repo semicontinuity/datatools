@@ -54,7 +54,7 @@ class AnsiToolkit:
             return self.empty()
 
         elif descriptor.is_uniform():
-            debug("node", descriptor={"is_uniform":True})
+            debug("node", descriptor={"is_uniform": True})
             # if descriptor.item.is_uniform() and descriptor.length is not None and descriptor.item.length is not None:
             #     return self.matrix_node(j, descriptor)
 
@@ -115,6 +115,7 @@ class AnsiToolkit:
         return self.array(j, descriptor)
 
     def uniform_table_node(self, j, descriptor):
+        debug("uniform_table_node")
         item_descriptor = descriptor.item
         # column_headers = HBox([HeaderNode(column_name, False) for column_name in item_descriptor.dict])
         # body = RegularTable([
@@ -142,7 +143,6 @@ class AnsiToolkit:
         ])
 
         return ComplexTableNode(body, column_headers, row_headers)
-
 
     def uniform_table_node2(self, j, descriptor: Descriptor):
         debug("uniform_table_node2", descriptor=type(descriptor))
@@ -307,6 +307,9 @@ class CompositeTableNode(RegularTable):
     def consolidate_min_widths(container1, container2):
         widths1 = container1.compute_widths()
         widths2 = container2.compute_widths()
+        debug("consolidate_min_widths", widths1=widths1, widths2=widths2)
+        if len(widths1) != len(widths2):
+            debug("consolidate_min_widths", container1=container1, container2=container2)
         container2.set_min_widths(widths1)
         container1.set_min_widths(widths2)
 
@@ -383,8 +386,10 @@ def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Descriptor:
 
 
 def column_headers_node_for_descriptor(descriptor: Descriptor, vertical: bool, leaf_sink: List = None, name=None):
+    debug("column_headers_node_for_descriptor")
+
     leaf_sink = leaf_sink if leaf_sink is not None else []
-    if descriptor.is_dict() and descriptor.is_not_empty():
+    if (descriptor.is_dict() or descriptor.is_list()) and descriptor.is_not_empty():
         nodes = [column_headers_node_for_descriptor(d, vertical, leaf_sink, name) for name, d in descriptor.items().items()]
         if name is None:
             return (NestedRowHeaders if vertical else NestedColumnHeaders)(nodes, leaf_sink)
@@ -393,6 +398,7 @@ def column_headers_node_for_descriptor(descriptor: Descriptor, vertical: bool, l
                 HeaderNode(name, False), (VBox if vertical else HBox)(nodes)
             ])
     else:
+        debug("column_headers_node_for_descriptor", name=name)
         leaf = HeaderNode(name, False)
         leaf_sink.append(leaf)
         return leaf

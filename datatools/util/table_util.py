@@ -1,5 +1,7 @@
 from typing import List
 
+from datatools.util.logging import debug
+
 
 class Block:
     x: int
@@ -224,6 +226,7 @@ class RegularTable(Container):
 
     def set_min_widths(self, sizes: List[int]):
         for row in self.contents:
+            debug('RegularTable', contents_len=len(self.contents), row_contents_len=len(row.contents), sizes_len=len(sizes))
             for i in range(len(row.contents)):
                 row.contents[i].width = max(row.contents[i].width, sizes[i])
 
