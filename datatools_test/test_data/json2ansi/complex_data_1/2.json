@@ -1,0 +1,47 @@
+{
+  "discrete_inputs": [
+    {
+      "address": 0,
+      "contents": [
+        {
+          "alias": "WATER_LEAK_SENSOR__A",
+          "value": 0
+        },
+        {
+          "alias": "WATER_LEAK_SENSOR__B",
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "coils": [
+    {
+      "address": 0,
+      "contents": [
+        {
+          "alias": "VALVE_CONTROL__1__ACTUATOR_POWER",
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "holding_registers": [
+    {
+      "address": 0,
+      "contents": [
+        {
+          "alias": "BASIC_RTC__DOW_HH",
+          "value": 2
+        },
+        {
+          "alias": "BASIC_RTC__MM_SS",
+          "value": 6197
+        },
+        {
+          "alias": "UPTIME__HOURS",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "discrete_inputs": [
+    {
+      "address": 0,
+      "contents": [
+        {
+          "alias": "WATER_LEAK_SENSOR__A",
+          "value": 0
+        },
+        {
+          "alias": "WATER_LEAK_SENSOR__B",
+          "value": 0
+        },
+        {
+          "alias": "WATER_LEAK_SENSOR__C",
+          "value": 0
+        },
+        {
+          "alias": "WATER_LEAK_SENSOR__D",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_LIMIT_SWITCH__A",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_LIMIT_SWITCH__B",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_LIMIT_SWITCH__C",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_LIMIT_SWITCH__D",
+          "value": 0
+        },
+        {
+          "alias": "EXTRA_INPUT__A",
+          "value": 0
+        },
+        {
+          "alias": "EXTRA_INPUT__B",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON__A",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON__B",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON__C",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON__D",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON__E",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON__F",
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "coils": [
+    {
+      "address": 0,
+      "contents": [
+        {
+          "alias": "VALVE_CONTROL__1__ACTUATOR_POWER",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROL__1__ACTUATOR_DIRECTION",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROL__2__ACTUATOR_POWER",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROL__2__ACTUATOR_DIRECTION",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__04",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__05",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__06",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__07",
+          "value": 0
+        },
+        {
+          "alias": "EXTRA_OUTPUT__A",
+          "value": 0
+        },
+        {
+          "alias": "EXTRA_OUTPUT__B",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON_LED__A",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON_LED__B",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON_LED__C",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON_LED__D",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON_LED__E",
+          "value": 0
+        },
+        {
+          "alias": "BUTTON_LED__F",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROLLER__1__ACTIVE",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROLLER__1__TARGET_POSITION",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROLLER__2__ACTIVE",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROLLER__2__TARGET_POSITION",
+          "value": 0
+        },
+        {
+          "alias": "CONTACTOR_CONTROLLER__ACTIVE",
+          "value": 0
+        },
+        {
+          "alias": "CONTACTOR_CONTROLLER__TARGET_POSITION",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__22",
+          "value": 0
+        },
+        {
+          "alias": "BUZZER__REQUESTED",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROLLER__1__FAILURE",
+          "value": 0
+        },
+        {
+          "alias": "VALVE_CONTROLLER__2__FAILURE",
+          "value": 0
+        },
+        {
+          "alias": "CONTACTOR_CONTROLLER__FAILURE",
+          "value": 0
+        },
+        {
+          "alias": "WATER_LEAK_SENSORS_CONTROLLER__FAILURE",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__28",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__29",
+          "value": 0
+        },
+        {
+          "alias": "RESERVED__30",
+          "value": 0
+        },
+        {
+          "alias": "BUZZER__RUNNING",
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "holding_registers": [
+    {
+      "address": 0,
+      "contents": [
+        {
+          "alias": "BASIC_RTC__DOW_HH",
+          "value": 2
+        },
+        {
+          "alias": "BASIC_RTC__MM_SS",
+          "value": 6197
+        },
+        {
+          "alias": "UPTIME__HOURS",
+          "value": 2
+        },
+        {
+          "alias": "UPTIME__SECONDS",
+          "value": 1493
+        },
+        {
+          "alias": "MODBUS__DEVICE_ADDRESS",
+          "value": 2
+        },
+        {
+          "alias": "MODBUS__PORT_SPEED",
+          "value": 48
+        },
+        {
+          "alias": "REBOOT",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

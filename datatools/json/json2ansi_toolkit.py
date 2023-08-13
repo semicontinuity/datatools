@@ -114,7 +114,7 @@ class AnsiToolkit:
     def matrix_node(self, j, descriptor):
         return self.array(j, descriptor)
 
-    def uniform_table_node(self, j, descriptor):
+    def uniform_table_node(self, j, descriptor: MappingDescriptor):
         debug("uniform_table_node")
         item_descriptor = descriptor.item
         # column_headers = HBox([HeaderNode(column_name, False) for column_name in item_descriptor.dict])
@@ -144,13 +144,16 @@ class AnsiToolkit:
 
         return ComplexTableNode(body, column_headers, row_headers)
 
-    def uniform_table_node2(self, j, descriptor: Descriptor):
+    def uniform_table_node2(self, j, descriptor: MappingDescriptor):
         debug("uniform_table_node2", descriptor=type(descriptor))
-        row_paths = compute_row_paths(j, descriptor)
+        row_paths, generic_row_descriptor = compute_row_paths(j, descriptor)
+        debug("uniform_table_node2", row_paths=row_paths, generic_row_descriptor=generic_row_descriptor)
         # item_descriptor = descriptor.inner_item()
-        item_descriptor = descriptor.item
+        # item_descriptor = descriptor.item
+        item_descriptor = generic_row_descriptor
         debug("uniform_table_node2", item_descriptor=item_descriptor)
         column_paths = compute_column_paths(item_descriptor)
+        debug("uniform_table_node2", column_paths=column_paths)
 
         row_headers = row_headers_node_for_paths(j, descriptor)
         # row_headers = row_headers_node_for_descriptor(j, descriptor)
@@ -175,6 +178,7 @@ class AnsiToolkit:
         return ComplexTableNode(body, column_headers, row_headers)
 
     def uniform_table_node2_tr(self, row, row_descriptor, column_paths, column_id_to_attrs):
+        debug("uniform_table_node2_tr", row_descriptor=row_descriptor)
         return HBox([
             self.uniform_table_cell_node(row, row_descriptor, path, column_id_to_attrs.get(path))
             for path in column_paths
@@ -182,14 +186,18 @@ class AnsiToolkit:
 
     def uniform_table_cell_node(self, row, item_descriptor, path, attrs: ColumnAttrs = None):
         child = child_by_path(row, path)
+        debug("uniform_table_cell_node", path=path, child=child)
         if child is ...:
             return self.empty()
         else:
+            # self.discovery.
             d = descriptor_by_path(item_descriptor, path)
+            # debug("uniform_table_cell_node", d=d)
             if d.is_primitive():
                 return self.primitive(child, attrs)
             else:
-                return self.node(child, d)
+                # return self.node(child, d)
+                return self.block(child)
 
 
 class PageNode:
@@ -377,12 +385,6 @@ class ComplexTableNode(CompositeTableNode):
                 HBox([row_headers, body])
             ]
         )
-
-
-def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Descriptor:
-    for name in path:
-        d = d.items()[name]
-    return d
 
 
 def column_headers_node_for_descriptor(descriptor: Descriptor, vertical: bool, leaf_sink: List = None, name=None):

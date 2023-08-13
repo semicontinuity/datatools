@@ -35,6 +35,7 @@ class Descriptor:
 
     @staticmethod
     def merge(descriptors: List['Descriptor']) -> 'Descriptor':
+        debug("Descriptor.merge")
         assert len(descriptors) > 0
 
         descriptor0 = descriptors[0]
@@ -42,12 +43,16 @@ class Descriptor:
             return descriptor0
 
         for d in descriptors:
+            debug("Descriptor.merge", d=d)
+
             if d is descriptor0:
                 continue
             if type(d) != type(descriptor0):
                 return AnyDescriptor()
 
-        return descriptor0.merge_with_descriptors(descriptors[1:])
+        descriptor = descriptor0.merge_with_descriptors(descriptors[1:])
+        debug("Descriptor.merge", descriptor=descriptor)
+        return descriptor
 
 
 @dataclass
@@ -197,6 +202,8 @@ class MappingDescriptor(Descriptor):
         # else:
         #     return item
 
+########################################################################################################################
+
 
 class Discovery:
 
@@ -217,9 +224,10 @@ class Discovery:
                 return MappingDescriptor({}, 'list', False, None)
             merged = Descriptor.merge(list(item_descriptors.values()))
             is_uniform = not merged.is_any()
-            return MappingDescriptor(
-                {i: merged for i, d in item_descriptors.items()},
-                'list', is_uniform, len(item_descriptors) if is_uniform else None)
+            descriptor = MappingDescriptor({i: merged for i, d in item_descriptors.items()}, 'list', is_uniform,
+                                           len(item_descriptors) if is_uniform else None)
+            debug("object_descriptor", descriptor=descriptor)
+            return descriptor
             # return self.array_or_list_descriptor(j)
         elif isinstance(j, dict):
             item_descriptors = {k: self.object_descriptor(v) for k, v in j.items()}
@@ -242,6 +250,8 @@ class Discovery:
         else:
             raise AssertionError()
 
+########################################################################################################################
+
 
 def compute_column_paths(descriptor: Descriptor) -> List[Tuple[str]]:
     result = []
@@ -260,16 +270,21 @@ def compute_column_paths0(descriptor: Descriptor, path: List[str], result: List[
             result.append(tuple(child_path))
 
 
-def compute_row_paths(j, descriptor: MappingDescriptor) -> List[Tuple[str]]:
+def compute_row_paths(j, descriptor: MappingDescriptor) -> Tuple[List[Tuple[str]], Descriptor]:
     result = []
-    compute_row_paths0(j, descriptor, [], result)
-    return result
+    row_descriptors = []
+    compute_row_paths0(j, descriptor, [], result, row_descriptors)
+    debug("compute_row_paths", result=result)
+    return result, Descriptor.merge(row_descriptors)
 
 
-def compute_row_paths0(j, descriptor: MappingDescriptor, path: List[Hashable], result: List[Tuple[Hashable]]):
+def compute_row_paths0(j, descriptor: Descriptor, path: List[Hashable], result: List[Tuple[Hashable]], row_descriptors: List[Descriptor]):
     debug("compute_row_paths0", descriptor=type(descriptor))
     if type(descriptor.item) is PrimitiveDescriptor or not descriptor.item.is_uniform():
+    # if type(descriptor) is PrimitiveDescriptor or not descriptor.is_uniform():
+        debug("compute_row_paths0", path=path)
         result.append(tuple(path))
+        row_descriptors.append(descriptor)
         return
 
     for key, value in descriptor.enumerate_entries(j):
@@ -279,7 +294,13 @@ def compute_row_paths0(j, descriptor: MappingDescriptor, path: List[Hashable], r
         #     compute_row_paths0(value, descriptor.item, child_path, result)
         # else:
         #     result.append(tuple(child_path))
-        compute_row_paths0(value, descriptor.item, child_path, result)
+        compute_row_paths0(value, descriptor.item, child_path, result, row_descriptors)
+
+
+def descriptor_by_path(d: Descriptor, path: Tuple[str]) -> Descriptor:
+    for name in path:
+        d = d.items()[name]
+    return d
 
 
 def child_by_path(value, path: Tuple[Hashable, ...]) -> Optional[Hashable]:

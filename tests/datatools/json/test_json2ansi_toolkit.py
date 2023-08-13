@@ -32,7 +32,7 @@ def test__table__1():
 
     assert compute_column_paths(inner_item) == [("x",), ("y",)]
 
-    paths = compute_row_paths(j, descriptor)
+    paths, _ = compute_row_paths(j, descriptor)
     assert paths == [("a", 0), ("a", 1), ("b", 0), ("b", 1)]
 
 
@@ -50,7 +50,7 @@ def test__table__2():
     inner_item = descriptor.inner_item()
     print(inner_item)
 
-    r = compute_row_paths(j, descriptor)
+    r, _ = compute_row_paths(j, descriptor)
     assert r == [("a",), ("b",)]
 
     paths = compute_column_paths(inner_item)
