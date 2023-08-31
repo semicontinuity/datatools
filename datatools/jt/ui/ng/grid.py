@@ -3,6 +3,7 @@ from typing import Optional
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
+from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.themes import FOOTER_BG
@@ -11,6 +12,7 @@ from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2
 from datatools.util.logging import debug
+from datatools.util.object_exporter import ObjectExporter
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -18,7 +20,7 @@ HORIZONTAL_PAGE_SIZE = 8
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f, interactive=True):
+    def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f, data_bundle: DataBundle, interactive=True):
         # last line not painted because of sixels (and footer)
         super().__init__(0, 0, width, height, 0, 1, interactive=interactive)
         self.column_count = column_count
@@ -28,6 +30,7 @@ class WGrid(WGridBase):
         self.x_shift = 0
         self.cursor_column = 0
         self.column_ends = None
+        self.data_bundle = data_bundle
         self.layout()
 
     def show_line(self, line_content, line):
@@ -172,7 +175,12 @@ class WGrid(WGridBase):
                 )
 
     def handle_edit_key(self, key):
-        if key in KEYS_TO_EXIT_CODES:
+        if key == KEY_INSERT:
+            ObjectExporter.INSTANCE.export(
+                self.data_bundle.orig_data[self.cur_line],
+                {}
+            )
+        elif key in KEYS_TO_EXIT_CODES:
             return key
         elif type(key) is bytes:
             if key == KEY_ALT_1:

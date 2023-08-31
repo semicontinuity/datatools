@@ -14,6 +14,7 @@ from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.ng.grid import WGrid
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
+from datatools.util.object_exporter import init_object_exporter
 
 LEAF_CONTENTS_APPLET_STYLE = default_style([48, 40, 24])
 
@@ -38,7 +39,8 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
         len(cell_renderers),
         lambda i: cell_renderers[i],
         lambda line, index: None if index is None else named_cell_value(line, column_keys[index]),
-        row_attrs
+        row_attrs,
+        data_bundle
     )
     g.total_lines = len(data_bundle.orig_data)
     init_from_state(g, data_bundle.state)
@@ -88,4 +90,5 @@ def nested_table_applet(cell_j, column_contents_metadata: Metadata, column_conte
 
 
 if __name__ == "__main__":
+    init_object_exporter()
     app_kit_main('jtng', Applet, grid, app_router)
