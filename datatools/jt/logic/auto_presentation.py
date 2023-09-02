@@ -64,18 +64,26 @@ def do_discover_columns(data, metadata, presentation, row_count):
         else:
             coloring = infer_column_coloring(column_metadata, len(data))
             if coloring == COLORING_NONE or key == metadata.timestamp_field:
-                column_presentation.add_renderer(ColumnRendererColoredPlain())
-                column_presentation.add_renderer(ColumnRendererIndicator())
+                plain_renderer = ColumnRendererColoredPlain()
+                plain_renderer.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
+                                                                          offset=160)
+                column_presentation.add_renderer(plain_renderer)
+
+                renderer_indicator = ColumnRendererIndicator()
+                renderer_indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
+                                                                              offset=64)
+                column_presentation.add_renderer(renderer_indicator)
             else:
                 column_renderer = ColumnRendererColoredHash()
                 if coloring == COLORING_HASH_FREQUENT:
                     column_renderer.onlyFrequent = True
-                column_renderer.color = coloring
+                    column_renderer.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=160)
+                else:
+                    column_renderer.color = coloring
+
                 indicator = ColumnRendererIndicator()
+                indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=64)
                 if column_metadata.contains_single_value():
-                    color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=64)
-                    indicator.color = color
-                    column_renderer.color = color
                     column_presentation.add_renderer(indicator)
                     column_presentation.add_renderer(column_renderer)
                 else:
