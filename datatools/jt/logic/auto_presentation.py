@@ -1,6 +1,6 @@
 from math import sqrt
 
-from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
+from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES, ColumnMetadata
 from datatools.jt.model.presentation import Presentation, COLORING_NONE, COLORING_HASH_ALL, COLORING_HASH_FREQUENT
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
     ColumnRendererColoredMapping
@@ -68,6 +68,8 @@ def do_discover_columns(data, metadata, presentation, row_count):
                 column_presentation.add_renderer(ColumnRendererIndicator())
             else:
                 column_renderer = ColumnRendererColoredHash()
+                if coloring == COLORING_HASH_FREQUENT:
+                    column_renderer.onlyFrequent = True
                 column_renderer.color = coloring
                 indicator = ColumnRendererIndicator()
                 if column_metadata.contains_single_value():
@@ -96,9 +98,9 @@ def scan(data, metadata, presentation):
                     if sub_presentation is None:
                         column_presentation.contents = enrich_presentation(value, metadata.columns[key].metadata, Presentation())
                 else:
-                    if type(column_renderer) is ColumnRendererColoredPlain or type(
-                            column_renderer) is ColumnRendererColoredHash or type(
-                        column_renderer) is ColumnRendererColoredMapping:
+                    if type(column_renderer) is ColumnRendererColoredPlain or \
+                            type(column_renderer) is ColumnRendererColoredHash or \
+                            type(column_renderer) is ColumnRendererColoredMapping:
                         value_as_string = '' if value is None else str(value)  # quick and dirty
                         column_renderer.max_content_width = max(column_renderer.max_content_width or 0,
                                                                 len(value_as_string))
@@ -135,11 +137,13 @@ def should_discover_columns(presentation: Presentation):
     return False
 
 
-def infer_column_coloring(column_metadata, records_count) -> str:
+def infer_column_coloring(column_metadata: ColumnMetadata, records_count: int) -> str:
     threshold = 2 * sqrt(records_count)
+    debug('infer_column_coloring', records_count=records_count, threshold=threshold, unique_values=len(column_metadata.unique_values), non_unique_value_counts=len(column_metadata.non_unique_value_counts))
+    # if len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
     if len(column_metadata.unique_values) + len(column_metadata.non_unique_value_counts) < threshold:
         return COLORING_HASH_ALL
-    elif len(column_metadata.non_unique_value_counts) < threshold:
+    elif 0 < len(column_metadata.non_unique_value_counts) < threshold:
         return COLORING_HASH_FREQUENT
     else:
         return COLORING_NONE

@@ -11,6 +11,7 @@ from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, OVERLINE_BYTES
 from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb, decode_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
+from datatools.util.logging import debug
 
 
 @dataclass
@@ -95,7 +96,7 @@ class WColoredTextCellRenderer(WColumnRenderer):
         pass
 
     def text_color(self):
-        if self.column_renderer.color is None:
+        if self.column_renderer.color is None or not self.column_renderer.color.startswith('#'):
             return COLORS2[ColorKey.TEXT][0]
         else:
             return decode_rgb(self.column_renderer.color.lstrip('#'))
@@ -131,6 +132,8 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
         self.__getitem__ = focus_handler.__getitem__
 
     def compute_fg_color(self, value):
+        debug('compute_fg_color', key=self.render_data.column_key, value=value, onlyFrequent=self.column_renderer.onlyFrequent)
+
         if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:
             return self.text_color()
         else:

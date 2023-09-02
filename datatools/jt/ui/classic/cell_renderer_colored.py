@@ -5,6 +5,7 @@ from datatools.jt.model.presentation import ColumnPresentation, COLORING_NONE, C
 from datatools.jt.ui.themes import COLORS, ColorKey
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes
+from datatools.util.logging import debug
 
 
 class WColoredTextCellRenderer:
@@ -25,6 +26,8 @@ class WColoredTextCellRenderer:
         text_colors = COLORS[ColorKey.TEXT]
 
         coloring = self.column_presentation.renderers[0].coloring
+        if coloring == COLORING_HASH_FREQUENT and text in self.column_metadata.unique_values:
+            debug('compute_cell_attrs', text=text)
         if coloring == COLORING_NONE or (
                 coloring == COLORING_HASH_FREQUENT and text in self.column_metadata.unique_values):
             return text_colors
