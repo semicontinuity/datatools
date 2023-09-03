@@ -1,8 +1,9 @@
 from pathlib import Path
 from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH
-from typing import AnyStr, Tuple, List, Callable
+from typing import AnyStr, Tuple, List, Callable, TypeVar
 
 from datatools.fstree.palette import PALETTE_ALT
+from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
@@ -36,8 +37,8 @@ class FsTreeNode(TreeNode):
         self.packed_size = 1
         self.st_mode = 0
 
-    def spans(self) -> List[Tuple[AnyStr, Style]]:
-        return self.parent.indent_spans() + self.pre_text_spans() + [self.rich_text()]
+    def spans(self, render_state: RenderState = None) -> List[Tuple[AnyStr, Style]]:
+        return self.parent.indent_spans() + self.edge_spans() + [self.rich_text(render_state)]
 
     def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
         pass
@@ -45,13 +46,14 @@ class FsTreeNode(TreeNode):
     def own_spans(self) -> List[Tuple[AnyStr, Style]]:
         pass
 
-    def pre_text_spans(self) -> List[Tuple[AnyStr, Style]]:
+    def edge_spans(self) -> List[Tuple[AnyStr, Style]]:
         pass
 
-    def rich_text(self) -> Tuple[AnyStr, Style]:
-        return self.name, self.text_style()
+    def rich_text(self, render_state: RenderState = None) -> Tuple[AnyStr, Style]:
+        return self.name, self.text_style(render_state)
 
-    def text_style(self):
+    def text_style(self, render_state: RenderState = None):
+        is_under_cursor = render_state and render_state.is_under_cursor
         is_bold = self.st_mode & S_IXOTH
         is_italic = self.st_mode & S_IWOTH
         color_idx = ((self.st_mode & S_IROTH) << 1) | ((self.st_mode & S_IRWXG) >> 3)
@@ -147,7 +149,7 @@ class FsFolder(FsTreeNode):
         else:
             return [('  ' if self.last_in_parent else '│ ', self.line_style())]
 
-    def pre_text_spans(self) -> List[Tuple[AnyStr, Style]]:
+    def edge_spans(self) -> List[Tuple[AnyStr, Style]]:
         if self.parent is None or type(self.parent) is FsInvisibleRoot:
             return []
         else:

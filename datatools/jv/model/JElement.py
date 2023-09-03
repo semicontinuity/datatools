@@ -17,7 +17,7 @@ class JElement(TreeNode):
         self.indent = indent
         self.padding = 0
 
-    def spans(self) -> List[Tuple[AnyStr, Style]]:
+    def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
         return [(' ' * self.indent, Style())] + self.spans_for_field_label() + [self.rich_text()] + self.spans_for_comma()
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:

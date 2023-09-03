@@ -12,7 +12,7 @@ class Style:
     fg: Optional[Sequence[int]] = None
 
 
-def render_substr(spans: List[Tuple[AnyStr, Style]], start, end) -> list[AnyStr]:
+def render_spans_substr(spans: List[Tuple[AnyStr, Style]], start: int, end: int) -> AnyStr:
     result = ''
     span_start = 0
 
@@ -24,8 +24,8 @@ def render_substr(spans: List[Tuple[AnyStr, Style]], start, end) -> list[AnyStr]
 
             from_x = max(start, span_start)
             to_x = min(end, span_start + len(span[0]))
-            s = span[0][from_x - span_start:to_x - span_start]
-            result += render_style(span[1]) + s + ANSI_CMD_DEFAULT_FG + ANSI_CMD_ATTR_NOT_BOLD
+            text = span[0][from_x - span_start:to_x - span_start]
+            result += render_style(span[1]) + text + ANSI_CMD_DEFAULT_FG + ANSI_CMD_ATTR_NOT_BOLD
         span_start = span_end
 
     return result + ' ' * (end - max(start, span_start))

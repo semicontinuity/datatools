@@ -1,5 +1,6 @@
 from typing import AnyStr, Tuple, List, Optional
 
+from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.rich_text import Style
 
 
@@ -29,7 +30,7 @@ class TreeNode:
     def text_length(self) -> int:
         return sum((len(span[0]) for span in self.spans()))
 
-    def spans(self) -> List[Tuple[AnyStr, Style]]:
+    def spans(self, render_state: RenderState = None) -> List[Tuple[AnyStr, Style]]:
         pass
 
     def optimize_layout(self, height): pass

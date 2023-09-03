@@ -13,6 +13,7 @@ from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
     KEY_CTRL_RIGHT
 from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
+from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.util.logging import debug
 
@@ -75,7 +76,7 @@ class WGrid(WGridBase, Thread):
                 self.cursor(True)
 
     def render_line(self, line, is_under_cursor):
-        return self.document.row_to_string(line, self.x_shift, self.x_shift + self.width)
+        return self.document.row_to_string(line, self.x_shift, self.x_shift + self.width, RenderState(is_under_cursor))
 
     def handle_edit_key(self, key):
         if key in KEYS_TO_EXIT_CODES:

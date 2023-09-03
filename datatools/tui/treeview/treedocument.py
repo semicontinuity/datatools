@@ -1,6 +1,7 @@
 from typing import List
 
-from datatools.tui.treeview.rich_text import render_substr
+from datatools.tui.treeview.render_state import RenderState
+from datatools.tui.treeview.rich_text import render_spans_substr
 from datatools.tui.treeview.treenode import TreeNode
 
 
@@ -40,9 +41,9 @@ class TreeDocument:
     def optimize_layout(self, height):
         self.root.optimize_layout(height)
 
-    def row_to_string(self, y, x_from, x_to):
+    def row_to_string(self, y, x_from: int, x_to: int, render_state: RenderState):
         if y < len(self.rows):
-            return render_substr(self.rows[y].spans(), x_from, x_to)
+            return render_spans_substr(self.rows[y].spans(render_state), x_from, x_to)
         else:
             return ' ' * (x_to - x_from)
 
