@@ -253,7 +253,14 @@ class GridContext:
 
 
 def grid(document: TreeDocument, grid_context: GridContext, grid_class=WGrid) -> WGrid:
-    g = grid_class(grid_context.x, grid_context.y, grid_context.width, min(grid_context.height, document.height), document, grid_context.interactive)
+    g = grid_class(
+        grid_context.x,
+        grid_context.y,
+        grid_context.width,
+        min(grid_context.height, document.height),
+        document,
+        grid_context.interactive
+    )
     g.dynamic_helper = DynamicEditorSupport(grid_context.height, g)
     g.layout()
     return g

@@ -57,7 +57,11 @@ class FsTreeNode(TreeNode):
         is_bold = self.st_mode & S_IXOTH
         is_italic = self.st_mode & S_IWOTH
         color_idx = ((self.st_mode & S_IROTH) << 1) | ((self.st_mode & S_IRWXG) >> 3)
-        return Style(attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00), fg=PALETTE_ALT[color_idx])
+        return Style(
+            attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00),
+            fg=PALETTE_ALT[color_idx],
+            bg=PALETTE_ALT[6] if is_under_cursor else None,
+        )
 
     def line_style(self):
         return Style(fg=(64, 64, 64))
