@@ -319,14 +319,24 @@ def auto_aggregate_by_groups(agg_groups):
     leading_columns.reverse()
     debug(f'Column names, sorted by run lengths: {leading_columns}')
 
-    return auto_aggregate_by_groups0(leading_columns)
+    aggregated, median_run_length = auto_aggregate_by_groups0(leading_columns)
+    return aggregated
 
 
 def auto_aggregate_by_groups0(leading_columns):
+    debug(f'Aggregating by columns {leading_columns}')
     aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns)
     if median_run_length < SUPPORT_THRESHOLD:
-        return auto_aggregate_by_groups0(leading_columns[0:-1])
-    return aggregated
+        less_columns = leading_columns[0:-1]
+        if len(less_columns) == 0:
+            return aggregated, median_run_length
+        aggregated_alt, median_run_length_alt = auto_aggregate_by_groups0(less_columns)
+        if median_run_length_alt == median_run_length:
+            # Makes no sense to group by smaller number of columns, if median_run_length is the same
+            return aggregated, median_run_length
+        else:
+            return aggregated_alt, median_run_length_alt
+    return aggregated, median_run_length
 
 
 def auto_aggregation_groups() -> Optional[List]:
