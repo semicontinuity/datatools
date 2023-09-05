@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Arguments: list of parameters to fill
-# Or, if empty, load json from STDIN
+# Or, if empty - load json from STDIN (format: {"k":"v",...})
 #
 # Output:
 #
@@ -123,10 +123,10 @@ def adjust_type(filled, original):
 def variables(argv):
     params = argv[1:]
     if len(params) == 0:
-        params = json.load(sys.stdin)
+        return json.load(sys.stdin)
     else:
-        params = {k: "" if os.environ.get(k) is None else os.environ.get(k) for k in params}
-    return params
+        # plain list of variables in argv
+        return {k: "" if os.environ.get(k) is None else os.environ.get(k) for k in params}
 
 
 if __name__ == "__main__":
