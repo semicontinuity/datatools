@@ -27,7 +27,7 @@ import json
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from statistics import median
+from statistics import median, mean
 from types import GeneratorType
 from typing import Iterable, Dict, List, Set, Hashable, Any, Optional
 
@@ -119,7 +119,12 @@ def compute_group_runs_and_median_by(run_columns: List[str]):
         run_dict['_'] = run_values
         run_lengths.append(len(run_values))
         result.append(run_dict)
-    median_run_length = median(run_lengths)
+
+    # median is perhaps not good: given several small runs, it aborts the aggregation.
+    # having a few small groups aside big groups is OK
+
+    # median_run_length = median(run_lengths)
+    median_run_length = mean(run_lengths)
     debug(f'Median run length: {median_run_length}')
     return result, median_run_length
 
@@ -150,7 +155,7 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
     def compare(current, prev):
         for column in all_column_names:
             length = lengths[column] + 1
-            if current.get(column) != prev.get(column):
+            if current is None or current.get(column) != prev.get(column):
                 runs[column].append(length)
                 length = 0
             lengths[column] = length
@@ -162,9 +167,10 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
             compare(j, prev_j)
         prev_j = j
 
-    compare(j, prev_j)
+    compare(None, prev_j)
 
-    result = {column: median(lengths) for column, lengths in runs.items()}
+    # result = {column: median(lengths) for column, lengths in runs.items()}
+    result = {column: mean(lengths) for column, lengths in runs.items()}
     for c in all_column_names:
         if c not in result:     # no changes detected => value is constant
             result[c] = len(all_data)
@@ -284,7 +290,7 @@ def compute_column_families(all_column_names) -> Optional[List]:
             if chosen_leaf in subtree:
                 connected = connected.union(subtree)
         connected = {item for item in connected if run_lengths.get(item[0], 0) >= SUPPORT_THRESHOLD}
-        debug(f'connected: {connected}')
+        debug(f'column_families: (connected) {connected}')
         return list(connected)
     elif len(trivial_roots) > 0:
         chosen_root = max(trivial_roots, key=len)   # questionable
