@@ -75,7 +75,8 @@ def fill(vars):
         entries = {}
         for i, param in enumerate(vars):
             d.add(2, i + 1, param)
-            entry = WTextEntry(50, str(vars.get(param)) or "")
+            value = vars.get(param)
+            entry = WTextEntry(50, var_repr(value) or "")
             entry.finish_dialog = ACTION_OK
             d.add(x=longest + 3, y=i + 1, widget=entry)
             entries[param] = entry
@@ -118,6 +119,13 @@ def adjust_type(filled, original):
         return bool(filled)
     else:
         return filled
+
+
+def var_repr(value):
+    if type(value) == str:
+        return value
+    else:
+        return json.dumps(value)
 
 
 def variables(argv):
