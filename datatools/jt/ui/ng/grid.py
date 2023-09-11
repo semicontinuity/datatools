@@ -1,9 +1,10 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
-from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_COLUMN_INDEX
+from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_COLUMN_INDEX, STATE_CUR_CELL_VALUE, \
+    STATE_CUR_COLUMN_KEY
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.themes import FOOTER_BG
@@ -20,9 +21,10 @@ HORIZONTAL_PAGE_SIZE = 8
 class WGrid(WGridBase):
     search_str: str = ""
 
-    def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f, data_bundle: DataBundle, interactive=True):
+    def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f, data_bundle: DataBundle, column_keys: List[str], interactive=True):
         # last line not painted because of sixels (and footer)
         super().__init__(0, 0, width, height, 0, 1, interactive=interactive)
+        self.column_keys = column_keys
         self.column_count = column_count
         self.column_cell_renderer_f = column_cell_renderer_f
         self.cell_value_f = cell_value_f
@@ -338,4 +340,6 @@ class WGrid(WGridBase):
     def state(self) -> Dict:
         state = super().state()
         state[STATE_CUR_COLUMN_INDEX] = self.cursor_column
+        state[STATE_CUR_CELL_VALUE] = self.cell_value_f(self.cur_line, self.cursor_column)
+        state[STATE_CUR_COLUMN_KEY] = self.column_keys[self.cursor_column]
         return state

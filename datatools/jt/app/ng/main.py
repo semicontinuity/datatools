@@ -8,7 +8,8 @@ from datatools.jt.app.classic.main import init_from_state
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_renderers import make_renderers
-from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR_LINE_Y
+from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR_LINE_Y, STATE_CUR_CELL_VALUE, \
+    STATE_CUR_COLUMN_KEY
 from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
@@ -40,7 +41,8 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
         lambda i: cell_renderers[i],
         lambda line, index: None if index is None else named_cell_value(line, column_keys[index]),
         row_attrs,
-        data_bundle
+        data_bundle,
+        column_keys
     )
     g.total_lines = len(data_bundle.orig_data)
     init_from_state(g, data_bundle.state)
@@ -65,7 +67,7 @@ def app_router(applet, exit_code):
                     True
                 )
         if exit_code == EXIT_CODE_ENTER + EXIT_CODE_ALT:
-            print(json.dumps(applet.data_bundle.orig_data))
+            print(json.dumps({ applet.data_bundle.state[STATE_CUR_COLUMN_KEY]: applet.data_bundle.state[STATE_CUR_CELL_VALUE] } ))
             return None
         if exit_code <= EXIT_CODE_MAX_REGULAR:
             if exit_code_key_has_modifier(exit_code, EXIT_CODE_SHIFT):
