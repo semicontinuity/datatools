@@ -3,19 +3,19 @@ import signal
 import sys
 from dataclasses import dataclass
 from json import JSONDecodeError
-from typing import List, Callable, Tuple
+from typing import List, Callable
 
 from picotui.screen import Screen
 
 from datatools.json.util import dataclass_from_dict, to_jsonisable
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
-from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE, STATE_CUR_LINE_Y
+from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE, STATE_CUR_LINE_Y, \
+    STATE_CUR_COLUMN_INDEX
 from datatools.jt.model.exit_codes import EXIT_CODE_ESCAPE
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
-from datatools.jt.ui.classic.grid import WGrid
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
     ColumnRendererColoredMapping
 from datatools.jt.ui.ng.cell_renderer_dict_index import ColumnRendererDictIndexHashColored
@@ -27,7 +27,7 @@ from datatools.jt.ui.ng.cell_renderer_stripes_time_series import ColumnRendererS
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_patch import get_screen_size, patch_picotui
 from datatools.tui.picotui_util import with_raw_term, screen_unprepare, screen_prepare
-from datatools.tui.terminal import with_raw_terminal, read_screen_size
+from datatools.tui.terminal import with_raw_terminal
 from datatools.tui.tui_fd import infer_fd_tui
 from datatools.util.meta_io import metadata_or_default, presentation_or_default, state_or_default, write_state_or_pass
 from datatools.util.meta_io import write_presentation_or_pass, write_metadata_or_pass
@@ -45,7 +45,7 @@ class Params:
 
 # NB: we do not need to keep data_bundle; better to return state from run()
 class Applet:
-    g: WGrid
+    g: WGridBase
     data_bundle: DataBundle
     popup: bool
 
@@ -68,11 +68,7 @@ class Applet:
     def run(self):
         res = self.g.loop()
         exit_code = KEYS_TO_EXIT_CODES.get(res)
-        self.data_bundle.state = {
-            STATE_TOP_LINE: self.g.top_line,
-            STATE_CUR_LINE: self.g.cur_line,
-            STATE_CUR_LINE_Y: self.g.line_y(self.g.cur_line)
-        }
+        self.data_bundle.state = self.g.state()
         return exit_code if exit_code is not None else EXIT_CODE_ESCAPE
 
 

@@ -1,5 +1,8 @@
+from typing import Dict
+
 from picotui.editor import Editor
 
+from datatools.jt.model.data_bundle import STATE_TOP_LINE, STATE_CUR_LINE, STATE_CUR_LINE_Y
 from datatools.jt.model.exit_codes_mapping import *
 from datatools.util.logging import debug
 
@@ -165,3 +168,10 @@ class WGridBase(Editor):
 
     def render_line(self, line, is_under_cursor):
         pass
+
+    def state(self) -> Dict:
+        return {
+            STATE_TOP_LINE: self.top_line,
+            STATE_CUR_LINE: self.cur_line,
+            STATE_CUR_LINE_Y: self.line_y(self.cur_line),
+        }

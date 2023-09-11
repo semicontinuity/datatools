@@ -7,6 +7,7 @@ from datatools.jt.model.presentation import Presentation
 STATE_TOP_LINE = "top_line"
 STATE_CUR_LINE = "cur_line"
 STATE_CUR_LINE_Y = "cur_line_y"
+STATE_CUR_COLUMN_INDEX = "cur_column_index"
 
 
 @dataclass

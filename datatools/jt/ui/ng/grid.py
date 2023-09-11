@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
-from datatools.jt.model.data_bundle import DataBundle
+from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_COLUMN_INDEX
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.themes import FOOTER_BG
@@ -331,3 +331,11 @@ class WGrid(WGridBase):
                     return line
             line += 1
         return None
+
+    def cell_value(self, line, column_index: int):
+        return self.cell_value_f(self.cur_line, self.cursor_column)
+
+    def state(self) -> Dict:
+        state = super().state()
+        state[STATE_CUR_COLUMN_INDEX] = self.cursor_column
+        return state

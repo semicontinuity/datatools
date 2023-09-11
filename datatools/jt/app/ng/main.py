@@ -64,6 +64,9 @@ def app_router(applet, exit_code):
                     {"anchor": {"x": 0, "y": (applet.data_bundle.state.get(STATE_CUR_LINE_Y))}},
                     True
                 )
+        if exit_code == EXIT_CODE_ENTER + EXIT_CODE_ALT:
+            print(json.dumps(applet.data_bundle.orig_data))
+            return None
         if exit_code <= EXIT_CODE_MAX_REGULAR:
             if exit_code_key_has_modifier(exit_code, EXIT_CODE_SHIFT):
                 print(json.dumps(applet.data_bundle.orig_data))
