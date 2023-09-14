@@ -177,15 +177,23 @@ class WGrid(WGridBase):
                 )
 
     def handle_edit_key(self, key):
-        if key == KEY_ALT_INSERT:
+        if key == KEY_F5 or key == KEY_ALT_F5:
             ObjectExporter.INSTANCE.export(
                 self.data_bundle.orig_data[self.cur_line],
-                {}
+                {},
+                key == KEY_ALT_F5
             )
-        elif key == KEY_INSERT:
+        elif key == KEY_INSERT or key == KEY_ALT_INSERT:
             ObjectExporter.INSTANCE.export(
                 self.cell_value_f(self.cur_line, self.cursor_column),
-                {}
+                {},
+                key == KEY_ALT_INSERT
+            )
+        elif key == KEY_DELETE or key == KEY_ALT_DELETE:
+            ObjectExporter.INSTANCE.export(
+                {self.column_keys[self.cursor_column]: self.cell_value_f(self.cur_line, self.cursor_column)},
+                {},
+                key == KEY_ALT_DELETE
             )
         elif key in KEYS_TO_EXIT_CODES:
             return key

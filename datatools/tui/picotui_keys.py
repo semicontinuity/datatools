@@ -1,4 +1,5 @@
 KEY_INSERT = b'\x1b[2~'
+KEY_DELETE = b'\x1b[3~'
 KEY_ALT_INSERT = b'\x1b[2;3~'
 KEY_ALT_DELETE = b'\x1b[3;3~'
 KEY_ALT_ENTER = b'\x1b\x0d'
@@ -21,6 +22,7 @@ KEY_ALT_SHIFT_F3 = b'\x1b[1;4R'
 
 KEY_CTRL_F4 = b'\x1b[1;5S'
 
+KEY_F5 = b'\x1b[15~'
 KEY_SHIFT_F5 = b'\x1b[15;2~'
 KEY_ALT_F5 = b'\x1b[15;3~'
 KEY_CTRL_F5 = b'\x1b[15;5~'
