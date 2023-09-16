@@ -22,7 +22,7 @@ class JElement(TreeNode):
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [
-            (f'"{self.key}"' + ' ' * self.padding, Highlighting.CURRENT.for_field_label(self.key)),
+            (f'"{self.key}"' + ' ' * self.padding, Highlighting.CURRENT.for_field_label(self.key, self.indent)),
             (': ', Highlighting.CURRENT.for_colon()),
         ] if self.key is not None and type(self.key) is not int else []
 

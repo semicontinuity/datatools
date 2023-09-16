@@ -26,7 +26,7 @@ class Highlighting:
 
     def for_field_name(self) -> Style: return Style()
 
-    def for_field_label(self, label: str) -> Style: return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(hash_code(label))))
+    def for_field_label(self, label: str, indent: int) -> Style: return Style()
 
 
 class ConsoleHighlighting(Highlighting):
@@ -41,3 +41,7 @@ class ConsoleHighlighting(Highlighting):
     def for_string(self) -> Style: return Style(0, (64, 160, 192))
 
     def for_field_name(self): return Style(AbstractBufferWriter.MASK_NONE, (160, 128, 0))
+
+    def for_field_label(self, label: str, indent: int) -> Style:
+        # return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(hash_code(label))))
+        return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(indent * 731593 ^ indent * 1363)))
