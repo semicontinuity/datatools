@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 ############################################################
-# Usage: filter_frequent_tags [THRESHOLD=0.8]
+# Usage: filter_frequent_tags [THRESHOLD=0] [LIMIT=10]
 #
 # Outputs frequent tags from tags statistics JSON from STDIN.
-# JSON has the following format:
+# Input JSON has the following format:
 #
 # {
 #   "TAG": [
@@ -20,9 +20,10 @@
 #   ...
 #  }
 #
-# For each TAG, there are statistics entries.
-# This program will analyze this statistics,
+# For each TAG, there are sorted statistics entries, with counts descending.
+# This program will analyze these statistics,
 # and retain only values with frequencies above threshold.
+# The limit for the number of values for each tag is LIMIT.
 #
 # TODO: in json, key->value
 ############################################################
@@ -37,7 +38,8 @@ def load_tag_stats() -> Dict:
 
 
 def main():
-    threshold = 0.8 if len(sys.argv) < 2 else float(sys.argv[1])
+    threshold = 0 if len(sys.argv) < 2 else float(sys.argv[1])
+    limit = 10 if len(sys.argv) < 3 else float(sys.argv[2])
     tag_stats = load_tag_stats()
     filtered_tag_stats = {}
 
@@ -45,11 +47,15 @@ def main():
         total = sum(int(stat['count']) for stat in stats)
 
         filtered_stats = []
+        i = 0
 
         for stat in stats:
             count = int(stat['count'])
-            if count >= threshold * total:
-                filtered_stats.append(stat)
+            if count < threshold * total or i >= limit:
+                break
+
+            filtered_stats.append(stat)
+            i += 1
 
         if len(filtered_stats) != 0:
             filtered_tag_stats[tag] = filtered_stats
