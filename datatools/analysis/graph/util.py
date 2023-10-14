@@ -116,25 +116,28 @@ def roots_and_leaves(g: Dict[Hashable, Any]) -> Tuple[Set, Set, Set]:
     """
     For DAG, find non-trivial (i.e., with outgoing edges) roots (i.e., nodes with no incoming edges) and trivial roots
     """
-    non_trivial = set()
-    trivial = set()
+    non_trivial_roots = set()
+    trivial_roots = set()
     leaves = set()
 
     for node, adj in g.items():
         if len(adj) > 0:
-            non_trivial.add(node)
+            debug('roots_and_leaves', node=node, trivial_root=False)
+            non_trivial_roots.add(node)
         else:
-            trivial.add(node)
+            debug('roots_and_leaves', node=node, trivial_root=True)
+            trivial_roots.add(node)
             leaves.add(node)
 
     for node, adj in g.items():
         if len(adj) > 0:
+            # always True? (see above)
             leaves.discard(node)
         for adj_node in adj:
-            non_trivial.discard(adj_node)
-            trivial.discard(adj_node)
+            non_trivial_roots.discard(adj_node)
+            trivial_roots.discard(adj_node)
 
-    return non_trivial, trivial, leaves
+    return non_trivial_roots, trivial_roots, leaves
 
 
 def reachable_from(roots: Iterable[Hashable], g: Dict[Hashable, Any], result: Set[Hashable] = None) -> Set[Hashable]:

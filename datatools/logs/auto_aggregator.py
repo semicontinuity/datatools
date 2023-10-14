@@ -147,7 +147,7 @@ def compute_all_column_names(data: List[Dict[str, Any]]) -> Set[str]:
     return result
 
 
-def compute_median_column_value_run_lengths(all_column_names, data: List[Dict[str, Any]]) -> Dict[str, int]:
+def compute_mean_column_value_run_lengths(all_column_names, data: List[Dict[str, Any]]) -> Dict[str, int]:
     lengths = {column: 0 for column in all_column_names}
     runs = defaultdict(list)
     prev_j = None
@@ -225,8 +225,8 @@ def compute_column_relations(data: List[Dict[str, Any]]) -> Dict:
     return column_relations
 
 
-def column_relations_graph():
-    relations: Dict = compute_column_relations()
+def column_relations_graph(data: List[Dict[str, Any]]):
+    relations: Dict = compute_column_relations(data)
     g = {}
     for column_a, column_a_relations in relations.items():
         if column_a in IGNORED_COLUMNS:
@@ -281,27 +281,29 @@ def column_relations_digraph_pruned(data: List[Dict[str, Any]]):
 
 @traced('column_families')
 def compute_column_families(all_column_names, data: List[Dict[str, Any]]) -> Optional[List]:
-    pruned = column_relations_digraph_pruned(data)
-    debug(f'all_column_names: {all_column_names}')
-    run_lengths: Dict[str, int] = compute_median_column_value_run_lengths(all_column_names, data)
+    pruned_relations_digraph = column_relations_digraph_pruned(data)
+    debug('compute_column_families', all_column_names=all_column_names)
+    run_lengths: Dict[str, int] = compute_mean_column_value_run_lengths(all_column_names, data)
     debug(f'Run lengths: {run_lengths}')
 
-    non_trivial_roots, trivial_roots, leaves = roots_and_leaves(pruned)
-    debug(f'Non-trivial roots: {non_trivial_roots}')
-    debug(f'Trivial roots: {trivial_roots}')
+    non_trivial_roots, trivial_roots, leaves = roots_and_leaves(pruned_relations_digraph)
+    debug('compute_column_families', non_trivial_roots=non_trivial_roots)
+    debug('compute_column_families', trivial_roots=trivial_roots)
+    debug('compute_column_families', leaves=leaves)
     leaves -= trivial_roots
-    debug(f'Non-trivial leaves: {leaves}')
+    debug('compute_column_families', non_trivial_leaves=leaves)
+
     if len(leaves) > 0:
         # choose root with maximum median run length
         chosen_leaf = max(leaves, key=lambda leaf: run_lengths.get(leaf[0]))
-        debug(f'Chosen leaf: {chosen_leaf}')
+        debug('compute_column_families', chosen_leaf=chosen_leaf)
         connected = set()
         for root in non_trivial_roots:
-            subtree = reachable_from([root], pruned)
+            subtree = reachable_from([root], pruned_relations_digraph)
             if chosen_leaf in subtree:
                 connected = connected.union(subtree)
         connected = {item for item in connected if run_lengths.get(item[0], 0) >= SUPPORT_THRESHOLD}
-        debug(f'column_families: (connected) {connected}')
+        debug('compute_column_families', connected=connected)
         return list(connected)
     elif len(trivial_roots) > 0:
         chosen_root = max(trivial_roots, key=len)   # questionable
@@ -357,14 +359,14 @@ def auto_aggregate_by_groups0(leading_columns, data: List[Dict[str, Any]]):
 
 def auto_aggregation_groups(data: List[Dict[str, Any]]) -> Optional[List]:
     all_column_names: Iterable[str] = compute_all_column_names(data)
-    column_families: List = compute_column_families(all_column_names)
+    column_families: List = compute_column_families(all_column_names, data)
     debug(f'Column families: {column_families}')
     if column_families is None or len(column_families) <= 1:
         debug('No auto-aggregation groups')
         return None
-    agg_groups = list(reversed(column_families[1:]))
-    debug(f'Auto-aggregation groups: {agg_groups}')
-    return agg_groups
+    groups = list(reversed(column_families[1:]))
+    debug('auto_aggregation_groups', groups=groups)
+    return groups
 
 
 def auto_aggregate(data: List[Dict[str, Any]]) -> List[Dict]:
@@ -381,21 +383,21 @@ def run(data: List[Dict[str, Any]]):
     elif len(sys.argv) == 2 and sys.argv[1] == "all_column_names":
         return to_jsonisable(compute_all_column_names(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_value_run_lengths":
-        return to_jsonisable(compute_median_column_value_run_lengths(compute_all_column_names(data), data))
+        return to_jsonisable(compute_mean_column_value_run_lengths(compute_all_column_names(data), data))
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations":
         return to_jsonisable(compute_value_relations(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return compute_column_relations(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
-        return column_relations_graph()
+        return column_relations_graph(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_equivalence_graph":
         return column_equivalence_graph(compute_column_relations(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph":
         return to_jsonisable(column_relations_digraph(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph_pruned":
-        return to_jsonisable(column_relations_digraph_pruned())
+        return to_jsonisable(column_relations_digraph_pruned(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_families":
-        return to_jsonisable(compute_column_families(compute_all_column_names(data)))
+        return to_jsonisable(compute_column_families(compute_all_column_names(data), data))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregation_groups":
         return auto_aggregation_groups(data)
     elif len(sys.argv) == 3 and sys.argv[1] == "auto_aggregate_by_groups":
