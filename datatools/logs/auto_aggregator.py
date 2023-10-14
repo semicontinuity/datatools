@@ -348,27 +348,31 @@ def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
 
     families.sort(key=len) # heuristic! there could be several equivalent families; start with largest
     families = list(reversed(families))
-    family = families[0]
-    rest_of_families = families[1:]
     family_to_group = defaultdict(list)
 
-    for j in data:
-        key = {}
-        value = {}
-        for k, v in j.items():
-            if k in family:
-                key[k] = v
-            else:
-                value[k] = v
-        family_to_group[FrozenDict(key)].append(value)
+    while len(families) > 0:
+        family = families[0]
+        families = families[1:]
+
+        for j in data:
+            key = {}
+            value = {}
+            for k, v in j.items():
+                if k in family:
+                    key[k] = v
+                else:
+                    value[k] = v
+            family_to_group[FrozenDict(key)].append(value)
+
+        break
 
     result = []
     for key, values in family_to_group.items():
         record = dict(key)
-        if len(rest_of_families) == 0:
+        if len(families) == 0:
             record['_'] = values
         else:
-            record['_'] = auto_group_by_column_families(rest_of_families, values)
+            record['_'] = auto_group_by_column_families(families, values)
         record['#'] = len(values)
         result.append(record)
     return result
