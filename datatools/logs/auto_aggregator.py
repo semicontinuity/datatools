@@ -29,10 +29,11 @@ from collections import defaultdict
 from dataclasses import dataclass
 from statistics import median, mean
 from types import GeneratorType
-from typing import Iterable, Dict, List, Set, Hashable, Any, Optional
+from typing import Iterable, Dict, List, Set, Hashable, Any, Optional, Tuple
 
 from datatools.analysis.graph.util import ConnectedComponents, transitive_reduction, roots_and_leaves, reachable_from
 from datatools.json.util import to_jsonisable, is_primitive, to_hashable
+from datatools.util.frozendict import FrozenDict
 from datatools.util.logging import debug, traced
 from datatools.util.infra import run_once
 
@@ -87,7 +88,7 @@ def compute_run_columns(data: List[Dict[str, Any]]) -> List[str]:
     ]
 
 
-def compute_group_runs_and_median_by(run_columns: List[str], data: List[Dict[str, Any]]):
+def compute_group_runs_and_median_by(run_columns: List[str], data: List[Dict[str, Any]]) -> Tuple[List, float]:
     debug(f'Computing group runs by {run_columns}')
     result = []
     run_dict = None
@@ -125,9 +126,9 @@ def compute_group_runs_and_median_by(run_columns: List[str], data: List[Dict[str
     # having a few small groups aside big groups is OK
 
     # median_run_length = median(run_lengths)
-    median_run_length = mean(run_lengths)
-    debug(f'Median run length: {median_run_length}')
-    return result, median_run_length
+    mean_run_length = mean(run_lengths)
+    debug(f'Median run length: {mean_run_length}')
+    return result, mean_run_length
 
 
 def compute_group_runs_by(run_columns: List[str], data: List[Dict[str, Any]]):
@@ -341,8 +342,40 @@ def auto_aggregate_by_groups(agg_groups, data: List[Dict[str, Any]]):
     return aggregated
 
 
+def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
+    if families is None or len(families) == 0:
+        return data
+
+    debug('auto_group_by_column_families', families=families)
+    families.sort(key=len) # heuristic! there could be several equivalent families; start with largest
+    families = list(reversed(families))
+    debug('auto_group_by_column_families', families=families)
+    family = families[0]
+    family_to_group = defaultdict(list)
+
+    for j in data:
+        key = {}
+        value = {}
+        for k, v in j.items():
+            if k in family:
+                key[k] = v
+            else:
+                value[k] = v
+        debug('auto_group_by_column_families', key=key)
+
+        family_to_group[FrozenDict(key)].append(value)
+
+    result = []
+    for key, values in family_to_group.items():
+        record = dict(key)
+        record['_'] = values
+        result.append(record)
+    # return list(family_to_group.values())
+    return result
+
+
 def auto_aggregate_by_groups0(leading_columns, data: List[Dict[str, Any]]):
-    debug(f'Aggregating by columns {leading_columns}')
+    debug('auto_aggregate_by_groups0', leading_columns=leading_columns)
     aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns, data)
     if median_run_length < SUPPORT_THRESHOLD:
         less_columns = leading_columns[0:-1]
@@ -371,6 +404,10 @@ def auto_aggregation_groups(data: List[Dict[str, Any]]) -> Optional[List]:
 
 def auto_aggregate(data: List[Dict[str, Any]]) -> List[Dict]:
     return auto_aggregate_by_groups(compute_column_families(compute_all_column_names(data), data), data)
+
+
+def auto_group(data: List[Dict[str, Any]]) -> List[Dict]:
+    return auto_group_by_column_families(compute_column_families(compute_all_column_names(data), data), data)
 
 
 def run(data: List[Dict[str, Any]]):
@@ -405,7 +442,9 @@ def run(data: List[Dict[str, Any]]):
     elif len(sys.argv) == 3 and sys.argv[1] == "group_runs_by":
         return compute_group_runs_by(json.loads(sys.argv[2]), data)
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
-        return auto_aggregate(data)
+        return to_jsonisable(auto_aggregate(data))
+    elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
+        return to_jsonisable(auto_group(data))
 
 
 if __name__ == "__main__":
