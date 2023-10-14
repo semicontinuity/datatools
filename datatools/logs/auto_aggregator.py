@@ -364,6 +364,9 @@ def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
                     value[k] = v
             family_to_group[FrozenDict(key)].append(value)
 
+        if len(families) > 0 and len(family_to_group) == 1 and FrozenDict() in family_to_group:
+            family_to_group.clear()
+            continue
         break
 
     result = []

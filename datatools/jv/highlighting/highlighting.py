@@ -44,4 +44,6 @@ class ConsoleHighlighting(Highlighting):
 
     def for_field_label(self, label: str, indent: int) -> Style:
         # return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(hash_code(label))))
-        return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(indent * 731593 ^ indent * 1363)))
+        # return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(indent * 731593 ^ indent * 1363)))
+        # return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(0)))
+        return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(0xc03b << (indent % 15))))
