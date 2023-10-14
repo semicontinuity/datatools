@@ -1,8 +1,19 @@
 import dataclasses
 
+from datatools.util.frozendict import FrozenDict
+
 
 def is_primitive(obj):
     return obj is None or type(obj) is int or type(obj) is float or type(obj) is bool or type(obj) is str
+
+
+def to_hashable(obj):
+    if is_primitive(obj):
+        return obj
+    elif isinstance(obj, dict):
+        return FrozenDict(**{k: to_hashable(v) for k, v in obj.items()})
+    elif isinstance(obj, list):
+        return tuple(to_hashable(e) for e in obj)
 
 
 def to_jsonisable(obj):

@@ -32,7 +32,7 @@ from types import GeneratorType
 from typing import Iterable, Dict, List, Set, Hashable, Any, Optional
 
 from datatools.analysis.graph.util import ConnectedComponents, transitive_reduction, roots_and_leaves, reachable_from
-from datatools.json.util import to_jsonisable, is_primitive
+from datatools.json.util import to_jsonisable, is_primitive, to_hashable
 from datatools.util.logging import debug, traced
 from datatools.util.infra import run_once
 
@@ -44,34 +44,37 @@ MULTI_VALUE_MARKER = ()
 @dataclass
 class Stat:
     values: Dict[Hashable, int]     # number of occurrences by value
+    mean_support: float = 0
     median_support: int = 0
-    is_run: bool = True
+    is_run: bool = True # True if all occurrences of a value occur continuosly (a "run")
 
 
 @run_once
 def load_data(lines) -> List[Dict[str, Any]]:
-    return [json.loads(line) for line in lines]
+    return to_hashable([json.loads(line) for line in lines])
 
 
 def compute_stats(data: List[Dict[str, Any]]) -> Dict[str, Stat]:
-    print(file=sys.stderr)
-    print("compute_stats", file=sys.stderr)
     prev_j = None
     column2stat: Dict[str, Stat] = defaultdict(lambda: Stat(defaultdict(int)))
+
     for j in data:
         for column, value in j.items():
             if prev_j is not None:
                 stat = column2stat[column]
                 if stat.is_run:
                     if value in stat.values:
-                        if prev_j[column] != value:
-                            stat.is_run = False     # repeated
+                        # detected discontinuance in occurrences of this value
+                        # so, this column is not a 'run'
+                        if prev_j.get(column) != value:
+                            stat.is_run = False
                     stat.values[value] += 1
 
         prev_j = j
 
     for column, stat in column2stat.items():
         stat.median_support = median(stat.values.values())
+        stat.mean_support = mean(stat.values.values())
 
     return column2stat
 
@@ -356,7 +359,7 @@ def auto_aggregate(data: List[Dict[str, Any]]) -> List[Dict]:
 
 def run(data: List[Dict[str, Any]]):
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
-        return compute_stats(data)
+        return to_jsonisable(compute_stats(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "run_columns":
         return compute_run_columns(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "aggregate_runs":
