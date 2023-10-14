@@ -38,7 +38,7 @@ from datatools.util.logging import debug, traced
 from datatools.util.infra import run_once
 
 SUPPORT_THRESHOLD = 4
-IGNORED_COLUMNS = ["datetime", "message", "hash", "logger", "level"]
+IGNORED_COLUMNS = []
 MULTI_VALUE_MARKER = ()
 
 
@@ -346,11 +346,10 @@ def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
     if families is None or len(families) == 0:
         return data
 
-    debug('auto_group_by_column_families', families=families)
     families.sort(key=len) # heuristic! there could be several equivalent families; start with largest
     families = list(reversed(families))
-    debug('auto_group_by_column_families', families=families)
     family = families[0]
+    rest_of_families = families[1:]
     family_to_group = defaultdict(list)
 
     for j in data:
@@ -361,16 +360,16 @@ def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
                 key[k] = v
             else:
                 value[k] = v
-        debug('auto_group_by_column_families', key=key)
-
         family_to_group[FrozenDict(key)].append(value)
 
     result = []
     for key, values in family_to_group.items():
         record = dict(key)
-        record['_'] = values
+        if len(rest_of_families) == 0:
+            record['_'] = values
+        else:
+            record['_'] = auto_group_by_column_families(rest_of_families, values)
         result.append(record)
-    # return list(family_to_group.values())
     return result
 
 
@@ -411,6 +410,8 @@ def auto_group(data: List[Dict[str, Any]]) -> List[Dict]:
 
 
 def run(data: List[Dict[str, Any]]):
+    global IGNORED_COLUMNS
+
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
         return to_jsonisable(compute_stats(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "run_columns":
@@ -442,6 +443,7 @@ def run(data: List[Dict[str, Any]]):
     elif len(sys.argv) == 3 and sys.argv[1] == "group_runs_by":
         return compute_group_runs_by(json.loads(sys.argv[2]), data)
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
+        IGNORED_COLUMNS = ["datetime", "message", "hash", "logger", "level"]
         return to_jsonisable(auto_aggregate(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
         return to_jsonisable(auto_group(data))
