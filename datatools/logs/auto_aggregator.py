@@ -39,7 +39,7 @@ from datatools.util.infra import run_once
 
 SUPPORT_THRESHOLD = 4
 IGNORED_COLUMNS = []
-MULTI_VALUE_MARKER = ()
+MULTI_VALUE_MARKER = ...
 
 
 @dataclass
@@ -179,7 +179,8 @@ def compute_mean_column_value_run_lengths(all_column_names, data: List[Dict[str,
 def compute_value_relations(data: List[Dict[str, Any]]):
     all_column_names = compute_all_column_names(data)
     # structure: [column_a][value_a][column_b] -> (value of column b, if it is a single value, or MULTI_VALUE_MARKER)
-    value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: None)))
+    # value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: None)))
+    value_relations = defaultdict(lambda: defaultdict(dict))
 
     for j in data:
         # For every pair of distinct columns...
@@ -193,11 +194,10 @@ def compute_value_relations(data: List[Dict[str, Any]]):
                     continue
 
                 value_a_relations = value_relations[column_a][value_a]
-                some_value_b = value_a_relations[column_b]
-                if some_value_b is None:
+                if column_b not in value_a_relations:
                     value_a_relations[column_b] = value_b  # for first occurrence value_a, memorize
                 else:
-                    if some_value_b != value_b:
+                    if value_a_relations.get(column_b) != value_b:
                         value_a_relations[column_b] = MULTI_VALUE_MARKER
     return value_relations
 
@@ -240,8 +240,8 @@ def column_relations_graph(data: List[Dict[str, Any]]):
 
 
 def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Hashable, Dict]:
-    relations: Dict = compute_column_relations(data)
-    equivalence = column_equivalence_graph(relations)
+    column_relations: Dict = compute_column_relations(data)
+    equivalence = column_equivalence_graph(column_relations)
 
     equivalence_groups = ConnectedComponents(equivalence).compute()
     column2group = {}
@@ -250,7 +250,7 @@ def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Hashable, Dict]
             column2group[column] = tuple(equivalence_group)
 
     g = {}
-    for column_a, column_a_relations in relations.items():
+    for column_a, column_a_relations in column_relations.items():
         equivalence_group_a = column2group[column_a]
         g[equivalence_group_a] = adj = {}
         for column_b, is_direct in column_a_relations.items():
@@ -260,7 +260,7 @@ def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Hashable, Dict]
     return g
 
 
-def column_equivalence_graph(relations):
+def column_equivalence_graph(column_relations):
     """
     Result is map: { column_a_name -> { column_b_name -> null} }
     Entry "column_b_name -> null" is present if a and b are "equivalent",
@@ -270,8 +270,8 @@ def column_equivalence_graph(relations):
         column_a: {
             column_b: None
             for column_b, is_direct in column_a_relations.items()
-            if is_direct and relations[column_b][column_a] and column_a not in IGNORED_COLUMNS
-        } for column_a, column_a_relations in relations.items()
+            if is_direct and column_relations[column_b][column_a] and column_relations[column_a][column_b] and column_a not in IGNORED_COLUMNS
+        } for column_a, column_a_relations in column_relations.items()
     }
 
 
@@ -369,6 +369,7 @@ def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
             record['_'] = values
         else:
             record['_'] = auto_group_by_column_families(rest_of_families, values)
+        record['#'] = len(values)
         result.append(record)
     return result
 

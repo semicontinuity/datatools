@@ -17,6 +17,8 @@ def to_hashable(obj):
 
 
 def to_jsonisable(obj):
+    if obj is ...:
+        return None
     if is_primitive(obj):
         return obj
     elif isinstance(obj, dict) or isinstance(obj, FrozenDict):
