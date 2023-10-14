@@ -177,9 +177,11 @@ def compute_median_column_value_run_lengths(all_column_names, data: List[Dict[st
 
 def compute_value_relations(data: List[Dict[str, Any]]):
     all_column_names = compute_all_column_names(data)
+    # structure: [column_a][value_a][column_b] -> (value of column b, if it is a single value, or MULTI_VALUE_MARKER)
     value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: None)))
 
     for j in data:
+        # For every pair of distinct columns...
         for column_a in all_column_names:
             value_a = j.get(column_a)
             if not is_primitive(value_a):
@@ -201,6 +203,13 @@ def compute_value_relations(data: List[Dict[str, Any]]):
 
 @traced('column_relations')
 def compute_column_relations(data: List[Dict[str, Any]]) -> Dict:
+    """
+    Reduce value relations to column relations.
+    Result is str -> {str -> bool}.
+    E.g.
+    { "a": { "b" : false }, "b": { "a" : true } }
+    means: "looking at the value in column b, we can tell the value in column a, but not vice versa"
+    """
     value_relations = compute_value_relations(data)
     column_relations = defaultdict(dict)
     for column_a, column_a_values_relations in value_relations.items():
@@ -251,6 +260,11 @@ def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Hashable, Dict]
 
 
 def column_equivalence_graph(relations):
+    """
+    Result is map: { column_a_name -> { column_b_name -> null} }
+    Entry "column_b_name -> null" is present if a and b are "equivalent",
+    i.e. by value in column a one can tell the value in column b, and vice versa.
+    """
     return {
         column_a: {
             column_b: None
@@ -369,13 +383,13 @@ def run(data: List[Dict[str, Any]]):
     elif len(sys.argv) == 2 and sys.argv[1] == "column_value_run_lengths":
         return to_jsonisable(compute_median_column_value_run_lengths(compute_all_column_names(data), data))
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations":
-        return compute_value_relations(data)
+        return to_jsonisable(compute_value_relations(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
-        return compute_column_relations()
+        return compute_column_relations(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
         return column_relations_graph()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_equivalence_graph":
-        return column_equivalence_graph(compute_column_relations())
+        return column_equivalence_graph(compute_column_relations(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph":
         return to_jsonisable(column_relations_digraph(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph_pruned":

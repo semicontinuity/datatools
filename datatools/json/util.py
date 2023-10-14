@@ -19,7 +19,7 @@ def to_hashable(obj):
 def to_jsonisable(obj):
     if is_primitive(obj):
         return obj
-    elif isinstance(obj, dict):
+    elif isinstance(obj, dict) or isinstance(obj, FrozenDict):
         if all((is_primitive(key) for key in obj)):
             return {
                 key: to_jsonisable(value) for key, value in obj.items() if value is not None
