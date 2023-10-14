@@ -4,8 +4,8 @@ from datatools.logs.buckets import Bucket
 from datatools.logs.buckets_helper import compute_stats_for_tokenized, raw_pattern_and_milestone_offsets
 from datatools.logs.buckets_pattern_inference import infer_pattern
 from datatools.logs.buckets_pattern_merger import merge_buckets, merge_buckets_by_pattern
-from datatools.logs.text_classifier import tokenize, compute_selected, collapse_successive_wildcards
-from datatools.util.graph_util import connected_components, compute_mutual_weights_iter, graph_from_edges
+from datatools.analysis.text.text_classifier import tokenize, compute_selected, collapse_successive_wildcards
+from datatools.analysis.graph.util import connected_components, compute_mutual_weights_iter, graph_from_edges
 from datatools.util.logging import debug
 from datatools.util.sequence_hash import seq_sim_hash
 

@@ -1,4 +1,4 @@
-from datatools.logs.text_classifier import with_packed_patterns, make_buckets, tokenize, annotate_lines
+from datatools.analysis.text.text_classifier import with_packed_patterns, make_buckets, tokenize, annotate_lines
 
 
 def test__make_buckets__1():

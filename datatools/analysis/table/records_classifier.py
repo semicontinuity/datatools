@@ -8,7 +8,7 @@ from typing import Tuple, Dict, List, Any, Sequence, Callable
 from datatools.json.util import to_jsonisable
 from datatools.logs.buckets import Bucket
 from datatools.logs.buckets_classifier import Classifier
-from datatools.logs.text_classifier import grouped_data
+from datatools.analysis.text.text_classifier import grouped_data
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
 

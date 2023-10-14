@@ -1,7 +1,7 @@
 from typing import *
 
 from datatools.logs.buckets import Bucket
-from datatools.logs.text_classifier import raw_pattern_and_milestone_offsets
+from datatools.analysis.text.text_classifier import raw_pattern_and_milestone_offsets
 from insight.logic.singletons import global_singletons
 from insight.logic.transitions import Transitions, pruned
 

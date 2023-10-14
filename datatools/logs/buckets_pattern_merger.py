@@ -1,7 +1,7 @@
 from typing import *
 
 from datatools.logs.buckets import Bucket
-from datatools.util.graph_util import compute_mutual_weights_iter, graph_from_edges, connected_components
+from datatools.analysis.graph.util import compute_mutual_weights_iter, graph_from_edges, connected_components
 from datatools.util.logging import debug
 
 

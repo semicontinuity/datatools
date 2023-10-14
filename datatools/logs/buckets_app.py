@@ -6,7 +6,7 @@ from types import GeneratorType
 
 from datatools.json.util import to_jsonisable
 from datatools.logs.buckets_classifier import Classifier
-from datatools.logs.text_classifier import tokenize
+from datatools.analysis.text.text_classifier import tokenize
 from datatools.util.infra import run_once
 from datatools.util.logging import debug
 
