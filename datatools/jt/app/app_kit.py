@@ -3,7 +3,7 @@ import signal
 import sys
 from dataclasses import dataclass
 from json import JSONDecodeError
-from typing import List, Callable
+from typing import List, Callable, Optional, Any
 
 from picotui.screen import Screen
 
@@ -72,7 +72,7 @@ class Applet:
         return exit_code if exit_code is not None else EXIT_CODE_ESCAPE
 
 
-def do_main(app_id, applet_f: Callable[[], Applet], grid_f, router, screen_size):
+def do_main(app_id, applet_f: Callable[[Any, Any, Any], Applet], grid_f, router, screen_size):
     params = parse_params(sys.argv)
     screen_width = screen_size[0]
 
@@ -110,12 +110,12 @@ def do_main(app_id, applet_f: Callable[[], Applet], grid_f, router, screen_size)
     return exit_code
 
 
-def app_kit_main(applet_id, applet_f: Callable[[], Applet], grid_f, router: Callable[[Applet, int], Applet]):
+def app_kit_main(applet_id, applet_f: Callable[[], Applet], grid_f, router: Callable[[Applet, int], Optional[Applet]]):
     screen_size = with_raw_terminal(get_screen_size)  # works only before patch(?) in 'long pipe'
     sys.exit(do_main(applet_id, applet_f, grid_f, router, screen_size))
 
 
-def app_loop(applet_f, applet_id, data_bundle, g, router, screen_size) -> int:
+def app_loop(applet_f: Callable[[Any, Any, Any], Applet], applet_id, data_bundle, g, router, screen_size) -> int:
     the_grid = g(screen_size, data_bundle)
     a = applet_f(applet_id, the_grid, data_bundle)
     applet_stack = [a]

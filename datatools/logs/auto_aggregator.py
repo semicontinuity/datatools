@@ -49,17 +49,16 @@ class Stat:
 
 
 @run_once
-def load_data(lines):
+def load_data(lines) -> List[Dict[str, Any]]:
     return [json.loads(line) for line in lines]
 
 
-def compute_stats() -> Dict[str, Stat]:
+def compute_stats(data: List[Dict[str, Any]]) -> Dict[str, Stat]:
     print(file=sys.stderr)
     print("compute_stats", file=sys.stderr)
     prev_j = None
     column2stat: Dict[str, Stat] = defaultdict(lambda: Stat(defaultdict(int)))
-    all_data = load_data()
-    for j in all_data:
+    for j in data:
         for column, value in j.items():
             if prev_j is not None:
                 stat = column2stat[column]
@@ -77,25 +76,24 @@ def compute_stats() -> Dict[str, Stat]:
     return column2stat
 
 
-def compute_run_columns() -> List[str]:
-    stats = compute_stats()
+def compute_run_columns(data: List[Dict[str, Any]]) -> List[str]:
+    stats = compute_stats(data)
     return [
         column for column, stat in stats.items()
         if stat.is_run and stat.median_support >= SUPPORT_THRESHOLD and column not in IGNORED_COLUMNS
     ]
 
 
-def compute_group_runs_and_median_by(run_columns: List[str]):
+def compute_group_runs_and_median_by(run_columns: List[str], data: List[Dict[str, Any]]):
     debug(f'Computing group runs by {run_columns}')
     result = []
     run_dict = None
     run_values = None
     run_lengths = []
-    all_j = load_data()
-    if len(all_j) == 0:
+    if len(data) == 0:
         return result, 0
 
-    for j in all_j:
+    for j in data:
         row_run_dict = {}
         row_values = {}
 
@@ -129,25 +127,24 @@ def compute_group_runs_and_median_by(run_columns: List[str]):
     return result, median_run_length
 
 
-def compute_group_runs_by(run_columns: List[str]):
-    return compute_group_runs_and_median_by(run_columns)[0]
+def compute_group_runs_by(run_columns: List[str], data: List[Dict[str, Any]]):
+    return compute_group_runs_and_median_by(run_columns, data)[0]
 
 
-def aggregate_runs() -> List[Dict]:
-    run_columns: List[str] = compute_run_columns()
-    return compute_group_runs_by(run_columns)
+def aggregate_runs(data: List[Dict[str, Any]]) -> List[Dict]:
+    run_columns: List[str] = compute_run_columns(data)
+    return compute_group_runs_by(run_columns, data)
 
 
-def compute_all_column_names() -> Set[str]:
-    all_data: List[Any] = load_data()
+def compute_all_column_names(data: List[Dict[str, Any]]) -> Set[str]:
     result = set()
-    for j in all_data:
+    for j in data:
         for column in j:
             result.add(column)
     return result
 
 
-def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
+def compute_median_column_value_run_lengths(all_column_names, data: List[Dict[str, Any]]) -> Dict[str, int]:
     lengths = {column: 0 for column in all_column_names}
     runs = defaultdict(list)
     prev_j = None
@@ -160,9 +157,7 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
                 length = 0
             lengths[column] = length
 
-    all_data = load_data()
-    j = None
-    for j in all_data:
+    for j in data:
         if prev_j is not None:
             compare(j, prev_j)
         prev_j = j
@@ -173,16 +168,15 @@ def compute_median_column_value_run_lengths(all_column_names) -> Dict[str, int]:
     result = {column: mean(lengths) for column, lengths in runs.items()}
     for c in all_column_names:
         if c not in result:     # no changes detected => value is constant
-            result[c] = len(all_data)
+            result[c] = len(data)
     return result
 
 
-def compute_value_relations():
-    all_column_names = compute_all_column_names()
+def compute_value_relations(data: List[Dict[str, Any]]):
+    all_column_names = compute_all_column_names(data)
     value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: None)))
 
-    all_data = load_data()
-    for j in all_data:
+    for j in data:
         for column_a in all_column_names:
             value_a = j.get(column_a)
             if not is_primitive(value_a):
@@ -203,8 +197,8 @@ def compute_value_relations():
 
 
 @traced('column_relations')
-def compute_column_relations() -> Dict:
-    value_relations = compute_value_relations()
+def compute_column_relations(data: List[Dict[str, Any]]) -> Dict:
+    value_relations = compute_value_relations(data)
     column_relations = defaultdict(dict)
     for column_a, column_a_values_relations in value_relations.items():
         # initialize with 1 -> 1 relations (== True)
@@ -232,8 +226,8 @@ def column_relations_graph():
     return g
 
 
-def column_relations_digraph() -> Dict[Hashable, Dict]:
-    relations: Dict = compute_column_relations()
+def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Hashable, Dict]:
+    relations: Dict = compute_column_relations(data)
     equivalence = column_equivalence_graph(relations)
 
     equivalence_groups = ConnectedComponents(equivalence).compute()
@@ -264,15 +258,15 @@ def column_equivalence_graph(relations):
 
 
 @traced('column_relations_digraph_pruned')
-def column_relations_digraph_pruned():
-    return transitive_reduction(column_relations_digraph())
+def column_relations_digraph_pruned(data: List[Dict[str, Any]]):
+    return transitive_reduction(column_relations_digraph(data))
 
 
 @traced('column_families')
-def compute_column_families(all_column_names) -> Optional[List]:
-    pruned = column_relations_digraph_pruned()
+def compute_column_families(all_column_names, data: List[Dict[str, Any]]) -> Optional[List]:
+    pruned = column_relations_digraph_pruned(data)
     debug(f'all_column_names: {all_column_names}')
-    run_lengths: Dict[str, int] = compute_median_column_value_run_lengths(all_column_names)
+    run_lengths: Dict[str, int] = compute_median_column_value_run_lengths(all_column_names, data)
     debug(f'Run lengths: {run_lengths}')
 
     non_trivial_roots, trivial_roots, leaves = roots_and_leaves(pruned)
@@ -313,30 +307,29 @@ def compute_column_families(all_column_names) -> Optional[List]:
     # return result
 
 
-def auto_aggregate_by_groups(agg_groups):
+def auto_aggregate_by_groups(agg_groups, data: List[Dict[str, Any]]):
     """ Quick-and-dirty, inefficient multi-group aggregation """
     debug(f'Automatically computing group runs by {agg_groups}')
-    data = load_data()
     if agg_groups is None or len(agg_groups) == 0:
         return data
     leading_columns = [c for g in agg_groups for c in g]
-    leading_columns_group_run_lengths = {c: compute_group_runs_and_median_by([c])[1] for c in leading_columns}
+    leading_columns_group_run_lengths = {c: compute_group_runs_and_median_by([c], data)[1] for c in leading_columns}
     leading_columns.sort(key=leading_columns_group_run_lengths.get)
     leading_columns.reverse()
     debug(f'Column names, sorted by run lengths: {leading_columns}')
 
-    aggregated, median_run_length = auto_aggregate_by_groups0(leading_columns)
+    aggregated, median_run_length = auto_aggregate_by_groups0(leading_columns, data)
     return aggregated
 
 
-def auto_aggregate_by_groups0(leading_columns):
+def auto_aggregate_by_groups0(leading_columns, data: List[Dict[str, Any]]):
     debug(f'Aggregating by columns {leading_columns}')
-    aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns)
+    aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns, data)
     if median_run_length < SUPPORT_THRESHOLD:
         less_columns = leading_columns[0:-1]
         if len(less_columns) == 0:
             return aggregated, median_run_length
-        aggregated_alt, median_run_length_alt = auto_aggregate_by_groups0(less_columns)
+        aggregated_alt, median_run_length_alt = auto_aggregate_by_groups0(less_columns, data)
         if median_run_length_alt == median_run_length:
             # Makes no sense to group by smaller number of columns, if median_run_length is the same
             return aggregated, median_run_length
@@ -345,8 +338,8 @@ def auto_aggregate_by_groups0(leading_columns):
     return aggregated, median_run_length
 
 
-def auto_aggregation_groups() -> Optional[List]:
-    all_column_names: Iterable[str] = compute_all_column_names()
+def auto_aggregation_groups(data: List[Dict[str, Any]]) -> Optional[List]:
+    all_column_names: Iterable[str] = compute_all_column_names(data)
     column_families: List = compute_column_families(all_column_names)
     debug(f'Column families: {column_families}')
     if column_families is None or len(column_families) <= 1:
@@ -357,23 +350,23 @@ def auto_aggregation_groups() -> Optional[List]:
     return agg_groups
 
 
-def auto_aggregate() -> List[Dict]:
-    return auto_aggregate_by_groups(compute_column_families(compute_all_column_names()))
+def auto_aggregate(data: List[Dict[str, Any]]) -> List[Dict]:
+    return auto_aggregate_by_groups(compute_column_families(compute_all_column_names(data), data), data)
 
 
-def run():
+def run(data: List[Dict[str, Any]]):
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
-        return compute_stats()
+        return compute_stats(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "run_columns":
-        return compute_run_columns()
+        return compute_run_columns(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "aggregate_runs":
-        return aggregate_runs()
+        return aggregate_runs(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "all_column_names":
-        return to_jsonisable(compute_all_column_names())
+        return to_jsonisable(compute_all_column_names(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_value_run_lengths":
-        return to_jsonisable(compute_median_column_value_run_lengths(compute_all_column_names()))
+        return to_jsonisable(compute_median_column_value_run_lengths(compute_all_column_names(data), data))
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations":
-        return compute_value_relations()
+        return compute_value_relations(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return compute_column_relations()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
@@ -381,25 +374,23 @@ def run():
     elif len(sys.argv) == 2 and sys.argv[1] == "column_equivalence_graph":
         return column_equivalence_graph(compute_column_relations())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph":
-        return to_jsonisable(column_relations_digraph())
+        return to_jsonisable(column_relations_digraph(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph_pruned":
         return to_jsonisable(column_relations_digraph_pruned())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_families":
-        return to_jsonisable(compute_column_families(compute_all_column_names()))
+        return to_jsonisable(compute_column_families(compute_all_column_names(data)))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregation_groups":
-        return auto_aggregation_groups()
+        return auto_aggregation_groups(data)
     elif len(sys.argv) == 3 and sys.argv[1] == "auto_aggregate_by_groups":
-        return auto_aggregate_by_groups(json.loads(sys.argv[2]))
+        return auto_aggregate_by_groups(json.loads(sys.argv[2]), data)
     elif len(sys.argv) == 3 and sys.argv[1] == "group_runs_by":
-        return compute_group_runs_by(json.loads(sys.argv[2]))
+        return compute_group_runs_by(json.loads(sys.argv[2]), data)
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
-        return auto_aggregate()
+        return auto_aggregate(data)
 
 
 if __name__ == "__main__":
-    load_data(sys.stdin.read().splitlines())
-
-    output = run()
+    output = run(load_data(sys.stdin.read().splitlines()))
     if output is not None:
         if isinstance(output, GeneratorType):
             for o in output:
