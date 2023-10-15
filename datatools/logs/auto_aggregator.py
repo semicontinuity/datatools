@@ -31,7 +31,8 @@ from statistics import median, mean
 from types import GeneratorType
 from typing import Iterable, Dict, List, Set, Hashable, Any, Optional, Tuple
 
-from datatools.analysis.graph.util import ConnectedComponents, transitive_reduction, roots_and_leaves, reachable_from
+from datatools.analysis.graph.util import ConnectedComponents, transitive_reduction, roots_and_leaves, reachable_from, \
+    invert_digraph, digraph_roots
 from datatools.json.util import to_jsonisable, is_primitive, to_hashable
 from datatools.util.frozendict import FrozenDict
 from datatools.util.logging import debug, traced
@@ -239,24 +240,23 @@ def column_relations_graph(data: List[Dict[str, Any]]):
     return g
 
 
-def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Hashable, Dict]:
+def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Tuple[str], Dict[Tuple[str], bool]]:
     column_relations: Dict = compute_column_relations(data)
     equivalence = column_equivalence_graph(column_relations)
 
-    equivalence_groups = ConnectedComponents(equivalence).compute()
-    column2group = {}
-    for equivalence_group in equivalence_groups:
-        for column in equivalence_group:
-            column2group[column] = tuple(equivalence_group)
+    column2group = ConnectedComponents(equivalence).compute_dict()
+    debug('column_relations_digraph', column2group=column2group)
 
     g = {}
     for column_a, column_a_relations in column_relations.items():
         equivalence_group_a = column2group[column_a]
-        g[equivalence_group_a] = adj = {}
+        adj = {}
+        g[equivalence_group_a] = adj
         for column_b, is_direct in column_a_relations.items():
             equivalence_group_b = column2group.get(column_b)
             if is_direct and equivalence_group_a != equivalence_group_b:
-                adj[equivalence_group_b] = None
+                debug('column_relations_digraph', node_from=equivalence_group_a, node_to=equivalence_group_b)
+                adj[equivalence_group_b] = True
     return g
 
 
@@ -270,7 +270,7 @@ def column_equivalence_graph(column_relations):
         column_a: {
             column_b: None
             for column_b, is_direct in column_a_relations.items()
-            if is_direct and column_relations[column_b][column_a] and column_relations[column_a][column_b] and column_a not in IGNORED_COLUMNS
+            if is_direct and column_relations.get(column_b) and column_relations.get(column_b).get(column_a) and column_a_relations.get(column_b) and column_a not in IGNORED_COLUMNS
         } for column_a, column_a_relations in column_relations.items()
     }
 
@@ -376,7 +376,34 @@ def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
             record['_'] = values
         else:
             record['_'] = auto_group_by_column_families(families, values)
-        record['#'] = len(values)
+
+        # record['_'] = values
+
+        # record['#'] = len(values)
+        result.append(record)
+    return result
+
+
+def auto_group_by_column_relations_digraph(graph: Dict[Tuple[str], Dict[Tuple[str], bool]], data: List[Dict[str, Any]]):
+    # find the most dependent tuple
+    roots = digraph_roots(invert_digraph(graph))
+    family = [column_name for root in roots for column_name in root]
+    family_to_group = defaultdict(list)
+
+    for j in data:
+        key = {}
+        value = {}
+        for k, v in j.items():
+            if k in family:
+                key[k] = v
+            else:
+                value[k] = v
+        family_to_group[FrozenDict(key)].append(value)
+
+    result = []
+    for key, values in family_to_group.items():
+        record = dict(key)
+        record['_'] = values
         result.append(record)
     return result
 
@@ -413,8 +440,12 @@ def auto_aggregate(data: List[Dict[str, Any]]) -> List[Dict]:
     return auto_aggregate_by_groups(compute_column_families(compute_all_column_names(data), data), data)
 
 
-def auto_group(data: List[Dict[str, Any]]) -> List[Dict]:
+def auto_group0(data: List[Dict[str, Any]]) -> List[Dict]:
     return auto_group_by_column_families(compute_column_families(compute_all_column_names(data), data), data)
+
+
+def auto_group(data: List[Dict[str, Any]]) -> List[Dict]:
+    return auto_group_by_column_relations_digraph(column_relations_digraph(data), data)
 
 
 def run(data: List[Dict[str, Any]]):
@@ -465,4 +496,4 @@ if __name__ == "__main__":
                 json.dump(o, fp=sys.stdout)
                 print()
         else:
-            json.dump(output, fp=sys.stdout)
+            json.dump(to_jsonisable(output), fp=sys.stdout)

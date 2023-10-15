@@ -1,6 +1,25 @@
+from collections import defaultdict
 from typing import *
 
 from datatools.util.logging import debug
+
+
+def digraph_roots(graph: Dict[Hashable, Dict[Hashable, Any]]) -> Set:
+    sources = set(graph)
+    sinks = set()
+    for node, adj in graph.items():
+        for target, edge in adj.items():
+            debug('roots', src=node, dst=target, edge=edge)
+            sinks.add(target)
+    return sources - sinks
+
+def invert_digraph(graph: Dict[Hashable, Dict[Hashable, Any]]) -> Dict[Hashable, Dict[Hashable, Any]]:
+    inverted = defaultdict(dict)
+    for node, adj in graph.items():
+        for target, edge in adj.items():
+            debug('invert_digraph', src=node, dst=target, edge=edge)
+            inverted[target][node] = edge
+    return inverted
 
 
 def compute_weights_graph(
@@ -77,6 +96,16 @@ class ConnectedComponents:
                 vertices = []
                 result.append(self.dfs(vertices, v, visited))
         return result
+
+    def compute_dict(self) -> Dict[Hashable, Tuple[Hashable]]:
+        equivalence_groups = self.compute()
+        column2group = {}
+
+        for equivalence_group in equivalence_groups:
+            for column in equivalence_group:
+                column2group[column] = tuple(equivalence_group)
+
+        return column2group
 
 
 def connected_components(adj: Dict[Hashable, Sequence[Hashable]]) -> List[List[Hashable]]:

@@ -3,7 +3,7 @@
 import json
 import sys
 
-from picotui.defs import KEY_ENTER, KEY_F3
+from picotui.defs import KEY_ENTER, KEY_F3, KEY_F4
 
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
@@ -11,7 +11,8 @@ from datatools.jv.document import JDocument
 from datatools.jv.grid import JGrid
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
-from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, MODIFIER_CTRL_ALT, EXIT_CODE_F3
+from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, MODIFIER_CTRL_ALT, \
+    EXIT_CODE_F3, EXIT_CODE_F4
 from datatools.tui.picotui_keys import KEY_ALT_ENTER, KEY_CTRL_ALT_SPACE
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
@@ -78,6 +79,8 @@ def loop(document: JDocument):
         return MODIFIER_ALT + EXIT_CODE_ENTER, document.selected_path(g.cur_line)
     elif key_code == KEY_F3:
         return EXIT_CODE_F3, json.dumps(document.selected_value(g.cur_line))
+    elif key_code == KEY_F4:
+        return EXIT_CODE_F4, json.dumps(document.selected_value(g.cur_line))
     else:
         return EXIT_CODE_ESCAPE, None
 
