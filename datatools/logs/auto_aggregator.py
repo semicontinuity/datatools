@@ -48,7 +48,7 @@ FORMAT_STRING = os.environ.get('FORMAT')
 
 
 def maybe_format(number):
-    return format(number, '.3f') if FORMAT_STRING else number
+    return format(number, FORMAT_STRING) if FORMAT_STRING else number
 
 
 @dataclass
@@ -61,7 +61,7 @@ class Stat:
 
 @run_once
 def load_data(lines) -> List[Dict[str, Any]]:
-    return to_hashable([json.loads(line) for line in lines])
+    return [json.loads(line) for line in lines]
 
 
 def compute_value_counts(data: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
@@ -159,14 +159,6 @@ def aggregate_runs(data: List[Dict[str, Any]]) -> List[Dict]:
     return compute_group_runs_by(run_columns, data)
 
 
-def compute_all_column_names(data: List[Dict[str, Any]]) -> Set[str]:
-    result = set()
-    for j in data:
-        for column in j:
-            result.add(column)
-    return result
-
-
 def compute_mean_column_value_run_lengths(all_column_names, data: List[Dict[str, Any]]) -> Dict[str, int]:
     lengths = {column: 0 for column in all_column_names}
     runs = defaultdict(list)
@@ -193,31 +185,6 @@ def compute_mean_column_value_run_lengths(all_column_names, data: List[Dict[str,
         if c not in result:     # no changes detected => value is constant
             result[c] = len(data)
     return result
-
-
-def compute_value_relations(data: List[Dict[str, Any]]):
-    all_column_names = compute_all_column_names(data)
-    # structure: [column_a][value_a][column_b] -> (value of column b, if it is a single value, or MULTI_VALUE_MARKER)
-    value_relations = defaultdict(lambda: defaultdict(dict))
-
-    for j in data:
-        # For every pair of distinct columns...
-        for column_a in all_column_names:
-            value_a = j.get(column_a)
-            if not is_primitive(value_a):
-                continue
-            for column_b in all_column_names:
-                value_b = j.get(column_b)
-                if column_a == column_b:
-                    continue
-
-                value_a_relations = value_relations[column_a][value_a]
-                if column_b not in value_a_relations:
-                    value_a_relations[column_b] = value_b  # for first occurrence value_a, memorize
-                else:
-                    if value_a_relations.get(column_b) != value_b:
-                        value_a_relations[column_b] = MULTI_VALUE_MARKER
-    return value_relations
 
 
 def compute_value_relations0(data: List[Dict[str, Any]]):
@@ -321,30 +288,6 @@ def compute_entropy_gap_graph(length: int, value_counts: Dict[str, Dict[str, int
     return result
 
 
-@traced('column_relations')
-def compute_column_relations(data: List[Dict[str, Any]]) -> Dict:
-    """
-    Reduce value relations to column relations.
-    Result is str -> {str -> bool}.
-    E.g.
-    { "a": { "b" : false }, "b": { "a" : true } }
-    means: "looking at the value in column b, we can tell the value in column a, but not vice versa"
-    """
-    value_relations = compute_value_relations(data)
-    column_relations = defaultdict(dict)
-    for column_a, column_a_values_relations in value_relations.items():
-        # initialize with 1 -> 1 relations (== True)
-        initial_relation = column_a not in IGNORED_COLUMNS
-        column_a_relations = {column: initial_relation for column in value_relations if column != column_a}
-
-        for value_a, value_a_relations in column_a_values_relations.items():
-            for column_b, value_b in value_a_relations.items():
-                if value_b == MULTI_VALUE_MARKER:
-                    column_a_relations[column_b] = False
-        column_relations[column_a] = column_a_relations
-    return column_relations
-
-
 def column_relations_graph(relations: Dict):
     g = {}
     for column_a, column_a_relations in relations.items():
@@ -354,26 +297,6 @@ def column_relations_graph(relations: Dict):
         for column_b, is_direct in column_a_relations.items():
             if is_direct:
                 adj[column_b] = None
-    return g
-
-
-def column_relations_digraph(data: List[Dict[str, Any]]) -> Dict[Tuple[str], Dict[Tuple[str], bool]]:
-    column_relations: Dict = compute_column_relations(data)
-    equivalence = column_equivalence_graph(column_relations)
-
-    column2group = ConnectedComponents(equivalence).compute_dict()
-    debug('column_relations_digraph', column2group=column2group)
-
-    g = {}
-    for column_a, column_a_relations in column_relations.items():
-        equivalence_group_a = column2group[column_a]
-        adj = {}
-        g[equivalence_group_a] = adj
-        for column_b, is_direct in column_a_relations.items():
-            equivalence_group_b = column2group.get(column_b)
-            if is_direct and equivalence_group_a != equivalence_group_b:
-                debug('column_relations_digraph', node_from=equivalence_group_a, node_to=equivalence_group_b)
-                adj[equivalence_group_b] = True
     return g
 
 
@@ -392,86 +315,191 @@ def column_equivalence_graph(column_relations):
     }
 
 
-@traced('column_relations_digraph_pruned')
-def column_relations_digraph_pruned(data: List[Dict[str, Any]]):
-    return transitive_reduction(column_relations_digraph(data))
+class TableAnalyzer:
+    data: List[Dict[str, Any]]
 
+    def __init__(self, data: List[Dict[str, Any]]) -> None:
+        self.data = data
 
-@traced('column_families')
-def compute_column_families(all_column_names, data: List[Dict[str, Any]]) -> Optional[List]:
-    pruned_relations_digraph = column_relations_digraph_pruned(data)
-    debug('compute_column_families', all_column_names=all_column_names)
-    run_lengths: Dict[str, int] = compute_mean_column_value_run_lengths(all_column_names, data)
-    debug(f'Run lengths: {run_lengths}')
+    def compute_all_column_names(self) -> Set[str]:
+        result = set()
+        for j in self.data:
+            for column in j:
+                result.add(column)
+        return result
 
-    non_trivial_roots, trivial_roots, leaves = roots_and_leaves(pruned_relations_digraph)
-    debug('compute_column_families', non_trivial_roots=non_trivial_roots)
-    debug('compute_column_families', trivial_roots=trivial_roots)
-    debug('compute_column_families', leaves=leaves)
-    leaves -= trivial_roots
-    debug('compute_column_families', non_trivial_leaves=leaves)
+    def compute_value_relations(self):
+        all_column_names = self.compute_all_column_names()
+        # structure: [column_a][value_a][column_b] -> (value of column b, if it is a single value, or MULTI_VALUE_MARKER)
+        value_relations = defaultdict(lambda: defaultdict(dict))
 
-    if len(leaves) > 0:
-        # choose root with maximum median run length
-        chosen_leaf = max(leaves, key=lambda leaf: run_lengths.get(leaf[0]))
-        debug('compute_column_families', chosen_leaf=chosen_leaf)
-        connected = set()
-        for root in non_trivial_roots:
-            subtree = reachable_from([root], pruned_relations_digraph)
-            if chosen_leaf in subtree:
-                connected = connected.union(subtree)
-        connected = {item for item in connected if run_lengths.get(item[0], 0) >= SUPPORT_THRESHOLD}
-        debug('compute_column_families', connected=connected)
-        return list(connected)
-    elif len(trivial_roots) > 0:
-        chosen_root = max(trivial_roots, key=len)   # questionable
-        return [chosen_root]
-    else:
-        debug(f'Cannot choose root')
-        return None
-    # debug(f'Chosen root: {chosen_root}')
-    #
-    # depth_to_nodes = defaultdict(list)
-    #
-    # for columns_tuple, depth in node_to_depth(pruned, chosen_root).items():
-    #     depth_to_nodes[depth].extend(columns_tuple)
-    #
-    # result = []
-    # trivial_columns = [e for root in trivial_roots for e in root]
-    # if trivial_columns:
-    #     result.append(trivial_columns)
-    # result += list(depth_to_nodes.values())
-    # return result
+        for j in self.data:
+            # For every pair of distinct columns...
+            for column_a in all_column_names:
+                value_a = j.get(column_a)
+                if not is_primitive(value_a):
+                    continue
+                for column_b in all_column_names:
+                    value_b = j.get(column_b)
+                    if column_a == column_b:
+                        continue
 
+                    value_a_relations = value_relations[column_a][value_a]
+                    if column_b not in value_a_relations:
+                        value_a_relations[column_b] = value_b  # for first occurrence value_a, memorize
+                    else:
+                        if value_a_relations.get(column_b) != value_b:
+                            value_a_relations[column_b] = MULTI_VALUE_MARKER
+        return value_relations
 
-def auto_aggregate_by_groups(agg_groups, data: List[Dict[str, Any]]):
-    """ Quick-and-dirty, inefficient multi-group aggregation """
-    debug(f'Automatically computing group runs by {agg_groups}')
-    if agg_groups is None or len(agg_groups) == 0:
-        return data
-    leading_columns = [c for g in agg_groups for c in g]
-    leading_columns_group_run_lengths = {c: compute_group_runs_and_median_by([c], data)[1] for c in leading_columns}
-    leading_columns.sort(key=leading_columns_group_run_lengths.get)
-    leading_columns.reverse()
-    debug(f'Column names, sorted by run lengths: {leading_columns}')
+    @traced('column_families')
+    def compute_column_families(self, all_column_names) -> Optional[List]:
+        pruned_relations_digraph = self.column_relations_digraph_pruned()
+        debug('compute_column_families', all_column_names=all_column_names)
+        run_lengths: Dict[str, int] = compute_mean_column_value_run_lengths(all_column_names, self.data)
+        debug(f'Run lengths: {run_lengths}')
 
-    aggregated, median_run_length = auto_aggregate_by_groups0(leading_columns, data)
-    return aggregated
+        non_trivial_roots, trivial_roots, leaves = roots_and_leaves(pruned_relations_digraph)
+        debug('compute_column_families', non_trivial_roots=non_trivial_roots)
+        debug('compute_column_families', trivial_roots=trivial_roots)
+        debug('compute_column_families', leaves=leaves)
+        leaves -= trivial_roots
+        debug('compute_column_families', non_trivial_leaves=leaves)
 
+        if len(leaves) > 0:
+            # choose root with maximum median run length
+            chosen_leaf = max(leaves, key=lambda leaf: run_lengths.get(leaf[0]))
+            debug('compute_column_families', chosen_leaf=chosen_leaf)
+            connected = set()
+            for root in non_trivial_roots:
+                subtree = reachable_from([root], pruned_relations_digraph)
+                if chosen_leaf in subtree:
+                    connected = connected.union(subtree)
+            connected = {item for item in connected if run_lengths.get(item[0], 0) >= SUPPORT_THRESHOLD}
+            debug('compute_column_families', connected=connected)
+            return list(connected)
+        elif len(trivial_roots) > 0:
+            chosen_root = max(trivial_roots, key=len)  # questionable
+            return [chosen_root]
+        else:
+            debug(f'Cannot choose root')
+            return None
+        # debug(f'Chosen root: {chosen_root}')
+        #
+        # depth_to_nodes = defaultdict(list)
+        #
+        # for columns_tuple, depth in node_to_depth(pruned, chosen_root).items():
+        #     depth_to_nodes[depth].extend(columns_tuple)
+        #
+        # result = []
+        # trivial_columns = [e for root in trivial_roots for e in root]
+        # if trivial_columns:
+        #     result.append(trivial_columns)
+        # result += list(depth_to_nodes.values())
+        # return result
 
-def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
-    if families is None or len(families) == 0:
-        return data
+    @traced('column_relations')
+    def compute_column_relations(self) -> Dict:
+        """
+        Reduce value relations to column relations.
+        Result is str -> {str -> bool}.
+        E.g.
+        { "a": { "b" : false }, "b": { "a" : true } }
+        means: "looking at the value in column b, we can tell the value in column a, but not vice versa"
+        """
+        value_relations = self.compute_value_relations()
+        column_relations = defaultdict(dict)
+        for column_a, column_a_values_relations in value_relations.items():
+            # initialize with 1 -> 1 relations (== True)
+            initial_relation = column_a not in IGNORED_COLUMNS
+            column_a_relations = {column: initial_relation for column in value_relations if column != column_a}
 
-    families.sort(key=len) # heuristic! there could be several equivalent families; start with largest
-    families = list(reversed(families))
-    family_to_group = defaultdict(list)
+            for value_a, value_a_relations in column_a_values_relations.items():
+                for column_b, value_b in value_a_relations.items():
+                    if value_b == MULTI_VALUE_MARKER:
+                        column_a_relations[column_b] = False
+            column_relations[column_a] = column_a_relations
+        return column_relations
 
-    while len(families) > 0:
-        family = families[0]
-        families = families[1:]
+    def column_relations_digraph(self) -> Dict[Tuple[str], Dict[Tuple[str], bool]]:
+        column_relations: Dict = self.compute_column_relations()
+        equivalence = column_equivalence_graph(column_relations)
 
-        for j in data:
+        column2group = ConnectedComponents(equivalence).compute_dict()
+        debug('column_relations_digraph', column2group=column2group)
+
+        g = {}
+        for column_a, column_a_relations in column_relations.items():
+            equivalence_group_a = column2group[column_a]
+            adj = {}
+            g[equivalence_group_a] = adj
+            for column_b, is_direct in column_a_relations.items():
+                equivalence_group_b = column2group.get(column_b)
+                if is_direct and equivalence_group_a != equivalence_group_b:
+                    debug('column_relations_digraph', node_from=equivalence_group_a, node_to=equivalence_group_b)
+                    adj[equivalence_group_b] = True
+        return g
+
+    @traced('column_relations_digraph_pruned')
+    def column_relations_digraph_pruned(self):
+        return transitive_reduction(self.column_relations_digraph())
+
+    def auto_aggregation_groups(self) -> Optional[List]:
+        all_column_names: Iterable[str] = self.compute_all_column_names()
+        column_families: List = self.compute_column_families(all_column_names)
+        debug(f'Column families: {column_families}')
+        if column_families is None or len(column_families) <= 1:
+            debug('No auto-aggregation groups')
+            return None
+        groups = list(reversed(column_families[1:]))
+        debug('auto_aggregation_groups', groups=groups)
+        return groups
+
+    def auto_aggregate_by_groups0(self, leading_columns):
+        debug('auto_aggregate_by_groups0', leading_columns=leading_columns)
+        aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns, self.data)
+        if median_run_length < SUPPORT_THRESHOLD:
+            less_columns = leading_columns[0:-1]
+            if len(less_columns) == 0:
+                return aggregated, median_run_length
+            aggregated_alt, median_run_length_alt = self.auto_aggregate_by_groups0(less_columns)
+            if median_run_length_alt == median_run_length:
+                # Makes no sense to group by smaller number of columns, if median_run_length is the same
+                return aggregated, median_run_length
+            else:
+                return aggregated_alt, median_run_length_alt
+        return aggregated, median_run_length
+
+    def auto_aggregate_by_groups(self, agg_groups):
+        """ Quick-and-dirty, inefficient multi-group aggregation """
+        debug(f'Automatically computing group runs by {agg_groups}')
+        if agg_groups is None or len(agg_groups) == 0:
+            return self.data
+        leading_columns = [c for g in agg_groups for c in g]
+        leading_columns_group_run_lengths = {c: compute_group_runs_and_median_by([c], self.data)[1] for c in leading_columns}
+        leading_columns.sort(key=leading_columns_group_run_lengths.get)
+        leading_columns.reverse()
+        debug(f'Column names, sorted by run lengths: {leading_columns}')
+
+        aggregated, median_run_length = self.auto_aggregate_by_groups0(leading_columns)
+        return aggregated
+
+    def auto_aggregate(self) -> List[Dict]:
+        return self.auto_aggregate_by_groups(self.compute_column_families(self.compute_all_column_names()))
+
+    def auto_group0(self) -> List[Dict]:
+        return self.auto_group_by_column_families(self.compute_column_families(self.compute_all_column_names()), self.data)
+
+    def auto_group(self) -> List[Dict]:
+        return self.auto_group_by_column_relations_digraph(self.column_relations_digraph())
+
+    def auto_group_by_column_relations_digraph(self, graph: Dict[Tuple[str], Dict[Tuple[str], bool]]):
+        # find the most dependent tuple
+        roots = digraph_roots(invert_digraph(graph))
+        family = [column_name for root in roots for column_name in root]
+        family_to_group = defaultdict(list)
+
+        for j in self.data:
             key = {}
             value = {}
             for k, v in j.items():
@@ -481,91 +509,55 @@ def auto_group_by_column_families(families, data: List[Dict[str, Any]]) -> List:
                     value[k] = v
             family_to_group[FrozenDict(key)].append(value)
 
-        if len(families) > 0 and len(family_to_group) == 1 and FrozenDict() in family_to_group:
-            family_to_group.clear()
-            continue
-        break
-
-    result = []
-    for key, values in family_to_group.items():
-        record = dict(key)
-        if len(families) == 0:
+        result = []
+        for key, values in family_to_group.items():
+            record = dict(key)
             record['_'] = values
-        else:
-            record['_'] = auto_group_by_column_families(families, values)
+            result.append(record)
+        return result
 
-        # record['_'] = values
+    def auto_group_by_column_families(self, families, data: List[Dict[str, Any]]) -> List:
+        if families is None or len(families) == 0:
+            return data
 
-        # record['#'] = len(values)
-        result.append(record)
-    return result
+        families.sort(key=len)  # heuristic! there could be several equivalent families; start with largest
+        families = list(reversed(families))
+        family_to_group = defaultdict(list)
 
+        while len(families) > 0:
+            family = families[0]
+            families = families[1:]
 
-def auto_group_by_column_relations_digraph(graph: Dict[Tuple[str], Dict[Tuple[str], bool]], data: List[Dict[str, Any]]):
-    # find the most dependent tuple
-    roots = digraph_roots(invert_digraph(graph))
-    family = [column_name for root in roots for column_name in root]
-    family_to_group = defaultdict(list)
+            for j in data:
+                key = {}
+                value = {}
+                for k, v in j.items():
+                    if k in family:
+                        key[k] = v
+                    else:
+                        value[k] = v
+                family_to_group[FrozenDict(key)].append(value)
 
-    for j in data:
-        key = {}
-        value = {}
-        for k, v in j.items():
-            if k in family:
-                key[k] = v
+            if len(families) > 0 and len(family_to_group) == 1 and FrozenDict() in family_to_group:
+                family_to_group.clear()
+                continue
+            break
+
+        result = []
+        for key, values in family_to_group.items():
+            record = dict(key)
+            if len(families) == 0:
+                record['_'] = values
             else:
-                value[k] = v
-        family_to_group[FrozenDict(key)].append(value)
+                record['_'] = self.auto_group_by_column_families(families, values)
 
-    result = []
-    for key, values in family_to_group.items():
-        record = dict(key)
-        record['_'] = values
-        result.append(record)
-    return result
+            # record['_'] = values
 
+            # record['#'] = len(values)
+            result.append(record)
+        return result
 
-def auto_aggregate_by_groups0(leading_columns, data: List[Dict[str, Any]]):
-    debug('auto_aggregate_by_groups0', leading_columns=leading_columns)
-    aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns, data)
-    if median_run_length < SUPPORT_THRESHOLD:
-        less_columns = leading_columns[0:-1]
-        if len(less_columns) == 0:
-            return aggregated, median_run_length
-        aggregated_alt, median_run_length_alt = auto_aggregate_by_groups0(less_columns, data)
-        if median_run_length_alt == median_run_length:
-            # Makes no sense to group by smaller number of columns, if median_run_length is the same
-            return aggregated, median_run_length
-        else:
-            return aggregated_alt, median_run_length_alt
-    return aggregated, median_run_length
-
-
-def auto_aggregation_groups(data: List[Dict[str, Any]]) -> Optional[List]:
-    all_column_names: Iterable[str] = compute_all_column_names(data)
-    column_families: List = compute_column_families(all_column_names, data)
-    debug(f'Column families: {column_families}')
-    if column_families is None or len(column_families) <= 1:
-        debug('No auto-aggregation groups')
-        return None
-    groups = list(reversed(column_families[1:]))
-    debug('auto_aggregation_groups', groups=groups)
-    return groups
-
-
-def auto_aggregate(data: List[Dict[str, Any]]) -> List[Dict]:
-    return auto_aggregate_by_groups(compute_column_families(compute_all_column_names(data), data), data)
-
-
-def auto_group0(data: List[Dict[str, Any]]) -> List[Dict]:
-    return auto_group_by_column_families(compute_column_families(compute_all_column_names(data), data), data)
-
-
-def auto_group(data: List[Dict[str, Any]]) -> List[Dict]:
-    return auto_group_by_column_relations_digraph(column_relations_digraph(data), data)
-
-
-def run(data: List[Dict[str, Any]]):
+def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     global IGNORED_COLUMNS
 
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
@@ -575,11 +567,11 @@ def run(data: List[Dict[str, Any]]):
     elif len(sys.argv) == 2 and sys.argv[1] == "aggregate_runs":
         return aggregate_runs(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "all_column_names":
-        return to_jsonisable(compute_all_column_names(data))
+        return to_jsonisable(a.compute_all_column_names())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_value_run_lengths":
-        return to_jsonisable(compute_mean_column_value_run_lengths(compute_all_column_names(data), data))
+        return to_jsonisable(compute_mean_column_value_run_lengths(a.compute_all_column_names(), data))
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations":
-        return to_jsonisable(compute_value_relations(data))
+        return to_jsonisable(a.compute_value_relations())
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations0":
         return compute_value_relations0(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_joint_entropy":
@@ -591,32 +583,44 @@ def run(data: List[Dict[str, Any]]):
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap_graph":
         return compute_entropy_gap_graph(len(data), compute_value_counts(data), compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
-        return compute_column_relations(data)
+        return a.compute_column_relations()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
-        return column_relations_graph(compute_column_relations(data))
+        return column_relations_graph(a.compute_column_relations())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_equivalence_graph":
-        return column_equivalence_graph(compute_column_relations(data))
+        return column_equivalence_graph(a.compute_column_relations())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph":
-        return to_jsonisable(column_relations_digraph(data))
+        return to_jsonisable(a.column_relations_digraph())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph_pruned":
-        return to_jsonisable(column_relations_digraph_pruned(data))
+        return to_jsonisable(a.column_relations_digraph_pruned())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_families":
-        return to_jsonisable(compute_column_families(compute_all_column_names(data), data))
+        return to_jsonisable(a.compute_column_families(a.compute_all_column_names()))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregation_groups":
-        return auto_aggregation_groups(data)
+        return a.auto_aggregation_groups()
     elif len(sys.argv) == 3 and sys.argv[1] == "auto_aggregate_by_groups":
-        return auto_aggregate_by_groups(json.loads(sys.argv[2]), data)
+        return a.auto_aggregate_by_groups(json.loads(sys.argv[2]))
     elif len(sys.argv) == 3 and sys.argv[1] == "group_runs_by":
         return compute_group_runs_by(json.loads(sys.argv[2]), data)
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
         IGNORED_COLUMNS = ["datetime", "message", "hash", "logger", "level"]
-        return to_jsonisable(auto_aggregate(data))
+        return to_jsonisable(a.auto_aggregate())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
-        return to_jsonisable(auto_group(data))
+        return to_jsonisable(a.auto_group())
 
 
-if __name__ == "__main__":
-    output = run(load_data(sys.stdin.read().splitlines()))
+def main():
+    raw_data = load_data(sys.stdin.read().splitlines())
+    a = TableAnalyzer(raw_data)
+
+    column_names = a.compute_all_column_names()
+    data = []
+
+    for j in raw_data:
+        for c in column_names:
+            if c not in j:
+                j[c] = NO_VALUE_MARKER
+        data.append(to_hashable(j))
+
+    output = run(data, a)
     if output is not None:
         if isinstance(output, GeneratorType):
             for o in output:
@@ -624,3 +628,7 @@ if __name__ == "__main__":
                 print()
         else:
             json.dump(to_jsonisable(output), fp=sys.stdout)
+
+
+if __name__ == "__main__":
+    main()
