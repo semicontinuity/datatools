@@ -317,9 +317,21 @@ def column_equivalence_graph(column_relations):
 
 class TableAnalyzer:
     data: List[Dict[str, Any]]
+    column_counts: Dict[str, int]
+    complete_columns: Set[str]
+    incomplete_columns: Set[str]
 
-    def __init__(self, data: List[Dict[str, Any]]) -> None:
+    def __init__(
+            self,
+            data: List[Dict[str, Any]],
+            column_counts: Dict[str, int],
+            complete_columns: Set[str],
+            incomplete_columns: Set[str]
+    ) -> None:
         self.data = data
+        self.column_counts = column_counts
+        self.complete_columns = complete_columns
+        self.incomplete_columns = incomplete_columns
 
     def compute_all_column_names(self) -> Set[str]:
         result = set()
@@ -607,9 +619,20 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
         return to_jsonisable(a.auto_group())
 
 
+def compute_column_counts(data: List[Dict[str, Any]]) -> Dict[str, int]:
+    result = {}
+    for j in data:
+        for column in j:
+            result[column] = result.get(column, 0) + 1
+    return result
+
+
 def main():
     raw_data = load_data(sys.stdin.read().splitlines())
-    a = TableAnalyzer(raw_data)
+    column_counts = compute_column_counts(raw_data)
+    complete_columns = { c for c, count in column_counts.items() if count == len(raw_data)}
+    incomplete_columns = { c for c, count in column_counts.items() if count != len(raw_data)}
+    a = TableAnalyzer(raw_data, column_counts, complete_columns, incomplete_columns)
 
     column_names = a.compute_all_column_names()
     data = []
