@@ -177,31 +177,6 @@ def compute_mean_column_value_run_lengths(all_column_names, data: List[Dict[str,
     return result
 
 
-def compute_value_relations0(data: List[Dict[str, Any]]):
-    """
-    :returns structure: [column_a][value_a][column_b][value_b] -> count
-    """
-    value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
-
-    for j in data:
-        # For every pair of distinct columns...
-        for column_a in j:
-            value_a = j.get(column_a)
-            if not is_primitive(value_a):
-                continue
-            for column_b in j:
-                if column_a == column_b:
-                    continue
-
-                value_b = j.get(column_b)
-                if not is_primitive(value_b):
-                    continue
-
-                value_relations[column_a][value_a][column_b][value_b] += 1
-
-    return value_relations
-
-
 def compute_joint_entropy(length: int, value_relations0: Dict):
     result = defaultdict(lambda: defaultdict(lambda: 0.0))
 
@@ -299,8 +274,38 @@ class TableAnalyzer:
 
         return column_value_counts
 
+    def compute_value_relations0(self):
+        """
+        :returns structure: [column_a][value_a][column_b][value_b] -> count
+        """
+        value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+
+        for j in self.data:
+            # For every pair of distinct columns...
+            for column_a in j:
+                if column_a in self.incomplete_columns:
+                    continue
+
+                value_a = j.get(column_a)
+                if not is_primitive(value_a):
+                    continue
+                for column_b in j:
+                    if column_b in self.incomplete_columns:
+                        continue
+
+                    if column_a == column_b:
+                        continue
+
+                    value_b = j.get(column_b)
+                    if not is_primitive(value_b):
+                        continue
+
+                    value_relations[column_a][value_a][column_b][value_b] += 1
+
+        return value_relations
+
     def compute_value_relations(self):
-        all_column_names = self.compute_all_column_names()
+        all_column_names = self.complete_columns
         # structure: [column_a][value_a][column_b] -> (value of column b, if it is a single value, or MULTI_VALUE_MARKER)
         value_relations = defaultdict(lambda: defaultdict(dict))
 
@@ -591,15 +596,15 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations":
         return to_jsonisable(a.compute_value_relations())
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations0":
-        return compute_value_relations0(data)
+        return a.compute_value_relations0()
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_joint_entropy":
-        return compute_joint_entropy(len(data), compute_value_relations0(data))
+        return compute_joint_entropy(len(data), a.compute_value_relations0())
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_mutual_information":
-        return compute_mutual_information(len(data), a.compute_value_counts(), compute_value_relations0(data))
+        return compute_mutual_information(len(data), a.compute_value_counts(), a.compute_value_relations0())
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap":
-        return a.compute_entropy_gap(compute_value_relations0(data))
+        return a.compute_entropy_gap(a.compute_value_relations0())
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap_graph":
-        return a.compute_entropy_gap_graph(compute_value_relations0(data))
+        return a.compute_entropy_gap_graph(a.compute_value_relations0())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return a.compute_column_relations()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
