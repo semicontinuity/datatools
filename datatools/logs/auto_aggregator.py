@@ -180,7 +180,6 @@ def compute_mean_column_value_run_lengths(all_column_names, data: List[Dict[str,
 def compute_value_relations(data: List[Dict[str, Any]]):
     all_column_names = compute_all_column_names(data)
     # structure: [column_a][value_a][column_b] -> (value of column b, if it is a single value, or MULTI_VALUE_MARKER)
-    # value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: None)))
     value_relations = defaultdict(lambda: defaultdict(dict))
 
     for j in data:
@@ -200,6 +199,31 @@ def compute_value_relations(data: List[Dict[str, Any]]):
                 else:
                     if value_a_relations.get(column_b) != value_b:
                         value_a_relations[column_b] = MULTI_VALUE_MARKER
+    return value_relations
+
+
+def compute_value_relations0(data: List[Dict[str, Any]]):
+    """
+    :returns structure: [column_a][value_a][column_b][value_b] -> count
+    """
+    value_relations = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+
+    for j in data:
+        # For every pair of distinct columns...
+        for column_a in j:
+            value_a = j.get(column_a)
+            if not is_primitive(value_a):
+                continue
+            for column_b in j:
+                if column_a == column_b:
+                    continue
+
+                value_b = j.get(column_b)
+                if not is_primitive(value_b):
+                    continue
+
+                value_relations[column_a][value_a][column_b][value_b] += 1
+
     return value_relations
 
 
@@ -463,6 +487,8 @@ def run(data: List[Dict[str, Any]]):
         return to_jsonisable(compute_mean_column_value_run_lengths(compute_all_column_names(data), data))
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations":
         return to_jsonisable(compute_value_relations(data))
+    elif len(sys.argv) == 2 and sys.argv[1] == "value_relations0":
+        return compute_value_relations0(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return compute_column_relations(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
