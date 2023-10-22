@@ -64,16 +64,6 @@ def load_data(lines) -> List[Dict[str, Any]]:
     return [json.loads(line) for line in lines]
 
 
-def compute_value_counts(data: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
-    column2stat = defaultdict(lambda: defaultdict(lambda: 0))
-
-    for j in data:
-        for column, value in j.items():
-            column2stat[column][value] += 1
-
-    return column2stat
-
-
 def compute_stats(data: List[Dict[str, Any]]) -> Dict[str, Stat]:
     prev_j = None
     column2stat: Dict[str, Stat] = defaultdict(lambda: Stat(defaultdict(int)))
@@ -242,52 +232,6 @@ def compute_mutual_information(length: int, value_counts: Dict[str, Dict[str, in
     return result
 
 
-def compute_entropy_gap(length: int, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
-    """
-    A=a1
-      B=b11
-      B=b12
-    A=a2
-      B=b21
-      B=b22
-      B=b23
-      B=b24
-
-    Entropy gap is defined as weighted conditional entropy:
-    IG(B|A) = p(a1)*H(B|a1) + p(a2)*H(B|a2) ...
-    """
-    result = defaultdict(lambda: defaultdict(lambda: 0.0))
-
-    for column_a, stats_a in value_relations0.items():
-        for value_a, stats_b in stats_a.items():
-            p_a = value_counts[column_a][value_a] / length
-
-            for column_b, values_b in stats_b.items():
-
-                size = 0
-                for value_b, count in values_b.items():
-                    size += count
-
-                h_b_given_a = 0.0
-                for value_b, count in values_b.items():
-                    p = count / size
-                    h_b_given_a -= p * math.log2(p)
-
-                result[column_a][column_b] += h_b_given_a * p_a
-
-    return result
-
-
-def compute_entropy_gap_graph(length: int, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
-    matrix = compute_entropy_gap(length, value_counts, value_relations0)
-    result = defaultdict(lambda: defaultdict(lambda: 0.0))
-    for column_a, values in matrix.items():
-        for column_b, h_gap in values.items():
-            if h_gap != 0.0:
-                result[column_a][column_b] = maybe_format(h_gap)
-    return result
-
-
 def column_relations_graph(relations: Dict):
     g = {}
     for column_a, column_a_relations in relations.items():
@@ -320,6 +264,7 @@ class TableAnalyzer:
     column_counts: Dict[str, int]
     complete_columns: Set[str]
     incomplete_columns: Set[str]
+    column_value_counts: Dict[str, Dict[str, int]]
 
     def __init__(
             self,
@@ -332,6 +277,7 @@ class TableAnalyzer:
         self.column_counts = column_counts
         self.complete_columns = complete_columns
         self.incomplete_columns = incomplete_columns
+        self.column_value_counts = self.compute_value_counts()
 
     def compute_all_column_names(self) -> Set[str]:
         result = set()
@@ -339,6 +285,19 @@ class TableAnalyzer:
             for column in j:
                 result.add(column)
         return result
+
+    def compute_value_counts(self) -> Dict[str, Dict[str, int]]:
+        """
+        Only for complete columns
+        """
+        column_value_counts = defaultdict(lambda: defaultdict(lambda: 0))
+
+        for j in self.data:
+            for column, value in j.items():
+                if column in self.complete_columns:
+                    column_value_counts[column][value] += 1
+
+        return column_value_counts
 
     def compute_value_relations(self):
         all_column_names = self.compute_all_column_names()
@@ -467,6 +426,52 @@ class TableAnalyzer:
         debug('auto_aggregation_groups', groups=groups)
         return groups
 
+    def compute_entropy_gap(self, value_relations0: Dict):
+        """
+        A=a1
+          B=b11
+          B=b12
+        A=a2
+          B=b21
+          B=b22
+          B=b23
+          B=b24
+
+        Entropy gap is defined as weighted conditional entropy:
+        IG(B|A) = p(a1)*H(B|a1) + p(a2)*H(B|a2) ...
+        """
+        value_counts = self.column_value_counts
+
+        result = defaultdict(lambda: defaultdict(lambda: 0.0))
+
+        for column_a, stats_a in value_relations0.items():
+            for value_a, stats_b in stats_a.items():
+                p_a = value_counts[column_a][value_a] / len(self.data)
+
+                for column_b, values_b in stats_b.items():
+
+                    size = 0
+                    for value_b, count in values_b.items():
+                        size += count
+
+                    h_b_given_a = 0.0
+                    for value_b, count in values_b.items():
+                        p = count / size
+                        h_b_given_a -= p * math.log2(p)
+
+                    result[column_a][column_b] += h_b_given_a * p_a
+
+        return result
+
+    def compute_entropy_gap_graph(self, value_relations0: Dict):
+        matrix = self.compute_entropy_gap(value_relations0)
+        result = defaultdict(lambda: defaultdict(lambda: 0.0))
+        for column_a, values in matrix.items():
+            for column_b, h_gap in values.items():
+                if h_gap != 0.0:
+                    result[column_a][column_b] = maybe_format(h_gap)
+        return result
+
     def auto_aggregate_by_groups0(self, leading_columns):
         debug('auto_aggregate_by_groups0', leading_columns=leading_columns)
         aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns, self.data)
@@ -569,6 +574,7 @@ class TableAnalyzer:
             result.append(record)
         return result
 
+
 def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     global IGNORED_COLUMNS
 
@@ -589,11 +595,11 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_joint_entropy":
         return compute_joint_entropy(len(data), compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_mutual_information":
-        return compute_mutual_information(len(data), compute_value_counts(data), compute_value_relations0(data))
+        return compute_mutual_information(len(data), a.compute_value_counts(), compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap":
-        return compute_entropy_gap(len(data), compute_value_counts(data), compute_value_relations0(data))
+        return a.compute_entropy_gap(compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap_graph":
-        return compute_entropy_gap_graph(len(data), compute_value_counts(data), compute_value_relations0(data))
+        return a.compute_entropy_gap_graph(compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return a.compute_column_relations()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
@@ -628,22 +634,13 @@ def compute_column_counts(data: List[Dict[str, Any]]) -> Dict[str, int]:
 
 
 def main():
-    raw_data = load_data(sys.stdin.read().splitlines())
+    raw_data = to_hashable(load_data(sys.stdin.read().splitlines()))
     column_counts = compute_column_counts(raw_data)
     complete_columns = { c for c, count in column_counts.items() if count == len(raw_data)}
     incomplete_columns = { c for c, count in column_counts.items() if count != len(raw_data)}
     a = TableAnalyzer(raw_data, column_counts, complete_columns, incomplete_columns)
+    output = run(raw_data, a)
 
-    column_names = a.compute_all_column_names()
-    data = []
-
-    for j in raw_data:
-        for c in column_names:
-            if c not in j:
-                j[c] = NO_VALUE_MARKER
-        data.append(to_hashable(j))
-
-    output = run(data, a)
     if output is not None:
         if isinstance(output, GeneratorType):
             for o in output:
