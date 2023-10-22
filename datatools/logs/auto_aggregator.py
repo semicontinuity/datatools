@@ -25,6 +25,7 @@ Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 
 import json
 import sys
+import math
 from collections import defaultdict
 from dataclasses import dataclass
 from statistics import median, mean
@@ -54,6 +55,16 @@ class Stat:
 @run_once
 def load_data(lines) -> List[Dict[str, Any]]:
     return to_hashable([json.loads(line) for line in lines])
+
+
+def compute_value_counts(data: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
+    column2stat = defaultdict(lambda: defaultdict(lambda: 0))
+
+    for j in data:
+        for column, value in j.items():
+            column2stat[column][value] += 1
+
+    return column2stat
 
 
 def compute_stats(data: List[Dict[str, Any]]) -> Dict[str, Stat]:
@@ -227,6 +238,72 @@ def compute_value_relations0(data: List[Dict[str, Any]]):
     return value_relations
 
 
+def compute_joint_entropy(length: int, value_relations0: Dict):
+    result = defaultdict(lambda: defaultdict(lambda: 0.0))
+
+    for column_a, stats_a in value_relations0.items():
+        for value_a, stats_b in stats_a.items():
+            for column_b, values_b in stats_b.items():
+                for value_b, count in values_b.items():
+                    p_a_b = count / length
+                    result[column_a][column_b] -= p_a_b * math.log2(p_a_b)
+    return result
+
+
+def compute_mutual_information(length: int, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
+    result = defaultdict(lambda: defaultdict(lambda: 0.0))
+
+    for column_a, stats_a in value_relations0.items():
+        for value_a, stats_b in stats_a.items():
+            p_a = value_counts[column_a][value_a] / length
+
+            for column_b, values_b in stats_b.items():
+                value_counts_column_b = value_counts[column_b]
+                mi = 0.0
+                for value_b, count in values_b.items():
+                    p_a_b = count / length
+                    p_b = value_counts_column_b[value_b] / length
+                    mi += p_a_b * math.log2(p_a_b / (p_a * p_b))
+                result[column_a][column_b] = mi
+    return result
+
+
+def compute_entropy_gap(length: int, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
+    """
+    A=a1
+      B=b11
+      B=b12
+    A=a2
+      B=b21
+      B=b22
+      B=b23
+      B=b24
+
+    Entropy gap is defined as weighted conditional entropy:
+    IG(B|A) = p(a1)*H(B|a1) + p(a2)*H(B|a2) ...
+    """
+    result = defaultdict(lambda: defaultdict(lambda: 0.0))
+
+    for column_a, stats_a in value_relations0.items():
+        for value_a, stats_b in stats_a.items():
+            p_a = value_counts[column_a][value_a] / length
+
+            for column_b, values_b in stats_b.items():
+
+                size = 0
+                for value_b, count in values_b.items():
+                    size += count
+
+                h_b_given_a = 0.0
+                for value_b, count in values_b.items():
+                    p = count / size
+                    h_b_given_a -= p * math.log2(p)
+
+                result[column_a][column_b] += h_b_given_a * p_a
+
+    return result
+
+
 @traced('column_relations')
 def compute_column_relations(data: List[Dict[str, Any]]) -> Dict:
     """
@@ -251,8 +328,7 @@ def compute_column_relations(data: List[Dict[str, Any]]) -> Dict:
     return column_relations
 
 
-def column_relations_graph(data: List[Dict[str, Any]]):
-    relations: Dict = compute_column_relations(data)
+def column_relations_graph(relations: Dict):
     g = {}
     for column_a, column_a_relations in relations.items():
         if column_a in IGNORED_COLUMNS:
@@ -489,10 +565,16 @@ def run(data: List[Dict[str, Any]]):
         return to_jsonisable(compute_value_relations(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations0":
         return compute_value_relations0(data)
+    elif len(sys.argv) == 2 and sys.argv[1] == "compute_joint_entropy":
+        return compute_joint_entropy(len(data), compute_value_relations0(data))
+    elif len(sys.argv) == 2 and sys.argv[1] == "compute_mutual_information":
+        return compute_mutual_information(len(data), compute_value_counts(data), compute_value_relations0(data))
+    elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap":
+        return compute_entropy_gap(len(data), compute_value_counts(data), compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return compute_column_relations(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
-        return column_relations_graph(data)
+        return column_relations_graph(compute_column_relations(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_equivalence_graph":
         return column_equivalence_graph(compute_column_relations(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph":
