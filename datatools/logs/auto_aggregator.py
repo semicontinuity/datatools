@@ -24,6 +24,7 @@ Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 """
 
 import json
+import os
 import sys
 import math
 from collections import defaultdict
@@ -42,6 +43,12 @@ from datatools.util.infra import run_once
 SUPPORT_THRESHOLD = 4
 IGNORED_COLUMNS = []
 MULTI_VALUE_MARKER = ...
+NO_VALUE_MARKER = ...
+FORMAT_STRING = os.environ.get('FORMAT')
+
+
+def maybe_format(number):
+    return format(number, '.3f') if FORMAT_STRING else number
 
 
 @dataclass
@@ -301,6 +308,16 @@ def compute_entropy_gap(length: int, value_counts: Dict[str, Dict[str, int]], va
 
                 result[column_a][column_b] += h_b_given_a * p_a
 
+    return result
+
+
+def compute_entropy_gap_graph(length: int, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
+    matrix = compute_entropy_gap(length, value_counts, value_relations0)
+    result = defaultdict(lambda: defaultdict(lambda: 0.0))
+    for column_a, values in matrix.items():
+        for column_b, h_gap in values.items():
+            if h_gap != 0.0:
+                result[column_a][column_b] = maybe_format(h_gap)
     return result
 
 
@@ -571,6 +588,8 @@ def run(data: List[Dict[str, Any]]):
         return compute_mutual_information(len(data), compute_value_counts(data), compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap":
         return compute_entropy_gap(len(data), compute_value_counts(data), compute_value_relations0(data))
+    elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap_graph":
+        return compute_entropy_gap_graph(len(data), compute_value_counts(data), compute_value_relations0(data))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return compute_column_relations(data)
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
