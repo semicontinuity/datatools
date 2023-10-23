@@ -419,6 +419,11 @@ class TableAnalyzer:
                     result[column_a].add(column_b)
         return result
 
+    def column_affinity_families(self, threshold: float) -> Set[Tuple[str]]:
+        g = self.column_affinity_graph(threshold)
+        column2group = ConnectedComponents(g).compute_dict()
+        return set(column2group.values())
+
     def auto_aggregation_groups(self) -> Optional[List]:
         all_column_names: Iterable[str] = self.compute_all_column_names()
         column_families: List = self.compute_column_families(all_column_names)
@@ -528,13 +533,16 @@ class TableAnalyzer:
     def auto_group0(self) -> List[Dict]:
         return self.auto_group_by_column_families(self.compute_column_families(self.compute_all_column_names()), self.data)
 
-    def auto_group(self) -> List[Dict]:
-        return self.auto_group_by_column_relations_digraph(self.column_relations_digraph())
-
-    def auto_group_by_column_relations_digraph(self, graph: Dict[Tuple[str], Dict[Tuple[str], bool]]):
+    def auto_group_family0(self) -> List:
         # find the most dependent tuple
-        roots = digraph_roots(invert_digraph(graph))
-        family = [column_name for root in roots for column_name in root]
+        roots = digraph_roots(invert_digraph(self.column_relations_digraph()))
+        return [column_name for root in roots for column_name in root]
+
+    def auto_group(self) -> List[Dict]:
+        return self.auto_group_by_column_relations_digraph(self.auto_group_family0())
+
+    def auto_group_by_column_relations_digraph(self, family: List):
+
         family_to_group = defaultdict(list)
 
         for j in self.data:
@@ -633,6 +641,8 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
         return to_jsonisable(a.column_relations_digraph_pruned())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_affinity_graph":
         return to_jsonisable(a.column_affinity_graph(1.0))
+    elif len(sys.argv) == 2 and sys.argv[1] == "column_affinity_families":
+        return to_jsonisable(a.column_affinity_families(1.0))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_families":
         return to_jsonisable(a.compute_column_families(a.compute_all_column_names()))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregation_groups":
@@ -644,6 +654,8 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
         IGNORED_COLUMNS = ["datetime", "message", "hash", "logger", "level"]
         return to_jsonisable(a.auto_aggregate())
+    elif len(sys.argv) == 2 and sys.argv[1] == "auto_group_family":
+        return to_jsonisable(a.auto_group_family0())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
         return to_jsonisable(a.auto_group())
 
