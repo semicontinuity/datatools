@@ -245,7 +245,7 @@ class TableAnalyzer:
 
     def compute_value_counts(self) -> Dict[str, Dict[str, int]]:
         """
-        Only for complete columns
+        Computes value counts (only for complete columns).
         """
         column_value_counts = defaultdict(lambda: defaultdict(lambda: 0))
 
@@ -255,6 +255,12 @@ class TableAnalyzer:
                     column_value_counts[column][value] += 1
 
         return column_value_counts
+
+    def mean_value_count(self, columns: Iterable[str]):
+        """
+        Ersatz metric, ideally - entropy
+        """
+        return mean(len(self.column_value_counts[c]) for c in columns)
 
     def compute_value_co_occurrences(self):
         """
@@ -423,6 +429,10 @@ class TableAnalyzer:
         g = self.column_affinity_graph(threshold)
         column2group = ConnectedComponents(g).compute_dict()
         return set(column2group.values())
+
+    def column_affinity_families_sorted(self, threshold: float):
+        families = self.column_affinity_families(threshold)
+        return sorted(families, key=self.mean_value_count)
 
     def auto_aggregation_groups(self) -> Optional[List]:
         all_column_names: Iterable[str] = self.compute_all_column_names()
@@ -646,6 +656,8 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
         return to_jsonisable(a.column_affinity_graph(1.0))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_affinity_families":
         return to_jsonisable(a.column_affinity_families(1.0))
+    elif len(sys.argv) == 2 and sys.argv[1] == "column_affinity_families_sorted":
+        return to_jsonisable(a.column_affinity_families_sorted(1.0))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_families":
         return to_jsonisable(a.compute_column_families(a.compute_all_column_names()))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregation_groups":
@@ -661,6 +673,8 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
         return to_jsonisable(a.auto_group_roots0())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group_family":
         return to_jsonisable(a.auto_group_family0())
+    elif len(sys.argv) == 2 and sys.argv[1] == "auto_group0":
+        return to_jsonisable(a.auto_group0())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
         return to_jsonisable(a.auto_group())
 
