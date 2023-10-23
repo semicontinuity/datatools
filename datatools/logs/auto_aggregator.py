@@ -189,24 +189,6 @@ def compute_joint_entropy(length: int, value_relations0: Dict):
     return result
 
 
-def compute_mutual_information(length: int, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
-    result = defaultdict(lambda: defaultdict(lambda: 0.0))
-
-    for column_a, stats_a in value_relations0.items():
-        for value_a, stats_b in stats_a.items():
-            p_a = value_counts[column_a][value_a] / length
-
-            for column_b, values_b in stats_b.items():
-                value_counts_column_b = value_counts[column_b]
-                mi = 0.0
-                for value_b, count in values_b.items():
-                    p_a_b = count / length
-                    p_b = value_counts_column_b[value_b] / length
-                    mi += p_a_b * math.log2(p_a_b / (p_a * p_b))
-                result[column_a][column_b] = mi
-    return result
-
-
 def column_relations_graph(relations: Dict):
     g = {}
     for column_a, column_a_relations in relations.items():
@@ -274,7 +256,7 @@ class TableAnalyzer:
 
         return column_value_counts
 
-    def compute_value_relations0(self):
+    def compute_value_co_occurrences(self):
         """
         :returns structure: [column_a][value_a][column_b][value_b] -> count
         """
@@ -420,6 +402,23 @@ class TableAnalyzer:
     def column_relations_digraph_pruned(self):
         return transitive_reduction(self.column_relations_digraph())
 
+    def column_affinity_graph(self, threshold: float):
+        """
+        Computes "column affinity graph":
+        pairs of columns with entropy gap lower than threshold are joined
+        (expect those having gap of 0 in one direction, but not both)
+        """
+        result = defaultdict(set)
+        gaps = self.compute_entropy_gap()
+        for column_a, column_a_values in gaps.items():
+            for column_b, gap_a_b in column_a_values.items():
+                if column_a == column_b:
+                    continue
+                gap_b_a = gaps[column_b][column_a]
+                if (gap_a_b == 0.0 and gap_b_a == 0.0) or (threshold > gap_a_b > 0.0 != gap_b_a) or (threshold > gap_b_a > 0.0 != gap_a_b):
+                    result[column_a].add(column_b)
+        return result
+
     def auto_aggregation_groups(self) -> Optional[List]:
         all_column_names: Iterable[str] = self.compute_all_column_names()
         column_families: List = self.compute_column_families(all_column_names)
@@ -431,7 +430,23 @@ class TableAnalyzer:
         debug('auto_aggregation_groups', groups=groups)
         return groups
 
-    def compute_entropy_gap(self, value_relations0: Dict):
+    def compute_mutual_information(self, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
+        """ Must be symmentric, but is not """
+        result = defaultdict(lambda: defaultdict(lambda: 0.0))
+
+        for column_a, stats_a in value_relations0.items():
+            for value_a, stats_b in stats_a.items():
+                p_a = value_counts[column_a][value_a] / len(self.data)
+
+                for column_b, values_b in stats_b.items():
+                    value_counts_column_b = value_counts[column_b]
+                    for value_b, count in values_b.items():
+                        p_a_b = count / len(self.data)
+                        p_b = value_counts_column_b[value_b] / len(self.data)
+                        result[column_a][column_b] += p_a_b * math.log2(p_a_b / (p_a * p_b))
+        return result
+
+    def compute_entropy_gap(self):
         """
         A=a1
           B=b11
@@ -445,11 +460,12 @@ class TableAnalyzer:
         Entropy gap is defined as weighted conditional entropy:
         IG(B|A) = p(a1)*H(B|a1) + p(a2)*H(B|a2) ...
         """
+        co_occurrence_counts = self.compute_value_co_occurrences()
         value_counts = self.column_value_counts
 
         result = defaultdict(lambda: defaultdict(lambda: 0.0))
 
-        for column_a, stats_a in value_relations0.items():
+        for column_a, stats_a in co_occurrence_counts.items():
             for value_a, stats_b in stats_a.items():
                 p_a = value_counts[column_a][value_a] / len(self.data)
 
@@ -595,16 +611,16 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
         return to_jsonisable(compute_mean_column_value_run_lengths(a.compute_all_column_names(), data))
     elif len(sys.argv) == 2 and sys.argv[1] == "value_relations":
         return to_jsonisable(a.compute_value_relations())
-    elif len(sys.argv) == 2 and sys.argv[1] == "value_relations0":
-        return a.compute_value_relations0()
+    elif len(sys.argv) == 2 and sys.argv[1] == "value_co_occurrences":
+        return a.compute_value_co_occurrences()
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_joint_entropy":
-        return compute_joint_entropy(len(data), a.compute_value_relations0())
+        return compute_joint_entropy(len(data), a.compute_value_co_occurrences())
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_mutual_information":
-        return compute_mutual_information(len(data), a.compute_value_counts(), a.compute_value_relations0())
+        return a.compute_mutual_information(a.compute_value_counts(), a.compute_value_co_occurrences())
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap":
-        return a.compute_entropy_gap(a.compute_value_relations0())
+        return a.compute_entropy_gap()
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap_graph":
-        return a.compute_entropy_gap_graph(a.compute_value_relations0())
+        return a.compute_entropy_gap_graph(a.compute_value_co_occurrences())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return a.compute_column_relations()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
@@ -615,6 +631,8 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
         return to_jsonisable(a.column_relations_digraph())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_digraph_pruned":
         return to_jsonisable(a.column_relations_digraph_pruned())
+    elif len(sys.argv) == 2 and sys.argv[1] == "column_affinity_graph":
+        return to_jsonisable(a.column_affinity_graph(1.0))
     elif len(sys.argv) == 2 and sys.argv[1] == "column_families":
         return to_jsonisable(a.compute_column_families(a.compute_all_column_names()))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregation_groups":
