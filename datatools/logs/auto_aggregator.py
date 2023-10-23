@@ -421,7 +421,8 @@ class TableAnalyzer:
                 if column_a == column_b:
                     continue
                 gap_b_a = gaps[column_b][column_a]
-                if (gap_a_b == 0.0 and gap_b_a == 0.0) or (threshold > gap_a_b > 0.0 != gap_b_a) or (threshold > gap_b_a > 0.0 != gap_a_b):
+                if (gap_a_b == 0.0 and gap_b_a == 0.0) or (threshold > gap_a_b > 0.0 and threshold > gap_b_a > 0.0):
+                    debug('column_affinity_graph', column_a=column_a, column_b=column_b, gap_a_b=gap_a_b, gap_b_a=gap_b_a)
                     result[column_a].add(column_b)
         return result
 
@@ -579,7 +580,8 @@ class TableAnalyzer:
         """
         TODO: attach incomplete columns
         """
-        if families is None or len(families) <= 1:
+        # if families is None or len(families) <= 1:
+        if families is None or len(families) == 0:
             return data
 
         family_to_group = defaultdict(list)
@@ -605,15 +607,12 @@ class TableAnalyzer:
 
         result = []
         for key, values in family_to_group.items():
-            record = dict(key)
+            record: Dict[str, Hashable] = {'#': len(values)} | dict(key)
+
             if len(families) == 0:
                 record['_'] = values
             else:
                 record['_'] = self.auto_group_by_column_families(families, values)
-
-            # record['_'] = values
-
-            # record['#'] = len(values)
             result.append(record)
         return result
 
