@@ -540,8 +540,8 @@ class TableAnalyzer:
     def auto_aggregate(self) -> List[Dict]:
         return self.auto_aggregate_by_groups(self.compute_column_families(self.compute_all_column_names()))
 
-    def auto_group0(self) -> List[Dict]:
-        return self.auto_group_by_column_families(self.compute_column_families(self.compute_all_column_names()), self.data)
+    def auto_group_new(self) -> List[Dict]:
+        return self.auto_group_by_column_families(self.column_affinity_families_sorted(1.0), self.data)
 
     def auto_group_roots0(self):
         return digraph_roots(invert_digraph(self.column_relations_digraph()))
@@ -674,9 +674,9 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group_family":
         return to_jsonisable(a.auto_group_family0())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group0":
-        return to_jsonisable(a.auto_group0())
-    elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
         return to_jsonisable(a.auto_group())
+    elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
+        return to_jsonisable(a.auto_group_new())
 
 
 def compute_column_counts(data: List[Dict[str, Any]]) -> Dict[str, int]:
