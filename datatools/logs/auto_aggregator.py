@@ -533,9 +533,12 @@ class TableAnalyzer:
     def auto_group0(self) -> List[Dict]:
         return self.auto_group_by_column_families(self.compute_column_families(self.compute_all_column_names()), self.data)
 
+    def auto_group_roots0(self):
+        return digraph_roots(invert_digraph(self.column_relations_digraph()))
+
     def auto_group_family0(self) -> List:
         # find the most dependent tuple
-        roots = digraph_roots(invert_digraph(self.column_relations_digraph()))
+        roots = self.auto_group_roots0()
         return [column_name for root in roots for column_name in root]
 
     def auto_group(self) -> List[Dict]:
@@ -654,6 +657,8 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
         IGNORED_COLUMNS = ["datetime", "message", "hash", "logger", "level"]
         return to_jsonisable(a.auto_aggregate())
+    elif len(sys.argv) == 2 and sys.argv[1] == "auto_group_roots0":
+        return to_jsonisable(a.auto_group_roots0())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group_family":
         return to_jsonisable(a.auto_group_family0())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
