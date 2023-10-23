@@ -499,8 +499,8 @@ class TableAnalyzer:
 
         return result
 
-    def compute_entropy_gap_graph(self, value_relations0: Dict):
-        matrix = self.compute_entropy_gap(value_relations0)
+    def compute_entropy_gap_graph(self):
+        matrix = self.compute_entropy_gap()
         result = defaultdict(lambda: defaultdict(lambda: 0.0))
         for column_a, values in matrix.items():
             for column_b, h_gap in values.items():
@@ -576,11 +576,12 @@ class TableAnalyzer:
         return result
 
     def auto_group_by_column_families(self, families, data: List[Dict[str, Any]]) -> List:
-        if families is None or len(families) == 0:
+        """
+        TODO: attach incomplete columns
+        """
+        if families is None or len(families) <= 1:
             return data
 
-        families.sort(key=len)  # heuristic! there could be several equivalent families; start with largest
-        families = list(reversed(families))
         family_to_group = defaultdict(list)
 
         while len(families) > 0:
@@ -641,7 +642,7 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap":
         return a.compute_entropy_gap()
     elif len(sys.argv) == 2 and sys.argv[1] == "compute_entropy_gap_graph":
-        return a.compute_entropy_gap_graph(a.compute_value_co_occurrences())
+        return a.compute_entropy_gap_graph()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations":
         return a.compute_column_relations()
     elif len(sys.argv) == 2 and sys.argv[1] == "column_relations_graph":
