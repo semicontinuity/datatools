@@ -114,8 +114,11 @@ class MappingDescriptor(Descriptor):
                 return AnyDescriptor()
 
         else:
+            if type(descriptor0) is AnyDescriptor:
+                return AnyDescriptor()
+
             for d in descriptors:
-                if d.kind != descriptor0.kind:
+                if type(d) is AnyDescriptor or type(descriptor0) is AnyDescriptor or d.kind != descriptor0.kind:
                     return AnyDescriptor()
                 descriptor0 = descriptor0.merge_with(d)
 
