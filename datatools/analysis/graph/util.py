@@ -13,6 +13,7 @@ def digraph_roots(graph: Dict[Hashable, Dict[Hashable, Any]]) -> Set:
             sinks.add(target)
     return sources - sinks
 
+
 def invert_digraph(graph: Dict[Hashable, Dict[Hashable, Any]]) -> Dict[Hashable, Dict[Hashable, Any]]:
     inverted = defaultdict(dict)
     for node, adj in graph.items():
