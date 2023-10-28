@@ -23,7 +23,7 @@ class ColumnMetadata:
     metadata: 'Metadata' = None
 
     def contains_single_value(self):
-        return (len(self.non_unique_value_counts) == 1 and len(self.unique_values) == 0) or (len(self.non_unique_value_counts) == 0 and len(self.unique_values) == 1)
+        return self.count is not None and self.count > 1 and ((len(self.non_unique_value_counts) == 1 and len(self.unique_values) == 0) or (len(self.non_unique_value_counts) == 0 and len(self.unique_values) == 1))
 
 
 @dataclass
