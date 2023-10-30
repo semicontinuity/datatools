@@ -16,7 +16,14 @@ from http.server import HTTPServer
 
 class Server(BaseHTTPRequestHandler):
     def do_GET(self):
-        self.respond(200, 'application/json', {})
+        for k, v in self.headers.items():
+            print(k, v)
+        self.respond(200, 'application/json', b'{}')
+
+    def do_POST(self):
+        content_len = int(self.headers.get('Content-Length'))
+        post_body = self.rfile.read(content_len)
+        self.respond(200, 'application/json', post_body)
 
     def respond(self, status, content_type, content):
         self.send_response(status)
