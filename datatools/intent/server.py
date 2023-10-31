@@ -17,14 +17,14 @@ from http.server import HTTPServer
 from typing import Dict, List
 
 
-def exe(self, cwd: str, args: List[str], vars: Dict[str, str], stdin: bytes = None):
-    env = os.environ | vars
+def exe(cwd: str, args: List[str], env: Dict[str, str], stdin: bytes = None):
+    env = os.environ | env
     proc = subprocess.Popen(
         args,
         cwd=cwd,
         env=env,
         stdin=subprocess.PIPE,
-        stdout=subprocess.STDOUT,
+        stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
     )
     out, err = proc.communicate(stdin)
@@ -34,6 +34,10 @@ def exe(self, cwd: str, args: List[str], vars: Dict[str, str], stdin: bytes = No
 
 
 class Server(BaseHTTPRequestHandler):
+
+    def log_message(self, fmt, *args):
+        return
+
     def do_GET(self):
         self.respond(200, 'application/json', b'{}')
 
@@ -58,10 +62,14 @@ class Server(BaseHTTPRequestHandler):
         if 'PWD' in env:
             del env['PWD']
 
-        # exe(
-        #     cwd
-        # )
-        self.respond(200, 'application/json', json.dumps(payload).encode('utf-8'))
+        out = exe(
+            cwd,
+            ['y', 'explore'],
+            {},
+            post_body
+        )
+        print(out)
+        self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
 
     def respond(self, status, content_type, content):
         self.send_response(status)
