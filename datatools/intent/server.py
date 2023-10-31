@@ -25,11 +25,11 @@ def exe(cwd: str, args: List[str], env: Dict[str, str], stdin: bytes = None):
         env=env,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
     )
     out, err = proc.communicate(stdin)
     if proc.returncode != 0:
-        raise Exception(proc.returncode)
+        raise Exception((proc.returncode, err))
     return out.decode()
 
 
@@ -44,7 +44,6 @@ class Server(BaseHTTPRequestHandler):
     def do_POST(self):
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
-        payload = json.loads(post_body)
 
         env_str = self.headers['x-env']
         if env_str is None:
@@ -56,16 +55,19 @@ class Server(BaseHTTPRequestHandler):
         if cwd is None:
             self.respond(400, 'application/json', b'{"error":"CWD variable in x-env header missing"}')
             return
-
         del env['CWD']
 
         if 'PWD' in env:
             del env['PWD']
+        if 'WD' in env:
+            del env['WD']
+        if 'CTX' in env:
+            del env['CTX']
 
         out = exe(
             cwd,
             ['y', 'explore'],
-            {},
+            {'WD': cwd},
             post_body
         )
         print(out)
