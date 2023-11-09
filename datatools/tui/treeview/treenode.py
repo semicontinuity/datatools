@@ -35,6 +35,9 @@ class TreeNode:
 
     def optimize_layout(self, height): pass
 
+    def set_collapsed_children(self, collapsed: bool):
+        self.collapsed = collapsed
+
     def set_collapsed_recursive(self, collapsed: bool):
         self.collapsed = collapsed
 

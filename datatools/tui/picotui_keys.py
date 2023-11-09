@@ -78,3 +78,5 @@ KEY_ALT_SHIFT_9 = b'\x1b('
 
 KEY_CTRL_SPACE = b'\x00'
 KEY_CTRL_ALT_SPACE = b'\x1b\x00'
+
+KEY_CTRL_SHIFT_RIGHT = b'\x1b[1;6C'

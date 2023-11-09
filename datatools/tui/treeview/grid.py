@@ -5,13 +5,13 @@ from dataclasses import dataclass
 from queue import Queue
 from threading import Thread, Event
 
-from picotui.defs import KEYMAP as _KEYMAP
+from picotui.defs import KEYMAP as _KEYMAP, KEY_SHIFT_TAB
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB
 
 from datatools.jt.model.exit_codes_mapping_v2 import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
-    KEY_CTRL_RIGHT
+    KEY_CTRL_RIGHT, KEY_CTRL_SHIFT_RIGHT
 from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
 from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.treedocument import TreeDocument
@@ -156,8 +156,19 @@ class WGrid(WGridBase, Thread):
             self.document.layout()
             self.layout()
             self.redraw_content()
-        elif key == KEY_TAB:
-            line = self.document.expand_recursive(self.cur_line)
+        elif key == KEY_TAB or key == KEY_SHIFT_TAB:
+            line = self.document.collapse_recursive(self.cur_line, key == KEY_SHIFT_TAB)
+
+            if line < self.top_line:
+                self.top_line = line
+            elif line >= self.top_line + self.height:
+                self.top_line = line - self.height + 1
+
+            self.cur_line = line
+            self.layout()
+            self.redraw_content()
+        elif key == KEY_CTRL_SHIFT_RIGHT:
+            line = self.document.collapse_children(self.cur_line, False)
 
             if line < self.top_line:
                 self.top_line = line

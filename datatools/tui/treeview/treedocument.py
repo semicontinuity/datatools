@@ -53,8 +53,14 @@ class TreeDocument:
     def expand(self, line):
         self.rows[line].collapsed = False
 
-    def expand_recursive(self, line) -> int:
+    def collapse_recursive(self, line: int, collapsed: bool = True) -> int:
         element = self.rows[line]
-        element.set_collapsed_recursive(False)
+        element.set_collapsed_recursive(collapsed)
+        self.layout()
+        return element.line
+
+    def collapse_children(self, line: int, collapsed: bool = True) -> int:
+        element = self.rows[line]
+        element.set_collapsed_children(collapsed)
         self.layout()
         return element.line
