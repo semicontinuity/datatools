@@ -8,6 +8,11 @@ class JSyntaxElement(JElement):
         if self.parent is not None:
             self.parent.set_collapsed_recursive(collapsed)
 
+    def set_collapsed_children(self, collapsed: bool):
+        super(JSyntaxElement, self).set_collapsed_children(collapsed)
+        if self.parent is not None:
+            self.parent.set_collapsed_children(collapsed)
+
     def get_value(self):
         return self.parent.value
 
