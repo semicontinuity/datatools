@@ -603,7 +603,9 @@ class TableAnalyzer:
                         key[k] = v
                     else:
                         value[k] = v
-                family_to_group[FrozenDict(key)].append(value)
+                values = family_to_group[FrozenDict(key)]
+                # if len(value) > 0:
+                values.append(value)
 
             if len(families) > 0 and len(family_to_group) == 1 and FrozenDict() in family_to_group:
                 family_to_group.clear()
@@ -612,12 +614,16 @@ class TableAnalyzer:
 
         result = []
         for key, values in family_to_group.items():
+            debug('auto_group_by_column_families', key=key, values=values)
             record: Dict[str, Hashable] = {'#': len(values)} | dict(key)
 
             if len(families) == 0:
-                record['_'] = values
+                if any(len(value) for value in values) > 0:
+                    record['_'] = values
             else:
-                record['_'] = self.auto_group_by_column_families(families, values)
+                values = self.auto_group_by_column_families(families, values)
+                # if len(values) > 0:
+                record['_'] = values
             result.append(record)
         return result
 
