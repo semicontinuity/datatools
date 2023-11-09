@@ -281,8 +281,8 @@ class TableAnalyzer:
                     if column_b in self.incomplete_columns:
                         continue
 
-                    if column_a == column_b:
-                        continue
+                    # if column_a == column_b:
+                    #     continue
 
                     value_b = j.get(column_b)
                     if not is_primitive(value_b):
@@ -412,18 +412,19 @@ class TableAnalyzer:
         """
         Computes "column affinity graph":
         pairs of columns with entropy gap lower than threshold are joined
-        (expect those having gap of 0 in one direction, but not both)
+        (except those having gap of 0 in one direction, but not both)
         """
         result = defaultdict(set)
         gaps = self.compute_entropy_gap()
         for column_a, column_a_values in gaps.items():
             for column_b, gap_a_b in column_a_values.items():
-                if column_a == column_b:
-                    continue
+                # if column_a == column_b:
+                #     continue
                 gap_b_a = gaps[column_b][column_a]
+                debug('column_affinity_graph', column_a=column_a, column_b=column_b, gap_a_b=gap_a_b, gap_b_a=gap_b_a)
                 if (gap_a_b == 0.0 and gap_b_a == 0.0) or (threshold > gap_a_b > 0.0 and threshold > gap_b_a > 0.0):
-                    debug('column_affinity_graph', column_a=column_a, column_b=column_b, gap_a_b=gap_a_b, gap_b_a=gap_b_a)
                     result[column_a].add(column_b)
+                    debug('column_affinity_graph', column_a=column_a, column_b=column_b, added=True)
         return result
 
     def column_affinity_families(self, threshold: float) -> Set[Tuple[str]]:
@@ -433,7 +434,11 @@ class TableAnalyzer:
 
     def column_affinity_families_sorted(self, threshold: float):
         families = self.column_affinity_families(threshold)
-        return sorted(families, key=self.mean_value_count)
+        result = sorted(families, key=self.mean_value_count)
+        debug('column_affinity_families_sorted', result=result)
+        if len(result) > 1 and len(result[-1]) == 1:
+            result = result[:-1]
+        return result
 
     def auto_aggregation_groups(self) -> Optional[List]:
         all_column_names: Iterable[str] = self.compute_all_column_names()
