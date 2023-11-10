@@ -8,7 +8,7 @@ from datatools.jt.ui.ng.column_focus_handler_highlight_rows import ColumnFocusHa
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import COLORS2, ColorKey
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, OVERLINE_BYTES
-from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES
+from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_THICK_BORDER_BYTES
 from datatools.tui.coloring import decode_rgb, is_color_value
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
@@ -20,9 +20,10 @@ class ColumnRendererIndicator(ColumnRenderer):
     color: str = None
     highlight: bool = None
     separator: bool = None
+    thick: bool = False
 
     def make_delegate(self, render_data: RenderData):
-        return WIndicatorCellRenderer(render_data, self.color_rgb(), self.highlight, self.separator)
+        return WIndicatorCellRenderer(render_data, self.color_rgb(), self.highlight, self.separator, self.thick)
 
     def color_rgb(self) -> Optional[Tuple[int, int, int]]:
         if is_color_value(self.color):
@@ -32,11 +33,12 @@ class ColumnRendererIndicator(ColumnRenderer):
 class WIndicatorCellRenderer(WColumnRenderer):
     bg: Any = None
 
-    def __init__(self, render_data: RenderData, bg: Optional[Tuple[int, int, int]], highlight, separator):
+    def __init__(self, render_data: RenderData, bg: Optional[Tuple[int, int, int]], highlight, separator: bool, thick: bool = False):
         self.render_data = render_data
         self.bg = bg
         self.highlight = highlight
         self.separator = separator
+        self.thick = thick
         if highlight:
             focus_handler = ColumnFocusHandlerHighlightRows(render_data)
             self.focus_handler = lambda: focus_handler
@@ -56,7 +58,7 @@ class WIndicatorCellRenderer(WColumnRenderer):
             COLORS2[ColorKey.BOX_DRAWING][0],
             self.bg_color(value, row_attrs & MASK_ROW_EMPHASIZED)
         )
-        buffer += LEFT_BORDER_BYTES
+        buffer += LEFT_THICK_BORDER_BYTES if self.thick else LEFT_BORDER_BYTES
         return buffer
 
     def bg_color(self, value, row_emphasized: bool):

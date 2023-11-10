@@ -56,11 +56,11 @@ def do_discover_columns(data, metadata, presentation, row_count):
             elif column_metadata.stereotype == STEREOTYPE_TIME_SERIES:
                 column_renderer = ColumnRendererStripesTimeSeries()
             else:
-                column_renderer = ColumnRendererIndicator()
+                column_renderer = ColumnRendererIndicator(thick=True)
             column_presentation.add_renderer(column_renderer)
         elif column_metadata.complex or column_metadata.multiline or (
                 column_metadata.count is not None and column_metadata.count < POPULATED_RATIO * row_count):
-            column_presentation.add_renderer(ColumnRendererIndicator())
+            column_presentation.add_renderer(ColumnRendererIndicator(thick=True))
         else:
             coloring = infer_column_coloring(column_metadata, len(data))
             if coloring == COLORING_NONE or key == metadata.timestamp_field:
