@@ -221,6 +221,8 @@ class TableAnalyzer:
     column_counts: Dict[str, int]
     complete_columns: Set[str]
     incomplete_columns: Set[str]
+
+    # [column][value] -> count
     column_value_counts: Dict[str, Dict[str, int]]
 
     def __init__(
@@ -235,6 +237,9 @@ class TableAnalyzer:
         self.complete_columns = complete_columns
         self.incomplete_columns = incomplete_columns
         self.column_value_counts = self.compute_value_counts()
+
+    def is_singleton_column(self, column: str) -> bool:
+        return column in self.column_value_counts and len(self.column_value_counts[column]) == 1
 
     def compute_all_column_names(self) -> Set[str]:
         result = set()
@@ -417,12 +422,17 @@ class TableAnalyzer:
         result = defaultdict(set)
         gaps = self.compute_entropy_gap()
         for column_a, column_a_values in gaps.items():
+            is_singleton_column_a = self.is_singleton_column(column_a)
             for column_b, gap_a_b in column_a_values.items():
                 # if column_a == column_b:
                 #     continue
+                is_singleton_column_b = self.is_singleton_column(column_b)
                 gap_b_a = gaps[column_b][column_a]
                 debug('column_affinity_graph', column_a=column_a, column_b=column_b, gap_a_b=gap_a_b, gap_b_a=gap_b_a)
-                if (gap_a_b == 0.0 and gap_b_a == 0.0) or (threshold > gap_a_b > 0.0 and threshold > gap_b_a > 0.0):
+                if is_singleton_column_a and is_singleton_column_b:
+                    result[column_a].add(column_b)
+                    debug('column_affinity_graph', column_a=column_a, column_b=column_b, added=True)
+                elif (not is_singleton_column_a and not is_singleton_column_b) and (threshold > gap_a_b >= 0.0 and threshold > gap_b_a >= 0.0):
                     result[column_a].add(column_b)
                     debug('column_affinity_graph', column_a=column_a, column_b=column_b, added=True)
         return result
