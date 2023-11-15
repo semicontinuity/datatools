@@ -6,9 +6,15 @@ from typing import List
 
 def get_pipe_peer_env_var(name: str):
     """
-    Returns the value of the given env variable, if present from some of pipe peers
+    Returns the value of the given env variable, if present in some of the pipe peers if the current process
     """
-    pid = os.getpid()
+    return get_process_pipe_peer_env_var(os.getpid(), name)
+
+
+def get_process_pipe_peer_env_var(pid, name: str):
+    """
+    Returns the value of the given env variable, if present in some pipe peers of given process
+    """
     pipe_id = os.readlink(f'/proc/{pid}/fd/1').removeprefix("pipe:[").removesuffix("]")
     pgid = os.getpgid(pid)
     peer_pids = get_pipe_peer_pids(pgid, pipe_id)
@@ -51,7 +57,9 @@ def get_env_var(pid: int, name: str):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        var = get_pipe_peer_env_var(sys.argv[1])
+    if len(sys.argv) > 2:
+        pid = int(sys.argv[1])
+        var_name = sys.argv[2]
+        var = get_process_pipe_peer_env_var(pid, var_name)
         if var:
             print(var)
