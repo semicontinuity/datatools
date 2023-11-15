@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from typing import List
 
 
@@ -47,3 +48,10 @@ def get_env_var(pid: int, name: str):
             (k, v) = s.split('=', maxsplit=1)
             if k == name:
                 return v
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        var = get_pipe_peer_env_var(sys.argv[1])
+        if var:
+            print(var)
