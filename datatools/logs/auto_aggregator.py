@@ -462,7 +462,7 @@ class TableAnalyzer:
         return groups
 
     def compute_mutual_information(self, value_counts: Dict[str, Dict[str, int]], value_relations0: Dict):
-        """ Must be symmentric, but is not """
+        """ Must be symmetric, but is not """
         result = defaultdict(lambda: defaultdict(lambda: 0.0))
 
         for column_a, stats_a in value_relations0.items():

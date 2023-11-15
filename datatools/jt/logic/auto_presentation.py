@@ -149,7 +149,9 @@ def infer_column_coloring(column_metadata: ColumnMetadata, records_count: int) -
     threshold = 2 * sqrt(records_count)
     debug('infer_column_coloring', records_count=records_count, threshold=threshold, unique_values=len(column_metadata.unique_values), non_unique_value_counts=len(column_metadata.non_unique_value_counts))
     # if len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
-    if len(column_metadata.unique_values) + len(column_metadata.non_unique_value_counts) < threshold:
+    if len(column_metadata.unique_values) == records_count:
+        return COLORING_NONE
+    elif len(column_metadata.unique_values) + len(column_metadata.non_unique_value_counts) < threshold:
         return COLORING_HASH_ALL
     elif 0 < len(column_metadata.non_unique_value_counts) < threshold:
         return COLORING_HASH_FREQUENT
