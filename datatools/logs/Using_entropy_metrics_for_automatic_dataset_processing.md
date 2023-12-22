@@ -9,12 +9,19 @@ the entropy for the values of the column is `H = - Sum[1..k](p_i * log(p_i))`.
 
 For instance, for the dataset
 ```
-Smith   | George
-Brown   | Henry
-Wright  | George
-Johnson | Henry
+Last name | Name   | City       | Planet
+----------+--------+------------+-------
+Smith     | George | London     | Earth
+Brown     | Henry  | York       | Earth
+Wright    | George | Manchester | Earth
+Johnson   | Henry  | Liverpool  | Earth
 ```
-`H=2` for the 1st column and `H=1` for the 
+Entropy values are for this example are:
+```
+C1        | C2     | C3         | C4
+----------+--------+------------+-------
+2         | 1      | 2          | 0
+```
 
 #### Entropy gap
 For the dataset above, it's clear, that given a last name, one can tell the first name, but not vice versa.
@@ -38,6 +45,7 @@ E.g., for the example above
 ```puml
 @startuml
 digraph foo {
+  rankdir=LR
   node [style=rounded shape=box]
   C1 [label="C1\nH=2"]
   C2 [label="C2\nH=1"]
@@ -46,3 +54,22 @@ digraph foo {
 }
 @enduml
 ```
+
+#### The task for automatic column ordering for 'good' dataset presentation
+
+Sometimes it might be useful to automatically order dataset columns for display to human beings.
+
+First, let's discuss what column ordering might be 'good'.
+(Here, we consider only column reordering but not row reordering.
+E.g., sorting the dataset on some columns will bring the repeated values in columns together,
+making it easier for the human to understand the data, leading to 'good' dataset presentation.)
+
+A suggestion is to display more 'informative' columns first.
+E.g., for the example dataset, the value for the column `Planet` is always `Earth`,
+and does not give much information. If this column is displayed last and possibly goes off-screen,
+it is not a problem.
+
+We can use entropy as a metric for informativeness of the column, 
+and display columns in the order of decreasing entropy.
+
+However, using entropy alone might not always give good results.

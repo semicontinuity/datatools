@@ -53,100 +53,16 @@ def maybe_format(number):
 
 @dataclass
 class Stat:
-    values: Dict[Hashable, int]     # number of occurrences by value
+    occurrences: Dict[Hashable, int]     # number of occurrences by value
     mean_support: float = 0
     median_support: int = 0
     is_run: bool = True # True if all occurrences of a value occur continuosly (a "run")
+    entropy: float = 0
 
 
 @run_once
 def load_data(lines) -> List[Dict[str, Any]]:
     return [json.loads(line) for line in lines]
-
-
-def compute_stats(data: List[Dict[str, Any]]) -> Dict[str, Stat]:
-    prev_j = None
-    column2stat: Dict[str, Stat] = defaultdict(lambda: Stat(defaultdict(int)))
-
-    for j in data:
-        for column, value in j.items():
-            if prev_j is not None:
-                stat = column2stat[column]
-                if stat.is_run:
-                    if value in stat.values:
-                        # detected discontinuance in occurrences of this value
-                        # so, this column is not a 'run'
-                        if prev_j.get(column) != value:
-                            stat.is_run = False
-                    stat.values[value] += 1
-
-        prev_j = j
-
-    for column, stat in column2stat.items():
-        stat.median_support = median(stat.values.values())
-        stat.mean_support = mean(stat.values.values())
-
-    return column2stat
-
-
-def compute_run_columns(data: List[Dict[str, Any]]) -> List[str]:
-    stats = compute_stats(data)
-    return [
-        column for column, stat in stats.items()
-        if stat.is_run and stat.median_support >= SUPPORT_THRESHOLD and column not in IGNORED_COLUMNS
-    ]
-
-
-def compute_group_runs_and_median_by(run_columns: List[str], data: List[Dict[str, Any]]) -> Tuple[List, float]:
-    debug(f'Computing group runs by {run_columns}')
-    result = []
-    run_dict = None
-    run_values = None
-    run_lengths = []
-    if len(data) == 0:
-        return result, 0
-
-    for j in data:
-        row_run_dict = {}
-        row_values = {}
-
-        for column, value in j.items():
-            if column in run_columns:
-                row_run_dict[column] = value
-            else:
-                row_values[column] = value
-
-        if row_run_dict != run_dict:
-            # debug(f'Change: {row_run_dict} {run_dict}')
-            if run_dict is not None:
-                run_dict['_'] = run_values
-                run_lengths.append(len(run_values))
-                result.append(run_dict)
-            run_dict = row_run_dict
-            run_values = []
-
-        run_values.append(row_values)
-    if len(run_values) > 0:
-        run_dict['_'] = run_values
-        run_lengths.append(len(run_values))
-        result.append(run_dict)
-
-    # median is perhaps not good: given several small runs, it aborts the aggregation.
-    # having a few small groups aside big groups is OK
-
-    # median_run_length = median(run_lengths)
-    mean_run_length = mean(run_lengths)
-    debug(f'Median run length: {mean_run_length}')
-    return result, mean_run_length
-
-
-def compute_group_runs_by(run_columns: List[str], data: List[Dict[str, Any]]):
-    return compute_group_runs_and_median_by(run_columns, data)[0]
-
-
-def aggregate_runs(data: List[Dict[str, Any]]) -> List[Dict]:
-    run_columns: List[str] = compute_run_columns(data)
-    return compute_group_runs_by(run_columns, data)
 
 
 def compute_mean_column_value_run_lengths(all_column_names, data: List[Dict[str, Any]]) -> Dict[str, int]:
@@ -526,7 +442,7 @@ class TableAnalyzer:
 
     def auto_aggregate_by_groups0(self, leading_columns):
         debug('auto_aggregate_by_groups0', leading_columns=leading_columns)
-        aggregated, median_run_length = compute_group_runs_and_median_by(leading_columns, self.data)
+        aggregated, median_run_length = self.compute_group_runs_and_median_by(leading_columns)
         if median_run_length < SUPPORT_THRESHOLD:
             less_columns = leading_columns[0:-1]
             if len(less_columns) == 0:
@@ -545,7 +461,7 @@ class TableAnalyzer:
         if agg_groups is None or len(agg_groups) == 0:
             return self.data
         leading_columns = [c for g in agg_groups for c in g]
-        leading_columns_group_run_lengths = {c: compute_group_runs_and_median_by([c], self.data)[1] for c in leading_columns}
+        leading_columns_group_run_lengths = {c: self.compute_group_runs_and_median_by([c])[1] for c in leading_columns}
         leading_columns.sort(key=leading_columns_group_run_lengths.get)
         leading_columns.reverse()
         debug(f'Column names, sorted by run lengths: {leading_columns}')
@@ -637,16 +553,104 @@ class TableAnalyzer:
             result.append(record)
         return result
 
+    def compute_stats(self) -> Dict[str, Stat]:
+        prev_j = None
+        column2stat: Dict[str, Stat] = defaultdict(lambda: Stat(defaultdict(int)))
+
+        for j in self.data:
+            for column, value in j.items():
+                stat = column2stat[column]
+                if prev_j is not None:
+                    if stat.is_run:
+                        if value in stat.occurrences:
+                            # detected discontinuance in occurrences of this value
+                            # so, this column is not a 'run'
+                            if prev_j.get(column) != value:
+                                stat.is_run = False
+                stat.occurrences[value] += 1
+
+            prev_j = j
+
+        length = len(self.data)
+        for column, stat in column2stat.items():
+            stat.median_support = median(stat.occurrences.values())
+            stat.mean_support = mean(stat.occurrences.values())
+
+            h = 0
+
+            for value, count in stat.occurrences.items():
+                p = count / length
+                h -= p * math.log2(p)
+            stat.entropy = h
+
+        return column2stat
+
+    def compute_run_columns(self) -> List[str]:
+        stats = self.compute_stats()
+        return [
+            column for column, stat in stats.items()
+            if stat.is_run and stat.median_support >= SUPPORT_THRESHOLD and column not in IGNORED_COLUMNS
+        ]
+
+    def compute_group_runs_and_median_by(self, run_columns: List[str]) -> Tuple[List, float]:
+        debug(f'Computing group runs by {run_columns}')
+        result = []
+        run_dict = None
+        run_values = None
+        run_lengths = []
+        if len(self.data) == 0:
+            return result, 0
+
+        for j in self.data:
+            row_run_dict = {}
+            row_values = {}
+
+            for column, value in j.items():
+                if column in run_columns:
+                    row_run_dict[column] = value
+                else:
+                    row_values[column] = value
+
+            if row_run_dict != run_dict:
+                # debug(f'Change: {row_run_dict} {run_dict}')
+                if run_dict is not None:
+                    run_dict['_'] = run_values
+                    run_lengths.append(len(run_values))
+                    result.append(run_dict)
+                run_dict = row_run_dict
+                run_values = []
+
+            run_values.append(row_values)
+        if len(run_values) > 0:
+            run_dict['_'] = run_values
+            run_lengths.append(len(run_values))
+            result.append(run_dict)
+
+        # median is perhaps not good: given several small runs, it aborts the aggregation.
+        # having a few small groups aside big groups is OK
+
+        # median_run_length = median(run_lengths)
+        mean_run_length = mean(run_lengths)
+        debug(f'Median run length: {mean_run_length}')
+        return result, mean_run_length
+
+    def compute_group_runs_by(self, run_columns: List[str]):
+        return self.compute_group_runs_and_median_by(run_columns)[0]
+
+    def aggregate_runs(self) -> List[Dict]:
+        run_columns: List[str] = self.compute_run_columns()
+        return self.compute_group_runs_by(run_columns)
+
 
 def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     global IGNORED_COLUMNS
 
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
-        return to_jsonisable(compute_stats(data))
+        return to_jsonisable(a.compute_stats())
     elif len(sys.argv) == 2 and sys.argv[1] == "run_columns":
-        return compute_run_columns(data)
+        return a.compute_run_columns()
     elif len(sys.argv) == 2 and sys.argv[1] == "aggregate_runs":
-        return aggregate_runs(data)
+        return a.aggregate_runs()
     elif len(sys.argv) == 2 and sys.argv[1] == "all_column_names":
         return to_jsonisable(a.compute_all_column_names())
     elif len(sys.argv) == 2 and sys.argv[1] == "column_value_run_lengths":
@@ -686,7 +690,7 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     elif len(sys.argv) == 3 and sys.argv[1] == "auto_aggregate_by_groups":
         return a.auto_aggregate_by_groups(json.loads(sys.argv[2]))
     elif len(sys.argv) == 3 and sys.argv[1] == "group_runs_by":
-        return compute_group_runs_by(json.loads(sys.argv[2]), data)
+        return a.compute_group_runs_by(json.loads(sys.argv[2]))
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_aggregate":
         IGNORED_COLUMNS = ["datetime", "message", "hash", "logger", "level"]
         return to_jsonisable(a.auto_aggregate())
