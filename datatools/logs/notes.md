@@ -1,3 +1,5 @@
+### Notes
+
 * for token, compute "noise factor":
   if this token is used in patterns, there will be more patterns.
   This factor would be the ratio of count(patterns with this token used)/(count patterns with this token unused)
