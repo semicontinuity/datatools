@@ -585,9 +585,9 @@ class TableAnalyzer:
 
         return column2stat
 
-    def columns_by_entropy(self, mult: float):
+    def columns_by_entropy(self, mult: float, column_set: Set[str]):
         column2stat = self.compute_stats()
-        column_and_entropy = [(column, stat.entropy) for column, stat in column2stat.items() if column not in self.incomplete_columns]
+        column_and_entropy = [(column, stat.entropy) for column, stat in column2stat.items() if column in column_set]
         column_and_entropy.sort(key=lambda it: mult * it[1])
         return [c for c, h in column_and_entropy]
 
@@ -647,6 +647,21 @@ class TableAnalyzer:
         run_columns: List[str] = self.compute_run_columns()
         return self.compute_group_runs_by(run_columns)
 
+    @staticmethod
+    def _reordered_record(record: Dict, order: List[str]):
+        result = {}
+        for c in order:
+            if c in record:
+                result[c] = record[c]
+        return result
+
+    def auto_reorder_columns_by_entropy_desc(self):
+        order = self.columns_by_entropy(-1.0, self.complete_columns) + self.columns_by_entropy(-1.0, self.incomplete_columns)
+        result = []
+        for record in self.data:
+            result.append(self._reordered_record(record, order))
+        return result
+
 
 def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     global IGNORED_COLUMNS
@@ -654,9 +669,9 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
         return to_jsonisable(a.compute_stats())
     if len(sys.argv) == 2 and sys.argv[1] == "columns_by_entropy_desc":
-        return to_jsonisable(a.columns_by_entropy(-1.0))
+        return to_jsonisable(a.columns_by_entropy(-1.0, a.complete_columns))
     if len(sys.argv) == 2 and sys.argv[1] == "columns_by_entropy_asc":
-        return to_jsonisable(a.columns_by_entropy(1.0))
+        return to_jsonisable(a.columns_by_entropy(1.0, a.complete_columns))
     elif len(sys.argv) == 2 and sys.argv[1] == "run_columns":
         return a.compute_run_columns()
     elif len(sys.argv) == 2 and sys.argv[1] == "aggregate_runs":
@@ -712,6 +727,8 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
         return to_jsonisable(a.auto_group())
     elif len(sys.argv) == 2 and sys.argv[1] == "auto_group":
         return to_jsonisable(a.auto_group_new())
+    elif len(sys.argv) == 2 and sys.argv[1] == "auto_reorder_columns_by_entropy_desc":
+        return to_jsonisable(a.auto_reorder_columns_by_entropy_desc())
 
 
 def compute_column_counts(data: List[Dict[str, Any]]) -> Dict[str, int]:
