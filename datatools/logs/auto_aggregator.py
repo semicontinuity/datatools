@@ -585,6 +585,12 @@ class TableAnalyzer:
 
         return column2stat
 
+    def columns_by_entropy(self, mult: float):
+        column2stat = self.compute_stats()
+        column_and_entropy = [(column, stat.entropy) for column, stat in column2stat.items() if column not in self.incomplete_columns]
+        column_and_entropy.sort(key=lambda it: mult * it[1])
+        return [c for c, h in column_and_entropy]
+
     def compute_run_columns(self) -> List[str]:
         stats = self.compute_stats()
         return [
@@ -647,6 +653,10 @@ def run(data: List[Dict[str, Any]], a: TableAnalyzer):
 
     if len(sys.argv) == 2 and sys.argv[1] == "stats":
         return to_jsonisable(a.compute_stats())
+    if len(sys.argv) == 2 and sys.argv[1] == "columns_by_entropy_desc":
+        return to_jsonisable(a.columns_by_entropy(-1.0))
+    if len(sys.argv) == 2 and sys.argv[1] == "columns_by_entropy_asc":
+        return to_jsonisable(a.columns_by_entropy(1.0))
     elif len(sys.argv) == 2 and sys.argv[1] == "run_columns":
         return a.compute_run_columns()
     elif len(sys.argv) == 2 and sys.argv[1] == "aggregate_runs":
