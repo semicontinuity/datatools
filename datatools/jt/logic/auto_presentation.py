@@ -57,43 +57,45 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
                 column_metadata.stereotype == 'hashes' or column_metadata.stereotype == STEREOTYPE_TIME_SERIES):
             # assume that all lists are stripes for now
             if column_metadata.stereotype == 'hashes':
-                column_renderer = ColumnRendererStripesHashColored()
+                renderer_main = ColumnRendererStripesHashColored()
             elif column_metadata.stereotype == STEREOTYPE_TIME_SERIES:
-                column_renderer = ColumnRendererStripesTimeSeries()
+                renderer_main = ColumnRendererStripesTimeSeries()
             else:
-                column_renderer = ColumnRendererIndicator(thick=True)
-            column_presentation.add_renderer(column_renderer)
+                renderer_main = ColumnRendererIndicator(thick=True)
+            column_presentation.add_renderer(renderer_main)
         elif column_metadata.complex or column_metadata.multiline or (
                 column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count):
             column_presentation.add_renderer(ColumnRendererIndicator(thick=True))
         else:
             coloring = infer_column_coloring(column_values_info, len(data))
             if coloring == COLORING_NONE or key == metadata.timestamp_field:
-                plain_renderer = ColumnRendererColoredPlain()
-                plain_renderer.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
+                renderer_main = ColumnRendererColoredPlain()
+                renderer_main.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
                                                                           offset=160)
-                column_presentation.add_renderer(plain_renderer)
+                column_presentation.add_renderer(renderer_main)
 
                 renderer_indicator = ColumnRendererIndicator()
                 renderer_indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
                                                                               offset=64)
                 column_presentation.add_renderer(renderer_indicator)
             else:
-                column_renderer = ColumnRendererColoredHash()
+                renderer_main = ColumnRendererColoredHash()
                 if coloring == COLORING_HASH_FREQUENT:
-                    column_renderer.onlyFrequent = True
-                    column_renderer.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=160)
+                    renderer_main.onlyFrequent = True
+                    renderer_main.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=160)
                 else:
-                    column_renderer.color = coloring
+                    renderer_main.color = coloring
 
-                indicator = ColumnRendererIndicator()
-                indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=64)
+                renderer_indicator = ColumnRendererIndicator()
+                renderer_indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=64)
                 if column_values_info.contains_single_value():
-                    column_presentation.add_renderer(indicator)
-                    column_presentation.add_renderer(column_renderer)
+                    column_presentation.add_renderer(renderer_indicator)
+                    column_presentation.add_renderer(renderer_main)
                 else:
-                    column_presentation.add_renderer(column_renderer)
-                    column_presentation.add_renderer(indicator)
+                    column_presentation.add_renderer(renderer_main)
+                    column_presentation.add_renderer(renderer_indicator)
+
+            # renderer_main.thick = True
 
 
 def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation):

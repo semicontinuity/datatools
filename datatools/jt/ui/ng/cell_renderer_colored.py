@@ -8,7 +8,7 @@ from datatools.jt.ui.ng.column_focus_handler_highlight_rows import ColumnFocusHa
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS2, COLORS3
 from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, OVERLINE_BYTES
-from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
+from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER, LEFT_THICK_BORDER_BYTES
 from datatools.tui.coloring import hash_code, hash_to_rgb, decode_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
 from datatools.util.logging import debug
@@ -23,6 +23,7 @@ class ColumnRendererBase(ColumnRenderer):
 @dataclass
 class ColumnRendererColoredPlain(ColumnRendererBase):
     type = 'colored-plain'
+    thick: bool = False
 
     def make_delegate(self, render_data: RenderData):
         return WColoredTextCellRendererPlain(self, render_data)
@@ -43,10 +44,13 @@ class ColumnRendererColoredHash(ColumnRendererColoredPlain):
     onlyFrequent: bool = False
 
     def make_delegate(self, render_data: RenderData):
-        return WColoredTextCellRendererHash(self, render_data)
+        d = WColoredTextCellRendererHash(self, render_data)
+        d.thick = self.thick
+        return d
 
 
 class WColoredTextCellRenderer(WColumnRenderer):
+    thick: bool = False
 
     def __init__(self, column_renderer: ColumnRendererBase, render_data: RenderData):
         self.column_renderer = column_renderer
@@ -76,7 +80,8 @@ class WColoredTextCellRenderer(WColumnRenderer):
 
         # Optimize or use Buffer
         if start == 0:
-            buffer += set_colors_cmd_bytes2(COLORS3[ColorKey.BOX_DRAWING], bg) + LEFT_BORDER_BYTES
+            buffer += set_colors_cmd_bytes2(COLORS3[ColorKey.BOX_DRAWING], bg)
+            buffer += LEFT_THICK_BORDER_BYTES if self.thick else LEFT_BORDER_BYTES
         if start < column_width - 1 and end > 1:
             buffer += set_colors_cmd_bytes2(fg, bg) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
         if end == column_width:
