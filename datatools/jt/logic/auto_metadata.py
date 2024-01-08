@@ -1,6 +1,6 @@
 from typing import Dict
 
-from datatools.json.util import is_primitive
+from datatools.jt.logic.auto_values_stats import compute_value_stats
 from datatools.jt.model.metadata import ColumnMetadata, STEREOTYPE_UNKNOWN, STEREOTYPE_TIME_SERIES, Metadata
 from datatools.util.logging import debug
 from datatools.util.time_series_util import time_series_list_summary
@@ -10,7 +10,7 @@ from datatools.util.time_util import infer_timestamp_format
 def enrich_metadata(data, metadata: Metadata) -> Metadata:
     infer_metadata_time_fields(data, metadata)
     debug('enrich_metadata', metadata_columns=metadata.columns.keys())
-    infer_metadata1(data, metadata.columns)
+    compute_value_stats(data, metadata.columns)
     return metadata
 
 
@@ -101,36 +101,6 @@ def update_time_series_metadata(column_metadata: ColumnMetadata, descriptor) -> 
     column_metadata.min_value = None
     column_metadata.max_value = None
     return False
-
-
-def infer_metadata1(data, column_metadata_map):
-    for record in data:
-        for key, value in record.items():
-            column_metadata = column_metadata_map[key]
-            if column_metadata.count is None:
-                column_metadata.count = 0
-            column_metadata.count += 1
-            if column_metadata.complex or column_metadata.complex:
-                continue
-
-            if value is ... or value is None or not is_primitive(value):
-                continue
-            value_as_string = str(value)
-
-            dict_index = column_metadata.dictionary.get(value_as_string)
-            if dict_index is None:
-                dict_index = len(column_metadata.dictionary)
-            column_metadata.dictionary[value_as_string] = dict_index
-
-            non_unique_value_count = column_metadata.non_unique_value_counts.get(value_as_string)
-            if non_unique_value_count is None:
-                if value_as_string in column_metadata.unique_values:
-                    column_metadata.unique_values.remove(value_as_string)
-                    column_metadata.non_unique_value_counts[value_as_string] = 2
-                else:
-                    column_metadata.unique_values.add(value_as_string)
-            else:
-                column_metadata.non_unique_value_counts[value_as_string] = non_unique_value_count + 1
 
 
 def accumulate(func, acc, value):
