@@ -12,6 +12,7 @@ class ColumnMetadata:
     complex: bool = None
     type: str = None
     multiline: bool = None
+    has_one_dict_key: bool = None
     stereotype: str = None
     min_value: Any = None
     max_value: Any = None

@@ -1,6 +1,6 @@
+from collections import defaultdict
 from typing import Dict
 
-from datatools.jt.logic.auto_values_info import compute_values_info
 from datatools.jt.model.metadata import ColumnMetadata, STEREOTYPE_UNKNOWN, STEREOTYPE_TIME_SERIES, Metadata
 from datatools.util.logging import debug
 from datatools.util.time_series_util import time_series_list_summary
@@ -8,9 +8,41 @@ from datatools.util.time_util import infer_timestamp_format
 
 
 def enrich_metadata(data, metadata: Metadata) -> Metadata:
+    infer_metadata_dict_keys(data, metadata)
     infer_metadata_time_fields(data, metadata)
     debug('enrich_metadata', metadata_columns=metadata.columns.keys())
     return metadata
+
+
+def infer_metadata_dict_keys(data, metadata: Metadata):
+    """
+    Set has_one_dict_key
+    """
+    registry = defaultdict(int)
+
+    for record in data:
+        if type(record) != dict:
+            continue    # ersatz
+        for key, value in record.items():
+            dict_key_count = registry[key]
+            if dict_key_count < 0:
+                continue
+            if value is None:
+                continue
+            if type(value) is not dict:
+                registry[key] = -1
+                continue
+
+            a_count = len(value)
+            if a_count != 1:
+                registry[key] = -1
+                continue
+            else:
+                registry[key] = 1
+
+    for k, v in registry.items():
+        if v == 1:
+            metadata.columns[k].has_one_dict_key = True
 
 
 def infer_metadata_time_fields(data, metadata):

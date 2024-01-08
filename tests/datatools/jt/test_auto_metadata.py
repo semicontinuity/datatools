@@ -11,7 +11,7 @@ def test__infer_metadata0():
         {"key": "k2", "series": [{"ts": "2020-01-03", "value": 3}, {"ts": "2020-01-04", "value": 4}]}
     ]
 
-    column_metadata_map = defaultdict(lambda: ColumnMetadata(set(), {}))
+    column_metadata_map = defaultdict(lambda: ColumnMetadata())
     infer_metadata0(data, column_metadata_map)
 
     series = column_metadata_map['series']
@@ -28,7 +28,7 @@ def test__infer_metadata1():
         {"key": "k2", "series": [{"ts": "2020-01-03T00:00:00.000Z", "value": 3}, {"ts": "2020-01-04T00:00:00.000Z", "value": 4}]}
     ]
 
-    column_metadata_map = defaultdict(lambda: ColumnMetadata(set(), {}))
+    column_metadata_map = defaultdict(lambda: ColumnMetadata())
     infer_metadata0(data, column_metadata_map)
 
     series = column_metadata_map['series']
