@@ -1,4 +1,13 @@
+from collections import defaultdict
+
 from datatools.json.util import is_primitive
+from datatools.jt.model.values_stats import ColumnsValuesStats, ValuesStats
+
+
+def compute_column_values_stats(data):
+    stats_map = defaultdict(ValuesStats)
+    compute_value_stats(data, stats_map)
+    return ColumnsValuesStats(columns=stats_map)
 
 
 def compute_value_stats(data, stats_map):

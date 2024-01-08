@@ -10,6 +10,7 @@ from picotui.screen import Screen
 from datatools.json.util import dataclass_from_dict, to_jsonisable
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
+from datatools.jt.logic.auto_values_stats import compute_column_values_stats
 from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE, STATE_CUR_LINE_Y, \
     STATE_CUR_COLUMN_INDEX
 from datatools.jt.model.exit_codes import EXIT_CODE_ESCAPE
@@ -178,7 +179,7 @@ def load_data_bundle(params: CmdLineParams, orig_data: List):
     if params.title is not None:
         presentation.title = params.title
 
-    values_stats = ColumnsValuesStats(columns={})
+    values_stats = compute_column_values_stats(orig_data)
     metadata = enrich_metadata(orig_data, metadata)
     presentation = enrich_presentation(orig_data, metadata, presentation)
     return DataBundle(orig_data, values_stats, metadata, presentation, state)

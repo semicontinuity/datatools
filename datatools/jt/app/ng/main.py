@@ -8,6 +8,7 @@ from datatools.jt.app.classic.main import init_from_state
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_renderers import make_renderers
+from datatools.jt.logic.auto_values_stats import compute_column_values_stats
 from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR_LINE_Y, STATE_CUR_CELL_VALUE, \
     STATE_CUR_COLUMN_KEY
 from datatools.jt.model.exit_codes import *
@@ -87,10 +88,11 @@ def time_series_column(data_bundle: DataBundle):
 
 
 def nested_table_applet(cell_j, column_contents_metadata: Metadata, column_contents_presentation: Presentation) -> Applet:
+    stats = compute_column_values_stats(cell_j)
     metadata = enrich_metadata(cell_j, column_contents_metadata or Metadata())
     presentation = enrich_presentation(cell_j, metadata, column_contents_presentation or Presentation())
 
-    data_bundle = DataBundle(cell_j, ColumnsValuesStats(columns={}), metadata, presentation, default_state())
+    data_bundle = DataBundle(cell_j, stats, metadata, presentation, default_state())
     screen_size = with_raw_terminal(read_screen_size)
     return Applet('jtng', grid(screen_size, data_bundle), data_bundle)
 
