@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, Set, Any
+from typing import Dict, Any
 
 STEREOTYPE_UNKNOWN = 'unknown'  # => None?
 STEREOTYPE_TIME_SERIES = 'time_series'
@@ -9,9 +9,6 @@ STEREOTYPE_TIME_SERIES = 'time_series'
 @dataclass
 class ColumnMetadata:
     count: int = None
-    dictionary: Dict[str, int] = field(default_factory=dict)
-    unique_values: Set[str] = field(default_factory=set)
-    non_unique_value_counts: Dict[str, int] = field(default_factory=dict)
     complex: bool = None
     type: str = None
     multiline: bool = None
@@ -21,9 +18,6 @@ class ColumnMetadata:
     time_series_timestamp_field: str = None
     time_series_timestamp_format: str = None
     metadata: 'Metadata' = None
-
-    def contains_single_value(self):
-        return self.count is not None and self.count > 1 and ((len(self.non_unique_value_counts) == 1 and len(self.unique_values) == 0) or (len(self.non_unique_value_counts) == 0 and len(self.unique_values) == 1))
 
 
 @dataclass

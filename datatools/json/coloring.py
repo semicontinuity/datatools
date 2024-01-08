@@ -83,13 +83,13 @@ class ColumnAttrs:
                 self.coloring == COLORING_HASH_FREQUENT and s in self.non_unique_value_counts)
 
 
-def compute_column_coloring(column_attr, row_count):
+def compute_column_coloring(column_attr: ColumnAttrs, row_count: int):
     threshold = 2.5 * sqrt(row_count)
     if len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
         return COLORING_NONE
     elif len(column_attr.unique_values) + len(column_attr.non_unique_value_counts) < threshold:
         return COLORING_HASH_ALL
-    elif 0 < column_attr.non_uniques_count < threshold:
+    elif 0 < len(column_attr.non_unique_value_counts) < threshold:
         return COLORING_HASH_FREQUENT
     else:
         return COLORING_NONE
@@ -112,7 +112,6 @@ def compute_column_attrs(j, column_id: Hashable, cell_value_function: Callable[[
                 attr.unique_values.add(value_as_string)
         else:
             attr.non_unique_value_counts[value_as_string] = count + 1
-    attr.non_uniques_count = len(attr.non_unique_value_counts)
     attr.coloring = compute_column_coloring(attr, len(j))
     return attr
 

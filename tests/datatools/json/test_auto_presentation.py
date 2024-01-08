@@ -1,8 +1,8 @@
-from datatools.json.util import *
 from datatools.jt.model.metadata import ColumnMetadata, Metadata
-from datatools.jt.model.presentation import Presentation, ColumnRenderer, ColumnPresentation
+from datatools.jt.model.presentation import Presentation, ColumnPresentation
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain
 from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
+from datatools.util.dataclasses import dataclass_from_dict
 
 
 def test__dataclass_from_dict__presentation__0():

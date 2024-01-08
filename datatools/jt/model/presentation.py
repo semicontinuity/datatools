@@ -34,8 +34,21 @@ class ColumnPresentation:
             self.contents.clone() if self.contents is not None else None,
             self.separator,
             self.visible,
-            [renderer.clone() for renderer in self.renderers] if self.renderers is not None else None
+            self.clone_renderers()
         )
+
+    def clone_renderers(self):
+        # return [renderer.clone() for renderer in self.renderers] if self.renderers is not None else None
+        if self.renderers is None:
+            return None
+
+        result = []
+        for renderer in self.renderers:
+            if type(renderer) is dict:
+                raise Exception(renderer)
+            else:
+                result.append(renderer.clone())
+        return result
 
     def add_renderer(self, renderer: ColumnRenderer):
         self.renderers.append(renderer)

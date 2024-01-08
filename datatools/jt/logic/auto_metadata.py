@@ -10,7 +10,6 @@ from datatools.util.time_util import infer_timestamp_format
 def enrich_metadata(data, metadata: Metadata) -> Metadata:
     infer_metadata_time_fields(data, metadata)
     debug('enrich_metadata', metadata_columns=metadata.columns.keys())
-    compute_values_info(data, metadata.columns)
     return metadata
 
 

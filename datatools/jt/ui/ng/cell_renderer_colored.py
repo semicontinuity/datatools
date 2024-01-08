@@ -134,7 +134,7 @@ class WColoredTextCellRendererHash(WColoredTextCellRenderer):
     def compute_fg_color(self, value):
         debug('compute_fg_color', key=self.render_data.column_key, value=value, onlyFrequent=self.column_renderer.onlyFrequent)
 
-        if self.column_renderer.onlyFrequent and value in self.render_data.column_metadata.unique_values:
+        if self.column_renderer.onlyFrequent and value in self.render_data.column_values_info.unique_values:
             return self.text_color()
         else:
             return hash_to_rgb(hash_code(value), offset=128)

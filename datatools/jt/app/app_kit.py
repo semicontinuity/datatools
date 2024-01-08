@@ -7,17 +7,15 @@ from typing import List, Callable, Optional, Any
 
 from picotui.screen import Screen
 
-from datatools.json.util import dataclass_from_dict, to_jsonisable
+from datatools.json.util import to_jsonisable
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_values_info import compute_column_values_info
-from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE, STATE_CUR_LINE_Y, \
-    STATE_CUR_COLUMN_INDEX
+from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.exit_codes import EXIT_CODE_ESCAPE
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
-from datatools.jt.model.values_info import ColumnsValuesInfo
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
     ColumnRendererColoredMapping
 from datatools.jt.ui.ng.cell_renderer_dict_index import ColumnRendererDictIndexHashColored
@@ -31,6 +29,8 @@ from datatools.tui.picotui_patch import get_screen_size, patch_picotui
 from datatools.tui.picotui_util import with_raw_term, screen_unprepare, screen_prepare
 from datatools.tui.terminal import with_raw_terminal
 from datatools.tui.tui_fd import infer_fd_tui
+from datatools.util.dataclasses import dataclass_from_dict
+from datatools.util.logging import debug
 from datatools.util.meta_io import metadata_or_default, presentation_or_default, state_or_default, write_state_or_pass
 from datatools.util.meta_io import write_presentation_or_pass, write_metadata_or_pass
 
@@ -176,6 +176,13 @@ def load_data_bundle(params: CmdLineParams, orig_data: List):
             ColumnRendererStripesHashColored.type: ColumnRendererStripesHashColored
         }
     )
+
+    debug('load_data_bundle', raw_presentation=type(raw_presentation))
+    debug('load_data_bundle', presentation=type(presentation.columns))
+    for k, p in presentation.columns.items():
+        debug('load_data_bundle', k=k, _="------------------------------------------------")
+        debug('load_data_bundle', p=p)
+
     if params.title is not None:
         presentation.title = params.title
 

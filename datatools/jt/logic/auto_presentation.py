@@ -16,6 +16,7 @@ POPULATED_RATIO = 0.66
 
 
 def enrich_presentation(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation: Presentation) -> Presentation:
+    debug('enrich_presentation')
     row_count = len(data)
     discover_columns: bool = len(presentation.columns) == 0 or should_discover_columns(presentation)
     discover_max_content_width: bool = any(r.max_content_width is None for c in presentation.columns.values() for r in c.renderers)
@@ -26,18 +27,20 @@ def enrich_presentation(data, values_info: ColumnsValuesInfo, metadata: Metadata
     if not discover_columns and not discover_max_content_width:
         return presentation
 
+    debug('enrich_presentation', clone_presentation=True)
     presentation = presentation.clone()
 
     if discover_columns:
         do_discover_columns(data, values_info, metadata, presentation, row_count)
     if discover_columns or discover_max_content_width:
-        scan(data, metadata, presentation)
+        enhance_column_presentation_renderers(data, values_info, metadata, presentation)
         post_scan_analysis(metadata, presentation)
 
     return presentation
 
 
 def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presentation, row_count):
+    debug('do_discover_columns')
     for key, column_metadata in metadata.columns.items():
         if key in presentation.columns:
             continue
@@ -93,11 +96,12 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
                     column_presentation.add_renderer(indicator)
 
 
-def scan(data, metadata, presentation):
-    debug('scan')
+def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation):
+    debug('enhance_column_presentation_renderers')
     for record in data:
         for key, value in record.items():
             column_presentation = presentation.columns.get(key)
+            debug('enhance_column_presentation_renderers', column_presentation=column_presentation)
             if column_presentation is None or column_presentation.separator:
                 continue
 
@@ -106,7 +110,12 @@ def scan(data, metadata, presentation):
                 if type(column_renderer) is ColumnRendererStripesTimeSeries:
                     sub_presentation = column_presentation.contents
                     if sub_presentation is None:
-                        column_presentation.contents = enrich_presentation(value, metadata.columns[key].metadata, Presentation())
+                        column_presentation.contents = enrich_presentation(
+                            value,
+                            ColumnsValuesInfo(),
+                            metadata.columns[key].metadata,
+                            Presentation()
+                        )
                 else:
                     if type(column_renderer) is ColumnRendererColoredPlain or \
                             type(column_renderer) is ColumnRendererColoredHash or \
