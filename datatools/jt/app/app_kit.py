@@ -186,8 +186,8 @@ def load_data_bundle(params: CmdLineParams, orig_data: List):
     if params.title is not None:
         presentation.title = params.title
 
-    values_info = compute_column_values_info(orig_data)
     metadata = enrich_metadata(orig_data, metadata)
+    values_info = compute_column_values_info(orig_data)
     presentation = enrich_presentation(orig_data, values_info, metadata, presentation)
     return DataBundle(orig_data, values_info, metadata, presentation, state)
 

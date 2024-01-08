@@ -1,16 +1,17 @@
 from collections import defaultdict
+from typing import Dict, Hashable, Any, Callable
 
 from datatools.json.util import is_primitive
 from datatools.jt.model.values_info import ColumnsValuesInfo, ValuesInfo
 
 
-def compute_column_values_info(data) -> ColumnsValuesInfo:
-    stats_map = defaultdict(ValuesInfo)
-    compute_values_info(data, stats_map)
-    return ColumnsValuesInfo(columns=stats_map)
+def compute_column_values_info(data, use_single_dict_key: bool = False) -> ColumnsValuesInfo:
+    info_map = defaultdict(ValuesInfo)
+    compute_values_info(data, info_map, single_key_of_dict if use_single_dict_key else primitive_value)
+    return ColumnsValuesInfo(columns=info_map)
 
 
-def compute_values_info(data, info_map):
+def compute_values_info(data, info_map: Dict[str, ValuesInfo], value_f: Callable[[Any], Hashable]):
     for record in data:
         for key, value in record.items():
             info = info_map[key]
@@ -18,7 +19,8 @@ def compute_values_info(data, info_map):
                 info.count = 0
             info.count += 1
 
-            if value is ... or value is None or not is_primitive(value):
+            value = value_f(value)
+            if value is ...:
                 del info_map[key]
 
             value_as_string = str(value)
@@ -37,3 +39,18 @@ def compute_values_info(data, info_map):
                     info.unique_values.add(value_as_string)
             else:
                 info.non_unique_value_counts[value_as_string] = non_unique_value_count + 1
+
+
+def primitive_value(value):
+    if value is ... or value is None or not is_primitive(value):
+        return ...
+    else:
+        return value
+
+
+def single_key_of_dict(value):
+    # if value is None:
+    #     return None
+    if is_primitive(value) or len(value) != 1:
+        return ...
+    return list(value)[0]
