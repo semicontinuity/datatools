@@ -67,7 +67,7 @@ def make_renderers(
     row_renderers = {}
 
     for column_key, column_presentation in column_presentation_map.items():
-        column_values_info = column_values_info_map.get(column_key)
+        column_values_info = column_values_info_map[column_key]
 
         column_metadata = column_metadata_map.get(column_key)
         if not column_presentation.visible and column_metadata is None:
