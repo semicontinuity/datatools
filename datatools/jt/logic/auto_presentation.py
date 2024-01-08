@@ -2,7 +2,7 @@ from math import sqrt
 
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES, ColumnMetadata
 from datatools.jt.model.presentation import Presentation, COLORING_NONE, COLORING_HASH_ALL, COLORING_HASH_FREQUENT
-from datatools.jt.model.values_info import ColumnsValuesInfo
+from datatools.jt.model.values_info import ColumnsValuesInfo, ValuesInfo
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
     ColumnRendererColoredMapping
 from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
@@ -29,7 +29,7 @@ def enrich_presentation(data, values_info: ColumnsValuesInfo, metadata: Metadata
     presentation = presentation.clone()
 
     if discover_columns:
-        do_discover_columns(data, metadata, presentation, row_count)
+        do_discover_columns(data, values_info, metadata, presentation, row_count)
     if discover_columns or discover_max_content_width:
         scan(data, metadata, presentation)
         post_scan_analysis(metadata, presentation)
@@ -37,11 +37,12 @@ def enrich_presentation(data, values_info: ColumnsValuesInfo, metadata: Metadata
     return presentation
 
 
-def do_discover_columns(data, metadata, presentation, row_count):
+def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presentation, row_count):
     for key, column_metadata in metadata.columns.items():
         if key in presentation.columns:
             continue
         debug('do_discover_columns', key=key)
+        column_values_info = values_info.columns[key]
         column_presentation = presentation.columns[key]
         column_presentation.title = key
 
@@ -60,10 +61,10 @@ def do_discover_columns(data, metadata, presentation, row_count):
                 column_renderer = ColumnRendererIndicator(thick=True)
             column_presentation.add_renderer(column_renderer)
         elif column_metadata.complex or column_metadata.multiline or (
-                column_metadata.count is not None and column_metadata.count < POPULATED_RATIO * row_count):
+                column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count):
             column_presentation.add_renderer(ColumnRendererIndicator(thick=True))
         else:
-            coloring = infer_column_coloring(column_metadata, len(data))
+            coloring = infer_column_coloring(column_values_info, len(data))
             if coloring == COLORING_NONE or key == metadata.timestamp_field:
                 plain_renderer = ColumnRendererColoredPlain()
                 plain_renderer.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
@@ -84,7 +85,7 @@ def do_discover_columns(data, metadata, presentation, row_count):
 
                 indicator = ColumnRendererIndicator()
                 indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=64)
-                if column_metadata.contains_single_value():
+                if column_values_info.contains_single_value():
                     column_presentation.add_renderer(indicator)
                     column_presentation.add_renderer(column_renderer)
                 else:
@@ -146,7 +147,7 @@ def should_discover_columns(presentation: Presentation):
     return False
 
 
-def infer_column_coloring(column_metadata: ColumnMetadata, records_count: int) -> str:
+def infer_column_coloring(column_metadata: ValuesInfo, records_count: int) -> str:
     threshold = 2 * sqrt(records_count)
     debug('infer_column_coloring', records_count=records_count, threshold=threshold, unique_values=len(column_metadata.unique_values), non_unique_value_counts=len(column_metadata.non_unique_value_counts))
     # if len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
