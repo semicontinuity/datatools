@@ -4,7 +4,7 @@ from typing import Dict, Set
 
 
 @dataclass
-class ValuesStats:
+class ValuesInfo:
     count: int = None
     dictionary: Dict[str, int] = field(default_factory=dict)
     unique_values: Set[str] = field(default_factory=set)
@@ -15,5 +15,5 @@ class ValuesStats:
 
 
 @dataclass
-class ColumnsValuesStats:
-    columns: Dict[str, ValuesStats] = field(default_factory=lambda: defaultdict(lambda: ValuesStats()))
+class ColumnsValuesInfo:
+    columns: Dict[str, ValuesInfo] = field(default_factory=lambda: defaultdict(lambda: ValuesInfo()))

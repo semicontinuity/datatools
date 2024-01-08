@@ -1,6 +1,6 @@
 from typing import Dict
 
-from datatools.jt.logic.auto_values_stats import compute_value_stats
+from datatools.jt.logic.auto_values_info import compute_values_info
 from datatools.jt.model.metadata import ColumnMetadata, STEREOTYPE_UNKNOWN, STEREOTYPE_TIME_SERIES, Metadata
 from datatools.util.logging import debug
 from datatools.util.time_series_util import time_series_list_summary
@@ -10,7 +10,7 @@ from datatools.util.time_util import infer_timestamp_format
 def enrich_metadata(data, metadata: Metadata) -> Metadata:
     infer_metadata_time_fields(data, metadata)
     debug('enrich_metadata', metadata_columns=metadata.columns.keys())
-    compute_value_stats(data, metadata.columns)
+    compute_values_info(data, metadata.columns)
     return metadata
 
 

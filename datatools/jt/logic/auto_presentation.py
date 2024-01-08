@@ -2,6 +2,7 @@ from math import sqrt
 
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES, ColumnMetadata
 from datatools.jt.model.presentation import Presentation, COLORING_NONE, COLORING_HASH_ALL, COLORING_HASH_FREQUENT
+from datatools.jt.model.values_info import ColumnsValuesInfo
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
     ColumnRendererColoredMapping
 from datatools.jt.ui.ng.cell_renderer_indicator import ColumnRendererIndicator
@@ -14,7 +15,7 @@ from datatools.util.time_bar_util import fit_time_bar
 POPULATED_RATIO = 0.66
 
 
-def enrich_presentation(data, metadata: Metadata, presentation: Presentation) -> Presentation:
+def enrich_presentation(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation: Presentation) -> Presentation:
     row_count = len(data)
     discover_columns: bool = len(presentation.columns) == 0 or should_discover_columns(presentation)
     discover_max_content_width: bool = any(r.max_content_width is None for c in presentation.columns.values() for r in c.renderers)

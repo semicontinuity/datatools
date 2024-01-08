@@ -3,6 +3,7 @@ from typing import Dict, List, Callable, Any
 from datatools.jt.model.column_state import ColumnState
 from datatools.jt.model.metadata import ColumnMetadata
 from datatools.jt.model.presentation import ColumnPresentation
+from datatools.jt.model.values_info import ValuesInfo
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.ng.row_renderer_separator import WRowSeparatorCellRenderer
@@ -55,6 +56,7 @@ class WMultiRenderer(WColumnRenderer):
 
 
 def make_renderers(
+        column_values_info_map: Dict[str, ValuesInfo],
         column_metadata_map: Dict[str, ColumnMetadata],
         column_presentation_map: Dict[str, ColumnPresentation],
         named_cell_value_f: Callable[[int, str], Any],
@@ -65,6 +67,8 @@ def make_renderers(
     row_renderers = {}
 
     for column_key, column_presentation in column_presentation_map.items():
+        column_values_info = column_values_info_map.get(column_key)
+
         column_metadata = column_metadata_map.get(column_key)
         if not column_presentation.visible and column_metadata is None:
             continue
@@ -80,7 +84,7 @@ def make_renderers(
 
         column_state = ColumnState(False)
         render_data = RenderData(
-            column_metadata, column_presentation, column_state, column_key, size, named_cell_value_f,
+            column_values_info, column_metadata, column_presentation, column_state, column_key, size, named_cell_value_f,
             value=lambda row: named_cell_value_f(row, column_key)
         )
         for column_renderer in column_presentation.renderers:

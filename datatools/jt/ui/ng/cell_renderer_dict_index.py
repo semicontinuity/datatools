@@ -26,7 +26,7 @@ class WDictIndexCellRenderer(WColumnRenderer):
 
     def __init__(self, render_data: RenderData):
         self.render_data = render_data
-        self.dictionary = render_data.column_metadata.dictionary
+        self.dictionary = render_data.column_values_info.dictionary
         self.title = render_data.column_presentation.title
         focus_handler = ColumnFocusHandlerHighlightRows(render_data)
         self.focus_handler = lambda: focus_handler

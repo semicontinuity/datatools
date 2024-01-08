@@ -8,13 +8,13 @@ from datatools.jt.app.classic.main import init_from_state
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_renderers import make_renderers
-from datatools.jt.logic.auto_values_stats import compute_column_values_stats
+from datatools.jt.logic.auto_values_info import compute_column_values_info
 from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR_LINE_Y, STATE_CUR_CELL_VALUE, \
     STATE_CUR_COLUMN_KEY
 from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
-from datatools.jt.model.values_stats import ColumnsValuesStats
+from datatools.jt.model.values_info import ColumnsValuesInfo
 from datatools.jt.ui.ng.grid import WGrid
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.object_exporter import init_object_exporter
@@ -29,7 +29,12 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
         return data_bundle.orig_data[line].get(column_key)
 
     column_keys, cell_renderers, row_renderers = make_renderers(
-        data_bundle.metadata.columns, data_bundle.presentation.columns, named_cell_value, len(data_bundle.orig_data))
+        data_bundle.values_stats.columns,
+        data_bundle.metadata.columns,
+        data_bundle.presentation.columns,
+        named_cell_value,
+        len(data_bundle.orig_data)
+    )
 
     def row_attrs(line):
         attrs = 0
@@ -88,11 +93,11 @@ def time_series_column(data_bundle: DataBundle):
 
 
 def nested_table_applet(cell_j, column_contents_metadata: Metadata, column_contents_presentation: Presentation) -> Applet:
-    stats = compute_column_values_stats(cell_j)
+    values_info = compute_column_values_info(cell_j)
     metadata = enrich_metadata(cell_j, column_contents_metadata or Metadata())
-    presentation = enrich_presentation(cell_j, metadata, column_contents_presentation or Presentation())
+    presentation = enrich_presentation(cell_j, values_info, metadata, column_contents_presentation or Presentation())
 
-    data_bundle = DataBundle(cell_j, stats, metadata, presentation, default_state())
+    data_bundle = DataBundle(cell_j, values_info, metadata, presentation, default_state())
     screen_size = with_raw_terminal(read_screen_size)
     return Applet('jtng', grid(screen_size, data_bundle), data_bundle)
 

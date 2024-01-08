@@ -3,7 +3,7 @@ from typing import Dict, Any
 
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
-from datatools.jt.model.values_stats import ColumnsValuesStats
+from datatools.jt.model.values_info import ColumnsValuesInfo
 
 STATE_TOP_LINE = "top_line"
 STATE_CUR_LINE = "cur_line"
@@ -17,7 +17,7 @@ STATE_CUR_CELL_VALUE = "cur_cell_value"
 @dataclass
 class DataBundle:
     orig_data: Any
-    values_stats: ColumnsValuesStats
+    values_stats: ColumnsValuesInfo
     metadata: Metadata
     presentation: Presentation
     state: Dict
