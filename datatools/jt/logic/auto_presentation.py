@@ -1,5 +1,6 @@
 from math import sqrt
 
+from datatools.jt.logic.auto_values_info import single_key_of_dict
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES, ColumnMetadata
 from datatools.jt.model.presentation import Presentation, COLORING_NONE, COLORING_HASH_ALL, COLORING_HASH_FREQUENT
 from datatools.jt.model.values_info import ColumnsValuesInfo, ValuesInfo
@@ -63,7 +64,7 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
             else:
                 renderer_main = ColumnRendererIndicator(thick=True)
             column_presentation.add_renderer(renderer_main)
-        elif column_metadata.complex or column_metadata.multiline or (
+        elif (column_metadata.complex and not column_metadata.has_one_dict_key) or column_metadata.multiline or (
                 column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count):
             column_presentation.add_renderer(ColumnRendererIndicator(thick=True))
         else:
@@ -95,7 +96,7 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
                     column_presentation.add_renderer(renderer_main)
                     column_presentation.add_renderer(renderer_indicator)
 
-            # renderer_main.thick = True
+            renderer_main.use_single_dict_key = column_metadata.has_one_dict_key
 
 
 def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation):
@@ -108,6 +109,8 @@ def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, 
                 continue
 
             for column_renderer in column_presentation.renderers:
+                column_metadata = metadata.columns[key]
+
                 # max_length might be set, but since we got here already, let's refresh it
                 if type(column_renderer) is ColumnRendererStripesTimeSeries:
                     sub_presentation = column_presentation.contents
@@ -115,14 +118,22 @@ def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, 
                         column_presentation.contents = enrich_presentation(
                             value,
                             ColumnsValuesInfo(),
-                            metadata.columns[key].metadata,
+                            column_metadata.metadata,
                             Presentation()
                         )
                 else:
                     if type(column_renderer) is ColumnRendererColoredPlain or \
                             type(column_renderer) is ColumnRendererColoredHash or \
                             type(column_renderer) is ColumnRendererColoredMapping:
-                        value_as_string = '' if value is None else str(value)  # quick and dirty
+
+                        # simulate rendering logic, does not look good
+                        if value is None:
+                            value_as_string = ''
+                        elif column_metadata.has_one_dict_key:
+                            value_as_string = single_key_of_dict(value)
+                        else:
+                            value_as_string = str(value)
+
                         column_renderer.max_content_width = max(column_renderer.max_content_width or 0,
                                                                 len(value_as_string))
 

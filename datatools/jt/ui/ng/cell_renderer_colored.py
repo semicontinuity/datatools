@@ -1,14 +1,15 @@
 from dataclasses import dataclass
 from typing import Sequence, Dict
 
+from datatools.jt.logic.auto_values_info import single_key_of_dict
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_ROW_EMPHASIZED, MASK_OVERLINE
 from datatools.jt.model.presentation import ColumnRenderer
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.ng.column_focus_handler_highlight_rows import ColumnFocusHandlerHighlightRows
 from datatools.jt.ui.ng.render_data import RenderData
 from datatools.jt.ui.themes import ColorKey, COLORS2, COLORS3
-from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, OVERLINE_BYTES
-from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER, LEFT_THICK_BORDER_BYTES
+from datatools.tui.ansi import DOUBLE_UNDERLINE_BYTES, OVERLINE_BYTES, ITALIC_BYTES
+from datatools.tui.box_drawing_chars import LEFT_BORDER_BYTES, LEFT_BORDER
 from datatools.tui.coloring import hash_code, hash_to_rgb, decode_rgb
 from datatools.tui.terminal import set_colors_cmd_bytes2
 from datatools.util.logging import debug
@@ -23,7 +24,7 @@ class ColumnRendererBase(ColumnRenderer):
 @dataclass
 class ColumnRendererColoredPlain(ColumnRendererBase):
     type = 'colored-plain'
-    thick: bool = False
+    use_single_dict_key: bool = False
 
     def make_delegate(self, render_data: RenderData):
         return WColoredTextCellRendererPlain(self, render_data)
@@ -45,12 +46,12 @@ class ColumnRendererColoredHash(ColumnRendererColoredPlain):
 
     def make_delegate(self, render_data: RenderData):
         d = WColoredTextCellRendererHash(self, render_data)
-        d.thick = self.thick
+        d.has_one_dict_key = self.use_single_dict_key
         return d
 
 
 class WColoredTextCellRenderer(WColumnRenderer):
-    thick: bool = False
+    has_one_dict_key: bool = False
 
     def __init__(self, column_renderer: ColumnRendererBase, render_data: RenderData):
         self.column_renderer = column_renderer
@@ -65,7 +66,7 @@ class WColoredTextCellRenderer(WColumnRenderer):
         return self.column_renderer.max_content_width + 2
 
     def __call__(self, row_attrs, column_width, start, end, value, row) -> bytes:
-        value = '' if value is None else str(value)
+        value = '' if value is None else (single_key_of_dict(value) if self.has_one_dict_key else str(value))
         length = len(value)
         text = str(value)
         text += ' ' * (column_width - 2 - length)
@@ -81,7 +82,9 @@ class WColoredTextCellRenderer(WColumnRenderer):
         # Optimize or use Buffer
         if start == 0:
             buffer += set_colors_cmd_bytes2(COLORS3[ColorKey.BOX_DRAWING], bg)
-            buffer += LEFT_THICK_BORDER_BYTES if self.thick else LEFT_BORDER_BYTES
+            buffer += LEFT_BORDER_BYTES
+            if self.has_one_dict_key:
+                buffer += ITALIC_BYTES
         if start < column_width - 1 and end > 1:
             buffer += set_colors_cmd_bytes2(fg, bg) + bytes(text[max(0, start - 1):end - 1], 'utf-8')
         if end == column_width:
