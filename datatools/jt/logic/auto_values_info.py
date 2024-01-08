@@ -1,19 +1,23 @@
 from collections import defaultdict
-from typing import Dict, Hashable, Any, Callable
+from typing import Dict
 
 from datatools.json.util import is_primitive
+from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.values_info import ColumnsValuesInfo, ValuesInfo
 
 
-def compute_column_values_info(data, use_single_dict_key: bool = False) -> ColumnsValuesInfo:
+def compute_column_values_info(data, metadata: Metadata) -> ColumnsValuesInfo:
     info_map = defaultdict(ValuesInfo)
-    compute_values_info(data, info_map, single_key_of_dict if use_single_dict_key else primitive_value)
+    compute_values_info(data, info_map, metadata)
     return ColumnsValuesInfo(columns=info_map)
 
 
-def compute_values_info(data, info_map: Dict[str, ValuesInfo], value_f: Callable[[Any], Hashable]):
+def compute_values_info(data, info_map: Dict[str, ValuesInfo], metadata: Metadata):
     for record in data:
         for key, value in record.items():
+            column_metadata = metadata.columns[key]
+            value_f = single_key_of_dict if column_metadata.has_one_dict_key else primitive_value
+
             info = info_map[key]
             if info.count is None:
                 info.count = 0

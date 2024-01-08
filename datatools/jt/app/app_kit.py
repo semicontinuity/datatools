@@ -187,7 +187,7 @@ def load_data_bundle(params: CmdLineParams, orig_data: List):
         presentation.title = params.title
 
     metadata = enrich_metadata(orig_data, metadata)
-    values_info = compute_column_values_info(orig_data)
+    values_info = compute_column_values_info(orig_data, metadata)
     presentation = enrich_presentation(orig_data, values_info, metadata, presentation)
     return DataBundle(orig_data, values_info, metadata, presentation, state)
 
