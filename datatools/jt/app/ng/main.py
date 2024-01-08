@@ -13,6 +13,7 @@ from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR
 from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
+from datatools.jt.model.values_stats import ColumnsValuesStats
 from datatools.jt.ui.ng.grid import WGrid
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.object_exporter import init_object_exporter
@@ -89,7 +90,7 @@ def nested_table_applet(cell_j, column_contents_metadata: Metadata, column_conte
     metadata = enrich_metadata(cell_j, column_contents_metadata or Metadata())
     presentation = enrich_presentation(cell_j, metadata, column_contents_presentation or Presentation())
 
-    data_bundle = DataBundle(cell_j, metadata, presentation, default_state())
+    data_bundle = DataBundle(cell_j, ColumnsValuesStats(columns={}), metadata, presentation, default_state())
     screen_size = with_raw_terminal(read_screen_size)
     return Applet('jtng', grid(screen_size, data_bundle), data_bundle)
 

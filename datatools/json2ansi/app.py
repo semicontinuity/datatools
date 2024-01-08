@@ -12,6 +12,7 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
+from datatools.jt.model.values_stats import ColumnsValuesStats
 from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
@@ -65,7 +66,7 @@ def do_make_json2ansi_applet(grid_context, j, popup, screen_buffer, state):
     return Applet(
         'json2ansi',
         grid(screen_buffer, grid_context),
-        DataBundle(j, Metadata(), Presentation(), state),
+        DataBundle(j, ColumnsValuesStats(), Metadata(), Presentation(), state),
         popup
     )
 

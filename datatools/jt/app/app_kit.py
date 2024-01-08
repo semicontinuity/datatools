@@ -16,6 +16,7 @@ from datatools.jt.model.exit_codes import EXIT_CODE_ESCAPE
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
+from datatools.jt.model.values_stats import ColumnsValuesStats
 from datatools.jt.ui.ng.cell_renderer_colored import ColumnRendererColoredPlain, ColumnRendererColoredHash, \
     ColumnRendererColoredMapping
 from datatools.jt.ui.ng.cell_renderer_dict_index import ColumnRendererDictIndexHashColored
@@ -34,7 +35,7 @@ from datatools.util.meta_io import write_presentation_or_pass, write_metadata_or
 
 
 @dataclass
-class Params:
+class CmdLineParams:
     title: str = None
     stream_mode: bool = None
     watch_mode: bool = None
@@ -73,7 +74,7 @@ class Applet:
 
 
 def do_main(app_id, applet_f: Callable[[Any, Any, Any], Applet], grid_f, router, screen_size):
-    params = parse_params(sys.argv)
+    params = parse_cmd_line_params(sys.argv)
     screen_width = screen_size[0]
 
     if not(params.print or params.pretty_print):
@@ -150,7 +151,7 @@ def app_loop(applet_f: Callable[[Any, Any, Any], Applet], applet_id, data_bundle
     return exit_code
 
 
-def load_data_bundle(params: Params, orig_data: List):
+def load_data_bundle(params: CmdLineParams, orig_data: List):
     raw_metadata = metadata_or_default(default={})
     raw_presentation = presentation_or_default(default={})
     state = state_or_default(default=default_state())
@@ -177,9 +178,10 @@ def load_data_bundle(params: Params, orig_data: List):
     if params.title is not None:
         presentation.title = params.title
 
+    values_stats = ColumnsValuesStats(columns={})
     metadata = enrich_metadata(orig_data, metadata)
     presentation = enrich_presentation(orig_data, metadata, presentation)
-    return DataBundle(orig_data, metadata, presentation, state)
+    return DataBundle(orig_data, values_stats, metadata, presentation, state)
 
 
 def store_data_bundle(data_bundle: DataBundle):
@@ -192,7 +194,7 @@ def default_state():
     return {'top_line': 0, 'cur_line': 0}
 
 
-def load_data(params: Params):
+def load_data(params: CmdLineParams):
     if params.stream_mode:
         orig_data = []
         i = 0
@@ -230,8 +232,8 @@ def load_data(params: Params):
             sys.exit(255)
 
 
-def parse_params(argv) -> Params:
-    params = Params()
+def parse_cmd_line_params(argv) -> CmdLineParams:
+    params = CmdLineParams()
     a = 1
     while a < len(argv):
         if sys.argv[a] == '-t':

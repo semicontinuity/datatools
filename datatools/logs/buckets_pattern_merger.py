@@ -20,7 +20,7 @@ def merge_buckets_by_pattern(buckets_list: List) -> List[Bucket]:
 
 def pattern_similarity(p1: List[str], p2: List[str], similar_result=0, dissimilar_result=None):
     """
-    Compares patterns
+    Compares patterns.
     Patterns are similar, if all tokens are equal, with the exception of max 1 wildcard (==None)
     """
     if len(p1) != len(p2):
