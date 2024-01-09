@@ -27,7 +27,9 @@ class ColumnRendererColoredPlain(ColumnRendererBase):
     use_single_dict_key: bool = False
 
     def make_delegate(self, render_data: RenderData):
-        return WColoredTextCellRendererPlain(self, render_data)
+        d = WColoredTextCellRendererPlain(self, render_data)
+        d.has_one_dict_key = self.use_single_dict_key
+        return d
 
 
 @dataclass
