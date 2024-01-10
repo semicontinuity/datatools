@@ -102,5 +102,15 @@ def nested_table_applet(cell_j, column_contents_metadata: Metadata, column_conte
 
 
 if __name__ == "__main__":
+    # sleep(1.1)
+
+    # var = get_pipe_peer_env_var('PRODUCES_ENTP', 0)
+    # if var is not None:
+    #     while True:
+    #         line = sys.stdin.readline()
+    #         if not line or len(line) == 0 or line == '\n':
+    #             break
+    #         print(line.removesuffix('\n'))
+
     init_object_exporter()
     app_kit_main('jtng', Applet, grid, app_router)

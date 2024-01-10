@@ -3,6 +3,8 @@ import subprocess
 import sys
 from typing import List
 
+from datatools.util.logging import debug
+
 
 def get_pipe_peer_env_var(name: str, fd=1):
     """
@@ -15,7 +17,9 @@ def get_process_pipe_peer_env_var(pid, name: str, fd=1):
     """
     Returns the value of the given env variable, if present in some pipe peers of given process
     """
+    debug('get_process_pipe_peer_env_var', pid=pid, name=name, fd=fd)
     peer_pids = get_pipe_peer_pids(pid, fd)
+    debug('get_process_pipe_peer_env_var', peer_pids=peer_pids)
     if len(peer_pids) == 0:
         return None
     for peer_pid in peer_pids:
@@ -53,7 +57,6 @@ def get_pg_pipe_pids(pgid, pipe_id, fd) -> List[int]:
                 continue
             if parts[4][0] != ord(str(peer_fd)):
                 continue
-            print(parts[4][0], ord(str(peer_fd)), parts[4][0] == ord(str(peer_fd)), file=sys.stderr)
             pids.append(int(parts[1]))
         return pids
 
@@ -61,7 +64,8 @@ def get_pg_pipe_pids(pgid, pipe_id, fd) -> List[int]:
 def get_env_var(pid: int, name: str):
     try:
         with open(f'/proc/{pid}/environ') as f:
-            for s in f.readline().split('\x00'):
+            environ = f.read()
+            for s in environ.split('\x00'):
                 if s == '':
                     continue
                 (k, v) = s.split('=', maxsplit=1)
@@ -72,9 +76,12 @@ def get_env_var(pid: int, name: str):
 
 
 if __name__ == '__main__':
+    """
+    Usage: pipe_peer_env_var <VAR> <FD>
+    """
     if len(sys.argv) > 2:
-        __pid = int(sys.argv[1])
-        __var_name = sys.argv[2]
-        __var = get_process_pipe_peer_env_var(__pid, __var_name)
-        if __var:
-            print(__var)
+        __var_name = sys.argv[1]
+        __fd = int(sys.argv[2])
+        __var = get_pipe_peer_env_var(__var_name, __fd)
+        if __var is None:
+            sys.exit(1)
