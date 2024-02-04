@@ -70,15 +70,19 @@ def main():
     data = [line.rstrip() for line in sys.stdin]
     if len(data) < 1:
         return
-    max_line_length = max((len(s) for s in data))
 
-    res = run_dialog(
-        lambda h, w, y, x: ChooseItemGrid(data, x, y, min(max_line_length, w - x), min(h - y, len(data)), 0, 0))
-
-    if res is None:
+    choice = choose_item(data)
+    if choice is None:
         sys.exit(1)
     else:
-        print(res)
+        print(choice)
+
+
+def choose_item(data):
+    max_line_length = max((len(s) for s in data))
+    res = run_dialog(
+        lambda h, w, y, x: ChooseItemGrid(data, x, y, min(max_line_length, w - x), min(h - y, len(data)), 0, 0))
+    return res
 
 
 if __name__ == "__main__":
