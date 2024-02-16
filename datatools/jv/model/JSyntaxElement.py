@@ -21,3 +21,5 @@ class JSyntaxElement(JElement):
 
     def get_value_element(self):
         return self.parent
+
+    def get_padding(self): return self.parent.padding
