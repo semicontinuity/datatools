@@ -1,5 +1,8 @@
 from typing import List
 
+from datatools.tui.ansi_str import ANSI_CMD_ATTR_RESET, SINGLE_UNDERLINE, ansi_cmd_set_bg, ANSI_CMD_DEFAULT_FG, \
+    ANSI_CMD_DEFAULT_BG
+from datatools.tui.terminal import ansi_background_escape_code
 from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.rich_text import render_spans_substr
 from datatools.tui.treeview.treenode import TreeNode
@@ -43,7 +46,8 @@ class TreeDocument:
 
     def row_to_string(self, y, x_from: int, x_to: int, render_state: RenderState):
         if y < len(self.rows):
-            return render_spans_substr(self.rows[y].spans(render_state), x_from, x_to)
+            s = render_spans_substr(self.rows[y].spans(render_state), x_from, x_to)
+            return ansi_background_escape_code(48, 48, 48) + s + ANSI_CMD_DEFAULT_BG if render_state.is_under_cursor else s
         else:
             return ' ' * (x_to - x_from)
 

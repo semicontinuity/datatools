@@ -1,19 +1,19 @@
 import os
 import subprocess
 import sys
-from typing import List
+from typing import List, Optional
 
 from datatools.util.logging import debug
 
 
-def get_pipe_peer_env_var(name: str, fd=1):
+def get_pipe_peer_env_var(name: str, fd=1) -> Optional[str]:
     """
-    Returns the value of the given env variable, if present in some of the pipe peers if the current process
+    Returns the value of the given env variable, if present in some pipe peers if the current process
     """
     return get_process_pipe_peer_env_var(os.getpid(), name, fd)
 
 
-def get_process_pipe_peer_env_var(pid, name: str, fd=1):
+def get_process_pipe_peer_env_var(pid, name: str, fd=1) -> Optional[str]:
     """
     Returns the value of the given env variable, if present in some pipe peers of given process
     """
