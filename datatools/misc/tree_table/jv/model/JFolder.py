@@ -1,5 +1,6 @@
 from typing import Tuple, AnyStr, Optional, Any, List
 
+from datatools.misc.tree_table.jv import format_float
 from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
 from datatools.misc.tree_table.jv.model.JFolderSummary import JFolderSummary
 from datatools.misc.tree_table.jv.model.JComplexElement import JComplexElement
@@ -14,4 +15,4 @@ class JFolder(JComplexElement):
         self.start.parent = self
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return f'{self.value:g}', Highlighting.CURRENT.for_number()
+        return format_float(self.value), Highlighting.CURRENT.for_number()

@@ -1,5 +1,6 @@
 from typing import Tuple, AnyStr
 
+from datatools.misc.tree_table.jv import format_float
 from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
 from datatools.misc.tree_table.jv.model.JPrimitiveElement import JPrimitiveElement
 from datatools.tui.treeview.rich_text import Style
@@ -7,7 +8,7 @@ from datatools.tui.treeview.rich_text import Style
 
 class JString(JPrimitiveElement[str]):
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        s = f'{self.value:g}'
+        s = format_float(self.value)
         return ''.join([JString.escape(c) for c in s]), Highlighting.CURRENT.for_string()
 
     @staticmethod
