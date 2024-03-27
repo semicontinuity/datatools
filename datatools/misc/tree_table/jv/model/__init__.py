@@ -10,28 +10,30 @@ INDENT = 2
 
 
 def build_root_model(expenses: ExpensesNode):
-    return build_model_raw(expenses)
+    key_field_length = expenses.max_indent_and_key_length()
+    return build_model_raw(key_field_length, expenses)
 
 
-def build_model(node: ExpensesNode, parent: JValueElement = None, last_in_parent=True) -> JValueElement:
-    model = build_model_raw(node, last_in_parent)
+def build_model(key_field_length: int, node: ExpensesNode, parent: JValueElement = None, last_in_parent=True) -> JValueElement:
+    model = build_model_raw(key_field_length, node, last_in_parent)
     model.parent = parent
     return model
 
 
-def build_model_raw(node: ExpensesNode, last_in_parent=True) -> JValueElement:
+def build_model_raw(key_field_length: int, node: ExpensesNode, last_in_parent=True) -> JValueElement:
+    text = node.key + ' ' * (key_field_length - len(node.key) - node.indent)
     if len(node.items) == 0:
-        return JString(node.value, node.key, node.indent, last_in_parent)
+        return JString(node.value, text, node.indent, last_in_parent)
     else:
-        folder = JFolder(node.value, node.key, node.indent, last_in_parent)
-        folder.set_elements(build_array_items_models(node.items, folder))
+        folder = JFolder(node.value, text, node.indent, last_in_parent)
+        folder.set_elements(build_array_items_models(key_field_length, node.items, folder))
         return folder
 
 
-def build_array_items_models(v: List, parent: JValueElement) -> List[JValueElement]:
+def build_array_items_models(key_field_length: int, v: List, parent: JValueElement) -> List[JValueElement]:
     items = []
     size = len(v)
     for i, item in enumerate(v):
-        items.append(build_model(item, parent, i >= size - 1))
+        items.append(build_model(key_field_length, item, parent, i >= size - 1))
         i += 1
     return items
