@@ -1,8 +1,8 @@
 from typing import Tuple, AnyStr
 
 from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
-from datatools.tui.treeview.rich_text import Style
 from datatools.misc.tree_table.jv.model.JPrimitiveElement import JPrimitiveElement
+from datatools.tui.treeview.rich_text import Style
 
 
 class JString(JPrimitiveElement[str]):
