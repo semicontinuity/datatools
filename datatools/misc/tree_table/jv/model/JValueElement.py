@@ -1,5 +1,6 @@
-from typing import TypeVar, Generic, Optional, List
+from typing import TypeVar, Generic, Optional, List, AnyStr
 
+from datatools.misc.tree_table.jv import format_float
 from datatools.misc.tree_table.jv.model.JElement import JElement
 
 V = TypeVar('V')

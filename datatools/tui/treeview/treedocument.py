@@ -1,7 +1,6 @@
 from typing import List
 
-from datatools.tui.ansi_str import ANSI_CMD_ATTR_RESET, SINGLE_UNDERLINE, ansi_cmd_set_bg, ANSI_CMD_DEFAULT_FG, \
-    ANSI_CMD_DEFAULT_BG
+from datatools.tui.ansi_str import ANSI_CMD_DEFAULT_BG
 from datatools.tui.terminal import ansi_background_escape_code
 from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.rich_text import render_spans_substr

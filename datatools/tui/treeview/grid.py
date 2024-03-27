@@ -1,13 +1,13 @@
 import os
 import select
 import sys
-from dataclasses import dataclass
 from queue import Queue
 from threading import Thread, Event
 
 from picotui.defs import KEYMAP as _KEYMAP, KEY_SHIFT_TAB
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB
 
+from datatools.json2ansi.app import GridContext
 from datatools.jt.model.exit_codes_mapping_v2 import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
@@ -252,15 +252,6 @@ class InputEventReader(Thread):
             return [col, row]
 
         return key
-
-
-@dataclass
-class GridContext:
-    x: int
-    y: int
-    width: int
-    height: int
-    interactive: bool = True
 
 
 def grid(document: TreeDocument, grid_context: GridContext, grid_class=WGrid) -> WGrid:

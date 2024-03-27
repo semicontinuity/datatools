@@ -1,5 +1,6 @@
 from typing import AnyStr, Tuple, List, Optional, Any
 
+from datatools.misc.tree_table.jv import format_float
 from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
@@ -19,16 +20,24 @@ class JElement(TreeNode):
         self.padding = 0
 
     def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
-        return [(' ' * self.indent, Style())] + self.spans_for_field_label() + [self.rich_text()]
+        text = self.poor_text()
+        style = self.style()
+        value_field = text, style
+        remaining = self.context.width - self.context.key_field_length - 7
+        return [(' ' * self.indent, Style())] + self.spans_for_field_label() + [value_field] + [(' | ', Style())] + [('=' * remaining, style)]
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [
             ('+ ' if self.show_plus() else '- ', Highlighting.CURRENT.for_null()),
             (self.key + ' ' * self.get_padding(), Highlighting.CURRENT.for_field_label(self.key, self.indent, self.is_folder())),
-            (': ', Highlighting.CURRENT.for_colon()),
+            ('|', Highlighting.CURRENT.for_colon()),
         ] if self.key is not None else []
 
-    def rich_text(self) -> Tuple[AnyStr, Style]: pass
+    def poor_text(self) -> AnyStr:
+        return format_float(self.value)
+
+    def style(self) -> Style:
+        pass
 
     def get_value(self): pass
 

@@ -1,0 +1,2 @@
+class TreeNodeContext:
+    width: int
