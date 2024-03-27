@@ -78,5 +78,5 @@ class JComplexElement(Generic[V], JValueElement[V]):
         for element in self.elements:
             element.set_collapsed_recursive(collapsed)
 
-    def is_collapsed(self):
+    def show_plus(self):
         return self.collapsed

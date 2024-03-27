@@ -1,6 +1,6 @@
-from datatools.tui.treeview.rich_text import Style
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
-from datatools.tui.coloring import hash_to_rgb, hash_code
+from datatools.tui.coloring import hash_to_rgb
+from datatools.tui.treeview.rich_text import Style
 
 
 class Highlighting:
@@ -8,7 +8,7 @@ class Highlighting:
 
     def for_null(self) -> Style: return Style()
 
-    def for_true(self) -> Style: return Style()
+    def for_folder(self) -> Style: return Style()
 
     def for_false(self) -> Style: return Style()
 
@@ -32,7 +32,7 @@ class Highlighting:
 class ConsoleHighlighting(Highlighting):
     def for_null(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (192, 192, 64))
 
-    def for_true(self): return Style(AbstractBufferWriter.MASK_BOLD, (64, 192, 64))
+    def for_folder(self): return Style(AbstractBufferWriter.MASK_BOLD, (64, 192, 64))
 
     def for_false(self): return Style(AbstractBufferWriter.MASK_BOLD, (96, 96, 192))
 
