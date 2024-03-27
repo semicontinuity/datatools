@@ -80,3 +80,6 @@ class JComplexElement(Generic[V], JValueElement[V]):
 
     def show_plus(self):
         return self.collapsed
+
+    def is_folder(self):
+        return True

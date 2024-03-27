@@ -9,4 +9,4 @@ from datatools.tui.treeview.rich_text import Style
 class JFolderSummary(JSyntaxElement):
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return format_float(self.value), Highlighting.CURRENT.for_number()
+        return format_float(self.value), Highlighting.CURRENT.for_number(True, self.indent)

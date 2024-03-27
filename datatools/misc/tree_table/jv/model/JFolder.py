@@ -15,4 +15,4 @@ class JFolder(JComplexElement):
         self.start.parent = self
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return format_float(self.value), Highlighting.CURRENT.for_number()
+        return format_float(self.value), Highlighting.CURRENT.for_number(True, self.indent)

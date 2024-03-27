@@ -9,7 +9,7 @@ from datatools.tui.treeview.rich_text import Style
 class JString(JPrimitiveElement[str]):
     def rich_text(self) -> Tuple[AnyStr, Style]:
         s = format_float(self.value)
-        return ''.join([JString.escape(c) for c in s]), Highlighting.CURRENT.for_string()
+        return ''.join([JString.escape(c) for c in s]), Highlighting.CURRENT.for_number(False, self.indent)
 
     @staticmethod
     def escape(c: str):

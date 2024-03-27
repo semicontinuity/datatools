@@ -24,7 +24,7 @@ class JElement(TreeNode):
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [
             ('+ ' if self.show_plus() else '- ', Highlighting.CURRENT.for_null()),
-            (self.key + ' ' * self.get_padding(), Highlighting.CURRENT.for_field_label(self.key, self.indent)),
+            (self.key + ' ' * self.get_padding(), Highlighting.CURRENT.for_field_label(self.key, self.indent, self.is_folder())),
             (': ', Highlighting.CURRENT.for_colon()),
         ] if self.key is not None else []
 
@@ -39,3 +39,5 @@ class JElement(TreeNode):
     def get_padding(self): return self.padding
 
     def show_plus(self): return False
+
+    def is_folder(self): return False
