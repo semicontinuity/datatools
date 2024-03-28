@@ -2,6 +2,7 @@ from typing import AnyStr, Tuple, List, Optional, Any
 
 from datatools.misc.tree_table.jv import format_float
 from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
+from datatools.tui.box_drawing_chars import FULL_BLOCK
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
@@ -24,7 +25,14 @@ class JElement(TreeNode):
         style = self.style()
         value_field = text, style
         remaining = self.context.width - self.context.key_field_length - 7
-        return [(' ' * self.indent, Style())] + self.spans_for_field_label() + [value_field] + [(' | ', Style())] + [('=' * remaining, style)]
+        ratio = self.value / self.context.total
+        block_count = int(ratio * remaining)
+        
+        return [(' ' * self.indent, Style())] + \
+            self.spans_for_field_label() + \
+            [value_field] + \
+            [(' | ', Style())] + \
+            [(FULL_BLOCK * block_count, style)]
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [

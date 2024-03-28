@@ -12,11 +12,13 @@ INDENT = 2
 
 class ViewModel(TreeNodeContext):
     key_field_length: int
+    total: float
 
-    def __init__(self, expenses: ExpensesNode) -> None:
-        self.expenses = expenses
-        self.key_field_length = expenses.max_indent_and_key_length()
-        self.width = 100
+    def __init__(self, root: ExpensesNode) -> None:
+        self.expenses = root
+        self.key_field_length = root.max_indent_and_key_length()
+        self.width = 120
+        self.total = root.value
 
     def build_root_model(self):
         return self.build_model_raw(self.expenses)
