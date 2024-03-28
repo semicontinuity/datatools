@@ -48,6 +48,6 @@ class ConsoleHighlighting(Highlighting):
         return self.style(indent, is_folder)
 
     def style(self, indent, is_folder):
-        to_bytes = (indent << 8).to_bytes(4, 'big')
+        to_bytes = (indent << 9).to_bytes(4, 'big')
         return (Style(AbstractBufferWriter.MASK_BOLD if is_folder else AbstractBufferWriter.MASK_NONE,
                       hash_to_rgb(mmh3.hash(to_bytes))))

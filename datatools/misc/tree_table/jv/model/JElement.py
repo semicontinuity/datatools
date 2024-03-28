@@ -58,3 +58,9 @@ class JElement(TreeNode):
     def show_plus(self): return False
 
     def is_folder(self): return False
+
+    def compacted_size(self, depth: int):
+        return 1
+
+    def set_expanded_recursive(self, depth: int):
+        super(JElement, self).set_collapsed_recursive(False)
