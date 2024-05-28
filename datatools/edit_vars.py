@@ -14,6 +14,7 @@
 import json
 import os
 import sys
+from typing import Dict
 
 from picotui.dialogs import *
 
@@ -89,8 +90,8 @@ def fill(vars):
             return {key: entry.get_cur_line() for key, entry in entries.items()}
 
 
-def main(variables):
-    filled = fill(variables)
+def main(variables: Dict):
+    filled = fill({k: v for k, v in variables.items() if v is not None})
 
     if not filled:
         sys.exit(1)
