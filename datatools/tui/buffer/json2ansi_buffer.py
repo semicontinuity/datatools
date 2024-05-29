@@ -19,7 +19,12 @@ class Buffer:
 
     TAB_SIZE = 4
 
-    def __init__(self, width: int, height: int, default_bg_color: Optional[List[int]] = None, default_fg_color: Optional[List[int]] = None):
+    def __init__(
+            self,
+            width: int,
+            height: int,
+            default_bg_color: Optional[List[int]] = None,
+            default_fg_color: Optional[List[int]] = None):
         self.width = width
         self.height = height
         self.chars = [self.spaces(width) for _ in range(height)]
@@ -181,7 +186,7 @@ class Buffer:
             codes.append('38;5;250')  # bright gray
         else:
             if self.default_fg_color is None:
-                codes.append('37')  # white
+                codes.append('39')  # default FG
             else:
                 append_fg_rgb_color(*self.default_fg_color)
 
@@ -191,7 +196,7 @@ class Buffer:
             codes.append('48;5;237')    # dark gray
         else:
             if self.default_bg_color is None:
-                codes.append('40')  # black
+                codes.append('49')  # default BG
             else:
                 append_bg_rgb_color(*self.default_bg_color)
 
