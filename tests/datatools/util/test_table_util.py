@@ -1,6 +1,8 @@
-from datatools.util.table_util import *
+from datatools.tui.buffer.blocks.auto_block import AutoBlock
+from datatools.tui.buffer.blocks.hbox import HBox
 import json
 from datatools.json.util import to_jsonisable
+from datatools.tui.buffer.blocks.vbox import VBox
 
 
 def test__table__layout__traverse():

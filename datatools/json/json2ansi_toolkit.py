@@ -4,9 +4,12 @@ from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_c
     hash_code
 from datatools.json.structure_discovery import *
 from datatools.tui.box_drawing_chars import LEFT_BORDER
+from datatools.tui.buffer.blocks.block import Block
+from datatools.tui.buffer.blocks.hbox import HBox
+from datatools.tui.buffer.blocks.table_util import *
+from datatools.tui.buffer.blocks.vbox import VBox
 from datatools.tui.buffer.json2ansi_buffer import Buffer
-from datatools.util.logging import stderr_print, debug
-from datatools.util.table_util import *
+from datatools.util.logging import stderr_print
 from datatools.util.text_util import geometry
 
 
