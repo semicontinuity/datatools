@@ -1,9 +1,9 @@
 import json
 
-from datatools.json.json2ansi_toolkit import AnsiToolkit
+from datatools.json2ansi_toolkit.ansi_toolkit import AnsiToolkit
 from datatools.json.structure_discovery import Discovery
 from datatools.json.util import to_jsonisable
-from datatools.json2ansi.default_style import default_style
+from datatools.json2ansi_toolkit.default_style import default_style
 
 
 def test__1():

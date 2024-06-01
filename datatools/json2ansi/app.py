@@ -4,10 +4,11 @@ import json
 import sys
 from dataclasses import dataclass
 
-from datatools.json.json2ansi_toolkit import Style, AnsiToolkit
 from datatools.json.structure_discovery import Discovery
-from datatools.json2ansi.default_style import default_style
 from datatools.json2ansi.grid import WGrid
+from datatools.json2ansi_toolkit.ansi_toolkit import AnsiToolkit
+from datatools.json2ansi_toolkit.default_style import default_style
+from datatools.json2ansi_toolkit.style import Style
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.metadata import Metadata

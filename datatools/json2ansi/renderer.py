@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-import os
 import json
+import os
 import sys
 
-from datatools.json.json2ansi_toolkit import *
 from datatools.json.structure_discovery import *
 from datatools.json.util import to_jsonisable
-from datatools.json2ansi.default_style import default_style
+from datatools.json2ansi_toolkit.ansi_toolkit import AnsiToolkit
+from datatools.json2ansi_toolkit.default_style import default_style
 from datatools.tui.terminal import read_screen_size, with_raw_terminal
 
 

@@ -1,4 +1,5 @@
-from datatools.json.json2ansi_toolkit import *
+from datatools.json2ansi_toolkit.border_style import BorderStyle
+from datatools.json2ansi_toolkit.style import Style
 
 
 def default_style(bg_color=None):
