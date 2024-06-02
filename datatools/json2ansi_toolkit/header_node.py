@@ -6,8 +6,8 @@ from datatools.tui.buffer.json2ansi_buffer import Buffer
 
 
 class HeaderNode(TextCell):
-    def __init__(self, key, is_uniform, border_style: BorderStyle):
-        super().__init__(str(key), self.attr_for(is_uniform), border_style)
+    def __init__(self, text, is_uniform, border_style: BorderStyle):
+        super().__init__(str(text), self.attr_for(is_uniform), border_style)
 
     # TODO
     def compute_widths(self) -> List[int]:

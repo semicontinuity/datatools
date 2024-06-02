@@ -31,7 +31,8 @@ class TextCell(Block):
             buffer.draw_attrs_box(self.x, self.y, self.width, 1, Buffer.MASK_OVERLINE)
 
         # left border
-        for j in range(self.height):
-            buffer.draw_text(self.x, self.y + j, LEFT_BORDER)
+        if self.border_style.left:
+            for j in range(self.height):
+                buffer.draw_text(self.x, self.y + j, LEFT_BORDER)
 
         buffer.draw_text(self.x + 1, self.y, self.text)
