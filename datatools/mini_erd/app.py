@@ -11,8 +11,9 @@
 import json
 import os
 import sys
+from typing import Dict
 
-from datatools.mini_erd.graph.field import Field
+from datatools.mini_erd.graph.graph import Field
 from datatools.mini_erd.graph.graph import Graph
 from datatools.mini_erd.ui_toolkit import UiToolkit
 from datatools.tui.buffer.blocks.block import Block
@@ -22,10 +23,10 @@ from datatools.tui.terminal import screen_size_or_default
 
 def paint_erd(table: str, data):
     graph = to_graph(data)
+    # focus_graph = filter_graph(table, graph.table_fields[table])
+    focus_graph = graph
 
-    focus_graph = filter_graph(graph.fields[table])
-
-    root = build_ui(focus_graph.fields[table], UiToolkit())
+    root = build_ui(table, focus_graph, UiToolkit())
     root.compute_width()
     root.compute_height()
     root.compute_position(0, 0)
@@ -45,43 +46,86 @@ def to_graph(j) -> Graph:
     graph = Graph()
 
     for record in j:
-        src_field = graph.add_field(record['src'])
-        dst_field = graph.add_field(record['dst'])
+        src_field = graph.add_table_field(*record['src'].split(':'))
+        dst_field = graph.add_table_field(*record['dst'].split(':'))
         graph.add_edge(src_field, dst_field)
 
     return graph
 
 
-def filter_graph(focus: Field) -> Graph:
+# not working?
+def filter_graph(focus_table_name: str, focus_table: Dict[str, Field]) -> Graph:
     graph = Graph()
-    focus_field = graph.add_field(focus.name)
-    for edge in focus.outbound.values():
-        graph.add_edge(focus_field, graph.add_field(edge.dst.name))
+    graph.add_table(focus_table_name, focus_table)
 
-    for edge in focus.inbound.values():
-        graph.add_edge(graph.add_field(edge.src.name), focus_field)
+    for field in focus_table.values():
+        for edge in field.outbound.values():
+            graph.add_edge(field, graph.add_table_field(edge.dst.table, edge.dst.name))
+        for edge in field.inbound.values():
+            graph.add_edge(graph.add_table_field(edge.src.table, edge.src.name), field)
 
     return graph
 
 
-def build_ui(focus: Field, tk: UiToolkit) -> Block:
-    elements = []
+def build_ui(focus_table_name: str, graph: Graph, tk: UiToolkit) -> Block:
+    focus_table = graph.table_fields[focus_table_name]
+    hbox_elements = []
 
-    if len(focus.inbound) > 0:
+    inbound_table_names = collect_inbound_table_names(focus_table)
+    if len(inbound_table_names) > 0:
         vbox_elements = []
-        for edge in focus.inbound.values():
-            vbox_elements.append(tk.header_node(edge.src.name))
-        elements.append(tk.vbox(vbox_elements))
+        for name in inbound_table_names:
+            vbox_elements.append(table_card(name, tk))
+        hbox_elements.append(
+            tk.vbox(
+                vbox_elements
+            )
+        )
 
-    elements.append(tk.vbox([tk.focus_node(focus.name)]))
+    hbox_elements.append(
+        tk.vbox(
+            [
+                tk.focus_node(focus_table_name),
+            ]
+        )
+    )
 
-    if len(focus.outbound) > 0:
+    outbound_table_names = collect_outbound_table_names(focus_table)
+    if len(outbound_table_names) > 0:
         vbox_elements = []
-        for edge in focus.outbound.values():
-            vbox_elements.append(tk.header_node(edge.dst.name))
-        elements.append(tk.vbox(vbox_elements))
+        for name in outbound_table_names:
+            vbox_elements.append(table_card(name, tk))
+        hbox_elements.append(
+            tk.vbox(
+                vbox_elements
+            )
+        )
 
-    return tk.hbox(tk.with_spacers_between(elements))
+    return tk.hbox(tk.with_spacers_between(hbox_elements))
+
+
+def table_card(table_name, tk):
+    return tk.vbox(
+        [
+            tk.header_node(table_name)
+        ]
+    )
+
+
+def collect_outbound_table_names(table: Dict[str, Field]):
+    result = set()
+    for field in table.values():
+        for edge in field.outbound.values():
+            result.add(edge.dst.table)
+    return result
+
+
+def collect_inbound_table_names(table: Dict[str, Field]):
+    result = set()
+    for field in table.values():
+        for edge in field.inbound.values():
+            result.add(edge.src.table)
+    return result
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from datatools.tui.buffer.blocks.block import Block
 from datatools.tui.buffer.blocks.hbox import HBox
 from datatools.tui.buffer.blocks.vbox import VBox
 from datatools.tui.buffer.json2ansi_buffer import Buffer
+from tests.datatools.util.spacer import Spacer
 
 
 class UiToolkit:
@@ -23,6 +24,9 @@ class UiToolkit:
 
     def spacer(self) -> TextCell:
         return TextCell('', Buffer.MASK_NONE, BorderStyle(left=False))
+
+    def mini_spacer(self) -> Spacer:
+        return Spacer()
 
     def focus_node(self, text: AnyStr) -> HeaderNode:
         return HeaderNode(text, True, self.style.header)
