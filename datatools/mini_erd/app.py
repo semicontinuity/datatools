@@ -11,9 +11,10 @@
 import json
 import os
 import sys
-from typing import Dict
+from collections import defaultdict
+from typing import Dict, Iterable
 
-from datatools.mini_erd.graph.graph import Field
+from datatools.mini_erd.graph.graph import Field, Edge
 from datatools.mini_erd.graph.graph import Graph
 from datatools.mini_erd.ui_toolkit import UiToolkit
 from datatools.tui.buffer.blocks.block import Block
@@ -71,61 +72,69 @@ def build_ui(focus_table_name: str, graph: Graph, tk: UiToolkit) -> Block:
     focus_table = graph.table_fields[focus_table_name]
     hbox_elements = []
 
-    inbound_table_names = collect_inbound_table_names(focus_table)
-    if len(inbound_table_names) > 0:
+    outbound_edges_by_table = group_outbound_edges_by_dst_table(focus_table)
+
+    inbound_cards = collect_inbound_cards(focus_table)
+    if len(inbound_cards) > 0:
         vbox_elements = []
-        for name in inbound_table_names:
-            vbox_elements.append(table_card(name, tk))
+        for table_name, field_names in inbound_cards.items():
+            vbox_elements.append(tk.table_card(table_name, field_names, foreign_keys=True))
         hbox_elements.append(
             tk.vbox(
-                vbox_elements
+                tk.with_spacers_between(
+                    vbox_elements
+                )
             )
         )
 
-    hbox_elements.append(
-        tk.vbox(
-            [
-                tk.focus_node(focus_table_name),
-            ]
-        )
-    )
+    center_elements = [tk.focus_node(focus_table_name)]
+    for table_name, outbound_edges in outbound_edges_by_table.items():
+        for e in outbound_edges:
+            center_elements.append(tk.key_node(e.src.name, foreign=True))
+        center_elements.append(tk.text_node(''))
+    hbox_elements.append(tk.vbox(center_elements))
 
-    outbound_table_names = collect_outbound_table_names(focus_table)
-    if len(outbound_table_names) > 0:
+    if len(outbound_edges_by_table) > 0:
         vbox_elements = []
-        for name in outbound_table_names:
-            vbox_elements.append(table_card(name, tk))
+        for table_name, outbound_edges in outbound_edges_by_table.items():
+            field_names = {e.dst.name for e in outbound_edges}
+            vbox_elements.append(tk.table_card(table_name, field_names, foreign_keys=False))
         hbox_elements.append(
             tk.vbox(
-                vbox_elements
+                tk.with_spacers_between(
+                    vbox_elements
+                )
             )
         )
 
-    return tk.hbox(tk.with_spacers_between(hbox_elements))
-
-
-def table_card(table_name, tk):
     return tk.vbox(
-        [
-            tk.header_node(table_name),
-            tk.text_node('...'),
-        ]
+        tk.with_spacers_around(
+            [tk.hbox(tk.with_spacers_between(hbox_elements))]
+        )
     )
 
 
-def collect_outbound_table_names(table: Dict[str, Field]):
-    result = set()
+def group_inbound_edges_by_src_table(table: Dict[str, Field]) -> Dict[str, Iterable[Edge]]:
+    result = defaultdict(list)
     for field in table.values():
-        for edge in field.outbound.values():
-            result.add(edge.dst.table)
+        for edge in field.inbound.values():
+            result[edge.src.table].append(edge)
     return result
 
 
-def collect_inbound_table_names(table: Dict[str, Field]):
-    result = set()
+def group_outbound_edges_by_dst_table(table: Dict[str, Field]) -> Dict[str, Iterable[Edge]]:
+    result = defaultdict(list)
+    for field in table.values():
+        for edge in field.outbound.values():
+            result[edge.dst.table].append(edge)
+    return result
+
+
+def collect_inbound_cards(table: Dict[str, Field]) -> Dict[str, Iterable[str]]:
+    result = defaultdict(set)
     for field in table.values():
         for edge in field.inbound.values():
-            result.add(edge.src.table)
+            result[edge.src.table].add(edge.src.name)
     return result
 
 

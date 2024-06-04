@@ -1,4 +1,4 @@
-from typing import AnyStr, List
+from typing import AnyStr, List, Iterable
 
 from datatools.json2ansi_toolkit.border_style import BorderStyle
 from datatools.json2ansi_toolkit.header_node import HeaderNode
@@ -22,11 +22,26 @@ class UiToolkit:
             background_color=None,
         )
 
+    def table_card(self, table_name: str, field_names: Iterable[str], foreign_keys: bool):
+        return self.vbox(
+            [
+                self.header_node(table_name),
+                self.vbox(
+                    [
+                        self.key_node(field_name, foreign_keys) for field_name in field_names
+                    ]
+                ),
+            ]
+        )
+
     def spacer(self) -> TextCell:
         return TextCell('', Buffer.MASK_NONE, BorderStyle(left=False))
 
+    def key_node(self, text: str, foreign: bool) -> TextCell:
+        return TextCell(text, (Buffer.MASK_ITALIC if foreign else Buffer.MASK_NONE) | Buffer.MASK_BG_CUSTOM, BorderStyle(left=True), bg=(0, 0, 0))
+
     def text_node(self, text: str) -> TextCell:
-        return TextCell(text, Buffer.MASK_NONE, BorderStyle(left=False))
+        return TextCell(text, Buffer.MASK_BG_CUSTOM, BorderStyle(left=True), bg=(0, 0, 0))
 
     def mini_spacer(self) -> Spacer:
         return Spacer()
@@ -49,3 +64,11 @@ class UiToolkit:
             result.append(e)
             result.append(self.spacer())
         return result[:-1]
+
+    def with_spacers_around(self, contents: List[Block]) -> List[Block]:
+        result = [self.spacer()]
+        if len(contents) > 0:
+            for e in contents:
+                result.append(e)
+                result.append(self.spacer())
+        return result

@@ -32,7 +32,7 @@ class VBox(Container):
         for child in self.contents:
             child.compute_width()
 
-        self.set_width(max(child.width for child in self.contents))
+        self.set_width(max((child.width for child in self.contents), default=0))
 
     # overrides method from parent
     def compute_height(self):
