@@ -26,11 +26,21 @@ class HBox(Container):
 
     # overrides method from parent
     def compute_width(self):
-        self.compute_width_as_sum()
+        """
+        First step in laying out: compute width from widths of children.
+        """
+        for child in self.contents:
+            child.compute_width()
+        self.width = sum(child.width for child in self.contents)
 
     # overrides method from parent
     def compute_height(self):
-        self.compute_height_as_max()
+        """
+        Sets the height of this container and all children to the height of the tallest child.
+        """
+        for child in self.contents:
+            child.compute_height()
+        self.set_height(max((child.height for child in self.contents), default=0))
 
     # overrides method from parent
     def compute_position(self, parent_x: int, parent_y: int):
@@ -46,3 +56,10 @@ class HBox(Container):
         for child in self.contents:
             child.compute_position(x, parent_y)
             x += child.width
+
+    # overrides method from parent
+    def set_height(self, size: int):
+        super().set_height(size)
+
+        for child in self.contents:
+            child.set_height(size)

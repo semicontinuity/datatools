@@ -107,7 +107,8 @@ def build_ui(focus_table_name: str, graph: Graph, tk: UiToolkit) -> Block:
 def table_card(table_name, tk):
     return tk.vbox(
         [
-            tk.header_node(table_name)
+            tk.header_node(table_name),
+            tk.text_node('...'),
         ]
     )
 

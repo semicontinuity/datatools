@@ -26,11 +26,22 @@ class VBox(Container):
 
     # overrides method from parent
     def compute_width(self):
-        self.compute_width_as_max()
+        """
+        Sets the width of this container and all children to the width of the widest child.
+        """
+        for child in self.contents:
+            child.compute_width()
+
+        self.set_width(max(child.width for child in self.contents))
 
     # overrides method from parent
     def compute_height(self):
-        self.compute_height_as_sum()
+        """
+        First step in laying out: compute height from heights of children.
+        """
+        for child in self.contents:
+            child.compute_height()
+        self.height = sum(child.height for child in self.contents)
 
     # overrides method from parent
     def compute_position(self, parent_x: int, parent_y: int):
@@ -47,3 +58,9 @@ class VBox(Container):
             child.compute_position(parent_x, y)
             y += child.height
 
+    # overrides method from parent
+    def set_width(self, size: int):
+        super().set_width(size)
+
+        for child in self.contents:
+            child.set_width(size)

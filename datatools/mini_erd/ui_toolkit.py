@@ -25,6 +25,9 @@ class UiToolkit:
     def spacer(self) -> TextCell:
         return TextCell('', Buffer.MASK_NONE, BorderStyle(left=False))
 
+    def text_node(self, text: str) -> TextCell:
+        return TextCell(text, Buffer.MASK_NONE, BorderStyle(left=False))
+
     def mini_spacer(self) -> Spacer:
         return Spacer()
 

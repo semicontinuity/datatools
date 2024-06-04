@@ -24,46 +24,6 @@ class Container(Block):
             child.compute_height()
         return [child.height for child in self.contents]
 
-    def compute_width_as_max(self):
-        """
-        Sets the width of this container and all children to the width of the widest child.
-        (VBox only?)
-        """
-        for child in self.contents:
-            child.compute_width()
-        self.width = max(child.width for child in self.contents)
-        for child in self.contents:
-            child.width = self.width
-
-    def compute_height_as_max(self):
-        """
-        Sets the height of this container and all children to the height of the tallest child.
-        (HBox only?)
-        """
-        for child in self.contents:
-            child.compute_height()
-        self.height = max((child.height for child in self.contents), default=0)
-        for child in self.contents:
-            child.height = self.height
-
-    def compute_width_as_sum(self):
-        """
-        First step in laying out: compute width from widths of children.
-        (HBox only?)
-        """
-        for child in self.contents:
-            child.compute_width()
-        self.width = sum(child.width for child in self.contents)
-
-    def compute_height_as_sum(self):
-        """
-        First step in laying out: compute height from heights of children.
-        (VBox only?)
-        """
-        for child in self.contents:
-            child.compute_height()
-        self.height = sum(child.height for child in self.contents)
-
     def set_min_widths(self, sizes: List[int]):
         for i in range(len(sizes)):
             self.contents[i].width = max(self.contents[i].width, sizes[i])
