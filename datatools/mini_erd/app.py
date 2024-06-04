@@ -20,7 +20,7 @@ from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.tui.terminal import screen_size_or_default
 
 
-def main(table: str, data):
+def paint_erd(table: str, data):
     graph = to_graph(data)
 
     focus_graph = filter_graph(graph.fields[table])
@@ -73,7 +73,7 @@ def build_ui(focus: Field, tk: UiToolkit) -> Block:
             vbox_elements.append(tk.header_node(edge.src.name))
         elements.append(tk.vbox(vbox_elements))
 
-    elements.append(tk.focus_node(focus.name))
+    elements.append(tk.vbox([tk.focus_node(focus.name)]))
 
     if len(focus.outbound) > 0:
         vbox_elements = []
@@ -85,4 +85,4 @@ def build_ui(focus: Field, tk: UiToolkit) -> Block:
 
 
 if __name__ == "__main__":
-    main(os.environ['TABLE'], load_data())
+    paint_erd(os.environ['TABLE'], load_data())
