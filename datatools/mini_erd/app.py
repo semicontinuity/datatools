@@ -27,7 +27,11 @@ def paint_erd(table: str, data):
     # focus_graph = filter_graph(table, graph.table_fields[table])
     focus_graph = graph
 
-    root = build_ui(table, focus_graph, UiToolkit())
+    focus_table = focus_graph.table_fields.get(table)
+    if focus_table is None:
+        return
+
+    root = build_ui(table, focus_table, UiToolkit())
     root.compute_width()
     root.compute_height()
     root.compute_position(0, 0)
@@ -68,11 +72,12 @@ def filter_graph(focus_table_name: str, focus_table: Dict[str, Field]) -> Graph:
     return graph
 
 
-def build_ui(focus_table_name: str, graph: Graph, tk: UiToolkit) -> Block:
-    focus_table = graph.table_fields[focus_table_name]
+def build_ui(focus_table_name: str, focus_table: Dict[str, Field], tk: UiToolkit) -> Block:
     hbox_elements = []
 
     outbound_edges_by_table = group_outbound_edges_by_dst_table(focus_table)
+    inbound_edges_by_table = group_inbound_edges_by_src_table(focus_table)
+    print(dict(inbound_edges_by_table))
 
     inbound_cards = collect_inbound_cards(focus_table)
     if len(inbound_cards) > 0:
@@ -88,6 +93,12 @@ def build_ui(focus_table_name: str, graph: Graph, tk: UiToolkit) -> Block:
         )
 
     center_elements = [tk.focus_node(focus_table_name)]
+
+    field_names = {e.dst.name for table_name, inbound_edges in inbound_edges_by_table.items() for e in inbound_edges}
+    for field_name in field_names:
+        center_elements.append(tk.key_node(field_name, foreign=False))
+    center_elements.append(tk.text_node(''))
+
     for table_name, outbound_edges in outbound_edges_by_table.items():
         for e in outbound_edges:
             center_elements.append(tk.key_node(e.src.name, foreign=True))
