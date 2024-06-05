@@ -77,14 +77,20 @@ def build_ui(focus_table_name: str, focus_table: Dict[str, Field], tk: UiToolkit
     outbound_edges_by_table = group_outbound_edges_by_dst_table(focus_table_name, focus_table)
     inbound_edges_by_table = group_inbound_edges_by_src_table(focus_table_name, focus_table)
 
+    # len({e.dst.name for e in outbound_edges}) is always 1
+    size_by_outbound_table = {
+        table_name: max(len({e.src.name for e in outbound_edges}), len({e.dst.name for e in outbound_edges}))
+        for table_name, outbound_edges in outbound_edges_by_table.items()
+    }
+
     return tk.vbox(
         tk.with_spacers_around(
             [
                 tk.hbox(
                     tk.with_spacers_between(
                         inbound_tables_ui(tk, inbound_edges_by_table) +
-                        focus_table_ui(focus_table_name, inbound_edges_by_table, outbound_edges_by_table, tk) +
-                        outbound_tables_ui(tk, outbound_edges_by_table)
+                        focus_table_ui(focus_table_name, inbound_edges_by_table, outbound_edges_by_table, size_by_outbound_table, tk) +
+                        outbound_tables_ui(tk, outbound_edges_by_table, size_by_outbound_table)
                     )
                 )
             ]
@@ -92,17 +98,29 @@ def build_ui(focus_table_name: str, focus_table: Dict[str, Field], tk: UiToolkit
     )
 
 
-def focus_table_ui(focus_table_name, inbound_edges_by_table, outbound_edges_by_table, tk):
-    center_elements = [tk.focus_node(focus_table_name)]
+def focus_table_ui(focus_table_name, inbound_edges_by_table, outbound_edges_by_table, size_by_outbound_table, tk):
+    vbox_elements = [tk.focus_node(focus_table_name)]
+
+    # primary keys (in fact, just one; or may be just one, but without any foreign keys pointing to it)
     field_names = {e.dst.name for table_name, inbound_edges in inbound_edges_by_table.items() for e in inbound_edges}
     for field_name in field_names:
-        center_elements.append(tk.key_node(field_name, foreign=False))
-    center_elements.append(tk.text_node(''))
-    for table_name, outbound_edges in outbound_edges_by_table.items():
+        vbox_elements.append(tk.key_node(field_name, foreign=False))
+    # placeholder for primary key
+    if len(field_names) == 0:
+        vbox_elements.append(tk.text_node(''))
+
+    # separator
+    vbox_elements.append(tk.text_node(''))
+
+    # foreign keys
+    for table_name, size in size_by_outbound_table.items():
+        outbound_edges = outbound_edges_by_table[table_name]
         for e in outbound_edges:
-            center_elements.append(tk.key_node(e.src.name, foreign=True))
-        center_elements.append(tk.text_node(''))
-    return [tk.vbox(center_elements)]
+            vbox_elements.append(tk.key_node(e.src.name, foreign=True))
+        for i in range(size - len(outbound_edges) + 2):
+            vbox_elements.append(tk.text_node(''))
+
+    return [tk.vbox(vbox_elements)]
 
 
 def inbound_tables_ui(tk, inbound_edges_by_table: Dict[str, Iterable[Edge]]) -> List[VBox]:
@@ -115,15 +133,21 @@ def inbound_tables_ui(tk, inbound_edges_by_table: Dict[str, Iterable[Edge]]) -> 
     return [tk.vbox(tk.with_spacers_between(vbox_elements))]
 
 
-def outbound_tables_ui(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]]) -> List[VBox]:
+def outbound_tables_ui(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]], size_by_outbound_table) -> List[VBox]:
     if len(outbound_edges_by_table) <= 0:
         return []
 
-    vbox_elements = []
-    for table_name, outbound_edges in outbound_edges_by_table.items():
+    vbox_elements = [tk.mini_spacer(0, 2)]
+    for table_name, size in size_by_outbound_table.items():
+        outbound_edges = outbound_edges_by_table[table_name]
         field_names = {e.dst.name for e in outbound_edges}
         vbox_elements.append(tk.table_card(table_name, field_names, foreign_keys=False))
-    return [tk.vbox(tk.with_spacers_between(vbox_elements))]
+        for i in range(size - len(field_names) + 1):
+            vbox_elements.append(tk.spacer())
+
+    return [
+        tk.vbox(vbox_elements)
+    ]
 
 
 def group_inbound_edges_by_src_table(table_name: str, table: Dict[str, Field]) -> Dict[str, Iterable[Edge]]:

@@ -43,8 +43,8 @@ class UiToolkit:
     def text_node(self, text: str) -> TextCell:
         return TextCell(text, Buffer.MASK_BG_CUSTOM, BorderStyle(left=True), bg=(0, 0, 0))
 
-    def mini_spacer(self) -> Spacer:
-        return Spacer()
+    def mini_spacer(self, width: int = 0, height: int = 0) -> Spacer:
+        return Spacer(width, height)
 
     def focus_node(self, text: AnyStr) -> HeaderNode:
         return HeaderNode(text, True, self.style.header)
