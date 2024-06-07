@@ -16,7 +16,8 @@ from typing import Dict, Iterable, List
 
 from datatools.mini_erd.graph.graph import Field, Edge
 from datatools.mini_erd.graph.graph import Graph
-from datatools.mini_erd.ui_toolkit import UiToolkit
+from datatools.mini_erd.ui.focus_table_model import FocusTableModel
+from datatools.mini_erd.ui.ui_toolkit import UiToolkit
 from datatools.tui.buffer.blocks.block import Block
 from datatools.tui.buffer.blocks.vbox import VBox
 from datatools.tui.buffer.json2ansi_buffer import Buffer
@@ -74,23 +75,16 @@ def filter_graph(focus_table_name: str, focus_table: Dict[str, Field]) -> Graph:
 
 
 def build_ui(focus_table_name: str, focus_table: Dict[str, Field], tk: UiToolkit) -> Block:
-    outbound_edges_by_table = group_outbound_edges_by_dst_table(focus_table_name, focus_table)
-    inbound_edges_by_table = group_inbound_edges_by_src_table(focus_table_name, focus_table)
-
-    # len({e.dst.name for e in outbound_edges}) is always 1
-    size_by_outbound_table = {
-        table_name: max(len({e.src.name for e in outbound_edges}), len({e.dst.name for e in outbound_edges}))
-        for table_name, outbound_edges in outbound_edges_by_table.items()
-    }
+    m = FocusTableModel(focus_table_name, focus_table)
 
     return tk.vbox(
         tk.with_spacers_around(
             [
                 tk.hbox(
                     tk.with_spacers_between(
-                        inbound_tables_ui(tk, inbound_edges_by_table) +
-                        focus_table_ui(focus_table_name, inbound_edges_by_table, outbound_edges_by_table, size_by_outbound_table, tk) +
-                        outbound_tables_ui(tk, outbound_edges_by_table, size_by_outbound_table)
+                        inbound_tables_ui(tk, m.inbound_edges_by_table) +
+                        focus_table_ui(focus_table_name, m.inbound_edges_by_table, m.outbound_edges_by_table, m.size_by_outbound_table, tk) +
+                        outbound_tables_ui(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
                     )
                 )
             ]
