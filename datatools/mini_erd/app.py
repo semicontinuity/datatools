@@ -14,7 +14,7 @@ import sys
 from collections import defaultdict
 from typing import Dict, Iterable, List
 
-from datatools.mini_erd.graph.graph import Field, Edge
+from datatools.mini_erd.graph.graph import TableField, Edge, Table
 from datatools.mini_erd.graph.graph import Graph
 from datatools.mini_erd.ui.focus_table_model import FocusTableModel
 from datatools.mini_erd.ui.ui_toolkit import UiToolkit
@@ -29,11 +29,11 @@ def paint_erd(table: str, data):
     # focus_graph = filter_graph(table, graph.table_fields[table])
     focus_graph = graph
 
-    focus_table = focus_graph.table_fields.get(table)
+    focus_table = focus_graph.get_table(table)
     if focus_table is None:
         return
 
-    root = build_ui(table, focus_table, UiToolkit())
+    root = build_ui(focus_table, UiToolkit())
     root.compute_width()
     root.compute_height()
     root.compute_position(0, 0)
@@ -61,7 +61,7 @@ def to_graph(j) -> Graph:
 
 
 # not working?
-def filter_graph(focus_table_name: str, focus_table: Dict[str, Field]) -> Graph:
+def filter_graph(focus_table_name: str, focus_table: Dict[str, TableField]) -> Graph:
     graph = Graph()
     graph.add_table(focus_table_name, focus_table)
 
@@ -74,8 +74,8 @@ def filter_graph(focus_table_name: str, focus_table: Dict[str, Field]) -> Graph:
     return graph
 
 
-def build_ui(focus_table_name: str, focus_table: Dict[str, Field], tk: UiToolkit) -> Block:
-    m = FocusTableModel(focus_table_name, focus_table)
+def build_ui(focus_table: Table, tk: UiToolkit) -> Block:
+    m = FocusTableModel(focus_table)
 
     return tk.vbox(
         tk.with_spacers_around(
@@ -83,7 +83,7 @@ def build_ui(focus_table_name: str, focus_table: Dict[str, Field], tk: UiToolkit
                 tk.hbox(
                     tk.with_spacers_between(
                         inbound_tables_ui(tk, m.inbound_edges_by_table) +
-                        focus_table_ui(focus_table_name, m.inbound_edges_by_table, m.outbound_edges_by_table, m.size_by_outbound_table, tk) +
+                        focus_table_ui(focus_table.name, m.inbound_edges_by_table, m.outbound_edges_by_table, m.size_by_outbound_table, tk) +
                         outbound_tables_ui(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
                     )
                 )
@@ -98,7 +98,7 @@ def focus_table_ui(focus_table_name, inbound_edges_by_table, outbound_edges_by_t
     # primary keys (in fact, just one; or may be just one, but without any foreign keys pointing to it)
     field_names = {e.dst.name for table_name, inbound_edges in inbound_edges_by_table.items() for e in inbound_edges}
     for field_name in field_names:
-        vbox_elements.append(tk.key_node(field_name, foreign=False))
+        vbox_elements.append(tk.primary_key_node(field_name))
     # placeholder for primary key
     if len(field_names) == 0:
         vbox_elements.append(tk.text_node(''))
@@ -110,7 +110,7 @@ def focus_table_ui(focus_table_name, inbound_edges_by_table, outbound_edges_by_t
     for table_name, size in size_by_outbound_table.items():
         outbound_edges = outbound_edges_by_table[table_name]
         for e in outbound_edges:
-            vbox_elements.append(tk.key_node(e.src.name, foreign=True))
+            vbox_elements.append(tk.foreign_key_node(e.src.name))
         for i in range(size - len(outbound_edges) + 2):
             vbox_elements.append(tk.text_node(''))
 
@@ -144,7 +144,7 @@ def outbound_tables_ui(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]], s
     ]
 
 
-def group_inbound_edges_by_src_table(table_name: str, table: Dict[str, Field]) -> Dict[str, Iterable[Edge]]:
+def group_inbound_edges_by_src_table(table_name: str, table: Dict[str, TableField]) -> Dict[str, Iterable[Edge]]:
     result = defaultdict(list)
     for field in table.values():
         for edge in field.inbound.values():
@@ -153,7 +153,7 @@ def group_inbound_edges_by_src_table(table_name: str, table: Dict[str, Field]) -
     return result
 
 
-def group_outbound_edges_by_dst_table(table_name: str, table: Dict[str, Field]) -> Dict[str, Iterable[Edge]]:
+def group_outbound_edges_by_dst_table(table_name: str, table: Dict[str, TableField]) -> Dict[str, Iterable[Edge]]:
     result = defaultdict(list)
     for field in table.values():
         for edge in field.outbound.values():

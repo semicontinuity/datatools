@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
 class BorderStyle:
-    top: bool = False
-    left: bool = True
+    top: Optional[bool] = False
+    left: Optional[bool] = True

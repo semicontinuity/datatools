@@ -37,8 +37,19 @@ class UiToolkit:
     def spacer(self) -> TextCell:
         return TextCell('', Buffer.MASK_NONE, BorderStyle(left=False))
 
+    def primary_key_node(self, text: str) -> TextCell:
+        return self.key_node(text, foreign=False)
+
+    def foreign_key_node(self, text: str) -> TextCell:
+        return self.key_node(text, foreign=True)
+
     def key_node(self, text: str, foreign: bool) -> TextCell:
-        return TextCell(text, (Buffer.MASK_ITALIC if foreign else Buffer.MASK_NONE) | Buffer.MASK_BG_CUSTOM, BorderStyle(left=True), bg=(0, 0, 0))
+        return TextCell(
+            text,
+            (Buffer.MASK_ITALIC if foreign else Buffer.MASK_BOLD) | Buffer.MASK_BG_CUSTOM,
+            BorderStyle(left=True),
+            bg=((0, 0, 0) if foreign else (32, 32, 48))
+        )
 
     def text_node(self, text: str) -> TextCell:
         return TextCell(text, Buffer.MASK_BG_CUSTOM, BorderStyle(left=True), bg=(0, 0, 0))
