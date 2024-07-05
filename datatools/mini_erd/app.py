@@ -77,18 +77,26 @@ def filter_graph(focus_table_name: str, focus_table: Dict[str, TableField]) -> G
 def build_ui(focus_table: Table, tk: UiToolkit) -> Block:
     m = FocusTableModel(focus_table)
 
+    print(m.outbound_edges_by_table)
+
+    inbound = inbound_tables_ui(tk, m.inbound_edges_by_table)
+    focus = focus_table_ui(focus_table.name, m.inbound_edges_by_table, m.outbound_edges_by_table, m.size_by_outbound_table, tk)
+    outbound = outbound_tables_ui(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
+
+    contents = []
+
+    if len(inbound) > 0:
+        contents += inbound
+        contents += [tk.spacer()]
+
+    contents += focus
+
+    if len(outbound) > 0:
+        contents += [tk.spacer()]
+        contents += outbound
+
     return tk.vbox(
-        tk.with_spacers_around(
-            [
-                tk.hbox(
-                    tk.with_spacers_between(
-                        inbound_tables_ui(tk, m.inbound_edges_by_table) +
-                        focus_table_ui(focus_table.name, m.inbound_edges_by_table, m.outbound_edges_by_table, m.size_by_outbound_table, tk) +
-                        outbound_tables_ui(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
-                    )
-                )
-            ]
-        )
+        tk.with_spacers_around([tk.hbox(contents)])
     )
 
 
