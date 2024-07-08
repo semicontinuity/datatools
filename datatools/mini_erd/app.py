@@ -77,8 +77,6 @@ def filter_graph(focus_table_name: str, focus_table: Dict[str, TableField]) -> G
 def build_ui(focus_table: Table, tk: UiToolkit) -> Block:
     m = FocusTableModel(focus_table)
 
-    print(m.outbound_edges_by_table)
-
     inbound = inbound_tables_ui(tk, m.inbound_edges_by_table)
     focus = focus_table_ui(focus_table.name, m.inbound_edges_by_table, m.outbound_edges_by_table, m.size_by_outbound_table, tk)
     outbound = outbound_tables_ui(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
@@ -92,7 +90,8 @@ def build_ui(focus_table: Table, tk: UiToolkit) -> Block:
     contents += focus
 
     if len(outbound) > 0:
-        contents += [tk.spacer()]
+        # contents += [tk.spacer()]
+        contents += many_to_one_arrows(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
         contents += outbound
 
     return tk.vbox(
@@ -146,6 +145,33 @@ def outbound_tables_ui(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]], s
         vbox_elements.append(tk.table_card(table_name, field_names, foreign_keys=False))
         for i in range(size - len(field_names) + 1):
             vbox_elements.append(tk.spacer())
+
+    return [
+        tk.vbox(vbox_elements)
+    ]
+
+
+def many_to_one_arrows(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]], size_by_outbound_table) -> List[VBox]:
+    if len(outbound_edges_by_table) <= 0:
+        return []
+
+    vbox_elements = [tk.mini_spacer(0, 2)]
+    for table_name, size in size_by_outbound_table.items():
+        print(table_name, size)
+        # outbound_edges = outbound_edges_by_table[table_name]
+        # field_names = {e.dst.name for e in outbound_edges}
+        # vbox_elements.append(tk.many_to_one_arrows(table_name, field_names, foreign_keys=False))
+        # for i in range(size - len(field_names) + 1):
+        #     vbox_elements.append(tk.spacer())
+        vbox_elements.append(tk.spacer())
+        for i in range(size):
+            if i == 0:
+                vbox_elements.append(tk.plain_text('───▶' if size == 1 else '─┬─▶'))
+            else:
+                vbox_elements.append(tk.plain_text('─┘' if i == size - 1 else '─┤'))
+
+        vbox_elements.append(tk.spacer())
+    vbox_elements.append(tk.spacer())
 
     return [
         tk.vbox(vbox_elements)

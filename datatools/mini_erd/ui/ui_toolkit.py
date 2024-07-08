@@ -34,8 +34,23 @@ class UiToolkit:
             ]
         )
 
+    def many_to_one_arrows(self, table_name: str, field_names: Iterable[str], foreign_keys: bool):
+        return self.vbox(
+            [
+                self.spacer(),
+                self.vbox(
+                    [
+                        self.plain_text() for field_name in field_names
+                    ]
+                ),
+            ]
+        )
+
     def spacer(self) -> TextCell:
         return TextCell('', Buffer.MASK_NONE, BorderStyle(left=False))
+
+    def plain_text(self, text='...') -> TextCell:
+        return TextCell(text, Buffer.MASK_NONE, BorderStyle(left=False))
 
     def primary_key_node(self, text: str) -> TextCell:
         return self.key_node(text, foreign=False)
