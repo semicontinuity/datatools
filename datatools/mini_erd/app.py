@@ -38,11 +38,12 @@ def paint_erd(table: str, data):
     root.compute_height()
     root.compute_position(0, 0)
 
-    buffer = Buffer(root.width, root.height)
+    height = root.height
+    buffer = Buffer(root.width, height)
     root.paint(buffer)
 
-    screen_size = screen_size_or_default()
-    buffer.flush(*screen_size)
+    screen_width, screen_height = screen_size_or_default()
+    buffer.flush(screen_width, height)
 
 
 def load_data():
@@ -85,13 +86,12 @@ def build_ui(focus_table: Table, tk: UiToolkit) -> Block:
 
     if len(inbound) > 0:
         contents += inbound
-        contents += [tk.spacer()]
+        contents += inbound_many_to_one_arrows(tk, m.inbound_edges_by_table)
 
     contents += focus
 
     if len(outbound) > 0:
-        # contents += [tk.spacer()]
-        contents += many_to_one_arrows(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
+        contents += outbound_many_to_one_arrows(tk, m.outbound_edges_by_table, m.size_by_outbound_table)
         contents += outbound
 
     return tk.vbox(
@@ -130,6 +130,7 @@ def inbound_tables_ui(tk, inbound_edges_by_table: Dict[str, Iterable[Edge]]) -> 
 
     vbox_elements = []
     for table_name, edges in inbound_edges_by_table.items():
+        print(table_name, edges)
         vbox_elements.append(tk.table_card(table_name, [e.src.name for e in edges], foreign_keys=True))
     return [tk.vbox(tk.with_spacers_between(vbox_elements))]
 
@@ -151,18 +152,52 @@ def outbound_tables_ui(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]], s
     ]
 
 
-def many_to_one_arrows(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]], size_by_outbound_table) -> List[VBox]:
+def inbound_many_to_one_arrows(tk, inbound_edges_by_table: Dict[str, List[Edge]]) -> List[VBox]:
+    inbound_edges_by_table = {k: v for k, v in inbound_edges_by_table.items() if len(v) > 0}
+    if len(inbound_edges_by_table) <= 0:
+        return []
+
+    main_arrow_painted = False
+    vbox_elements = []
+    table_index = 0
+
+    for table_name, edges in inbound_edges_by_table.items():
+
+        size = len(edges)
+
+        if table_index > 0:
+            vbox_elements.append(tk.plain_text(' │'))
+        else:
+            vbox_elements.append(tk.spacer())
+
+        for i in range(size):
+            if i == 0 and table_index == 0 and size == 1 and len(inbound_edges_by_table) == 1:
+                vbox_elements.append(tk.plain_text('───▶'))
+            elif i == 0 and table_index == 0 and size == 1:
+                vbox_elements.append(tk.plain_text('─┬─▶'))
+            elif table_index == len(inbound_edges_by_table) - 1 and i == size - 1:
+                vbox_elements.append(tk.plain_text('─┘'))
+            elif i > 0 or table_index > 0:
+                vbox_elements.append(tk.plain_text('─┤'))
+            else:
+                vbox_elements.append(tk.plain_text('─┬─▶'))
+
+        if table_index < len(inbound_edges_by_table) - 1:
+            vbox_elements.append(tk.plain_text(' │'))
+
+        table_index += 1
+
+    return [
+        tk.vbox(vbox_elements)
+    ]
+
+
+def outbound_many_to_one_arrows(tk, outbound_edges_by_table: Dict[str, Iterable[Edge]], size_by_outbound_table) -> List[VBox]:
     if len(outbound_edges_by_table) <= 0:
         return []
 
     vbox_elements = [tk.mini_spacer(0, 2)]
     for table_name, size in size_by_outbound_table.items():
-        print(table_name, size)
-        # outbound_edges = outbound_edges_by_table[table_name]
-        # field_names = {e.dst.name for e in outbound_edges}
-        # vbox_elements.append(tk.many_to_one_arrows(table_name, field_names, foreign_keys=False))
-        # for i in range(size - len(field_names) + 1):
-        #     vbox_elements.append(tk.spacer())
         vbox_elements.append(tk.spacer())
         for i in range(size):
             if i == 0:
