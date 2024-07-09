@@ -157,7 +157,6 @@ def inbound_many_to_one_arrows(tk, inbound_edges_by_table: Dict[str, List[Edge]]
     if len(inbound_edges_by_table) <= 0:
         return []
 
-    main_arrow_painted = False
     vbox_elements = []
     table_index = 0
 
@@ -166,24 +165,24 @@ def inbound_many_to_one_arrows(tk, inbound_edges_by_table: Dict[str, List[Edge]]
         size = len(edges)
 
         if table_index > 0:
-            vbox_elements.append(tk.plain_text(' │'))
+            vbox_elements.append(tk.text_block(' │'))
         else:
             vbox_elements.append(tk.spacer())
 
         for i in range(size):
             if i == 0 and table_index == 0 and size == 1 and len(inbound_edges_by_table) == 1:
-                vbox_elements.append(tk.plain_text('───▶'))
+                vbox_elements.append(tk.text_block('───▶'))
             elif i == 0 and table_index == 0 and size == 1:
-                vbox_elements.append(tk.plain_text('─┬─▶'))
+                vbox_elements.append(tk.text_block('─┬─▶'))
             elif table_index == len(inbound_edges_by_table) - 1 and i == size - 1:
-                vbox_elements.append(tk.plain_text('─┘'))
+                vbox_elements.append(tk.text_block('─┘'))
             elif i > 0 or table_index > 0:
-                vbox_elements.append(tk.plain_text('─┤'))
+                vbox_elements.append(tk.text_block('─┤'))
             else:
-                vbox_elements.append(tk.plain_text('─┬─▶'))
+                vbox_elements.append(tk.text_block('─┬─▶'))
 
         if table_index < len(inbound_edges_by_table) - 1:
-            vbox_elements.append(tk.plain_text(' │'))
+            vbox_elements.append(tk.text_block(' │'))
 
         table_index += 1
 
@@ -198,15 +197,15 @@ def outbound_many_to_one_arrows(tk, outbound_edges_by_table: Dict[str, Iterable[
 
     vbox_elements = [tk.mini_spacer(0, 2)]
     for table_name, size in size_by_outbound_table.items():
-        vbox_elements.append(tk.spacer())
+        vbox_elements.append(tk.text_block(''))
         for i in range(size):
             if i == 0:
-                vbox_elements.append(tk.plain_text('───▶' if size == 1 else '─┬─▶'))
+                vbox_elements.append(tk.text_block('───▶' if size == 1 else '─┬─▶'))
             else:
-                vbox_elements.append(tk.plain_text('─┘' if i == size - 1 else '─┤'))
+                vbox_elements.append(tk.text_block('─┘' if i == size - 1 else '─┤'))
 
-        vbox_elements.append(tk.spacer())
-    vbox_elements.append(tk.spacer())
+        vbox_elements.append(tk.text_block(''))
+    vbox_elements.append(tk.text_block(''))
 
     return [
         tk.vbox(vbox_elements)

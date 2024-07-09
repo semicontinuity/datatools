@@ -3,6 +3,7 @@ from typing import AnyStr, List, Iterable
 from datatools.json2ansi_toolkit.border_style import BorderStyle
 from datatools.json2ansi_toolkit.header_node import HeaderNode
 from datatools.json2ansi_toolkit.style import Style
+from datatools.json2ansi_toolkit.text_block import TextBlock
 from datatools.json2ansi_toolkit.text_cell import TextCell
 from datatools.tui.buffer.blocks.block import Block
 from datatools.tui.buffer.blocks.hbox import HBox
@@ -51,6 +52,9 @@ class UiToolkit:
 
     def plain_text(self, text='...') -> TextCell:
         return TextCell(text, Buffer.MASK_NONE, BorderStyle(left=False))
+
+    def text_block(self, text='...') -> TextBlock:
+        return TextBlock(text, Buffer.MASK_NONE)
 
     def primary_key_node(self, text: str) -> TextCell:
         return self.key_node(text, foreign=False)
