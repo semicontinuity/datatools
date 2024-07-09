@@ -113,7 +113,7 @@ class ExpensesTreeWriter:
     def __write(self, node: ExpensesNode, key_area_size: int):
         key_area_chars = ' ' * node.indent + node.key
         n_tabs = (key_area_size - len(key_area_chars) + TAB_SIZE - 1) // TAB_SIZE
-        self.file.write(key_area_chars + '\t' * n_tabs + f'{node.value:g}\n')
+        self.file.write(key_area_chars + '\t' * n_tabs + f'{node.value:10.2f}\n')
         for item in node.items:
             self.__write(item, key_area_size)
 
