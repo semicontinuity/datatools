@@ -130,7 +130,6 @@ def inbound_tables_ui(tk, inbound_edges_by_table: Dict[str, Iterable[Edge]]) -> 
 
     vbox_elements = []
     for table_name, edges in inbound_edges_by_table.items():
-        print(table_name, edges)
         vbox_elements.append(tk.table_card(table_name, [e.src.name for e in edges], foreign_keys=True))
     return [tk.vbox(tk.with_spacers_between(vbox_elements))]
 
