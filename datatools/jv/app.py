@@ -11,9 +11,8 @@ from datatools.jv.document import JDocument
 from datatools.jv.grid import JGrid
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
-from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, MODIFIER_CTRL_ALT, \
-    EXIT_CODE_F3, EXIT_CODE_F4
-from datatools.tui.picotui_keys import KEY_ALT_ENTER, KEY_CTRL_ALT_SPACE
+from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
+from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.picotui_util import with_prepared_screen
@@ -21,7 +20,7 @@ from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview.grid import GridContext, grid
 from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.tui.tui_fd import infer_fd_tui
-from datatools.util.object_exporter import init_object_exporter
+from datatools.util.object_exporter import init_object_exporter, ObjectExporter
 
 
 def make_json_tree_applet(document, popup: bool = False):
@@ -85,9 +84,13 @@ def loop(document: JDocument):
         return EXIT_CODE_ESCAPE, None
 
 
-if __name__ == "__main__":
+if ObjectExporter.INSTANCE is None:
     init_object_exporter()
+if Highlighting.CURRENT is None:
     Highlighting.CURRENT = ConsoleHighlighting()
+
+
+if __name__ == "__main__":
     doc = make_document(data())    # must consume stdin first
 
     if '-p' in sys.argv:

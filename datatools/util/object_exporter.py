@@ -12,7 +12,7 @@ def init_object_exporter():
 
 
 class ObjectExporter:
-    INSTANCE: 'ObjectExporter'
+    INSTANCE: 'ObjectExporter' = None
 
     def export(self, obj, metadata, channel):
         pass
