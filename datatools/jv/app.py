@@ -2,6 +2,7 @@
 
 import json
 import sys
+from typing import Tuple, Any
 
 from picotui.defs import KEY_ENTER, KEY_F3, KEY_F4
 
@@ -11,6 +12,7 @@ from datatools.jv.document import JDocument
 from datatools.jv.grid import JGrid
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
+from datatools.tui.grid_base import WGridBase
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
 from datatools.tui.picotui_keys import KEY_ALT_ENTER
@@ -54,14 +56,19 @@ def make_document(j):
 def loop(document: JDocument):
     g = make_json_tree_applet(document).g
     key_code = g.loop()
+    cur_line = g.cur_line
+    return key_code, cur_line
+
+
+def handle_loop_result(document, key_code, cur_line: int) -> Tuple[int, Any]:
     if key_code == KEY_ENTER:
-        return EXIT_CODE_ENTER, json.dumps(document.selected_value(g.cur_line))
+        return EXIT_CODE_ENTER, json.dumps(document.selected_value(cur_line))
     elif key_code == KEY_ALT_ENTER:
-        return MODIFIER_ALT + EXIT_CODE_ENTER, document.selected_path(g.cur_line)
+        return MODIFIER_ALT + EXIT_CODE_ENTER, document.selected_path(cur_line)
     elif key_code == KEY_F3:
-        return EXIT_CODE_F3, json.dumps(document.selected_value(g.cur_line))
+        return EXIT_CODE_F3, json.dumps(document.selected_value(cur_line))
     elif key_code == KEY_F4:
-        return EXIT_CODE_F4, json.dumps(document.selected_value(g.cur_line))
+        return EXIT_CODE_F4, json.dumps(document.selected_value(cur_line))
     else:
         return EXIT_CODE_ESCAPE, None
 
@@ -78,7 +85,8 @@ if __name__ == "__main__":
     if '-p' in sys.argv:
         make_json_tree_applet(doc).g.redraw()
     else:
-        exit_code, output = with_alternate_screen(lambda: loop(doc))
+        key_code, cur_line = with_alternate_screen(lambda: loop(doc))
+        exit_code, output = handle_loop_result(doc, key_code, cur_line)
         if output is not None:
             print(output)
         sys.exit(exit_code)
