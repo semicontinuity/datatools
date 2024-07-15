@@ -12,10 +12,9 @@ from datatools.jv.document import JDocument
 from datatools.jv.grid import JGrid
 from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
 from datatools.jv.model import build_model
-from datatools.tui.grid_base import WGridBase
-from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
 from datatools.tui.picotui_keys import KEY_ALT_ENTER
+from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview.grid import GridContext, grid
 from datatools.tui.treeview.treedocument import TreeDocument

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List, Optional
 
 from datatools.jv.model.JArray import JArray
@@ -12,8 +13,7 @@ from datatools.jv.model.JValueElement import JValueElement
 INDENT = 2
 
 
-def build_model(v, k: Optional[str] = None, indent: int = 0, last_in_parent=True,
-                parent: Optional[JElement] = None) -> JValueElement:
+def build_model(v, k: Optional[str] = None, indent: int = 0, last_in_parent=True, parent: Optional[JElement] = None) -> JValueElement:
     model = build_model_raw(v, k, indent, last_in_parent)
     model.parent = parent
     return model
@@ -28,7 +28,7 @@ def build_model_raw(v, k: Optional[str], indent: int, last_in_parent=True) -> JV
         return JNumber(v, k, indent, last_in_parent)
     elif type(v) is bool:
         return JBoolean(v, k, indent, last_in_parent)
-    elif type(v) is dict:
+    elif type(v) is dict or type(v) is defaultdict:
         obj = JObject(v, k, indent, last_in_parent)
         obj.set_elements(build_object_fields_models(v, indent + INDENT, obj))
         return obj
@@ -39,7 +39,7 @@ def build_model_raw(v, k: Optional[str], indent: int, last_in_parent=True) -> JV
 
 
 def build_object_fields_models(v, indent: int, parent: JValueElement) -> List[JValueElement]:
-    max_field_name_length = 0 if len(v) is 0 else max(len(k) for k in v)
+    max_field_name_length = 0 if len(v) == 0 else max(len(k) for k in v)
     fields = []
     i = 0
     size = len(v)

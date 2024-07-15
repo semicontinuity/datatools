@@ -21,7 +21,7 @@ def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str,
     return [{k: to_jsonisable(v) for k, v in row.items()} for row in rows]
 
 
-def build_model(table: str, where: List[Tuple[str, str, str]]):
+def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
     with connect_to_db() as conn:
         if not where:
             raise Exception('WHERE clause is required')
@@ -69,7 +69,7 @@ def main():
     table = get_env('TABLE')
     where = get_where_clauses()
 
-    print(json.dumps(build_model(table, where)))
+    print(json.dumps(referring_rows_model(table, where)))
 
 
 if __name__ == '__main__':

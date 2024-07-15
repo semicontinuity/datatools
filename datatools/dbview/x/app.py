@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-import json
-import sys
-from typing import Tuple, Any, Hashable, List
+from typing import Tuple, Hashable, List
 
 from picotui.defs import KEY_ENTER
 
+from datatools.dbview.x.get_referring_rows import referring_rows_model
+from datatools.dbview.x.util.pg import get_env, get_where_clauses
 from datatools.jv.app import loop, make_document
 from datatools.tui.screen_helper import with_alternate_screen
 
 
 def data():
-    lines = [line for line in sys.stdin]
-    s = ''.join(lines)
-    return json.loads(s)
+    table = get_env('TABLE')
+    where = get_where_clauses()
+    model = referring_rows_model(table, where)
+    return model
 
 
 def handle_loop_result(document, key_code, cur_line: int) -> Tuple[bool, str, List[Hashable]]:
@@ -24,9 +25,14 @@ def handle_loop_result(document, key_code, cur_line: int) -> Tuple[bool, str, Li
         return False, "", []
 
 
-if __name__ == "__main__":
-    doc = make_document(data())    # must consume stdin first
+def main():
+    model = data()
+    doc = make_document(model)
     key_code, cur_line = with_alternate_screen(lambda: loop(doc))
     is_leaf, value, path = handle_loop_result(doc, key_code, cur_line)
     if is_leaf:
         print(path)
+
+
+if __name__ == "__main__":
+    main()
