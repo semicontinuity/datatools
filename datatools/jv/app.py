@@ -64,7 +64,7 @@ def handle_loop_result(document, key_code, cur_line: int) -> Tuple[int, Any]:
     if key_code == KEY_ENTER:
         return EXIT_CODE_ENTER, json.dumps(document.selected_value(cur_line))
     elif key_code == KEY_ALT_ENTER:
-        return MODIFIER_ALT + EXIT_CODE_ENTER, document.selected_path(cur_line)
+        return MODIFIER_ALT + EXIT_CODE_ENTER, document.selected_json_path(cur_line)
     elif key_code == KEY_F3:
         return EXIT_CODE_F3, json.dumps(document.selected_value(cur_line))
     elif key_code == KEY_F4:
