@@ -1,8 +1,3 @@
-import json
-
-import psycopg2
-
-
 def fetch(query, variables):
     """
     query format:
@@ -30,9 +25,3 @@ def get_var(variables, key):
     if value is None:
         raise Exception(f'Must set {key}')
     return value
-
-
-def to_jsonizable(value):
-    if value is None or type(value) is str or type(value) is float or type(value) is int or type(value) is bool:
-        return value
-    return str(value)
