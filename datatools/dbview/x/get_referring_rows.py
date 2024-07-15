@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 from collections import defaultdict
+from typing import Tuple, List
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, get_table_foreign_keys_inbound
 from datatools.dbview.x.util.pg import connect_to_db, get_env, get_where_clauses
@@ -20,10 +21,8 @@ def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str,
     return [{k: to_jsonisable(v) for k, v in row.items()} for row in rows]
 
 
-def main():
+def build_model(table: str, where: List[Tuple[str, str, str]]):
     with connect_to_db() as conn:
-        table = get_env('TABLE')
-        where = get_where_clauses()
         if not where:
             raise Exception('WHERE clause is required')
         if len(where) != 1:
@@ -63,7 +62,14 @@ def main():
             else:
                 result[foreign_table][foreign_column] = rows
 
-        print(json.dumps(result))
+        return result
+
+
+def main():
+    table = get_env('TABLE')
+    where = get_where_clauses()
+
+    print(json.dumps(build_model(table, where)))
 
 
 if __name__ == '__main__':
