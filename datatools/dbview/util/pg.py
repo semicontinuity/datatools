@@ -1,6 +1,26 @@
 from typing import Dict, Any, List
 
 
+def describe_table(conn, table: str):
+    return execute_sql(conn, describe_table_sql(table))
+
+
+def describe_table_sql(table: str):
+    return f'''select
+
+column_name,
+data_type,
+character_maximum_length,
+column_default,
+is_nullable
+
+from
+
+INFORMATION_SCHEMA.COLUMNS
+
+where table_name = '{table}';'''
+
+
 def get_table_pks(conn, table: str):
     return [row['column_name'] for row in execute_sql(conn, get_table_pks_sql(table))]
 

@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
 import json
+import sys
 from collections import defaultdict
 from typing import Tuple, List
 
-from datatools.dbview.util.pg import get_table_pks, execute_sql, get_table_foreign_keys_inbound
+from datatools.dbview.util.pg import get_table_pks, execute_sql, get_table_foreign_keys_inbound, describe_table
 from datatools.dbview.x.util.pg import connect_to_db, get_env, get_where_clauses
 from datatools.util.logging import debug
 from datatools.json.util import to_jsonisable
 
 
-def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str, selector_column_value: str):
+def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str, selector_column_value: str) -> Tuple[List, List]:
+
+    d = describe_table(conn, table)
+    text_columns = [row['column_name'] for row in d if row['data_type'] == 'text']
+
     table_pks = get_table_pks(conn, table)
     if len(table_pks) == 0:
         raise Exception(f"expected PKs in table {table}")
 
-    sql = f"SELECT {', '.join(table_pks)} from {table} where {selector_column_name}={selector_column_value}"
+    columns = table_pks + text_columns
+
+    sql = f"SELECT {', '.join(columns)} from {table} where {selector_column_name}={selector_column_value}"
     debug(sql)
     rows = execute_sql(conn, sql)
     debug(len(rows))
-    return [{k: to_jsonisable(v) for k, v in row.items()} for row in rows]
+    return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [{k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
 
 def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
@@ -32,7 +39,7 @@ def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
         if where_op != '=':
             raise Exception('WHERE clause must be PK equality')
 
-        result = defaultdict(dict)
+        result = defaultdict(lambda: defaultdict(list))
 
         inbound_relations = get_table_foreign_keys_inbound(conn, table)
         for inbound_relation in inbound_relations:
@@ -56,11 +63,19 @@ def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
             foreign_table = inbound_relation['table_name']
             foreign_column = inbound_relation['column_name']
 
-            rows = get_pk_values_for_selected_rows(conn, foreign_table, foreign_column, selector_value)
-            if len(rows) == 0:
+            pk_kv, text_kv = get_pk_values_for_selected_rows(conn, foreign_table, foreign_column, selector_value)
+            if len(pk_kv) == 0:
                 continue
             else:
-                result[foreign_table][foreign_column] = rows
+                entry = []
+                result[foreign_table][foreign_column] = entry
+                for i in range(len(pk_kv)):
+                    entry.append(
+                        {
+                            'key': pk_kv[i],
+                            'value': text_kv[i],
+                        }
+                    )
 
         return result
 
