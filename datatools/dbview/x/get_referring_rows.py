@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 import json
-import sys
 from collections import defaultdict
 from typing import Tuple, List
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, get_table_foreign_keys_inbound, describe_table
 from datatools.dbview.x.util.pg import connect_to_db, get_env, get_where_clauses
-from datatools.util.logging import debug
 from datatools.json.util import to_jsonisable
+from datatools.util.logging import debug
 
 
 def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str, selector_column_value: str) -> Tuple[List, List]:
