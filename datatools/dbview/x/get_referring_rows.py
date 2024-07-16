@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-import json
 from collections import defaultdict
 from typing import Tuple, List
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, get_table_foreign_keys_inbound, describe_table
-from datatools.dbview.x.util.pg import connect_to_db, get_env, get_where_clauses
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
@@ -25,7 +23,7 @@ def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_n
     return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [{k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
 
-def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]]):
+def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]], inbound_relations):
     debug('make_referring_rows_model', table=table, where=where)
 
     if not where:
@@ -39,7 +37,6 @@ def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]
 
     result = defaultdict(lambda: defaultdict(list))
 
-    inbound_relations = get_table_foreign_keys_inbound(conn, table)
     for inbound_relation in inbound_relations:
         this_table = inbound_relation['foreign_table_name']
         if table != this_table:
@@ -75,15 +72,3 @@ def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]
                 )
 
     return result
-
-
-def main():
-    table = get_env('TABLE')
-    where = get_where_clauses()
-
-    with connect_to_db() as conn:
-        print(json.dumps(make_referring_rows_model(conn, table, where)))
-
-
-if __name__ == '__main__':
-    main()

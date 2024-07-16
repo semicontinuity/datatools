@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-from typing import Tuple, Hashable, List
+from typing import Tuple, Hashable, List, Dict
 
 from picotui.defs import KEY_ENTER
 
-from datatools.dbview.util.pg import describe_table, execute_sql
+from datatools.dbview.util.pg import describe_table, execute_sql, get_table_foreign_keys_outbound, \
+    get_table_foreign_keys_inbound
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
 from datatools.dbview.x.util.pg import get_env, get_where_clauses, connect_to_db
 from datatools.json.util import to_jsonisable
@@ -53,6 +54,17 @@ def get_entity_row(conn, table: str, where: List[Tuple[str, str, str]]):
     return rows[0]
 
 
+def to_concept(table_foreign_keys_outbound: List[Dict]):
+    references = {}
+    for entry in table_foreign_keys_outbound:
+        references[entry['column_name']] = {
+            'concept': entry['foreign_table_name'],
+            'concept-pk': entry['foreign_column_name'],
+        }
+    return {
+        "references": references
+    }
+
 def main():
     table = get_env('TABLE')
     where = get_where_clauses()
@@ -60,13 +72,18 @@ def main():
     with connect_to_db() as conn:
         while True:
             # descriptor = describe_table(conn, table)
+
+            outbound = get_table_foreign_keys_outbound(conn, table)
+
             entity_row = get_entity_row(conn, table, where)
 
             data = {
                 "self": to_jsonisable(entity_row),
             }
 
-            in_refs_model = make_referring_rows_model(conn, table, where)
+            inbound_relations = get_table_foreign_keys_inbound(conn, table)
+
+            in_refs_model = make_referring_rows_model(conn, table, where, inbound_relations)
             if len(in_refs_model) > 0:
                 data["referring"] = in_refs_model
 
@@ -84,7 +101,10 @@ def main():
                             ]
                         }
                     },
-                    "data": data
+                    "data": data,
+                    "concepts": {
+                        table: to_concept(outbound)
+                    }
                 }
             }
 

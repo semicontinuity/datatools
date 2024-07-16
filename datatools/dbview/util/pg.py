@@ -35,6 +35,45 @@ def get_table_pks_sql(table: str):
     '''
 
 
+def get_table_foreign_keys_outbound(conn, table: str):
+    """
+    Returns list of dicts with keys:
+    - table_name
+    - column_name
+    - foreign_table_name
+    - foreign_column_name
+    """
+    return execute_sql(conn, get_table_foreign_keys_outbound_sql(table))
+
+
+def get_table_foreign_keys_outbound_sql(table: str):
+    return f'''
+with fkeys as (
+
+SELECT
+    tc.constraint_name,
+
+    tc.table_name,
+    kcu.column_name,
+
+    ccu.table_name AS foreign_table_name,
+    ccu.column_name AS foreign_column_name
+FROM
+    information_schema.table_constraints AS tc
+    JOIN information_schema.key_column_usage
+        AS kcu
+        ON tc.constraint_name = kcu.constraint_name
+    JOIN information_schema.constraint_column_usage
+        AS ccu
+        ON ccu.constraint_name = tc.constraint_name
+WHERE constraint_type = 'FOREIGN KEY'
+
+)
+
+select * from fkeys where table_name='{table}' order by 1
+        '''
+
+
 def get_table_foreign_keys_inbound_tuples(conn, table: str):
     return [(row['table_name'], row['column_name']) for row in execute_sql(conn, get_table_foreign_keys_inbound_sql(table))]
 
