@@ -28,63 +28,68 @@ def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str,
 
 
 def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
-    debug('referring_rows_model', table=table, where=where)
-
     with connect_to_db() as conn:
-        if not where:
-            raise Exception('WHERE clause is required')
-        if len(where) != 1:
-            raise Exception('WHERE clauses must contain 1 clause')
+        return make_referring_rows_model(conn, table, where)
 
-        where_column, where_op, where_value = where[0]
-        if where_op != '=':
-            raise Exception('WHERE clause must be PK equality')
 
-        result = defaultdict(lambda: defaultdict(list))
+def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]]):
+    debug('make_referring_rows_model', table=table, where=where)
 
-        inbound_relations = get_table_foreign_keys_inbound(conn, table)
-        for inbound_relation in inbound_relations:
-            this_table = inbound_relation['foreign_table_name']
-            if table != this_table:
-                raise Exception('illegal state')
+    if not where:
+        raise Exception('WHERE clause is required')
+    if len(where) != 1:
+        raise Exception('WHERE clauses must contain 1 clause')
 
-            this_column = inbound_relation['foreign_column_name']
+    where_column, where_op, where_value = where[0]
+    if where_op != '=':
+        raise Exception('WHERE clause must be PK equality')
 
-            if this_column != where_column:
-                sql = f"SELECT {this_column} from {table} where {where_column} {where_op} {where_value}"
-                debug(sql)
-                rows = execute_sql(conn, sql)
-                if len(rows) != 1:
-                    raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
-                selector_value = "'" + rows[0][this_column] + "'"
-            else:
-                selector_value = where_value
+    result = defaultdict(lambda: defaultdict(list))
 
-            foreign_table = inbound_relation['table_name']
-            foreign_column = inbound_relation['column_name']
+    inbound_relations = get_table_foreign_keys_inbound(conn, table)
+    for inbound_relation in inbound_relations:
+        this_table = inbound_relation['foreign_table_name']
+        if table != this_table:
+            raise Exception('illegal state')
 
-            pk_kv, text_kv = get_pk_values_for_selected_rows(conn, foreign_table, foreign_column, selector_value)
-            if len(pk_kv) == 0:
-                continue
-            else:
-                entry = []
-                result[foreign_table][foreign_column] = entry
-                for i in range(len(pk_kv)):
-                    entry.append(
-                        {
-                            'key': pk_kv[i],
-                            'value': text_kv[i],
-                        }
-                    )
+        this_column = inbound_relation['foreign_column_name']
 
-        return result
+        if this_column != where_column:
+            sql = f"SELECT {this_column} from {table} where {where_column} {where_op} {where_value}"
+            debug(sql)
+            rows = execute_sql(conn, sql)
+            if len(rows) != 1:
+                raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
+            selector_value = "'" + rows[0][this_column] + "'"
+        else:
+            selector_value = where_value
+
+        foreign_table = inbound_relation['table_name']
+        foreign_column = inbound_relation['column_name']
+
+        pk_kv, text_kv = get_pk_values_for_selected_rows(conn, foreign_table, foreign_column, selector_value)
+        if len(pk_kv) == 0:
+            continue
+        else:
+            entry = []
+            result[foreign_table][foreign_column] = entry
+            for i in range(len(pk_kv)):
+                entry.append(
+                    {
+                        'key': pk_kv[i],
+                        'value': text_kv[i],
+                    }
+                )
+
+    return result
 
 
 def main():
     table = get_env('TABLE')
     where = get_where_clauses()
 
-    print(json.dumps(referring_rows_model(table, where)))
+    with connect_to_db() as conn:
+        print(json.dumps(make_referring_rows_model(conn, table, where)))
 
 
 if __name__ == '__main__':
