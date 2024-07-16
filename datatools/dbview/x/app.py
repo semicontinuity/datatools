@@ -54,7 +54,7 @@ def get_entity_row(conn, table: str, where: List[Tuple[str, str, str]]):
     return rows[0]
 
 
-def to_concept(table_foreign_keys_outbound: List[Dict]):
+def foreign_keys_outbound_to_concept(table_foreign_keys_outbound: List[Dict]):
     references = {}
     for entry in table_foreign_keys_outbound:
         references[entry['column_name']] = {
@@ -71,21 +71,14 @@ def main():
 
     with connect_to_db() as conn:
         while True:
-            # descriptor = describe_table(conn, table)
-
-            outbound = get_table_foreign_keys_outbound(conn, table)
-
-            entity_row = get_entity_row(conn, table, where)
-
             data = {
-                "self": to_jsonisable(entity_row),
+                "self": to_jsonisable(get_entity_row(conn, table, where)),
             }
 
             inbound_relations = get_table_foreign_keys_inbound(conn, table)
-
             in_refs_model = make_referring_rows_model(conn, table, where, inbound_relations)
             if len(in_refs_model) > 0:
-                data["referring"] = in_refs_model
+                data["referrers"] = in_refs_model
 
             model = {
                 "ENTITY": {
@@ -103,7 +96,7 @@ def main():
                     },
                     "data": data,
                     "concepts": {
-                        table: to_concept(outbound)
+                        table: foreign_keys_outbound_to_concept(get_table_foreign_keys_outbound(conn, table))
                     }
                 }
             }
