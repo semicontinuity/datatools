@@ -29,6 +29,8 @@ def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str,
 
 
 def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
+    debug('referring_rows_model', table=table, where=where)
+
     with connect_to_db() as conn:
         if not where:
             raise Exception('WHERE clause is required')
@@ -58,7 +60,6 @@ def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
                 selector_value = "'" + rows[0][this_column] + "'"
             else:
                 selector_value = where_value
-            debug(selector_value)
 
             foreign_table = inbound_relation['table_name']
             foreign_column = inbound_relation['column_name']

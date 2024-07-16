@@ -20,18 +20,28 @@ def handle_loop_result(document, key_code, cur_line: int) -> Tuple[bool, str, Li
     if key_code == KEY_ENTER:
         path = document.selected_path(cur_line)
         value = document.selected_value(cur_line)
-        return type(value) is str, value, path
-    else:
-        return False, "", []
+        is_leaf = type(value) is str
+        if is_leaf and path[3] == 'key':
+            return True, value, path
+    return False, "", []
 
 
 def main():
-    model = data()
-    doc = make_document(model)
-    key_code, cur_line = with_alternate_screen(lambda: loop(doc))
-    is_leaf, value, path = handle_loop_result(doc, key_code, cur_line)
-    if is_leaf:
-        print(path)
+
+    table = get_env('TABLE')
+    where = get_where_clauses()
+
+    while True:
+        model = referring_rows_model(table, where)
+        doc = make_document(model)
+        key_code, cur_line = with_alternate_screen(lambda: loop(doc))
+        is_leaf, value, path = handle_loop_result(doc, key_code, cur_line)
+        if is_leaf:
+            # print('is_leaf', is_leaf, path[3])
+            table = path[0]
+            where = [(path[4], '=', f"'{value}'")]
+            continue
+        break
 
 
 if __name__ == "__main__":
