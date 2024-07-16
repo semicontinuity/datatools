@@ -1,3 +1,5 @@
+import datetime
+
 from datatools.util.frozendict import FrozenDict
 
 
@@ -34,6 +36,8 @@ def to_jsonisable(obj):
         return [to_jsonisable(e) for e in obj]
     elif isinstance(obj, bytearray):
         return [e for e in obj]
+    elif isinstance(obj, datetime.datetime):
+        return str(obj)
     else:
         return to_jsonisable(obj.__dict__)
 

@@ -9,8 +9,7 @@ from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
 
-def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str, selector_column_value: str) -> Tuple[List, List]:
-
+def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_name: str, selector_column_value: str) -> Tuple[List, List]:
     d = describe_table(conn, table)
     text_columns = [row['column_name'] for row in d if row['data_type'] == 'text']
 
@@ -23,13 +22,7 @@ def get_pk_values_for_selected_rows(conn, table: str, selector_column_name: str,
     sql = f"SELECT {', '.join(columns)} from {table} where {selector_column_name}={selector_column_value}"
     debug(sql)
     rows = execute_sql(conn, sql)
-    debug(len(rows))
     return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [{k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
-
-
-def referring_rows_model(table: str, where: List[Tuple[str, str, str]]):
-    with connect_to_db() as conn:
-        return make_referring_rows_model(conn, table, where)
 
 
 def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]]):
@@ -67,7 +60,7 @@ def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]
         foreign_table = inbound_relation['table_name']
         foreign_column = inbound_relation['column_name']
 
-        pk_kv, text_kv = get_pk_values_for_selected_rows(conn, foreign_table, foreign_column, selector_value)
+        pk_kv, text_kv = get_pk_and_text_values_for_selected_rows(conn, foreign_table, foreign_column, selector_value)
         if len(pk_kv) == 0:
             continue
         else:

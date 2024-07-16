@@ -3,10 +3,13 @@ from typing import Tuple, Hashable, List
 
 from picotui.defs import KEY_ENTER
 
+from datatools.dbview.util.pg import describe_table, execute_sql
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
 from datatools.dbview.x.util.pg import get_env, get_where_clauses, connect_to_db
+from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
 from datatools.tui.screen_helper import with_alternate_screen
+from datatools.util.logging import debug
 
 
 class JsonTreeStructure:
@@ -32,14 +35,59 @@ def handle_loop_result(document, key_code, cur_line: int) -> Tuple[bool, str, Li
     return False, "", []
 
 
+def get_entity_row(conn, table: str, where: List[Tuple[str, str, str]]):
+    if not where:
+        raise Exception('WHERE clause is required')
+    if len(where) != 1:
+        raise Exception('WHERE clauses must contain 1 clause')
+
+    where_column, where_op, where_value = where[0]
+    if where_op != '=':
+        raise Exception('WHERE clause must be PK equality')
+
+    sql = f"SELECT * from {table} where {where_column} {where_op} {where_value}"
+    debug(sql)
+    rows = execute_sql(conn, sql)
+    if len(rows) != 1:
+        raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
+    return rows[0]
+
+
 def main():
     table = get_env('TABLE')
     where = get_where_clauses()
 
     with connect_to_db() as conn:
         while True:
+            # descriptor = describe_table(conn, table)
+            entity_row = get_entity_row(conn, table, where)
+
+            data = {
+                "self": to_jsonisable(entity_row),
+            }
+
             in_refs_model = make_referring_rows_model(conn, table, where)
-            model = {"ENTITY": {"data": {"referring": in_refs_model}}}
+            if len(in_refs_model) > 0:
+                data["referring"] = in_refs_model
+
+            model = {
+                "ENTITY": {
+                    "metadata": {
+                        "self": {
+                            "table": table,
+                            "selector": [
+                                {
+                                    "column": e[0],
+                                    "op": e[1],
+                                    "value": e[2]
+                                } for e in where
+                            ]
+                        }
+                    },
+                    "data": data
+                }
+            }
+
             doc = make_document(model)
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
             is_leaf, value, path = handle_loop_result(doc, key_code, cur_line)
