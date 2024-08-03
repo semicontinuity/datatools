@@ -74,7 +74,25 @@ class ArrayOfNestableObjectsNode:
 
     def __str__(self):
         depth = depth_of(self.descriptor) - 1
-        return table(
+
+        table_contents = []
+
+        # experimental.
+        # background, if defined, should depend on the single value of the column.
+        if depth == 1:
+            table_contents.append(
+                colgroup(
+                    *[
+                        col(
+                            span=number_of_columns(value),
+                            style=f"background: #{self.bg(name)[0]:02x}{self.bg(name)[1]:02x}{self.bg(name)[2]:02x};"
+                        )
+                        for name, value in items_at_level(self.descriptor, 1)
+                    ]
+                )
+            )
+
+        table_contents.append(
             thead(
                 *[
                     tr(
@@ -86,11 +104,15 @@ class ArrayOfNestableObjectsNode:
                             )
                             for name, value in items_at_level(self.descriptor, level + 1)
                         ],
-                        tk.custom_th('-', rowspan=depth, onclick="toggle(this)") if len(self.pruned) > 0 and level == 0 else None,
+                        tk.custom_th('-', rowspan=depth, onclick="toggle(this)") if len(
+                            self.pruned) > 0 and level == 0 else None,
                     )
                     for level in range(depth)
                 ]
-            ),
+            )
+        )
+
+        table_contents.append(
             tbody(
                 *[
                     tr(
@@ -105,10 +127,17 @@ class ArrayOfNestableObjectsNode:
                 ],
                 clazz="collapsed" if not verbose and self.parent and (
                         len(self.record_nodes) > 7 or len(str(self.record_nodes)) > 1024) else None
-            ),
+            )
+        )
+
+        return table(
+            *table_contents,
             clazz="aohwno"
         ).__str__()
 
+    def bg(self, name: str):
+        return hash_to_rgb(hash_code(name))
+    
     def combo_cell(self, record):
         return ObjectNode({key: record[key] for key in self.pruned if key in record}, True, self, True)
 
@@ -148,6 +177,7 @@ def td_value_with_attrs(attrs: ColumnAttrs, value):
         return td()
 
     string_value = str(value)
+    # (can check for COLORING_SINGLE)
     if attrs.is_colored(string_value):
         bg = hash_to_rgb(attrs.value_hashes.get(string_value) or hash_code(string_value))
         return tk.td_value_with_color(value, bg=bg)

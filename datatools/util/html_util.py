@@ -5,6 +5,14 @@ def table(*contents, **attrs):
     return Element('table', *contents, **attrs)
 
 
+def colgroup(*contents, **attrs):
+    return Element('colgroup', *contents, **attrs)
+
+
+def col(*contents, **attrs):
+    return Element('col', *contents, **attrs)
+
+
 def thead(*contents, **attrs):
     return Element('thead', *contents, **attrs)
 
