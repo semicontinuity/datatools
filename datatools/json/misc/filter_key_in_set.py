@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 ############################################################
-# Filters a stream of json lines.
+# Filters a stream of json lines from STDIN.
 # Arguments: <KEY> <FILE with KEY values, one per line>
 #
-# Json line matches, if it has key KEY with value,
+# Json line matches, if it has a key [KEY] with a value,
 # contained in the FILE with a list of values.
 ############################################################
 import sys, json

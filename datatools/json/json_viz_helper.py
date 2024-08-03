@@ -1,10 +1,11 @@
+import html
 import random
+from string import Template
 from string import ascii_lowercase, digits
-from typing import List, Tuple, Optional
+from typing import Optional
 
 from datatools.json.util import is_primitive
 from datatools.util.html_util import *
-from string import Template
 
 
 def random_id(size, chars=ascii_lowercase + digits):
@@ -23,8 +24,9 @@ class CustomHtmlToolkit:
     def td_value_with_color(self, value, clazz=None, bg=None):
         leaf = is_primitive(value)
         data_type = f'{type(value).__name__}' if leaf else None
+        value_repr = html.escape(value) if type(value) is str else value
         return td(
-            self.value_e(value, leaf),
+            self.value_e(value_repr, leaf),
             clazz=(clazz, data_type, 'plain' if bg is None else None),
             style=f"background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};" if bg is not None else None,
         )
