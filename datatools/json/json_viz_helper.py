@@ -74,8 +74,8 @@ th {border-top: solid 1px darkgrey; border-bottom: solid 1px darkgrey; backgroun
 th.a {background: lightgray; }
 table.aon th {border: solid 1px darkgrey; }
 table.aon td {border: solid 1px darkgrey; }
-table.aohwno th {border: solid 1px darkgrey; }
-table.aohwno td {border: solid 1px darkgrey; }
+table.aohwno th {border: solid 1px darkgrey; border-left: solid 2px darkgrey; }
+table.aohwno td {border: solid 1px darkgrey; border-left: solid 2px darkgrey; }
 td {border-top: solid 1px #CCC; border-bottom: solid 1px #CCC; padding: 0; background: #F8F8F8;}
 th.ov_th {border-right: solid 2px darkgrey; }
 //tr:nth-child(odd)  td.index {background: #CCC;}

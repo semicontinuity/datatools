@@ -64,6 +64,7 @@ def is_primitive_type(value):
 
 
 COLORING_NONE = "none"
+COLORING_SINGLE = "single"
 COLORING_HASH_ALL = "hash-all"
 COLORING_HASH_FREQUENT = "hash-frequent"
 
@@ -79,13 +80,15 @@ class ColumnAttrs:
         return self.coloring
 
     def is_colored(self, s: str):
-        return self.coloring == COLORING_HASH_ALL or (
+        return self.coloring == COLORING_SINGLE or self.coloring == COLORING_HASH_ALL or (
                 self.coloring == COLORING_HASH_FREQUENT and s in self.non_unique_value_counts)
 
 
 def compute_column_coloring(column_attr: ColumnAttrs, row_count: int):
     threshold = 2.5 * sqrt(row_count)
-    if len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
+    if len(column_attr.non_unique_value_counts) == 1 and len(column_attr.unique_values) == 0:
+        return COLORING_SINGLE
+    elif len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
         return COLORING_NONE
     elif len(column_attr.unique_values) + len(column_attr.non_unique_value_counts) < threshold:
         return COLORING_HASH_ALL
@@ -120,7 +123,7 @@ def compute_cross_column_attrs(j, column_attrs_by_name, cell_value_function: Cal
     indices2categories = defaultdict(list)
 
     for column_id, attr in column_attrs_by_name.items():
-        if attr.coloring == COLORING_NONE:
+        if attr.coloring == COLORING_NONE or attr.coloring == COLORING_SINGLE:
             continue
 
         value2indices: Dict[str, List[int]] = defaultdict(list)
