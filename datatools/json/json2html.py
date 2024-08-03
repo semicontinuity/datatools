@@ -85,7 +85,7 @@ class ArrayOfNestableObjectsNode:
                     *[
                         col(
                             span=number_of_columns(value),
-                            style=f"background: #{self.bg(name)[0]:02x}{self.bg(name)[1]:02x}{self.bg(name)[2]:02x};"
+                            style=f"background: #{self.bg(name)[0]:02x}{self.bg(name)[1]:02x}{self.bg(name)[2]:02x};",
                         )
                         for name, value in items_at_level(self.descriptor, 1)
                     ]
@@ -177,8 +177,14 @@ def td_value_with_attrs(attrs: ColumnAttrs, value):
         return td()
 
     string_value = str(value)
-    # (can check for COLORING_SINGLE)
-    if attrs.is_colored(string_value):
+    if attrs.coloring == COLORING_HASH_FREQUENT:
+        if attrs.is_frequent(string_value):
+            bg = hash_to_rgb(attrs.value_hashes.get(string_value) or hash_code(string_value), offset=0xC0)
+        else:
+            bg = None
+        return tk.td_value_with_color(value, bg=bg)
+
+    elif attrs.is_colored(string_value):
         bg = hash_to_rgb(attrs.value_hashes.get(string_value) or hash_code(string_value))
         return tk.td_value_with_color(value, bg=bg)
     else:

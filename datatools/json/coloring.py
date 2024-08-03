@@ -12,7 +12,7 @@ def hash_code(s):
     return hh
 
 
-def hash_to_rgb(h):
+def hash_to_rgb(h, offset=0xE0):
     if h is None:
         return 0, 0, 0
 
@@ -36,7 +36,7 @@ def hash_to_rgb(h):
     h = (h - g3) // 4
     b3 = (h % 3) & 0x3
 
-    return r6*16 + r5*8 + r3 + 0xE0, g6*16 + g5*8 + g3 + 0xE0, b6*16 + b5*8 + b3 + 0xE0
+    return r6*16 + r5*8 + r3 + offset, g6*16 + g5*8 + g3 + offset, b6*16 + b5*8 + b3 + offset
 
 
 def hash_to_rgb_dark(h):
@@ -81,7 +81,10 @@ class ColumnAttrs:
 
     def is_colored(self, s: str):
         return self.coloring == COLORING_SINGLE or self.coloring == COLORING_HASH_ALL or (
-                self.coloring == COLORING_HASH_FREQUENT and s in self.non_unique_value_counts)
+                self.coloring == COLORING_HASH_FREQUENT and self.is_frequent(s))
+
+    def is_frequent(self, s: str):
+        return s in self.non_unique_value_counts
 
 
 def compute_column_coloring(column_attr: ColumnAttrs, row_count: int):

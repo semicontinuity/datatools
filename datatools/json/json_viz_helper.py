@@ -84,7 +84,7 @@ th.ov_th {border-right: solid 2px darkgrey; }
 //td.a_v {width:100%;}
 //td.ov_v {width:100%;}
 
-.plain {background: white;}
+//.plain {background: white;}
 .int   {color: darkred; padding-left: 0.25em; padding-right: 0.25em;}
 .float {color: darkred; padding-left: 0.25em; padding-right: 0.25em;}
 .str   {color: navy; padding-left: 0.25em; padding-right: 0.25em;}
@@ -143,12 +143,15 @@ function toggle2(e, tagName) {
 }
 
 function _(id) { return document.getElementById(id); }
+
 function openOverlay(text_id) {
   _('overlay-content').innerText = _(text_id).content.textContent;
   _('overlay').style.width = "100%";
   _('main').style.display="none";
 }
+
 function closeOverlay() { _('overlay').style.width = "0%"; _('main').style.display=""; }
+
 </script>
 
 </head>
