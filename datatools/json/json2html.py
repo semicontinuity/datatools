@@ -98,8 +98,9 @@ class ArrayOfNestableObjectsNode:
                     tr(
                         tk.custom_th('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
                         *[
-                            tk.custom_th(
-                                name,
+                            th(
+                                span(name),
+                                span(name[:1] + '.', clazz='compact'),
                                 rowspan=1 if value is not None else depth - level, colspan=number_of_columns(value)
                             )
                             for name, value in items_at_level(self.descriptor, level + 1)

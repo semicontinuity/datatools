@@ -84,6 +84,10 @@ th.ov_th {border-right: solid 2px darkgrey; }
 //td.a_v {width:100%;}
 //td.ov_v {width:100%;}
 
+.compact {display:none;}
+
+$style
+
 //.plain {background: white;}
 .int   {color: darkred; padding-left: 0.25em; padding-right: 0.25em;}
 .float {color: darkred; padding-left: 0.25em; padding-right: 0.25em;}
@@ -179,8 +183,16 @@ $long_texts
         return self.html_template.substitute(
             title=self.title,
             view=str(self.root),
+            style="\n".join((self.hide_rules(n) for n in range(2,20))),
             long_texts="\n".join(f'<template id="{k}">{v}</template>' for k, v in tk.long_texts.items())
         )
+
+    def hide_rules(self, n):
+        return f"""
+table.hide-c-{n}>tbody>tr>td:nth-child({n})>span {{display:none;}}
+table.hide-c-{n}>thead>tr>th:nth-child({n})>span {{display:none;}}
+table.hide-c-{n}>thead>tr>th:nth-child({n})>span.compact {{display:inherit;}}
+        """
 
 
 class ListNode:
