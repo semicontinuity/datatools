@@ -79,18 +79,18 @@ class ArrayOfNestableObjectsNode:
 
         # experimental.
         # background, if defined, should depend on the single value of the column.
-        if depth == 1:
-            table_contents.append(
-                colgroup(
-                    *[
-                        col(
-                            span=number_of_columns(value),
-                            style=f"background: #{self.bg(name)[0]:02x}{self.bg(name)[1]:02x}{self.bg(name)[2]:02x};",
-                        )
-                        for name, value in items_at_level(self.descriptor, 1)
-                    ]
-                )
-            )
+        # if depth == 1:
+        #     table_contents.append(
+        #         colgroup(
+        #             *[
+        #                 col(
+        #                     span=number_of_columns(value),
+        #                     style=f"background: #{self.bg(name)[0]:02x}{self.bg(name)[1]:02x}{self.bg(name)[2]:02x};",
+        #                 )
+        #                 for name, value in items_at_level(self.descriptor, 1)
+        #             ]
+        #         )
+        #     )
 
         table_contents.append(
             thead(
@@ -101,9 +101,10 @@ class ArrayOfNestableObjectsNode:
                             th(
                                 span(name),
                                 span(name[:1] + '.', clazz='compact'),
-                                rowspan=1 if value is not None else depth - level, colspan=number_of_columns(value)
+                                rowspan=1 if value is not None else depth - level, colspan=number_of_columns(value),
+                                onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")',
                             )
-                            for name, value in items_at_level(self.descriptor, level + 1)
+                            for i, (name, value) in enumerate(items_at_level(self.descriptor, level + 1))
                         ],
                         tk.custom_th('-', rowspan=depth, onclick="toggle(this)") if len(
                             self.pruned) > 0 and level == 0 else None,

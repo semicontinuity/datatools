@@ -88,7 +88,7 @@ th.ov_th {border-right: solid 2px darkgrey; }
 
 $style
 
-//.plain {background: white;}
+.plain {background: white;}
 .int   {color: darkred; padding-left: 0.25em; padding-right: 0.25em;}
 .float {color: darkred; padding-left: 0.25em; padding-right: 0.25em;}
 .str   {color: navy; padding-left: 0.25em; padding-right: 0.25em;}
@@ -144,6 +144,16 @@ function toggle(e) {
 function toggle2(e, tagName) {
   while (e.tagName !== tagName) e = e.parentElement;
   toggleClass2(e, "collapsed2", "regular");
+}
+function toggleParentClass(e, tagName, className) {
+  while (true) {
+    if (e === null) return;
+    if (e.tagName === tagName) {
+      break;
+    }
+    e = e.parentElement;
+  }
+  toggleClass(e, className);
 }
 
 function _(id) { return document.getElementById(id); }
