@@ -8,6 +8,7 @@ import sys
 from json import JSONDecodeError
 
 from datatools.json.coloring import *
+from datatools.json.coloring import COLORING_SINGLE
 from datatools.json.json_viz_helper import *
 from datatools.json.structure_analyzer import *
 from datatools.util.meta_io import presentation_or_default
@@ -132,9 +133,14 @@ class ArrayOfNestableObjectsNode:
             )
         )
 
+        table_classes = [
+            f"hide-c-{i + 2}" if self.column_id_to_attrs[(name,)].coloring == COLORING_SINGLE else None
+            for i, (name, value) in enumerate(items_at_level(self.descriptor, 1))
+        ]
+
         return table(
             *table_contents,
-            clazz="aohwno"
+            clazz=["aohwno"] + table_classes
         ).__str__()
 
     def bg(self, name: str):
