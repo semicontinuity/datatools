@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple, AnyStr, List
 
-from datatools.tui.ansi_str import ANSI_CMD_DEFAULT_FG, ANSI_CMD_ATTR_NOT_BOLD, ANSI_CMD_ATTR_BOLD, ANSI_CMD_DEFAULT_BG
+from datatools.tui.ansi_str import ANSI_CMD_DEFAULT_FG, ANSI_CMD_ATTR_NOT_BOLD, ANSI_CMD_ATTR_BOLD, ANSI_CMD_DEFAULT_BG, \
+    ANSI_CMD_ATTR_NOT_ITALIC, ANSI_CMD_ATTR_ITALIC, ANSI_CMD_ATTR_UNDERLINED, ANSI_CMD_ATTR_NOT_UNDERLINED
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.terminal import ansi_foreground_escape_code, ansi_background_escape_code
 
@@ -40,4 +41,8 @@ def render_styled(style: Style, text: AnyStr) -> AnyStr:
         result = ansi_background_escape_code(*style.bg) + result + ANSI_CMD_DEFAULT_BG
     if style.attr & AbstractBufferWriter.MASK_BOLD != 0:
         result = ANSI_CMD_ATTR_BOLD + result + ANSI_CMD_ATTR_NOT_BOLD
+    if style.attr & AbstractBufferWriter.MASK_ITALIC != 0:
+        result = ANSI_CMD_ATTR_ITALIC + result + ANSI_CMD_ATTR_NOT_ITALIC
+    if style.attr & AbstractBufferWriter.MASK_UNDERLINED != 0:
+        result = ANSI_CMD_ATTR_UNDERLINED + result + ANSI_CMD_ATTR_NOT_UNDERLINED
     return result

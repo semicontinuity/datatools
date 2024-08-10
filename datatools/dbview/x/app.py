@@ -3,12 +3,14 @@ from typing import Tuple, Hashable, List, Dict
 
 from picotui.defs import KEY_ENTER
 
-from datatools.dbview.util.pg import describe_table, execute_sql, get_table_foreign_keys_outbound, \
+from datatools.dbview.util.pg import execute_sql, get_table_foreign_keys_outbound, \
     get_table_foreign_keys_inbound
+from datatools.dbview.x.app_highlighting import AppHighlighting
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
 from datatools.dbview.x.util.pg import get_env, get_where_clauses, connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
+from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
@@ -67,6 +69,8 @@ def foreign_keys_outbound_to_concept(table_foreign_keys_outbound: List[Dict]):
 
 
 def main():
+    Highlighting.CURRENT = AppHighlighting()
+
     table = get_env('TABLE')
     where = get_where_clauses()
 
