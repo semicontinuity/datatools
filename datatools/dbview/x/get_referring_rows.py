@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from collections import defaultdict
-from typing import Tuple, List
+from typing import Tuple, List, Sequence
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, describe_table
 from datatools.json.util import to_jsonisable
@@ -23,7 +23,7 @@ def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_n
     return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [{k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
 
-def make_referring_rows_model(conn, table: str, where: List[Tuple[str, str, str]], inbound_relations):
+def make_referring_rows_model(conn, table: str, where: Sequence[Tuple[str, str, str]], inbound_relations):
     debug('make_referring_rows_model', table=table, where=where)
 
     if not where:
