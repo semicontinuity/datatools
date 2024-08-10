@@ -65,6 +65,7 @@ def foreign_keys_outbound_to_concept(table_foreign_keys_outbound: List[Dict]):
         "references": references
     }
 
+
 def main():
     table = get_env('TABLE')
     where = get_where_clauses()

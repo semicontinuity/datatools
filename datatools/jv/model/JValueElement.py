@@ -21,9 +21,3 @@ class JValueElement(Generic[V], JElement):
 
     def get_value_element(self):
         return self
-
-    def get_selector(self):
-        if type(self.key) is int:
-            return '[' + str(self.key) + ']'
-        else:
-            return '.' + self.key

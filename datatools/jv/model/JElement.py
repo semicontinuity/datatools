@@ -1,4 +1,5 @@
-from typing import AnyStr, Tuple, List, Optional
+import sys
+from typing import AnyStr, Tuple, List, Optional, Hashable, Sequence
 
 from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.tui.treeview.rich_text import Style
@@ -35,6 +36,16 @@ class JElement(TreeNode):
 
     def get_value_element(self): pass
 
-    def get_selector(self): pass
-
     def get_padding(self): return self.padding
+
+    def path(self) -> List[Hashable]:
+        path = []
+        node = self
+        while True:
+            if node.parent is None:
+                path.reverse()
+                return path
+
+            node = node.get_value_element()
+            path.append(node.key)
+            node = node.parent
