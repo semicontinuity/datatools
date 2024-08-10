@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 from dataclasses import dataclass
-from typing import Tuple, Hashable, List, Sequence
+from typing import Tuple, Sequence
 
 from picotui.defs import KEY_ENTER
 
@@ -33,12 +33,36 @@ class App:
     def run(self):
         with connect_to_db() as conn:
             while True:
-                model = self.make_model(conn)
-                doc = make_document(model)
+                self.refresh_model(conn)
+                doc = make_document(self.make_view())
                 key_code, cur_line = with_alternate_screen(lambda: loop(doc))
                 self.e_ref = self.handle_loop_result(doc, key_code, cur_line)
                 if self.e_ref is None:
                     break
+
+    def make_view(self):
+        return {
+            "ENTITY": {
+                "metadata": {
+                    "self": {
+                        "table": self.e_ref.table,
+                        "selector": [
+                            {
+                                "column": e[0],
+                                "op": e[1],
+                                "value": e[2]
+                            } for e in self.e_ref.where
+                        ]
+                    }
+                },
+                "data": self.data,
+                "concepts": {
+                    self.e_ref.table: {
+                        "references": self.references
+                    }
+                }
+            }
+        }
 
     def handle_loop_result(self, document, key_code, cur_line: int) -> DbEntityReference:
         if key_code == KEY_ENTER:
@@ -69,48 +93,25 @@ class App:
             raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
         return rows[0]
 
-    def make_model(self, conn):
+    def refresh_model(self, conn):
         table = self.e_ref.table
         where = self.e_ref.where
-        data = {
+        self.data = {
             "self": to_jsonisable(self.get_entity_row(conn, table, where)),
         }
         inbound_relations = get_table_foreign_keys_inbound(conn, table)
         in_refs_model = make_referring_rows_model(conn, table, where, inbound_relations)
         if len(in_refs_model) > 0:
-            data["referrers"] = in_refs_model
+            self.data["referrers"] = in_refs_model
         outbound_relations = get_table_foreign_keys_outbound(conn, table)
-        references = {
+        self.references = {
             entry['column_name']: {
                 'concept': entry['foreign_table_name'],
                 'concept-pk': entry['foreign_column_name'],
             }
             for entry in outbound_relations
         }
-        set_current_highlighting(AppHighlighting(references))
-        model = {
-            "ENTITY": {
-                "metadata": {
-                    "self": {
-                        "table": table,
-                        "selector": [
-                            {
-                                "column": e[0],
-                                "op": e[1],
-                                "value": e[2]
-                            } for e in where
-                        ]
-                    }
-                },
-                "data": data,
-                "concepts": {
-                    table: {
-                        "references": references
-                    }
-                }
-            }
-        }
-        return model
+        set_current_highlighting(AppHighlighting(self.references))
 
 
 def main():
