@@ -1,10 +1,10 @@
 from typing import Tuple, AnyStr, Optional, Any, List
 
-from datatools.jv.highlighting.highlighting import Highlighting
-from datatools.tui.treeview.rich_text import Style
+from datatools.jv.highlighting.highlighting_holder import get_current_highlighting
 from datatools.jv.model.JArrayEnd import JArrayEnd
 from datatools.jv.model.JArrayStart import JArrayStart
 from datatools.jv.model.JComplexElement import JComplexElement
+from datatools.tui.treeview.rich_text import Style
 
 
 class JArray(JComplexElement):
@@ -17,4 +17,4 @@ class JArray(JComplexElement):
         self.end.parent = self
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return '[…]', Highlighting.CURRENT.for_square_brackets()
+        return '[…]', get_current_highlighting().for_square_brackets()

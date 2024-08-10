@@ -6,8 +6,6 @@ from datatools.tui.coloring import hash_to_rgb, hash_code
 
 
 class Highlighting:
-    CURRENT: 'Highlighting' = None
-
     def for_null(self) -> Style: return Style()
 
     def for_true(self) -> Style: return Style()
@@ -26,8 +24,6 @@ class Highlighting:
 
     def for_square_brackets(self) -> Style: return Style()
 
-    def for_field_name(self) -> Style: return Style()
-
     def for_field_label(self, label: str, indent: int, path: List[Hashable]) -> Style: return Style()
 
 
@@ -41,8 +37,6 @@ class ConsoleHighlighting(Highlighting):
     def for_number(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (192, 96, 96))
 
     def for_string(self) -> Style: return Style(0, (64, 160, 192))
-
-    def for_field_name(self): return Style(AbstractBufferWriter.MASK_NONE, (160, 128, 0))
 
     def for_field_label(self, label: str, indent: int, path: List[Hashable]) -> Style:
         # return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(hash_code(label))))

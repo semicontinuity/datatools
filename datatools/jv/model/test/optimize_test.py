@@ -1,7 +1,8 @@
 from datatools.jv.highlighting.highlighting import Highlighting
+from datatools.jv.highlighting.highlighting_holder import set_current_highlighting
 from datatools.jv.model import build_model
 
-Highlighting.CURRENT = Highlighting()
+set_current_highlighting(Highlighting())
 
 
 def test__optimize__1():

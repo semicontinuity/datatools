@@ -1,12 +1,12 @@
 from typing import Tuple, AnyStr
 
-from datatools.jv.highlighting.highlighting import Highlighting
-from datatools.tui.treeview.rich_text import Style
+from datatools.jv.highlighting.highlighting_holder import get_current_highlighting
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
+from datatools.tui.treeview.rich_text import Style
 
 
 class JBoolean(JPrimitiveElement[bool]):
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return ("true", Highlighting.CURRENT.for_true()) \
+        return ("true", get_current_highlighting().for_true()) \
             if self.value \
-            else ("false", Highlighting.CURRENT.for_false())
+            else ("false", get_current_highlighting().for_false())

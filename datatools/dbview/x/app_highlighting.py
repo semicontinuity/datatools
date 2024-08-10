@@ -1,4 +1,4 @@
-from typing import List, Hashable, Dict, Any, Sequence
+from typing import Hashable, Dict, Any, Sequence
 
 from datatools.jv.highlighting.highlighting import ConsoleHighlighting
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter

@@ -2,6 +2,7 @@ import sys
 from typing import AnyStr, Tuple, List, Optional, Hashable, Sequence
 
 from datatools.jv.highlighting.highlighting import Highlighting
+from datatools.jv.highlighting.highlighting_holder import get_current_highlighting
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
@@ -23,13 +24,13 @@ class JElement(TreeNode):
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [
-            (f'"{self.key}"', Highlighting.CURRENT.for_field_label(self.key, self.indent, self.path())),
+            (f'"{self.key}"', get_current_highlighting().for_field_label(self.key, self.indent, self.path())),
             (' ' * self.get_padding(), Style()),
-            (': ', Highlighting.CURRENT.for_colon()),
+            (': ', get_current_highlighting().for_colon()),
         ] if self.key is not None and type(self.key) is not int else []
 
     def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
-        return [] if self.last_in_parent else [(',', Highlighting.CURRENT.for_comma())]
+        return [] if self.last_in_parent else [(',', get_current_highlighting().for_comma())]
 
     def rich_text(self) -> Tuple[AnyStr, Style]: pass
 

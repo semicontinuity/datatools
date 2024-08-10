@@ -1,6 +1,6 @@
 from typing import Tuple, AnyStr, Optional, Dict, Any
 
-from datatools.jv.highlighting.highlighting import Highlighting
+from datatools.jv.highlighting.highlighting_holder import get_current_highlighting
 from datatools.jv.model.JComplexElement import JComplexElement
 from datatools.jv.model.JObjectEnd import JObjectEnd
 from datatools.jv.model.JObjectStart import JObjectStart
@@ -17,4 +17,4 @@ class JObject(JComplexElement[dict]):
         self.end.parent = self
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return '{…}', Highlighting.CURRENT.for_curly_braces()
+        return '{…}', get_current_highlighting().for_curly_braces()
