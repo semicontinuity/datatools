@@ -15,7 +15,7 @@ class JsonTreeStructure:
         return path[3]
 
     @staticmethod
-    def is_leaf_in_self_data(path):
+    def is_self_field_name(path):
         return len(path) == 4 and path[0:3] == ['ENTITY', 'data', 'self']
 
     @staticmethod

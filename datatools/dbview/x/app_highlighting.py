@@ -25,4 +25,4 @@ class AppHighlighting(ConsoleHighlighting):
                      hash_to_rgb(0xc03b << (indent % 15)))
 
     def is_fk(self, path):
-        return JsonTreeStructure.is_leaf_in_self_data(path) and JsonTreeStructure.self_field_name(path) in self.references
+        return JsonTreeStructure.is_self_field_name(path) and JsonTreeStructure.self_field_name(path) in self.references

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from typing import Tuple, Hashable, List
+from dataclasses import dataclass
+from typing import Tuple, Hashable, List, Sequence
 
 from picotui.defs import KEY_ENTER
 
@@ -16,13 +17,21 @@ from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
 
-def handle_loop_result(document, key_code, cur_line: int) -> Tuple[bool, str, List[Hashable]]:
+@dataclass
+class DbEntityReference:
+    table: str
+    where: Sequence[Tuple[str, str, str]]
+
+
+def handle_loop_result(document, key_code, cur_line: int) -> DbEntityReference:
     if key_code == KEY_ENTER:
         path = document.selected_path(cur_line)
         value = document.selected_value(cur_line)
         if JsonTreeStructure.path_is_pk_element(path):
-            return True, value, path
-    return False, "", []
+            return DbEntityReference(
+                table=JsonTreeStructure.get_referring_table(path),
+                where=[(JsonTreeStructure.get_pk_value(path), '=', f"'{value}'")]
+            )
 
 
 def get_entity_row(conn, table: str, where: List[Tuple[str, str, str]]):
@@ -52,12 +61,11 @@ def main():
             model = make_model(conn, table, where)
             doc = make_document(model)
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
-            navigate, value, path = handle_loop_result(doc, key_code, cur_line)
-            if navigate:
-                table = JsonTreeStructure.get_referring_table(path)
-                where = [(JsonTreeStructure.get_pk_value(path), '=', f"'{value}'")]
-                continue
-            break
+            entity_reference = handle_loop_result(doc, key_code, cur_line)
+            if entity_reference is None:
+                break
+            table = entity_reference.table
+            where = entity_reference.where
 
 
 def make_model(conn, table, where):
