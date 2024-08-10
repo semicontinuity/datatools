@@ -74,7 +74,12 @@ class App:
                     where=[(JsonTreeStructure.get_pk_value(path), '=', f"'{value}'")]
                 )
             elif get_current_highlighting().is_fk(path):
-                print('FK', JsonTreeStructure.self_field_name(path), file=sys.stderr)
+                fk_field_name = JsonTreeStructure.self_field_name(path)
+                referred = self.references[fk_field_name]
+                return DbEntityReference(
+                    table=referred['concept'],
+                    where=[(referred['concept-pk'], '=', f"'{value}'")]
+                )
 
     def get_entity_row(self, conn, table: str, where: Sequence[Tuple[str, str, str]]):
         if not where:
