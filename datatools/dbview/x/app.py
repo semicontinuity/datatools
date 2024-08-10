@@ -56,21 +56,7 @@ def get_entity_row(conn, table: str, where: List[Tuple[str, str, str]]):
     return rows[0]
 
 
-def foreign_keys_outbound_to_concept(table_foreign_keys_outbound: List[Dict]):
-    references = {}
-    for entry in table_foreign_keys_outbound:
-        references[entry['column_name']] = {
-            'concept': entry['foreign_table_name'],
-            'concept-pk': entry['foreign_column_name'],
-        }
-    return {
-        "references": references
-    }
-
-
 def main():
-    Highlighting.CURRENT = AppHighlighting()
-
     table = get_env('TABLE')
     where = get_where_clauses()
 
@@ -84,6 +70,16 @@ def main():
             in_refs_model = make_referring_rows_model(conn, table, where, inbound_relations)
             if len(in_refs_model) > 0:
                 data["referrers"] = in_refs_model
+
+            outbound_relations = get_table_foreign_keys_outbound(conn, table)
+            references = {
+                entry['column_name']: {
+                    'concept': entry['foreign_table_name'],
+                    'concept-pk': entry['foreign_column_name'],
+                }
+                for entry in outbound_relations
+            }
+            Highlighting.CURRENT = AppHighlighting(references)
 
             model = {
                 "ENTITY": {
@@ -101,7 +97,9 @@ def main():
                     },
                     "data": data,
                     "concepts": {
-                        table: foreign_keys_outbound_to_concept(get_table_foreign_keys_outbound(conn, table))
+                        table: {
+                           "references": references
+                        }
                     }
                 }
             }
