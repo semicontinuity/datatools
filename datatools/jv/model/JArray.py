@@ -1,6 +1,6 @@
 from typing import Tuple, AnyStr, Optional, Any, List
 
-from datatools.jv.highlighting.highlighting_holder import get_current_highlighting
+from datatools.jv.highlighting.holder import get_current_highlighting
 from datatools.jv.model.JArrayEnd import JArrayEnd
 from datatools.jv.model.JArrayStart import JArrayStart
 from datatools.jv.model.JComplexElement import JComplexElement

@@ -10,7 +10,7 @@ from datatools.dbview.x.get_referring_rows import make_referring_rows_model
 from datatools.dbview.x.util.pg import get_env, get_where_clauses, connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
-from datatools.jv.highlighting.highlighting_holder import set_current_highlighting
+from datatools.jv.highlighting.holder import set_current_highlighting
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 

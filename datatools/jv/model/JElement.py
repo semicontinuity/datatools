@@ -2,7 +2,7 @@ import sys
 from typing import AnyStr, Tuple, List, Optional, Hashable, Sequence
 
 from datatools.jv.highlighting.highlighting import Highlighting
-from datatools.jv.highlighting.highlighting_holder import get_current_highlighting
+from datatools.jv.highlighting.holder import get_current_highlighting
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 

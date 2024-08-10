@@ -10,8 +10,8 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.document import JDocument
 from datatools.jv.grid import JGrid
-from datatools.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
-from datatools.jv.highlighting.highlighting_holder import set_current_highlighting, get_current_highlighting
+from datatools.jv.highlighting.console import ConsoleHighlighting
+from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.jv.model import build_model
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
 from datatools.tui.picotui_keys import KEY_ALT_ENTER

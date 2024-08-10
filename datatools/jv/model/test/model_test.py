@@ -1,5 +1,5 @@
 from datatools.jv.highlighting.highlighting import Highlighting
-from datatools.jv.highlighting.highlighting_holder import set_current_highlighting
+from datatools.jv.highlighting.holder import set_current_highlighting
 from datatools.jv.model import build_model, JValueElement
 
 set_current_highlighting(Highlighting())

@@ -1,6 +1,6 @@
 from typing import Hashable, Dict, Any, Sequence
 
-from datatools.jv.highlighting.highlighting import ConsoleHighlighting
+from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.coloring import hash_to_rgb
 from datatools.tui.treeview.rich_text import Style
