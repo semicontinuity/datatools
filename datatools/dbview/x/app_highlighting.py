@@ -1,5 +1,6 @@
 from typing import Hashable, Dict, Any, Sequence
 
+from datatools.dbview.x.app_tree_structure import JsonTreeStructure
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.model import JString
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
@@ -24,4 +25,4 @@ class AppHighlighting(ConsoleHighlighting):
                      hash_to_rgb(0xc03b << (indent % 15)))
 
     def is_fk(self, path):
-        return len(path) == 4 and path[0:3] == ['ENTITY', 'data', 'self'] and path[3] in self.references
+        return JsonTreeStructure.is_leaf_in_self_data(path) and JsonTreeStructure.self_field_name(path) in self.references
