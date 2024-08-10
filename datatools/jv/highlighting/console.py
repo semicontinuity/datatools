@@ -1,6 +1,7 @@
 from typing import Hashable, List
 
 from datatools.jv.highlighting.highlighting import Highlighting
+from datatools.jv.model import JElement
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.coloring import hash_to_rgb
 from datatools.tui.treeview.rich_text import Style
@@ -15,7 +16,7 @@ class ConsoleHighlighting(Highlighting):
 
     def for_number(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (192, 96, 96))
 
-    def for_string(self) -> Style: return Style(0, (64, 160, 192))
+    def for_string(self, node: JElement) -> Style: return Style(0, (64, 160, 192))
 
     def for_field_label(self, label: str, indent: int, path: List[Hashable]) -> Style:
         # return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(hash_code(label))))

@@ -1,9 +1,8 @@
 from typing import Tuple, AnyStr
 
-from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.jv.highlighting.holder import get_current_highlighting
-from datatools.tui.treeview.rich_text import Style
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
+from datatools.tui.treeview.rich_text import Style
 
 
 class JNumber(JPrimitiveElement[float]):

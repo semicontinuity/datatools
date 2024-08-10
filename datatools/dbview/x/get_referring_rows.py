@@ -2,7 +2,7 @@
 from collections import defaultdict
 from typing import Tuple, List
 
-from datatools.dbview.util.pg import get_table_pks, execute_sql, get_table_foreign_keys_inbound, describe_table
+from datatools.dbview.util.pg import get_table_pks, execute_sql, describe_table
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 

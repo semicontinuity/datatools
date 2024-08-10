@@ -1,9 +1,8 @@
 from typing import AnyStr, Tuple
 
-from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.jv.highlighting.holder import get_current_highlighting
-from datatools.tui.treeview.rich_text import Style
 from datatools.jv.model.JSyntaxElement import JSyntaxElement
+from datatools.tui.treeview.rich_text import Style
 
 
 class JObjectStart(JSyntaxElement):

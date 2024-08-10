@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import Tuple, Hashable, List, Dict
+from typing import Tuple, Hashable, List
 
 from picotui.defs import KEY_ENTER
 

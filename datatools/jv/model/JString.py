@@ -1,14 +1,13 @@
 from typing import Tuple, AnyStr
 
-from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.jv.highlighting.holder import get_current_highlighting
-from datatools.tui.treeview.rich_text import Style
 from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
+from datatools.tui.treeview.rich_text import Style
 
 
 class JString(JPrimitiveElement[str]):
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return '"' + ''.join([JString.escape(c) for c in self.value]) + '"', get_current_highlighting().for_string()
+        return '"' + ''.join([JString.escape(c) for c in self.value]) + '"', get_current_highlighting().for_string(self)
 
     @staticmethod
     def escape(c: str):
