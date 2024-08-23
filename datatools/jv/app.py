@@ -22,8 +22,8 @@ from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.util.object_exporter import init_object_exporter, ObjectExporter
 
 
-def make_json_tree_applet(document, popup: bool = False):
-    screen_width, screen_height = screen_size_or_default()
+def make_json_tree_applet(document, screen_size, popup: bool = False):
+    screen_width, screen_height = screen_size
     grid_context = GridContext(0, 0, screen_width, screen_height)
     document.layout()
     document.optimize_layout(screen_height)
@@ -54,7 +54,7 @@ def make_document(j):
 
 
 def loop(document: JDocument):
-    g = make_json_tree_applet(document).g
+    g = make_json_tree_applet(document, screen_size_or_default()).g
     key_code = g.loop()
     cur_line = g.cur_line
     return key_code, cur_line
@@ -83,7 +83,10 @@ if __name__ == "__main__":
     doc = make_document(data())    # must consume stdin first
 
     if '-p' in sys.argv:
-        make_json_tree_applet(doc).g.redraw()
+        screen_width, screen_height = screen_size_or_default()
+        g = make_json_tree_applet(doc, (screen_width, 10000)).g
+        g.interactive = False
+        g.redraw()
     else:
         key_code, cur_line = with_alternate_screen(lambda: loop(doc))
         exit_code, output = handle_loop_result(doc, key_code, cur_line)

@@ -7,7 +7,7 @@ from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
 
-def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_name: str, selector_column_value: str) -> Tuple[List, List]:
+def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_name: str, selector_column_value: str, limit: int = 20) -> Tuple[List, List]:
     d = describe_table(conn, table)
     text_columns = [row['column_name'] for row in d if row['data_type'] == 'text']
 
@@ -17,7 +17,7 @@ def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_n
 
     columns = table_pks + text_columns
 
-    sql = f"SELECT {', '.join(columns)} from {table} where {selector_column_name}={selector_column_value}"
+    sql = f"SELECT {', '.join(columns)} from {table} where {selector_column_name}={selector_column_value} limit {limit}"
     debug(sql)
     rows = execute_sql(conn, sql)
     return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [{k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
