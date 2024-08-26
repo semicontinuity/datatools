@@ -1,6 +1,5 @@
-import sys
 from dataclasses import dataclass
-from typing import Tuple, Sequence
+from typing import Tuple, Sequence, List
 
 from picotui.defs import KEY_ENTER
 
@@ -8,6 +7,7 @@ from datatools.dbview.util.pg import execute_sql, get_table_foreign_keys_outboun
     get_table_foreign_keys_inbound
 from datatools.dbview.x.app_highlighting import AppHighlighting
 from datatools.dbview.x.app_tree_structure import JsonTreeStructure
+from datatools.dbview.x.entity_reference import DbRowReference, DbSelectorClause
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
@@ -24,39 +24,53 @@ class DbEntityReference:
 
 
 class ViewDbRow:
-    e_ref: DbEntityReference
+    db_row_ref: DbRowReference
 
-    def __init__(self, e_ref: DbEntityReference) -> None:
-        self.e_ref = e_ref
+    def __init__(self, db_row_ref: DbRowReference) -> None:
+        self.db_row_ref = db_row_ref
 
     def run(self):
-        while True:
-            with connect_to_db() as conn:
-                self.refresh_model(conn)
-                doc = make_document(self.make_repr_tree())
-                key_code, cur_line = with_alternate_screen(lambda: loop(doc))
-                self.e_ref = self.handle_loop_result(doc, key_code, cur_line)
-                if self.e_ref is None:
-                    break
+        with connect_to_db() as conn:
+            self.refresh_model(conn)
+            tree = self.make_repr_tree()
+            doc = make_document(tree)
+            key_code, cur_line = with_alternate_screen(lambda: loop(doc))
+            e_ref = self.handle_loop_result(doc, key_code, cur_line)
+
+            if e_ref is None:
+                return None, None
+            else:
+                return e_ref, {
+                    "type": "db_row",
+                    "table": e_ref.table,
+                    "selector": [
+                        {
+                            "column": w[0],
+                            "op": w[1],
+                            "value": w[2]
+                        }
+                        for w in e_ref.where
+                    ]
+                }
 
     def make_repr_tree(self):
         return {
             "ENTITY": {
                 "metadata": {
                     "self": {
-                        "table": self.e_ref.table,
+                        "table": self.db_row_ref.table,
                         "selector": [
                             {
-                                "column": e[0],
-                                "op": e[1],
-                                "value": e[2]
-                            } for e in self.e_ref.where
+                                "column": clause.column,
+                                "op": clause.op,
+                                "value": clause.value
+                            } for clause in self.db_row_ref.selector
                         ]
                     }
                 },
                 "data": self.data,
                 "concepts": {
-                    self.e_ref.table: {
+                    self.db_row_ref.table: {
                         "references": self.references
                     }
                 }
@@ -80,13 +94,13 @@ class ViewDbRow:
                     where=[(referred['concept-pk'], '=', f"'{value}'")]
                 )
 
-    def get_entity_row(self, conn, table: str, where: Sequence[Tuple[str, str, str]]):
+    def get_entity_row(self, conn, table: str, where: List[DbSelectorClause]):
         if not where:
             raise Exception('WHERE clause is required')
         if len(where) != 1:
             raise Exception('WHERE clauses must contain 1 clause')
 
-        where_column, where_op, where_value = where[0]
+        where_column, where_op, where_value = where[0].column, where[0].op, where[0].value
         if where_op != '=':
             raise Exception('WHERE clause must be PK equality')
 
@@ -98,13 +112,13 @@ class ViewDbRow:
         return rows[0]
 
     def refresh_model(self, conn):
-        table = self.e_ref.table
-        where = self.e_ref.where
+        table = self.db_row_ref.table
+        selector = self.db_row_ref.selector
         self.data = {
-            "self": to_jsonisable(self.get_entity_row(conn, table, where)),
+            "self": to_jsonisable(self.get_entity_row(conn, table, selector)),
         }
         inbound_relations = get_table_foreign_keys_inbound(conn, table)
-        in_refs_model = make_referring_rows_model(conn, table, where, inbound_relations)
+        in_refs_model = make_referring_rows_model(conn, table, selector, inbound_relations)
         if len(in_refs_model) > 0:
             self.data["referrers"] = in_refs_model
         outbound_relations = get_table_foreign_keys_outbound(conn, table)

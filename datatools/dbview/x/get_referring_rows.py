@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import Tuple, List, Sequence
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, describe_table
+from datatools.dbview.x.entity_reference import DbSelectorClause
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
@@ -23,7 +24,7 @@ def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_n
     return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [{k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
 
-def make_referring_rows_model(conn, table: str, where: Sequence[Tuple[str, str, str]], inbound_relations):
+def make_referring_rows_model(conn, table: str, where: List[DbSelectorClause], inbound_relations):
     debug('make_referring_rows_model', table=table, where=where)
 
     if not where:
@@ -31,7 +32,7 @@ def make_referring_rows_model(conn, table: str, where: Sequence[Tuple[str, str, 
     if len(where) != 1:
         raise Exception('WHERE clauses must contain 1 clause')
 
-    where_column, where_op, where_value = where[0]
+    where_column, where_op, where_value = where[0].column, where[0].op, where[0].value
     if where_op != '=':
         raise Exception('WHERE clause must be PK equality')
 
