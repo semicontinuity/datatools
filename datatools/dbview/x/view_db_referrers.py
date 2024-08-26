@@ -25,10 +25,10 @@ class ViewDbReferrers(View):
             return self.handle_loop_result(doc, key_code, cur_line)
 
     def make_referring_rows_model(conn, inbound_relations):
-        result = defaultdict(list)
+        result = defaultdict(dict)
 
         for inbound_relation in inbound_relations:
-            result[inbound_relation['table_name']].append(inbound_relation['column_name'])
+            result[inbound_relation['table_name']][inbound_relation['column_name']] = inbound_relation['foreign_column_name']
 
         return result
 
@@ -38,6 +38,6 @@ class ViewDbReferrers(View):
             value = document.selected_value(cur_line)
             if len(path) == 2:
                 return DbReferringRows(
-                    source=DbTableColumn(table=path[0], column=value),
+                    source=DbTableColumn(table=path[0], column=path[0]),
                     target=self.selector
                 )

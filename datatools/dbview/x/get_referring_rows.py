@@ -32,9 +32,6 @@ def make_referring_rows_model(conn, table: str, where: List[DbSelectorClause], i
     if len(where) != 1:
         raise Exception('WHERE clauses must contain 1 clause')
 
-    where_column, where_op, where_value = where[0].column, where[0].op, where[0].value
-    if where_op != '=':
-        raise Exception('WHERE clause must be PK equality')
 
     result = defaultdict(lambda: defaultdict(list))
 
@@ -43,17 +40,7 @@ def make_referring_rows_model(conn, table: str, where: List[DbSelectorClause], i
         if table != this_table:
             raise Exception('illegal state')
 
-        this_column = inbound_relation['foreign_column_name']
-
-        if this_column != where_column:
-            sql = f"SELECT {this_column} from {table} where {where_column} {where_op} {where_value}"
-            debug(sql)
-            rows = execute_sql(conn, sql)
-            if len(rows) != 1:
-                raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
-            selector_value = "'" + rows[0][this_column] + "'"
-        else:
-            selector_value = where_value
+        selector_value = get_selector_value(conn, inbound_relation, table, where)
 
         foreign_table = inbound_relation['table_name']
         foreign_column = inbound_relation['column_name']
@@ -73,3 +60,20 @@ def make_referring_rows_model(conn, table: str, where: List[DbSelectorClause], i
                 )
 
     return result
+
+
+def get_selector_value(conn, inbound_relation, table, where):
+    this_column = inbound_relation['foreign_column_name']
+    where_column, where_op, where_value = where[0].column, where[0].op, where[0].value
+    if where_op != '=':
+        raise Exception('WHERE clause must be PK equality')
+    if this_column != where_column:
+        sql = f"SELECT {this_column} from {table} where {where_column} {where_op} {where_value}"
+        debug(sql)
+        rows = execute_sql(conn, sql)
+        if len(rows) != 1:
+            raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
+        selector_value = "'" + rows[0][this_column] + "'"
+    else:
+        selector_value = where_value
+    return selector_value
