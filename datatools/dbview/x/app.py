@@ -7,7 +7,6 @@ from datatools.dbview.x.view_db_row import ViewDbRow
 
 
 def make_view(e_ref: EntityReference) -> View:
-    print(e_ref)
     if type(e_ref) is DbRowReference:
         return ViewDbRow(e_ref)
     elif type(e_ref) is DbReferrers:

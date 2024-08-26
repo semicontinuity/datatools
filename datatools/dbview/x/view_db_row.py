@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Tuple, Sequence, List, Optional
+from typing import List, Optional
 
 from picotui.defs import KEY_ENTER
 
@@ -7,8 +6,8 @@ from datatools.dbview.util.pg import execute_sql, get_table_foreign_keys_outboun
     get_table_foreign_keys_inbound
 from datatools.dbview.x.app_highlighting import AppHighlighting
 from datatools.dbview.x.app_tree_structure import JsonTreeStructure
-from datatools.dbview.x.types import DbRowReference, DbSelectorClause, EntityReference, View, DbReferrers
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
+from datatools.dbview.x.types import DbRowReference, DbSelectorClause, EntityReference, View, DbReferrers
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
