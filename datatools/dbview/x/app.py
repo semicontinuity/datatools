@@ -3,7 +3,6 @@
 from datatools.dbview.x.entity_reference import EntityReference, DbRowReference, DbSelectorClause
 from datatools.dbview.x.util.pg import get_env, get_where_clauses
 from datatools.dbview.x.view_db_row import ViewDbRow
-from datatools.util.dataclasses import dataclass_from_dict
 
 
 def make_view(e_ref: EntityReference):
@@ -19,13 +18,9 @@ def main():
         if view is None:
             break
 
-        e_ref, spec = view.run()
-        if e_ref is None:
+        ref = view.run()
+        if ref is None:
             break
-
-        ref = dataclass_from_dict(
-            EntityReference, spec, {'db_row': DbRowReference}
-        )
 
 
 if __name__ == "__main__":
