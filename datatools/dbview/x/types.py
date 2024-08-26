@@ -15,15 +15,19 @@ class DbSelectorClause:
 
 
 @dataclass
-class DbRowReference(EntityReference):
+class DbTableRowsSelector:
     table: str
-    selector: List[DbSelectorClause]
+    where: List[DbSelectorClause]
+
+
+@dataclass
+class DbRowReference(EntityReference):
+    selector: DbTableRowsSelector
 
 
 @dataclass
 class DbReferrers(EntityReference):
-    table: str
-    selector: List[DbSelectorClause]
+    selector: DbTableRowsSelector
 
 
 @dataclass

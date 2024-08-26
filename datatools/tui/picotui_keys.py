@@ -12,7 +12,10 @@ KEY_CTRL_LEFT = b'\x1b[1;5D'
 KEY_CTRL_HOME = b'\x1b[1;5H'
 KEY_CTRL_END = b'\x1b[1;5F'
 
+KEY_ALT_F1 = b'\x1b[1;3P'
 KEY_CTRL_F1 = b'\x1b[1;5P'
+
+KEY_ALT_F2 = b'\x1b[1;3Q'
 KEY_CTRL_F2 = b'\x1b[1;5Q'
 
 KEY_SHIFT_F3 = b'\x1b[1;2R'
