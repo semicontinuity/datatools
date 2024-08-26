@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple, Sequence, List
+from typing import Tuple, Sequence, List, Optional
 
 from picotui.defs import KEY_ENTER
 
@@ -7,7 +7,7 @@ from datatools.dbview.util.pg import execute_sql, get_table_foreign_keys_outboun
     get_table_foreign_keys_inbound
 from datatools.dbview.x.app_highlighting import AppHighlighting
 from datatools.dbview.x.app_tree_structure import JsonTreeStructure
-from datatools.dbview.x.entity_reference import DbRowReference, DbSelectorClause, EntityReference
+from datatools.dbview.x.types import DbRowReference, DbSelectorClause, EntityReference, View, DbReferrers
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
@@ -17,19 +17,13 @@ from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
 
-@dataclass
-class DbEntityReference:
-    table: str
-    where: Sequence[Tuple[str, str, str]]
-
-
-class ViewDbRow:
+class ViewDbRow(View):
     db_row_ref: DbRowReference
 
     def __init__(self, db_row_ref: DbRowReference) -> None:
         self.db_row_ref = db_row_ref
 
-    def run(self):
+    def run(self) -> Optional[EntityReference]:
         with connect_to_db() as conn:
             self.refresh_model(conn)
             tree = self.make_repr_tree()
@@ -61,19 +55,21 @@ class ViewDbRow:
             }
         }
 
-    def handle_loop_result(self, document, key_code, cur_line: int) -> DbRowReference:
+    def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
         if key_code == KEY_ENTER:
             path = document.selected_path(cur_line)
             value = document.selected_value(cur_line)
             if JsonTreeStructure.path_is_pk_element(path):
-                return DbRowReference(
+                # return DbRowReference(
+                return DbReferrers(
                     table=JsonTreeStructure.get_referring_table(path),
                     selector=[DbSelectorClause(JsonTreeStructure.get_pk_value(path), '=', f"'{value}'")]
                 )
             elif get_current_highlighting().is_fk(path):
                 fk_field_name = JsonTreeStructure.self_field_name(path)
                 referred = self.references[fk_field_name]
-                return DbRowReference(
+                # return DbRowReference(
+                return DbReferrers(
                     table=referred['concept'],
                     selector=[DbSelectorClause(referred['concept-pk'], '=', f"'{value}'")]
                 )

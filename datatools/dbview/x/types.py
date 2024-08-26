@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -18,3 +18,15 @@ class DbSelectorClause:
 class DbRowReference(EntityReference):
     table: str
     selector: List[DbSelectorClause]
+
+
+@dataclass
+class DbReferrers(EntityReference):
+    table: str
+    selector: List[DbSelectorClause]
+
+
+@dataclass
+class View:
+    def run(self) -> Optional[EntityReference]:
+        pass

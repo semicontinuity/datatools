@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Tuple, List, Sequence
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, describe_table
-from datatools.dbview.x.entity_reference import DbSelectorClause
+from datatools.dbview.x.types import DbSelectorClause
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
