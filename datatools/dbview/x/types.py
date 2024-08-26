@@ -21,6 +21,12 @@ class DbTableRowsSelector:
 
 
 @dataclass
+class DbTableColumn:
+    table: str
+    column: str
+
+
+@dataclass
 class DbRowReference(EntityReference):
     selector: DbTableRowsSelector
 
@@ -28,6 +34,12 @@ class DbRowReference(EntityReference):
 @dataclass
 class DbReferrers(EntityReference):
     selector: DbTableRowsSelector
+
+
+@dataclass
+class DbReferringRows(EntityReference):
+    source: DbTableColumn
+    target: DbTableRowsSelector
 
 
 @dataclass

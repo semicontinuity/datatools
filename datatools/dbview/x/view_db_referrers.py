@@ -1,8 +1,11 @@
 from collections import defaultdict
 from typing import Optional
 
+from picotui.defs import KEY_ENTER
+
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound
-from datatools.dbview.x.types import DbRowReference, View, EntityReference, DbTableRowsSelector
+from datatools.dbview.x.types import View, EntityReference, DbTableRowsSelector, DbReferringRows, \
+    DbTableColumn
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.jv.app import loop, make_document
 from datatools.tui.screen_helper import with_alternate_screen
@@ -11,11 +14,11 @@ from datatools.tui.screen_helper import with_alternate_screen
 class ViewDbReferrers(View):
 
     def __init__(self, e_ref: DbTableRowsSelector) -> None:
-        self.e_ref = e_ref
+        self.selector = e_ref
 
     def run(self) -> Optional[EntityReference]:
         with connect_to_db() as conn:
-            inbound_relations = get_table_foreign_keys_inbound(conn, self.e_ref.table)
+            inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
             tree = self.make_referring_rows_model(inbound_relations)
             doc = make_document(tree)
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
@@ -29,5 +32,12 @@ class ViewDbReferrers(View):
 
         return result
 
-    def handle_loop_result(self, document, key_code, cur_line: int) -> DbRowReference:
-        pass
+    def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[DbReferringRows]:
+        if key_code == KEY_ENTER:
+            path = document.selected_path(cur_line)
+            value = document.selected_value(cur_line)
+            if len(path) == 2:
+                return DbReferringRows(
+                    source=DbTableColumn(table=path[0], column=value),
+                    target=self.selector
+                )

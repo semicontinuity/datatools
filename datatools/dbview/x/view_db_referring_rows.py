@@ -1,14 +1,13 @@
 from collections import defaultdict
-from typing import Optional, List
+from typing import Optional
 
-from datatools.dbview.util.pg import get_table_foreign_keys_inbound
-from datatools.dbview.x.types import DbRowReference, View, EntityReference, DbReferrers, DbSelectorClause
+from datatools.dbview.x.types import View, EntityReference, DbReferrers, DbReferringRows
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.jv.app import loop, make_document
 from datatools.tui.screen_helper import with_alternate_screen
 
 
-class ViewDbReferrers(View):
+class ViewDbReferringRows(View):
 
     def __init__(self, e_ref: DbReferrers) -> None:
         self.e_ref = e_ref
@@ -30,5 +29,5 @@ class ViewDbReferrers(View):
 
         return result
 
-    def handle_loop_result(self, document, key_code, cur_line: int) -> DbRowReference:
+    def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[DbReferringRows]:
         pass
