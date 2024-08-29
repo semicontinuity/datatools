@@ -1,9 +1,10 @@
+import os
 from typing import List, Optional
 
 from picotui.defs import KEY_ENTER, KEY_F1
 
 from datatools.dbview.util.pg import execute_sql, get_table_foreign_keys_outbound, \
-    get_table_foreign_keys_inbound
+    get_table_foreign_keys_inbound, get_table_pks
 from datatools.dbview.x.app_highlighting import AppHighlighting
 from datatools.dbview.x.app_tree_structure import JsonTreeStructure
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
@@ -34,24 +35,24 @@ class ViewDbRow(View):
     def make_repr_tree(self):
         return {
             "ENTITY": {
-                "metadata": {
-                    "self": {
-                        "table": self.selector.table,
-                        "selector": [
-                            {
-                                "column": clause.column,
-                                "op": clause.op,
-                                "value": clause.value
-                            } for clause in self.selector.where
-                        ]
-                    }
-                },
+                # "metadata": {
+                #     "self": {
+                #         "table": self.selector.table,
+                #         "selector": [
+                #             {
+                #                 "column": clause.column,
+                #                 "op": clause.op,
+                #                 "value": clause.value
+                #             } for clause in self.selector.where
+                #         ]
+                #     }
+                # },
                 "data": self.data,
-                "concepts": {
-                    self.selector.table: {
-                        "references": self.references
-                    }
-                }
+                # "concepts": {
+                #     self.selector.table: {
+                #         "references": self.references
+                #     }
+                # }
             }
         }
 
@@ -75,13 +76,19 @@ class ViewDbRow(View):
     def refresh_model(self, conn):
         table = self.selector.table
         selector = self.selector.where
+
+        table_pks = get_table_pks(conn, table)
+
         self.data = {
             "self": to_jsonisable(self.get_entity_row(conn, table, selector)),
         }
-        inbound_relations = get_table_foreign_keys_inbound(conn, table)
-        in_refs_model = make_referring_rows_model(conn, table, selector, inbound_relations)
-        if len(in_refs_model) > 0:
-            self.data["referrers"] = in_refs_model
+
+        if os.environ.get('IR') is not None:
+            inbound_relations = get_table_foreign_keys_inbound(conn, table)
+            in_refs_model = make_referring_rows_model(conn, table, selector, inbound_relations)
+            if len(in_refs_model) > 0:
+                self.data["referrers"] = in_refs_model
+
         outbound_relations = get_table_foreign_keys_outbound(conn, table)
         self.references = {
             entry['column_name']: {
@@ -90,7 +97,7 @@ class ViewDbRow(View):
             }
             for entry in outbound_relations
         }
-        set_current_highlighting(AppHighlighting(self.references))
+        set_current_highlighting(AppHighlighting(self.references, table_pks))
 
     def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
         if key_code == KEY_ENTER:
