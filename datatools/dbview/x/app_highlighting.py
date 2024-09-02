@@ -16,9 +16,9 @@ class AppHighlighting(ConsoleHighlighting):
 
     def for_string(self, node: JString) -> Style:
         if self.is_fk(node.path()):
-            return Style(AbstractBufferWriter.MASK_ITALIC, (64, 160, 192))
+            return Style(AbstractBufferWriter.MASK_ITALIC | AbstractBufferWriter.MASK_UNDERLINED, (64, 160, 192))
         if self.is_pk(node.path()):
-            return Style(AbstractBufferWriter.MASK_UNDERLINED, (64, 160, 192))
+            return Style(AbstractBufferWriter.MASK_BOLD, (64, 160, 192))
         else:
             return Style(0, (64, 160, 192))
 
@@ -28,9 +28,9 @@ class AppHighlighting(ConsoleHighlighting):
         # return (Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(0)))
         indent = len(path) * 2
         if self.is_fk(path):
-            return Style(AbstractBufferWriter.MASK_BOLD | AbstractBufferWriter.MASK_ITALIC, hash_to_rgb(0xc03b << (indent % 15)))
+            return Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(0xc03b << (indent % 15)))
         if self.is_pk(path):
-            return Style(AbstractBufferWriter.MASK_BOLD | AbstractBufferWriter.MASK_UNDERLINED, hash_to_rgb(0xc03b << (indent % 15)))
+            return Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(0xc03b << (indent % 15)))
         else:
             return Style(AbstractBufferWriter.MASK_BOLD, hash_to_rgb(0xc03b << (indent % 15)))
 

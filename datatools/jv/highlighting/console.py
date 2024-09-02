@@ -8,13 +8,13 @@ from datatools.tui.treeview.rich_text import Style
 
 
 class ConsoleHighlighting(Highlighting):
-    def for_null(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (192, 192, 64))
+    def for_null(self) -> Style: return Style(0, (192, 192, 64))
 
-    def for_true(self): return Style(AbstractBufferWriter.MASK_BOLD, (64, 192, 64))
+    def for_true(self): return Style(0, (64, 192, 64))
 
-    def for_false(self): return Style(AbstractBufferWriter.MASK_BOLD, (96, 96, 192))
+    def for_false(self): return Style(0, (96, 96, 192))
 
-    def for_number(self) -> Style: return Style(AbstractBufferWriter.MASK_BOLD, (192, 96, 96))
+    def for_number(self) -> Style: return Style(0, (192, 96, 96))
 
     def for_string(self, node: JString) -> Style: return Style(0, (64, 160, 192))
 
