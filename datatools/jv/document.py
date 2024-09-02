@@ -13,6 +13,9 @@ class JDocument(TreeDocument):
         else:
             return line
 
+    def selected_value_node(self, line):
+        return self.rows[line].get_value_element()
+
     def selected_value(self, line):
         return self.rows[line].get_value()
 

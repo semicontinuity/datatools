@@ -28,8 +28,20 @@ class JPrimaryKey(JString):
 
 
 class JForeignKey(JString):
+    view: 'ViewDbRow'
+
     def value_style(self):
         return Style(AbstractBufferWriter.MASK_ITALIC | AbstractBufferWriter.MASK_UNDERLINED, (64, 160, 192))
+
+    def handle_key(self, key: str):
+        if key == KEY_ENTER:
+            referred = self.view.references[self.key]
+            return DbRowReference(
+                DbTableRowsSelector(
+                    table=referred['concept'],
+                    where=[DbSelectorClause(referred['concept-pk'], '=', f"'{self.value}'")]
+                )
+            )
 
 
 class ViewDbRow(View):
@@ -46,7 +58,9 @@ class ViewDbRow(View):
             if type(v) is str and k in table_pks:
                 views.append(JPrimaryKey(v, k))
             elif type(v) is str and k in references:
-                views.append(JForeignKey(v, k))
+                node = JForeignKey(v, k)
+                node.view = self
+                views.append(node)
             else:
                 views.append(factory.build_model(v, k))
 
@@ -125,6 +139,10 @@ class ViewDbRow(View):
         return to_jsonisable(self.get_entity_row(conn, self.selector.table, self.selector.where))
 
     def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
+        if type(key_code) is not int and type(key_code) is not str:
+            # Not key_code - EntityReference
+            return key_code
+
         if key_code == KEY_ENTER:
             path = document.selected_path(cur_line)
             value = document.selected_value(cur_line)

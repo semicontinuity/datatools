@@ -13,4 +13,10 @@ class JGrid(WGrid):
                 0
             )
         else:
-            return super().handle_edit_key(key)
+            node = self.document.selected_value_node(self.cur_line)
+            result = node.handle_key(key)
+            if result is None:
+                return super().handle_edit_key(key)
+            else:
+                return result
+

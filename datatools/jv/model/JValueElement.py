@@ -24,3 +24,6 @@ class JValueElement(Generic[V], JElement):
 
     def set_key(self, key: str):
         pass
+
+    def handle_key(self, key: str):
+        pass
