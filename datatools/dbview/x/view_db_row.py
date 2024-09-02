@@ -154,16 +154,14 @@ class ViewDbRow(View):
                                                                       selector_value, table_pks)
             if len(pk_kv) == 0:
                 continue
-            else:
-                entry = []
-                result[foreign_table][foreign_column] = entry
-                for i in range(len(pk_kv)):
-                    entry.append(
-                        {
-                            'key': pk_kv[i],
-                            'value': text_kv[i],
-                        }
-                    )
+
+            result[foreign_table][foreign_column] = [
+                {
+                    'key': pk_kv[i],
+                    'value': text_kv[i],
+                }
+                for i in range(len(pk_kv))
+            ]
 
         return result
 

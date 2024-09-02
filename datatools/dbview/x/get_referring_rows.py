@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-from collections import defaultdict
-from typing import Tuple, List, Dict
+from typing import Tuple, List
 
-from datatools.dbview.util.pg import get_table_pks, execute_sql, describe_table
-from datatools.dbview.x.types import DbSelectorClause
+from datatools.dbview.util.pg import execute_sql, describe_table
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
