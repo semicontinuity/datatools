@@ -24,8 +24,8 @@ class JComplexElement(Generic[V], JValueElement[V]):
             yield self
         else:
             yield self.start
-            for field in self.elements:
-                yield from field
+            for e in self.elements:
+                yield from e
             yield self.end
 
     def layout(self, line: int) -> int:
@@ -80,3 +80,7 @@ class JComplexElement(Generic[V], JValueElement[V]):
         super(JComplexElement, self).set_collapsed_recursive(collapsed)
         for element in self.elements:
             element.set_collapsed_recursive(collapsed)
+
+    def set_key(self, key: str):
+        self.key = key
+        self.start.key = key

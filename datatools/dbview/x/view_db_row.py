@@ -14,6 +14,7 @@ from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
+from datatools.jv.model import build_model, build_root_model
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
@@ -48,7 +49,7 @@ class ViewDbRow(View):
                     # },
                     "data": cleanse_dict(
                         {
-                            "self": self.make_row_model(conn),
+                            "self": build_model(self.make_row_model(conn)),
                             "referrers": self.make_inbound_references_models(conn),
                         }
                     ),

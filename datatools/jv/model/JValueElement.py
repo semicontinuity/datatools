@@ -21,3 +21,6 @@ class JValueElement(Generic[V], JElement):
 
     def get_value_element(self):
         return self
+
+    def set_key(self, key: str):
+        pass
