@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-import sys
 from collections import defaultdict
-from typing import Tuple, List, Sequence, Dict
+from typing import Tuple, List, Dict
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, describe_table
 from datatools.dbview.x.types import DbSelectorClause

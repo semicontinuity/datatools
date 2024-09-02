@@ -10,11 +10,11 @@ from datatools.tui.treeview.rich_text import Style
 
 class JObject(JComplexElement[dict]):
 
-    def __init__(self, value: Dict[str, Any], key: Optional[Hashable], elements: List[JValueElement], last_in_parent=True) -> None:
-        super().__init__(value, key, last_in_parent)
+    def __init__(self, value: Dict[str, Any], key: Optional[Hashable], elements: List[JValueElement]) -> None:
+        super().__init__(value, key)
         self.start = JObjectStart(key)
         self.start.parent = self
-        self.end = JObjectEnd(None, last_in_parent)
+        self.end = JObjectEnd(None)
         self.end.parent = self
         self.set_elements(elements)
 

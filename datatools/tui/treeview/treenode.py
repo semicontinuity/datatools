@@ -15,7 +15,7 @@ class TreeNode:
     size: int  # size (in lines)
     collapsed: bool
 
-    def __init__(self, last_in_parent=True) -> None:
+    def __init__(self, last_in_parent=False) -> None:
         self.last_in_parent = last_in_parent
         self.collapsed = False
         self.parent = None

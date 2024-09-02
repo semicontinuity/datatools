@@ -86,3 +86,6 @@ class JComplexElement(Generic[V], JValueElement[V]):
     def set_key(self, key: str):
         self.key = key
         self.start.key = key
+
+    def set_last_in_parent(self, last_in_parent: bool):
+        self.end.last_in_parent = last_in_parent

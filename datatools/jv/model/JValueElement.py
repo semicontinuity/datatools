@@ -9,7 +9,7 @@ class JValueElement(Generic[V], JElement):
     value: V
     packed_size: int
 
-    def __init__(self, value: V, key: Optional[str] = None, last_in_parent=True) -> None:
+    def __init__(self, value: V, key: Optional[str] = None, last_in_parent=False) -> None:
         super().__init__(key, last_in_parent)
         self.value = value
         self.packed_size = 1
@@ -23,6 +23,9 @@ class JValueElement(Generic[V], JElement):
         return self
 
     def set_key(self, key: str):
+        pass
+
+    def set_last_in_parent(self, last_in_parent: bool):
         pass
 
     def handle_key(self, key: str):

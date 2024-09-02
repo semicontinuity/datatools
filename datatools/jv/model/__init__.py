@@ -23,6 +23,14 @@ def set_padding(elements: List[JValueElement]) -> List[JValueElement]:
     return elements
 
 
+def set_last_in_parent(elements: List[JValueElement]) -> List[JValueElement]:
+    if len(elements) > 0:
+        for e in elements:
+            e.set_last_in_parent(False)
+        e.set_last_in_parent(True)
+    return elements
+
+
 def set_indent_recursive(model: JValueElement, indent: int = 0) -> JValueElement:
     model.indent = indent
     if issubclass(type(model), JComplexElement):
@@ -53,27 +61,44 @@ class JElementFactory:
         elif type(v) is bool:
             return JBoolean(v, k, last_in_parent)
         elif type(v) is dict or type(v) is defaultdict:
-            return JObject(v, k, set_padding(self.build_object_fields_models(v)), last_in_parent)
+            return self.build_object_model(v, k, self.build_object_fields_models(v))
         elif type(v) is list:
-            return JArray(v, k, self.build_array_items_models(v), last_in_parent)
+            return self.build_array_model(v, k, self.build_array_items_models(v))
         else:
             v.set_key(k)
             return v
 
+    def build_array_model(self, v, k, items_models):
+        return JArray(v, k, items_models)
+
+    def build_object_model(self, v, k, element_models):
+        return JObject(v, k, set_last_in_parent(set_padding(element_models)))
+
     def build_object_fields_models(self, v) -> List[JValueElement]:
-        fields = []
+        models = []
         i = 0
-        size = len(v)
+        model = None
+
         for k, v in v.items():
-            model = self.build_model(v, k, i >= size - 1)
-            fields.append(model)
+            model = self.build_model(v, k)
+            models.append(model)
             i += 1
-        return fields
+
+        if model is not None:
+            model.last_in_parent = True
+
+        return models
 
     def build_array_items_models(self, v) -> List[JValueElement]:
-        items = []
-        size = len(v)
+        models = []
+        model = None
+
         for i, v in enumerate(v):
-            items.append(self.build_model(v, i, i >= size - 1))
+            model = self.build_model(v, i)
+            models.append(model)
             i += 1
-        return items
+
+        if model is not None:
+            model.last_in_parent = True
+
+        return models
