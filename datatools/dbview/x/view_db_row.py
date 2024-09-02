@@ -30,18 +30,20 @@ class JPrimaryKey(JString):
 
 
 class JForeignKey(JString):
-    view: 'ViewDbRow'
+    # view: 'ViewDbRow'
+    foreign_table_name: str
+    foreign_table_pk: str
 
     def value_style(self):
         return Style(AbstractBufferWriter.MASK_ITALIC | AbstractBufferWriter.MASK_UNDERLINED, (64, 160, 192))
 
     def handle_key(self, key: str):
         if key == KEY_ENTER:
-            referred = self.view.references[self.key]
+            # referred = self.view.references[self.key]
             return DbRowReference(
                 DbTableRowsSelector(
-                    table=referred['concept'],
-                    where=[DbSelectorClause(referred['concept-pk'], '=', f"'{self.value}'")]
+                    table=self.foreign_table_name,
+                    where=[DbSelectorClause(self.foreign_table_pk, '=', f"'{self.value}'")]
                 )
             )
 
@@ -53,6 +55,7 @@ class ViewDbRow(View):
         self.selector = selector
 
     def build_row_view(self, model: Dict, references: Dict[str, Any], table_pks: List[str]) -> JObject:
+
         factory = JElementFactory()
 
         views = []
@@ -61,7 +64,9 @@ class ViewDbRow(View):
                 views.append(JPrimaryKey(v, k))
             elif type(v) is str and k in references:
                 node = JForeignKey(v, k)
-                node.view = self
+                node.foreign_table_name = references[k]['concept']
+                node.foreign_table_pk = references[k]['concept-pk']
+                # node.view = self
                 views.append(node)
             else:
                 views.append(factory.build_model(v, k))
@@ -124,7 +129,23 @@ class ViewDbRow(View):
     def make_inbound_references_models(self, conn):
         if os.environ.get('IR') is not None:
             inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
-            return self.make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
+            return self.referring_tables(
+                self.make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
+            )
+
+    def referring_tables(self, referrers: Dict):
+        return {table: self.referring_columns(columns, table) for table, columns in referrers.items()}
+
+    def referring_columns(self, referrers: Dict, table: str):
+        return {column: self.referring_records(records, table) for column, records in referrers.items()}
+
+    def referring_records(self, referrers: List, table: str):
+        return [self.referring_record(e, table) for e in referrers]
+
+    def referring_record(self, referrer: Dict, table: str):
+        key = referrer['key']
+        value = referrer['value']
+        return self.build_row_view(key | value, {k: {'concept': table, 'concept-pk': k} for k in key}, [])
 
     def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
         debug('make_referring_rows_model', table=table, where=where)
@@ -166,15 +187,15 @@ class ViewDbRow(View):
         return result
 
     def make_references(self, conn) -> Dict[str, Any]:
+        """ Returns dict: column_name -> { foreign table name + foreign table column } """
         outbound_relations = get_table_foreign_keys_outbound(conn, self.selector.table)
-        references = {
+        return {
             entry['column_name']: {
                 'concept': entry['foreign_table_name'],
                 'concept-pk': entry['foreign_column_name'],
             }
             for entry in outbound_relations
         }
-        return references
 
     def make_row_model(self, conn):
         return to_jsonisable(self.get_entity_row(conn, self.selector.table, self.selector.where))
