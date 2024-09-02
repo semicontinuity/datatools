@@ -15,6 +15,8 @@ class JComplexElement(Generic[V], JValueElement[V]):
     def set_elements(self, elements: List[JValueElement]):
         self.elements = elements
         self.packed_size = 1 + len(elements) + 1
+        for e in elements:
+            e.parent = self
 
     def sub_elements(self) -> List[JValueElement]:
         return self.elements
