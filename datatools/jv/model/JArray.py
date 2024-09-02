@@ -10,11 +10,11 @@ from datatools.tui.treeview.rich_text import Style
 
 class JArray(JComplexElement):
 
-    def __init__(self, value: List[Any], key: Optional[str], elements: List[JValueElement], indent=0, last_in_parent=True) -> None:
-        super().__init__(value, key, indent, last_in_parent)
-        self.start = JArrayStart(key, indent=indent)
+    def __init__(self, value: List[Any], key: Optional[str], elements: List[JValueElement], last_in_parent=True) -> None:
+        super().__init__(value, key, last_in_parent)
+        self.start = JArrayStart(key)
         self.start.parent = self
-        self.end = JArrayEnd(None, indent=indent, last_in_parent=last_in_parent)
+        self.end = JArrayEnd(None, last_in_parent=last_in_parent)
         self.end.parent = self
         self.set_elements(elements)
 

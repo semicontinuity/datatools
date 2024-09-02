@@ -11,10 +11,10 @@ class JElement(TreeNode):
     key: Optional[str]
     padding: int
 
-    def __init__(self, key: Optional[str] = None, indent=0, last_in_parent=True) -> None:
+    def __init__(self, key: Optional[str] = None, last_in_parent=True) -> None:
         super().__init__(last_in_parent)
         self.key = key
-        self.indent = indent
+        self.indent = 0
         self.padding = 0
 
     def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
