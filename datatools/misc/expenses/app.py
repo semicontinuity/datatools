@@ -131,7 +131,7 @@ def recalculate(file_name, output_file_name):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print("Usage: expenses.py <recalc> <file> [output file name or '-' for stdout]", file=sys.stderr)
+        print("Usage: app.py <recalc> <file> [output file name or '-' for stdout]", file=sys.stderr)
         sys.exit(1)
 
     recalculate(sys.argv[2], sys.argv[2] if len(sys.argv) == 3 else sys.argv[3])

@@ -1,5 +1,5 @@
-from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
-from datatools.misc.tree_table.jv.model.JElement import JElement
+from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting
+from datatools.misc.expenses.viewer.model.JElement import JElement
 
 
 class JFolderSummary(JElement):

@@ -1,6 +1,6 @@
 from typing import TypeVar, Generic, List
 
-from datatools.misc.tree_table.jv.model.JValueElement import JValueElement
+from datatools.misc.expenses.viewer.model.JValueElement import JValueElement
 
 V = TypeVar('V')
 

@@ -1,7 +1,7 @@
 from typing import AnyStr, Tuple, List, Optional, Any
 
-from datatools.misc.tree_table.jv import format_float
-from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
+from datatools.misc.expenses import format_float
+from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting
 from datatools.tui.box_drawing_chars import FULL_BLOCK
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode

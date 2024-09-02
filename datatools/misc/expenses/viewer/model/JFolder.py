@@ -1,8 +1,8 @@
 from typing import Optional
 
-from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
-from datatools.misc.tree_table.jv.model.JComplexElement import JComplexElement
-from datatools.misc.tree_table.jv.model.JFolderSummary import JFolderSummary
+from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting
+from datatools.misc.expenses.viewer.model.JComplexElement import JComplexElement
+from datatools.misc.expenses.viewer.model.JFolderSummary import JFolderSummary
 
 
 class JFolder(JComplexElement):

@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
 
-import json
 import sys
-
-from picotui.defs import KEY_ENTER, KEY_F3, KEY_F4
 
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
-from datatools.misc.expenses import ExpensesTreeReader
-from datatools.misc.tree_table.jv.document import JDocument
-from datatools.misc.tree_table.jv.grid import JGrid
-from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting, ConsoleHighlighting
-from datatools.misc.tree_table.jv.model import ViewModel
-from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
+from datatools.misc.expenses.app import ExpensesTreeReader
+from datatools.misc.expenses.viewer.document import JDocument
+from datatools.misc.expenses.viewer.grid import JGrid
+from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting, ConsoleHighlighting
+from datatools.misc.expenses.viewer.model import ViewModel
+from datatools.tui.exit_codes_v2 import EXIT_CODE_ESCAPE
 from datatools.tui.grid_base import WGridBase
-from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview.grid import GridContext, grid
@@ -49,17 +45,8 @@ def make_document(j):
 
 def loop(document: JDocument):
     g: WGridBase = make_json_tree_applet(document).g
-    key_code = g.loop()
-    if key_code == KEY_ENTER:
-        return EXIT_CODE_ENTER, json.dumps(document.selected_value(g.cur_line))
-    elif key_code == KEY_ALT_ENTER:
-        return MODIFIER_ALT + EXIT_CODE_ENTER, document.selected_path(g.cur_line)
-    elif key_code == KEY_F3:
-        return EXIT_CODE_F3, json.dumps(document.selected_value(g.cur_line))
-    elif key_code == KEY_F4:
-        return EXIT_CODE_F4, json.dumps(document.selected_value(g.cur_line))
-    else:
-        return EXIT_CODE_ESCAPE, None
+    g.loop()
+    return EXIT_CODE_ESCAPE, None
 
 
 if __name__ == "__main__":

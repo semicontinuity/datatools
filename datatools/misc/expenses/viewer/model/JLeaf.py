@@ -1,5 +1,5 @@
-from datatools.misc.tree_table.jv.highlighting.highlighting import Highlighting
-from datatools.misc.tree_table.jv.model.JPrimitiveElement import JPrimitiveElement
+from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting
+from datatools.misc.expenses.viewer.model.JPrimitiveElement import JPrimitiveElement
 from datatools.tui.treeview.rich_text import Style
 
 

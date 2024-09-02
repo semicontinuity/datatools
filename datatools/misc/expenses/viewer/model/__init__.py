@@ -1,10 +1,9 @@
 from typing import List
 
-from datatools.misc.expenses import ExpensesNode
-from datatools.misc.tree_table.jv.model.JElement import JElement
-from datatools.misc.tree_table.jv.model.JFolder import JFolder
-from datatools.misc.tree_table.jv.model.JLeaf import JLeaf
-from datatools.misc.tree_table.jv.model.JValueElement import JValueElement
+from datatools.misc.expenses.app import ExpensesNode
+from datatools.misc.expenses.viewer.model.JFolder import JFolder
+from datatools.misc.expenses.viewer.model.JLeaf import JLeaf
+from datatools.misc.expenses.viewer.model.JValueElement import JValueElement
 from datatools.tui.treeview.treenode_context import TreeNodeContext
 
 INDENT = 2
