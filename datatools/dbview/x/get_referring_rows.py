@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 from collections import defaultdict
-from typing import Tuple, List, Sequence
+from typing import Tuple, List, Sequence, Dict
 
 from datatools.dbview.util.pg import get_table_pks, execute_sql, describe_table
 from datatools.dbview.x.types import DbSelectorClause
@@ -25,14 +25,13 @@ def get_pk_and_text_values_for_selected_rows(conn, table: str, selector_column_n
     return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [{k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
 
-def make_referring_rows_model(conn, table: str, where: List[DbSelectorClause], inbound_relations):
+def make_referring_rows_model(conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
     debug('make_referring_rows_model', table=table, where=where)
 
     if not where:
         raise Exception('WHERE clause is required')
     if len(where) != 1:
         raise Exception('WHERE clauses must contain 1 clause')
-
 
     result = defaultdict(lambda: defaultdict(list))
 

@@ -18,6 +18,10 @@ from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
 
+def cleanse_dict(d: dict):
+    return { k: v for k, v in d.items() if v}
+
+
 class ViewDbRow(View):
     selector: DbTableRowsSelector
 
@@ -26,35 +30,38 @@ class ViewDbRow(View):
 
     def run(self) -> Optional[EntityReference]:
         with connect_to_db() as conn:
-            self.refresh_model(conn)
-            tree = self.make_repr_tree()
+            references = self.make_references(conn)
+
+            tree = {
+                "ENTITY": {
+                    # "metadata": {
+                    #     "self": {
+                    #         "table": self.selector.table,
+                    #         "selector": [
+                    #             {
+                    #                 "column": clause.column,
+                    #                 "op": clause.op,
+                    #                 "value": clause.value
+                    #             } for clause in self.selector.where
+                    #         ]
+                    #     }
+                    # },
+                    "data": cleanse_dict(
+                        {
+                            "self": self.make_row_model(conn),
+                            "referrers": self.make_inbound_references_models(conn),
+                        }
+                    ),
+                    # "concepts": {
+                    #     self.selector.table: {
+                    #         "references": self.references
+                    #     }
+                    # }
+                }
+            }
             doc = make_document(tree)
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
-            return self.handle_loop_result(doc, key_code, cur_line)
-
-    def make_repr_tree(self):
-        return {
-            "ENTITY": {
-                # "metadata": {
-                #     "self": {
-                #         "table": self.selector.table,
-                #         "selector": [
-                #             {
-                #                 "column": clause.column,
-                #                 "op": clause.op,
-                #                 "value": clause.value
-                #             } for clause in self.selector.where
-                #         ]
-                #     }
-                # },
-                "data": self.data,
-                # "concepts": {
-                #     self.selector.table: {
-                #         "references": self.references
-                #     }
-                # }
-            }
-        }
+            return self.handle_loop_result(doc, references, key_code, cur_line)
 
     def get_entity_row(self, conn, table: str, where: List[DbSelectorClause]):
         if not where:
@@ -73,33 +80,28 @@ class ViewDbRow(View):
             raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
         return rows[0]
 
-    def refresh_model(self, conn):
-        table = self.selector.table
-        selector = self.selector.where
-
-        table_pks = get_table_pks(conn, table)
-
-        self.data = {
-            "self": to_jsonisable(self.get_entity_row(conn, table, selector)),
-        }
-
+    def make_inbound_references_models(self, conn):
         if os.environ.get('IR') is not None:
-            inbound_relations = get_table_foreign_keys_inbound(conn, table)
-            in_refs_model = make_referring_rows_model(conn, table, selector, inbound_relations)
-            if len(in_refs_model) > 0:
-                self.data["referrers"] = in_refs_model
+            inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
+            return make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
 
-        outbound_relations = get_table_foreign_keys_outbound(conn, table)
-        self.references = {
+    def make_references(self, conn):
+        outbound_relations = get_table_foreign_keys_outbound(conn, self.selector.table)
+        references = {
             entry['column_name']: {
                 'concept': entry['foreign_table_name'],
                 'concept-pk': entry['foreign_column_name'],
             }
             for entry in outbound_relations
         }
-        set_current_highlighting(AppHighlighting(self.references, table_pks))
+        table_pks = get_table_pks(conn, self.selector.table)
+        set_current_highlighting(AppHighlighting(references, table_pks))
+        return references
 
-    def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
+    def make_row_model(self, conn):
+        return to_jsonisable(self.get_entity_row(conn, self.selector.table, self.selector.where))
+
+    def handle_loop_result(self, document, references, key_code, cur_line: int) -> Optional[EntityReference]:
         if key_code == KEY_ENTER:
             path = document.selected_path(cur_line)
             value = document.selected_value(cur_line)
@@ -112,7 +114,7 @@ class ViewDbRow(View):
                 )
             elif get_current_highlighting().is_fk(path):
                 fk_field_name = JsonTreeStructure.self_field_name(path)
-                referred = self.references[fk_field_name]
+                referred = references[fk_field_name]
                 return DbRowReference(
                     DbTableRowsSelector(
                         table=referred['concept'],
