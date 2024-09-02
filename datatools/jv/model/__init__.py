@@ -14,6 +14,13 @@ from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 from datatools.jv.model.JComplexElement import JComplexElement
 
 
+def set_padding(elements: List[JValueElement]) -> List[JValueElement]:
+    max_field_name_length = 0 if len(elements) == 0 else max(len(e.key) for e in elements)
+    for e in elements:
+        e.padding = max_field_name_length - len(e.key) + 1
+    return elements
+
+
 class JElementFactory:
     INDENT = 2
 
@@ -37,7 +44,7 @@ class JElementFactory:
         elif type(v) is bool:
             return JBoolean(v, k, last_in_parent)
         elif type(v) is dict or type(v) is defaultdict:
-            return JObject(v, k, self.build_object_fields_models(v), last_in_parent)
+            return JObject(v, k, set_padding(self.build_object_fields_models(v)), last_in_parent)
         elif type(v) is list:
             return JArray(v, k, self.build_array_items_models(v), last_in_parent)
         else:
@@ -45,13 +52,11 @@ class JElementFactory:
             return v
 
     def build_object_fields_models(self, v) -> List[JValueElement]:
-        max_field_name_length = 0 if len(v) == 0 else max(len(k) for k in v)
         fields = []
         i = 0
         size = len(v)
         for k, v in v.items():
             model = self.build_model(v, k, i >= size - 1)
-            model.padding = max_field_name_length - len(k) + 1
             fields.append(model)
             i += 1
         return fields

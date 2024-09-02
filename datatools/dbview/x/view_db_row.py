@@ -1,10 +1,11 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from picotui.defs import KEY_ENTER, KEY_F1
 
 from datatools.dbview.util.pg import execute_sql, get_table_foreign_keys_outbound, \
     get_table_foreign_keys_inbound, get_table_pks
+from datatools.dbview.x import cleanse_dict
 from datatools.dbview.x.app_highlighting import AppHighlighting
 from datatools.dbview.x.app_tree_structure import JsonTreeStructure
 from datatools.dbview.x.get_referring_rows import make_referring_rows_model
@@ -15,12 +16,9 @@ from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.jv.model import JElementFactory
+from datatools.jv.model.JObject import JObject
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
-
-
-def cleanse_dict(d: dict):
-    return { k: v for k, v in d.items() if v}
 
 
 class ViewDbRow(View):
@@ -28,6 +26,9 @@ class ViewDbRow(View):
 
     def __init__(self, selector: DbTableRowsSelector) -> None:
         self.selector = selector
+
+    def build_row_view(self, model: Dict, references: Dict[str, Any]) -> JObject:
+        return JElementFactory().build_model(model)
 
     def run(self) -> Optional[EntityReference]:
         with connect_to_db() as conn:
@@ -49,7 +50,7 @@ class ViewDbRow(View):
                     # },
                     "data": cleanse_dict(
                         {
-                            "self": JElementFactory().build_model(self.make_row_model(conn)),
+                            "self": self.build_row_view(self.make_row_model(conn), references),
                             "referrers": self.make_inbound_references_models(conn),
                         }
                     ),
@@ -86,7 +87,7 @@ class ViewDbRow(View):
             inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
             return make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
 
-    def make_references(self, conn):
+    def make_references(self, conn) -> Dict[str, Any]:
         outbound_relations = get_table_foreign_keys_outbound(conn, self.selector.table)
         references = {
             entry['column_name']: {
