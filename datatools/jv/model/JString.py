@@ -7,7 +7,10 @@ from datatools.tui.treeview.rich_text import Style
 
 class JString(JPrimitiveElement[str]):
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return '"' + ''.join([JString.escape(c) for c in self.value]) + '"', get_current_highlighting().for_string(self)
+        return '"' + ''.join([JString.escape(c) for c in self.value]) + '"', self.value_style()
+
+    def value_style(self):
+        return get_current_highlighting().for_string(self)
 
     @staticmethod
     def escape(c: str):
