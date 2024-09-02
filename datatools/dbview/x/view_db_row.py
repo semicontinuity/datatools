@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from typing import List, Optional, Dict, Any
 
 from picotui.defs import KEY_ENTER, KEY_F1
@@ -7,7 +8,8 @@ from datatools.dbview.util.pg import execute_sql, get_table_foreign_keys_outboun
     get_table_foreign_keys_inbound, get_table_pks
 from datatools.dbview.x import cleanse_dict
 from datatools.dbview.x.app_tree_structure import JsonTreeStructure
-from datatools.dbview.x.get_referring_rows import make_referring_rows_model
+from datatools.dbview.x.get_referring_rows import get_selector_value, \
+    get_pk_and_text_values_for_selected_rows
 from datatools.dbview.x.types import DbRowReference, DbSelectorClause, EntityReference, View, DbReferrers, \
     DbTableRowsSelector
 from datatools.dbview.x.util.pg import connect_to_db
@@ -122,7 +124,48 @@ class ViewDbRow(View):
     def make_inbound_references_models(self, conn):
         if os.environ.get('IR') is not None:
             inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
-            return make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
+            return self.make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
+
+    def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
+        debug('make_referring_rows_model', table=table, where=where)
+
+        if not where:
+            raise Exception('WHERE clause is required')
+        if len(where) != 1:
+            raise Exception('WHERE clauses must contain 1 clause')
+
+        result = defaultdict(lambda: defaultdict(list))
+
+        for inbound_relation in inbound_relations:
+            this_table = inbound_relation['foreign_table_name']
+            if table != this_table:
+                raise Exception('illegal state')
+
+            selector_value = get_selector_value(conn, inbound_relation, table, where)
+
+            foreign_table = inbound_relation['table_name']
+            foreign_column = inbound_relation['column_name']
+
+            table_pks = get_table_pks(conn, foreign_table)
+            if len(table_pks) == 0:
+                raise Exception(f"expected PKs in table {foreign_table}")
+
+            pk_kv, text_kv = get_pk_and_text_values_for_selected_rows(conn, foreign_table, foreign_column,
+                                                                      selector_value, table_pks)
+            if len(pk_kv) == 0:
+                continue
+            else:
+                entry = []
+                result[foreign_table][foreign_column] = entry
+                for i in range(len(pk_kv)):
+                    entry.append(
+                        {
+                            'key': pk_kv[i],
+                            'value': text_kv[i],
+                        }
+                    )
+
+        return result
 
     def make_references(self, conn) -> Dict[str, Any]:
         outbound_relations = get_table_foreign_keys_outbound(conn, self.selector.table)
