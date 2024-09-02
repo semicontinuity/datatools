@@ -15,8 +15,9 @@ from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
-from datatools.jv.model import JElementFactory
+from datatools.jv.model import JElementFactory, set_padding
 from datatools.jv.model.JObject import JObject
+from datatools.jv.model.JString import JString
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
@@ -28,7 +29,16 @@ class ViewDbRow(View):
         self.selector = selector
 
     def build_row_view(self, model: Dict, references: Dict[str, Any]) -> JObject:
-        return JElementFactory().build_model(model)
+        factory = JElementFactory()
+
+        views = []
+        for k, v in model.items():
+            if type(v) is str:
+                views.append(JString(v, k))
+            else:
+                views.append(factory.build_model(v, k))
+
+        return JObject(model, None, set_padding(views))
 
     def run(self) -> Optional[EntityReference]:
         with connect_to_db() as conn:

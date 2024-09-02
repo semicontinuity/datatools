@@ -1,17 +1,19 @@
 from collections import defaultdict
-from typing import List, Optional, Dict, Hashable
+from typing import List, Optional, Hashable
 
 from datatools.jv.model import JObject, JArray
 from datatools.jv.model.JArray import JArray
 from datatools.jv.model.JBoolean import JBoolean
+from datatools.jv.model.JComplexElement import JComplexElement
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JNull import JNull
 from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.JObject import JObject
+from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
 from datatools.jv.model.JString import JString
 from datatools.jv.model.JValueElement import JValueElement
-from datatools.jv.model.JPrimitiveElement import JPrimitiveElement
-from datatools.jv.model.JComplexElement import JComplexElement
+
+INDENT = 2
 
 
 def set_padding(elements: List[JValueElement]) -> List[JValueElement]:
@@ -21,13 +23,20 @@ def set_padding(elements: List[JValueElement]) -> List[JValueElement]:
     return elements
 
 
+def set_indent_recursive(model: JValueElement, indent: int = 0) -> JValueElement:
+    model.indent = indent
+    if issubclass(type(model), JComplexElement):
+        model.start.indent = indent
+        model.end.indent = indent
+        for e in model.elements:
+            set_indent_recursive(e, indent + INDENT)
+    return model
+
+
 class JElementFactory:
-    INDENT = 2
 
     def build_root_model(self, v, k: Optional[Hashable] = None, last_in_parent=True) -> JValueElement:
-        model = self.build_model(v, k, last_in_parent)
-        self.set_indent_recursive(model, 0)
-        return model
+        return set_indent_recursive(self.build_model(v, k, last_in_parent))
 
     def build_model(self, v, k: Optional[Hashable] = None, last_in_parent=True, parent: Optional[JElement] = None) -> JValueElement:
         model = self.build_model_raw(v, k, last_in_parent)
@@ -68,11 +77,3 @@ class JElementFactory:
             items.append(self.build_model(v, i, i >= size - 1))
             i += 1
         return items
-
-    def set_indent_recursive(self, model: JElement, indent: int):
-        model.indent = indent
-        if issubclass(type(model), JComplexElement):
-            model.start.indent = indent
-            model.end.indent = indent
-            for e in model.elements:
-                self.set_indent_recursive(e, indent + self.INDENT)
