@@ -11,8 +11,8 @@ class JElement(TreeNode):
     key: Optional[str]
     padding: int
 
-    def __init__(self, key: Optional[str] = None, last_in_parent=True) -> None:
-        super().__init__(last_in_parent)
+    def __init__(self, key: Optional[str] = None) -> None:
+        super().__init__(True)
         self.key = key
         self.indent = 0
         self.padding = 0

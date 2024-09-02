@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Optional, Hashable
+from typing import List, Optional, Hashable, Dict
 
 from datatools.jv.model import JObject, JArray
 from datatools.jv.model.JArray import JArray
@@ -43,23 +43,23 @@ def set_indent_recursive(model: JValueElement, indent: int = 0) -> JValueElement
 
 class JElementFactory:
 
-    def build_root_model(self, v, k: Optional[Hashable] = None, last_in_parent=True) -> JValueElement:
-        return set_indent_recursive(self.build_model(v, k, last_in_parent))
+    def build_root_model(self, v, k: Optional[Hashable] = None) -> JValueElement:
+        return set_indent_recursive(self.build_model(v, k))
 
-    def build_model(self, v, k: Optional[Hashable] = None, last_in_parent=True, parent: Optional[JElement] = None) -> JValueElement:
-        model = self.build_model_raw(v, k, last_in_parent)
+    def build_model(self, v, k: Optional[Hashable] = None, parent: Optional[JElement] = None) -> JValueElement:
+        model = self.build_model_raw(v, k)
         model.parent = parent
         return model
 
-    def build_model_raw(self, v, k: Optional[str], last_in_parent=True) -> JValueElement:
+    def build_model_raw(self, v, k: Optional[str]) -> JValueElement:
         if v is None:
-            return JNull(None, k, last_in_parent)
+            return JNull(None, k)
         elif type(v) is str:
-            return JString(v, k, last_in_parent)
+            return JString(v, k)
         elif type(v) is int or type(v) is float:
-            return JNumber(v, k, last_in_parent)
+            return JNumber(v, k)
         elif type(v) is bool:
-            return JBoolean(v, k, last_in_parent)
+            return JBoolean(v, k)
         elif type(v) is dict or type(v) is defaultdict:
             return self.build_object_model(v, k, self.build_object_fields_models(v))
         elif type(v) is list:
@@ -74,31 +74,8 @@ class JElementFactory:
     def build_object_model(self, v, k, element_models):
         return JObject(v, k, set_last_in_parent(set_padding(element_models)))
 
-    def build_object_fields_models(self, v) -> List[JValueElement]:
-        models = []
-        i = 0
-        model = None
+    def build_object_fields_models(self, v: Dict) -> List[JValueElement]:
+        return [self.build_model(v, k) for k, v in v.items()]
 
-        for k, v in v.items():
-            model = self.build_model(v, k)
-            models.append(model)
-            i += 1
-
-        if model is not None:
-            model.last_in_parent = True
-
-        return models
-
-    def build_array_items_models(self, v) -> List[JValueElement]:
-        models = []
-        model = None
-
-        for i, v in enumerate(v):
-            model = self.build_model(v, i)
-            models.append(model)
-            i += 1
-
-        if model is not None:
-            model.last_in_parent = True
-
-        return models
+    def build_array_items_models(self, v: List) -> List[JValueElement]:
+        return [self.build_model(v, i) for i, v in enumerate(v)]
