@@ -69,7 +69,7 @@ class JElementFactory:
             return v
 
     def build_array_model(self, v, k, items_models):
-        return JArray(v, k, items_models)
+        return JArray(v, k, set_last_in_parent(items_models))
 
     def build_object_model(self, v, k, element_models):
         return JObject(v, k, set_last_in_parent(set_padding(element_models)))

@@ -64,7 +64,7 @@ class ViewDbRow(View):
             else:
                 views.append(factory.build_model(v, k))
 
-        return JObject(model, None, set_padding(views))
+        return factory.build_object_model(model, None, views)
 
     def run(self) -> Optional[EntityReference]:
         with connect_to_db() as conn:
