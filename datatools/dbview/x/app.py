@@ -4,6 +4,7 @@ from datatools.dbview.x.types import EntityReference, DbRowReference, DbSelector
     DbTableRowsSelector, DbReferringRows
 from datatools.dbview.x.util.pg import get_env, get_where_clauses
 from datatools.dbview.x.view_db_referrers import ViewDbReferrers
+from datatools.dbview.x.view_db_referrers2 import ViewDbReferrers2
 from datatools.dbview.x.view_db_referring_rows import ViewDbReferringRows
 from datatools.dbview.x.view_db_row import ViewDbRow
 
@@ -30,7 +31,7 @@ def make_view(e_ref: EntityReference) -> View:
     if type(e_ref) is DbRowReference:
         return ViewDbRow(e_ref.selector)
     elif type(e_ref) is DbReferrers:
-        return ViewDbReferrers(e_ref.selector)
+        return ViewDbReferrers2(e_ref.selector)
     elif type(e_ref) is DbReferringRows:
         return ViewDbReferringRows(e_ref)
 
