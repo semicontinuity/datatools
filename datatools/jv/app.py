@@ -12,7 +12,7 @@ from datatools.jv.document import JDocument
 from datatools.jv.grid import JGrid
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
-from datatools.jv.model import JElementFactory
+from datatools.jv.model.factory import JElementFactory
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
 from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.screen_helper import with_alternate_screen

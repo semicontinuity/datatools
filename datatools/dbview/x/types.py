@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 from picotui.defs import KEY_ENTER
 
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
-from datatools.jv.model import JElementFactory
+from datatools.jv.model.factory import JElementFactory
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
