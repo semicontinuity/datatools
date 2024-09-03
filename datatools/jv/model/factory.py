@@ -34,8 +34,11 @@ class JElementFactory:
 
     def __init__(self, options: JViewOptions = None) -> None:
         if options is None:
-            options = JViewOptions(quotes='YAML' not in os.environ)
-            # options = JViewOptions(quotes=True)
+            json = 'YAML' not in os.environ
+            options = JViewOptions(
+                quotes=json,
+                commas=json,
+            )
         self.options = options
 
     def set_indent_recursive(self, model: JValueElement, indent: int = 0) -> JValueElement:

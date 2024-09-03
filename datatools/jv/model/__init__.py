@@ -4,3 +4,4 @@ from dataclasses import dataclass
 class JViewOptions:
     indent: int = 2
     quotes: bool = True
+    commas: bool = True

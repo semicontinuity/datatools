@@ -33,7 +33,7 @@ class JElement(TreeNode):
         return f'"{self.key}"' if self.get_options().quotes else self.key
 
     def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
-        return [] if self.last_in_parent else [(',', get_current_highlighting().for_comma())]
+        return [] if self.last_in_parent or not self.get_options().commas else [(',', get_current_highlighting().for_comma())]
 
     def rich_text(self) -> Tuple[AnyStr, Style]: pass
 
