@@ -25,7 +25,14 @@ class ViewDbRow(View):
 
             doc = make_document(
                 {
-                    self.selector.table: MyElementFactory().build_row_view(self.make_row_model(conn), self.references, self.table_pks)
+                    self.selector.table: MyElementFactory().build_row_view(
+                        # to_jsonisable(
+                        #     self.get_entity_row(conn, self.selector.table, self.selector.where)
+                        # ),
+                        self.get_entity_row(conn, self.selector.table, self.selector.where),
+                        self.references,
+                        self.table_pks
+                    )
                 }
             )
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
@@ -47,9 +54,6 @@ class ViewDbRow(View):
         if len(rows) != 1:
             raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
         return rows[0]
-
-    def make_row_model(self, conn):
-        return to_jsonisable(self.get_entity_row(conn, self.selector.table, self.selector.where))
 
     def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
         if type(key_code) is not int and type(key_code) is not str:

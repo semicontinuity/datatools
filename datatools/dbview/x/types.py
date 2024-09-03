@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 
@@ -59,6 +60,10 @@ class View:
 
 class MyElementFactory(JElementFactory):
 
+    class JDateTime(JString):
+        def value_style(self):
+            return Style(0, (0, 120, 240))
+
     class JPrimaryKey(JString):
         def value_style(self):
             return Style(AbstractBufferWriter.MASK_BOLD, (64, 160, 192))
@@ -91,10 +96,17 @@ class MyElementFactory(JElementFactory):
         e.options = self.options
         return e
 
+    def date_time(self, v, k):
+        e = MyElementFactory.JDateTime(str(v), k)
+        e.options = self.options
+        return e
+
     def build_row_view(self, model: Dict, references: Dict[str, Any], table_pks: List[str]) -> JObject:
         views = []
         for k, v in model.items():
-            if type(v) is str and k in table_pks:
+            if isinstance(v, datetime.datetime):
+                views.append(self.date_time(v, k))
+            elif type(v) is str and k in table_pks:
                 views.append(self.primary_key(v, k))
             elif type(v) is str and k in references:
                 node = self.foreign_key(v, k)
