@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from typing import List, Optional, Hashable, Dict
 
@@ -31,7 +32,10 @@ def set_last_in_parent(elements: List[JValueElement]) -> List[JValueElement]:
 class JElementFactory:
     options: JViewOptions
 
-    def __init__(self, options: JViewOptions = JViewOptions()) -> None:
+    def __init__(self, options: JViewOptions = None) -> None:
+        if options is None:
+            options = JViewOptions(quotes='YAML' not in os.environ)
+            # options = JViewOptions(quotes=True)
         self.options = options
 
     def set_indent_recursive(self, model: JValueElement, indent: int = 0) -> JValueElement:

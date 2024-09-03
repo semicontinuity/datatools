@@ -58,6 +58,7 @@ class View:
 
 
 class MyElementFactory(JElementFactory):
+
     class JPrimaryKey(JString):
         def value_style(self):
             return Style(AbstractBufferWriter.MASK_BOLD, (64, 160, 192))
@@ -79,7 +80,6 @@ class MyElementFactory(JElementFactory):
                         where=[DbSelectorClause(self.foreign_table_pk, '=', f"'{self.value}'")]
                     )
                 )
-
 
     def foreign_key(self, v, k):
         e = MyElementFactory.JForeignKey(v, k)
