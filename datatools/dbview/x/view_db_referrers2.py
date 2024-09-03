@@ -32,11 +32,10 @@ class ViewDbReferrers2(View):
             return self.handle_loop_result(doc, key_code, cur_line)
 
     def make_inbound_references_models(self, conn):
-        if os.environ.get('IR') is not None:
-            inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
-            return self.referring_tables(
-                self.make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
-            )
+        inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
+        return self.referring_tables(
+            self.make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
+        )
 
     def referring_tables(self, referrers: Dict):
         return {table: self.referring_columns(columns, table) for table, columns in referrers.items()}
