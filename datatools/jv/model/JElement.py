@@ -1,6 +1,7 @@
 from typing import AnyStr, Tuple, List, Optional, Hashable
 
 from datatools.jv.highlighting.holder import get_current_highlighting
+from datatools.jv.model import JViewOptions
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
 
@@ -10,6 +11,7 @@ class JElement(TreeNode):
     indent: int
     key: Optional[str]
     padding: int
+    options: JViewOptions
 
     def __init__(self, key: Optional[str] = None) -> None:
         super().__init__(True)

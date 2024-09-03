@@ -53,13 +53,13 @@ class JElementFactory:
 
     def build_model_raw(self, v, k: Optional[str]) -> JValueElement:
         if v is None:
-            return JNull(None, k)
+            return self.null(k)
         elif type(v) is str:
-            return JString(v, k)
+            return self.string(v, k)
         elif type(v) is int or type(v) is float:
-            return JNumber(v, k)
+            return self.number(v, k)
         elif type(v) is bool:
-            return JBoolean(v, k)
+            return self.boolean(v, k)
         elif type(v) is dict or type(v) is defaultdict:
             return self.build_object_model(v, k, self.build_object_fields_models(v))
         elif type(v) is list:
@@ -68,11 +68,35 @@ class JElementFactory:
             v.set_key(k)
             return v
 
+    def boolean(self, v, k):
+        e = JBoolean(v, k)
+        e.options = self.options
+        return e
+
+    def number(self, v, k):
+        e = JNumber(v, k)
+        e.options = self.options
+        return e
+
+    def string(self, v, k):
+        e = JString(v, k)
+        e.options = self.options
+        return e
+
+    def null(self, k) -> JNull:
+        e = JNull(None, k)
+        e.options = self.options
+        return e
+
     def build_array_model(self, v, k, items_models):
-        return JArray(v, k, set_last_in_parent(items_models))
+        e = JArray(v, k, set_last_in_parent(items_models))
+        e.options = self.options
+        return e
 
     def build_object_model(self, v, k, element_models):
-        return JObject(v, k, set_last_in_parent(set_padding(element_models)))
+        e = JObject(v, k, set_last_in_parent(set_padding(element_models)))
+        e.options = self.options
+        return e
 
     def build_object_fields_models(self, v: Dict) -> List[JValueElement]:
         return [self.build_model(v, k) for k, v in v.items()]

@@ -1,12 +1,11 @@
-import os
 from collections import defaultdict
 from typing import List, Optional, Dict
 
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
 from datatools.dbview.x.get_referring_rows import get_selector_value, \
     get_pk_and_text_values_for_selected_rows
-from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbTableRowsSelector, build_row_view, \
-    make_references
+from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbTableRowsSelector, make_references, \
+    MyElementFactory
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.jv.app import loop, make_document
 from datatools.tui.screen_helper import with_alternate_screen
@@ -49,7 +48,7 @@ class ViewDbReferrers2(View):
     def referring_record(self, referrer: Dict, table: str):
         key = referrer['key']
         value = referrer['value']
-        return build_row_view(key | value, {k: {'concept': table, 'concept-pk': k} for k in key}, [])
+        return MyElementFactory().build_row_view(key | value, {k: {'concept': table, 'concept-pk': k} for k in key}, [])
 
     def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
         debug('make_referring_rows_model', table=table, where=where)

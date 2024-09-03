@@ -4,7 +4,7 @@ from picotui.defs import KEY_F1
 
 from datatools.dbview.util.pg import execute_sql, get_table_pks
 from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbReferrers, \
-    DbTableRowsSelector, build_row_view, make_references
+    DbTableRowsSelector, make_references, MyElementFactory
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
@@ -25,7 +25,7 @@ class ViewDbRow(View):
 
             doc = make_document(
                 {
-                    self.selector.table: build_row_view(self.make_row_model(conn), self.references, self.table_pks)
+                    self.selector.table: MyElementFactory().build_row_view(self.make_row_model(conn), self.references, self.table_pks)
                 }
             )
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
