@@ -24,10 +24,13 @@ class JElement(TreeNode):
 
     def spans_for_field_label(self) -> List[Tuple[AnyStr, Style]]:
         return [
-            (f'"{self.key}"', get_current_highlighting().for_field_label(self.key, self.indent, self.path())),
+            (f'"{self.label()}"', get_current_highlighting().for_field_label(self.key, self.indent, self.path())),
             (' ' * self.get_padding(), Style()),
             (': ', get_current_highlighting().for_colon()),
         ] if self.key is not None and type(self.key) is not int else []
+
+    def label(self) -> str:
+        return f'"{self.key}"' if self.get_options().quotes else self.key
 
     def spans_for_comma(self) -> List[Tuple[AnyStr, Style]]:
         return [] if self.last_in_parent else [(',', get_current_highlighting().for_comma())]
@@ -39,6 +42,8 @@ class JElement(TreeNode):
     def get_value_element(self): pass
 
     def get_padding(self): return self.padding
+
+    def get_options(self): return self.options
 
     def path(self) -> List[Hashable]:
         path = []
