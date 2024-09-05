@@ -3,10 +3,10 @@
 from datatools.dbview.x.types import EntityReference, DbRowReference, DbSelectorClause, DbReferrers, View, \
     DbTableRowsSelector, DbReferringRows
 from datatools.dbview.x.util.pg import get_env, get_where_clauses
-from datatools.dbview.x.view_db_referrers import ViewDbReferrers
 from datatools.dbview.x.view_db_referrers2 import ViewDbReferrers2
 from datatools.dbview.x.view_db_referring_rows import ViewDbReferringRows
 from datatools.dbview.x.view_db_row import ViewDbRow
+from datatools.tui.picotui_keys import KEY_ALT_SHIFT_LEFT, KEY_ALT_SHIFT_RIGHT, KEY_ALT_SHIFT_UP
 
 
 def main():
@@ -17,10 +17,28 @@ def main():
         )
     )
 
+    history = []
+    history_idx = 0
+
     while True:
         view = make_view(ref)
         if view is None:
-            break
+            if ref == KEY_ALT_SHIFT_LEFT:
+                history_idx = max(0, history_idx - 1)
+                view = history[history_idx]
+            elif ref == KEY_ALT_SHIFT_RIGHT:
+                history_idx = min(len(history) - 1, history_idx + 1)
+                view = history[history_idx]
+            elif ref == KEY_ALT_SHIFT_UP:
+                print(history_idx, [type(e) for e in history])
+                break
+            else:
+                break
+        else:
+            history_idx += 1
+            history = history[:history_idx + 1]
+            history.append(view)
+            history_idx = len(history) - 1
 
         ref = view.run()
         if ref is None:

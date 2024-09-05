@@ -6,7 +6,6 @@ from datatools.dbview.util.pg import execute_sql, get_table_pks
 from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbReferrers, \
     DbTableRowsSelector, make_references, MyElementFactory
 from datatools.dbview.x.util.pg import connect_to_db
-from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
@@ -56,8 +55,7 @@ class ViewDbRow(View):
         return rows[0]
 
     def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
-        if type(key_code) is not int and type(key_code) is not str:
-            # Not key_code - EntityReference
-            return key_code
-        elif key_code == KEY_F1:
+        if key_code == KEY_F1:
             return DbReferrers(self.selector)
+        else:
+            return key_code

@@ -90,6 +90,7 @@ class ViewDbReferrers2(View):
         return result
 
     def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
-        if type(key_code) is not int and type(key_code) is not str:
-            # Not key_code - EntityReference
-            return key_code
+        #if type(key_code) is not int and type(key_code) is not str:
+        #    # Not key_code - EntityReference
+        #    return key_code
+        return key_code
