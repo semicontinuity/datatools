@@ -30,15 +30,11 @@ def main():
             elif ref == KEY_ALT_SHIFT_RIGHT:
                 history_idx = min(len(history) - 1, history_idx + 1)
                 view = history[history_idx]
-            elif ref == KEY_ALT_SHIFT_UP:
-                print(history_idx, [type(e) for e in history])
-                break
             else:
                 break
         else:
             view.build()
-            history_idx += 1
-            history = history[:history_idx + 1]
+            history = history[:(history_idx + 1)]
             history.append(view)
             history_idx = len(history) - 1
 
