@@ -7,7 +7,7 @@ from datatools.dbview.x.get_referring_rows import get_selector_value, \
 from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbTableRowsSelector, make_references, \
     MyElementFactory
 from datatools.dbview.x.util.pg import connect_to_db
-from datatools.jv.app import loop, make_document
+from datatools.jv.app import loop, make_document, make_grid, do_loop
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
@@ -27,9 +27,10 @@ class ViewDbReferrers2(View):
                 "referrers": self.make_inbound_references_models(conn)
             }
             self.doc = make_document(tree)
+            self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
     def run(self) -> Optional[EntityReference]:
-        key_code, cur_line = with_alternate_screen(lambda: loop(self.doc))
+        key_code, cur_line = with_alternate_screen(lambda: do_loop(self.g))
         return self.handle_loop_result(self.doc, key_code, cur_line)
 
     def make_inbound_references_models(self, conn):

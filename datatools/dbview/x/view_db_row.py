@@ -6,7 +6,7 @@ from datatools.dbview.util.pg import execute_sql, get_table_pks
 from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbReferrers, \
     DbTableRowsSelector, make_references, MyElementFactory
 from datatools.dbview.x.util.pg import connect_to_db
-from datatools.jv.app import loop, make_document
+from datatools.jv.app import loop, make_document, make_grid, do_loop
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
@@ -34,9 +34,10 @@ class ViewDbRow(View):
                     )
                 }
             )
+            self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
     def run(self) -> Optional[EntityReference]:
-        key_code, cur_line = with_alternate_screen(lambda: loop(self.doc))
+        key_code, cur_line = with_alternate_screen(lambda: do_loop(self.g))
         return self.handle_loop_result(self.doc, key_code, cur_line)
 
     def get_entity_row(self, conn, table: str, where: List[DbSelectorClause]):

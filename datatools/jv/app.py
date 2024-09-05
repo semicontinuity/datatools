@@ -55,7 +55,14 @@ def make_document(j):
 
 
 def loop(document: JDocument):
-    g = make_json_tree_applet(document, screen_size_or_default()).g
+    return do_loop(make_grid(document))
+
+
+def make_grid(document):
+    return make_json_tree_applet(document, screen_size_or_default()).g
+
+
+def do_loop(g):
     key_code = g.loop()
     cur_line = g.cur_line
     return key_code, cur_line
