@@ -54,6 +54,9 @@ class DbReferringRows(EntityReference):
 
 @dataclass
 class View:
+    def build(self):
+        pass
+
     def run(self) -> Optional[EntityReference]:
         pass
 

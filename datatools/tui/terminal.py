@@ -33,9 +33,10 @@ def with_raw_terminal(code):
 
 def read_screen_size():
     resp = query_terminal(b"\x1b[18t")
-    assert resp.startswith(b"\x1b[8;") and resp[-1:] == b"t"
-    parts = resp[:-1].split(b";")
-    return int(parts[2]), int(parts[1])
+    if resp.startswith(b"\x1b[8;") and resp[-1:] == b"t":
+        parts = resp[:-1].split(b";")
+        return int(parts[2]), int(parts[1])
+    return 100, 40
 
 
 def screen_size_or_default(default=(1000, 10000)):

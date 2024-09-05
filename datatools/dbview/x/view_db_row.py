@@ -17,12 +17,12 @@ class ViewDbRow(View):
     def __init__(self, selector: DbTableRowsSelector) -> None:
         self.selector = selector
 
-    def run(self) -> Optional[EntityReference]:
+    def build(self):
         with connect_to_db() as conn:
             self.references = make_references(conn, self.selector.table)
             self.table_pks = get_table_pks(conn, self.selector.table)
 
-            doc = make_document(
+            self.doc = make_document(
                 {
                     self.selector.table: MyElementFactory().build_row_view(
                         # to_jsonisable(
@@ -34,8 +34,10 @@ class ViewDbRow(View):
                     )
                 }
             )
-            key_code, cur_line = with_alternate_screen(lambda: loop(doc))
-            return self.handle_loop_result(doc, key_code, cur_line)
+
+    def run(self) -> Optional[EntityReference]:
+        key_code, cur_line = with_alternate_screen(lambda: loop(self.doc))
+        return self.handle_loop_result(self.doc, key_code, cur_line)
 
     def get_entity_row(self, conn, table: str, where: List[DbSelectorClause]):
         if not where:

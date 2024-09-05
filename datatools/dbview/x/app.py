@@ -21,7 +21,8 @@ def main():
     history_idx = 0
 
     while True:
-        view = make_view(ref)
+        # ref is EntityReference or key code
+        view = create_view(ref)
         if view is None:
             if ref == KEY_ALT_SHIFT_LEFT:
                 history_idx = max(0, history_idx - 1)
@@ -35,6 +36,7 @@ def main():
             else:
                 break
         else:
+            view.build()
             history_idx += 1
             history = history[:history_idx + 1]
             history.append(view)
@@ -45,7 +47,7 @@ def main():
             break
 
 
-def make_view(e_ref: EntityReference) -> View:
+def create_view(e_ref: EntityReference) -> View:
     if type(e_ref) is DbRowReference:
         return ViewDbRow(e_ref.selector)
     elif type(e_ref) is DbReferrers:

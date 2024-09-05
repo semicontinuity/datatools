@@ -18,7 +18,7 @@ class ViewDbReferrers2(View):
     def __init__(self, selector: DbTableRowsSelector) -> None:
         self.selector = selector
 
-    def run(self) -> Optional[EntityReference]:
+    def build(self):
         with connect_to_db() as conn:
             self.references = make_references(conn, self.selector.table)
             self.table_pks = get_table_pks(conn, self.selector.table)
@@ -26,9 +26,11 @@ class ViewDbReferrers2(View):
             tree = {
                 "referrers": self.make_inbound_references_models(conn)
             }
-            doc = make_document(tree)
-            key_code, cur_line = with_alternate_screen(lambda: loop(doc))
-            return self.handle_loop_result(doc, key_code, cur_line)
+            self.doc = make_document(tree)
+
+    def run(self) -> Optional[EntityReference]:
+        key_code, cur_line = with_alternate_screen(lambda: loop(self.doc))
+        return self.handle_loop_result(self.doc, key_code, cur_line)
 
     def make_inbound_references_models(self, conn):
         inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
