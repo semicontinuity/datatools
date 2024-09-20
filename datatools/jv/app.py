@@ -51,7 +51,9 @@ def make_document(j) -> JDocument:
     model = factory.build_root_model(j)
     model.set_collapsed_recursive(True)
     model.collapsed = False
-    return JDocument(model)
+    doc = JDocument(model)
+    # doc.footer = 'test'
+    return doc
 
 
 def loop(document: JDocument):

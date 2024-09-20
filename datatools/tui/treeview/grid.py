@@ -9,9 +9,11 @@ from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_U
 
 from datatools.json2ansi.app import GridContext
 from datatools.jt.model.exit_codes_mapping_v2 import KEYS_TO_EXIT_CODES
+from datatools.tui.ansi import ANSI_ATTR_OVERLINE
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME, KEY_CTRL_LEFT, \
     KEY_CTRL_RIGHT, KEY_CTRL_SHIFT_RIGHT
+from datatools.tui.terminal import ansi_attr_bytes
 from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
 from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.treedocument import TreeDocument
@@ -24,8 +26,8 @@ class WGrid(WGridBase, Thread):
     dynamic_helper: DynamicEditorSupport
     x_shift: int  # horizontal view shift size
 
-    def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True, footer: str = None):
-        super().__init__(x, y, width, height, 0, 1 if footer else 0, interactive)
+    def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):
+        super().__init__(x, y, width, height, 0, 1 if document.footer else 0, interactive)
         self.x_shift = 0
         self.document = document
         self.event_queue = Queue()
@@ -56,7 +58,30 @@ class WGrid(WGridBase, Thread):
         self.clear_box(self.x, self.y, self.width, self.height)
 
     def redraw(self):
+        if self.document.footer and self.interactive:
+            self.redraw_footer()
         self.redraw_content()
+
+    def redraw_footer(self):
+        self.goto(self.x, self.y + self.y_top_offset + min(self.rows_view_height, self.total_lines))
+        self.wr(self.render_footer())
+
+    def render_footer(self):
+        buffer = bytearray()
+        # reset attributes
+        buffer += b'\x1b[0m'
+
+        buffer += ansi_attr_bytes(ANSI_ATTR_OVERLINE)
+
+        text = self.document.footer[:self.width]
+        buffer += bytes(text, "utf-8")
+
+        buffer += b' ' * (self.width - len(text))
+
+        # reset attributes
+        buffer += b'\x1b[0m'
+
+        return buffer
 
     def before_redraw(self):
         self.cell_cursor_off()

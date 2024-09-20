@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from datatools.tui.ansi_str import ANSI_CMD_DEFAULT_BG
 from datatools.tui.terminal import ansi_background_escape_code
@@ -8,6 +8,8 @@ from datatools.tui.treeview.treenode import TreeNode
 
 
 class TreeDocument:
+    footer: Optional[str] = None
+
     root: TreeNode
 
     width: int
