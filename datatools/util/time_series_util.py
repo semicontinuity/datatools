@@ -21,12 +21,17 @@ def time_series_list_summary(data) -> Optional[Tuple]:
             if current_summary is ...:
                 continue
 
-            pattern, _ = infer_timestamp_format(value)
+            pattern = infer_timestamp_format(value)
+            if type(pattern) is tuple:
+                pattern, _ = pattern
             if pattern is None:
                 summaries[key] = ...
                 continue
 
-            ts = datetime.datetime.strptime(value, pattern).timestamp()
+            if pattern == 'ISO':
+                ts = datetime.datetime.fromisoformat(value).timestamp()
+            else:
+                ts = datetime.datetime.strptime(value, pattern).timestamp()
 
             if current_summary is None:
                 summaries[key] = pattern, ts, ts

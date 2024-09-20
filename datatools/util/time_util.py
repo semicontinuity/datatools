@@ -9,8 +9,13 @@ def parse_timestamp(ts):
     %Y-%m-%d %H:%M:%S
     %Y-%m-%d %H:%M:%S.%f
     %Y-%m-%d %H:%M:%S.%f%z
+    ISO
     """
-    pattern, ts = infer_timestamp_format(ts)
+    res = infer_timestamp_format(ts)
+    if res == 'ISO':
+        return datetime.datetime.fromisoformat(ts).timestamp()
+    print(res)
+    pattern, _ = res
     return datetime.datetime.strptime(ts, pattern).timestamp()
 
 
@@ -45,4 +50,6 @@ def infer_timestamp_format(ts):
     if time_offset is not None: pattern = pattern + '%H:%M:%S'
     if fraction_char: pattern = pattern + fraction_char + '%f'
     if has_tz_offset is not None: pattern = pattern + '%z'
+    if pattern and len(ts) == 30:
+        return 'ISO'
     return pattern if pattern != '' else None, ts
