@@ -96,7 +96,11 @@ def infer_metadata0(data, column_metadata_map: Dict[str, ColumnMetadata]):
                         column_metadata.multiline = True
                         timestamp_formats[key] = ''
                     elif current_ts_format != '':
-                        fmt, _ = infer_timestamp_format(value)
+                        res = infer_timestamp_format(value)
+                        if len(res) == 1:
+                            fmt = res
+                        else:
+                            fmt = res[0]
                         if fmt != current_ts_format:
                             timestamp_formats[key] = fmt if current_ts_format is None else ''
     return timestamp_formats

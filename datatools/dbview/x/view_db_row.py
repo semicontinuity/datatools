@@ -6,13 +6,15 @@ from datatools.dbview.util.pg import execute_sql, get_table_pks
 from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbReferrers, \
     DbTableRowsSelector, make_references, MyElementFactory
 from datatools.dbview.x.util.pg import connect_to_db
-from datatools.jv.app import loop, make_document, make_grid, do_loop
+from datatools.jv.app import make_document, make_grid, do_loop
+from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
 
 class ViewDbRow(View):
     selector: DbTableRowsSelector
+    doc: JDocument
 
     def __init__(self, selector: DbTableRowsSelector) -> None:
         self.selector = selector

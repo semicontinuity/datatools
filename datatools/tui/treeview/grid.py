@@ -24,8 +24,8 @@ class WGrid(WGridBase, Thread):
     dynamic_helper: DynamicEditorSupport
     x_shift: int  # horizontal view shift size
 
-    def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):
-        super().__init__(x, y, width, height, 0, 0, interactive)
+    def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True, footer: str = None):
+        super().__init__(x, y, width, height, 0, 1 if footer else 0, interactive)
         self.x_shift = 0
         self.document = document
         self.event_queue = Queue()

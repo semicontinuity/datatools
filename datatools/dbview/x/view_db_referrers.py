@@ -8,6 +8,7 @@ from datatools.dbview.x.types import View, EntityReference, DbTableRowsSelector,
     DbTableColumn
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.jv.app import loop, make_document
+from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 
 
@@ -20,7 +21,7 @@ class ViewDbReferrers(View):
         with connect_to_db() as conn:
             inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
             tree = self.make_referring_rows_model(inbound_relations)
-            doc = make_document(tree)
+            doc: JDocument = make_document(tree)
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
             return self.handle_loop_result(doc, key_code, cur_line)
 

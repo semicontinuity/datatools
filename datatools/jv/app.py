@@ -46,7 +46,7 @@ def data():
     return json.loads(s)
 
 
-def make_document(j):
+def make_document(j) -> JDocument:
     factory = JElementFactory()
     model = factory.build_root_model(j)
     model.set_collapsed_recursive(True)
@@ -88,7 +88,7 @@ if get_current_highlighting() is None:
 
 
 if __name__ == "__main__":
-    doc = make_document(data())    # must consume stdin first
+    doc: JDocument = make_document(data())    # must consume stdin first
 
     if '-p' in sys.argv:
         screen_width, screen_height = screen_size_or_default()

@@ -9,6 +9,7 @@ from datatools.dbview.x.types import View, EntityReference, DbReferringRows, DbR
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
+from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
@@ -35,7 +36,7 @@ class ViewDbReferringRows(View):
             else:
                 sql = f"SELECT * from {source_table} where {source_column}={self.e_ref.target.where[0].value} limit 2"
             rows = to_jsonisable(execute_sql(conn, sql))
-            doc = make_document(rows)
+            doc: JDocument = make_document(rows)
             key_code, cur_line = with_alternate_screen(lambda: loop(doc))
             return self.handle_loop_result(doc, key_code, cur_line)
 
