@@ -22,7 +22,7 @@ from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.util.object_exporter import init_object_exporter, ObjectExporter
 
 
-def make_json_tree_applet(document, screen_size, popup: bool = False):
+def make_json_tree_applet(document: JDocument, screen_size, popup: bool = False):
     screen_width, screen_height = screen_size
     grid_context = GridContext(0, 0, screen_width, screen_height)
     document.layout()
@@ -31,7 +31,7 @@ def make_json_tree_applet(document, screen_size, popup: bool = False):
     return do_make_json_tree_applet(grid_context, popup, document)
 
 
-def do_make_json_tree_applet(grid_context, popup, document: TreeDocument):
+def do_make_json_tree_applet(grid_context: GridContext, popup, document: TreeDocument):
     return Applet(
         'jv',
         grid(document, grid_context, grid_class=JGrid),
@@ -46,13 +46,13 @@ def data():
     return json.loads(s)
 
 
-def make_document(j) -> JDocument:
+def make_document(j, footer: str = None) -> JDocument:
     factory = JElementFactory()
     model = factory.build_root_model(j)
     model.set_collapsed_recursive(True)
     model.collapsed = False
     doc = JDocument(model)
-    # doc.footer = 'test'
+    doc.footer = footer
     return doc
 
 
@@ -60,7 +60,7 @@ def loop(document: JDocument):
     return do_loop(make_grid(document))
 
 
-def make_grid(document):
+def make_grid(document: JDocument):
     return make_json_tree_applet(document, screen_size_or_default()).g
 
 

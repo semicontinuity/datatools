@@ -25,16 +25,12 @@ class ViewDbRow(View):
             self.table_pks = get_table_pks(conn, self.selector.table)
 
             self.doc = make_document(
-                {
-                    self.selector.table: MyElementFactory().build_row_view(
-                        # to_jsonisable(
-                        #     self.get_entity_row(conn, self.selector.table, self.selector.where)
-                        # ),
-                        self.get_entity_row(conn, self.selector.table, self.selector.where),
-                        self.references,
-                        self.table_pks
-                    )
-                }
+                MyElementFactory().build_row_view(
+                    self.get_entity_row(conn, self.selector.table, self.selector.where),
+                    self.references,
+                    self.table_pks
+                ),
+                self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
             )
             self.g = with_alternate_screen(lambda: make_grid(self.doc))
 

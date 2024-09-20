@@ -24,11 +24,10 @@ class ViewDbReferrers2(View):
         with connect_to_db() as conn:
             self.references = make_references(conn, self.selector.table)
             self.table_pks = get_table_pks(conn, self.selector.table)
-
-            tree = {
-                "referrers": self.make_inbound_references_models(conn)
-            }
-            self.doc = make_document(tree)
+            self.doc = make_document(
+                self.make_inbound_references_models(conn),
+                'referrers of ' + self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
+            )
             self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
     def run(self) -> Optional[EntityReference]:
