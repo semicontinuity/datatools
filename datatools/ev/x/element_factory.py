@@ -15,11 +15,14 @@ class MyElementFactory(JElementFactory):
     concepts: Concepts
     concept: str
 
-    def __init__(self, concepts: Concepts):
+    def __init__(self, concepts: Concepts, concept: str):
         super().__init__(None)
         self.concepts = concepts
+        self.concept = concept
 
     class JMyNumber(JNumber):
+        concept: str
+
         def set_concept(self, concept: str):
             self.concept = concept
             return self
@@ -32,7 +35,7 @@ class MyElementFactory(JElementFactory):
                 return RestEntity(self.concept, self.value)
 
     def make_number_element(self, v, k, parent: Optional[JElement] = None):
-        concept = self.concepts.find_concept(parent.path() + [k])
+        concept = self.concepts.find_link_concept(self.concept, parent.path() + [k])
         if concept:
             return MyElementFactory.JMyNumber(v, k).set_concept(concept)
         else:

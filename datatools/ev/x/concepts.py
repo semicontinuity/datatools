@@ -23,22 +23,25 @@ class Concepts:
         prefix = '/'.join(parts[:-1])
         entity_id = parts[-1]
 
-        for concept, base_path in self.concepts.items():
-            if prefix == base_path:
-                return RestEntity(concept, entity_id)
+        for concept_name, concept_def in self.concepts.items():
+            if prefix == concept_def['path']:
+                return RestEntity(concept_name, entity_id)
 
     def fetch_json(self, entity: RestEntity):
-        url = f'{self.protocol}://{self.host}/{self.concepts[entity.concept]}/{entity.entity_id}'
+        concept_def = self.concepts[entity.concept]
+        url = f'{self.protocol}://{self.host}/{concept_def["path"]}/{entity.entity_id}'
         response = requests.request('GET', url, headers=self.headers)
         if 200 <= response.status_code < 300:
             return response.json()
         else:
             raise Exception(f"Got status {response.status_code} for {url}")
 
-    def find_concept(self, path: List[Hashable]):
-        print(path)
-        if self.path_matches(path, ['_embedded', 'companies', None, 'id']):
-            return 'company'
+    def find_link_concept(self, concept: str, path: List[Hashable]):
+        concept_def = self.concepts[concept]
+        for link in concept_def['links']:
+            path_pattern = link['path_pattern']
+            if self.path_matches(path, path_pattern):
+                return link['concept']
 
     def path_matches(self, path: List[Hashable], pattern: List[Hashable]):
         if len(path) != len(pattern):

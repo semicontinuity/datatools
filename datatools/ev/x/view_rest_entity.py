@@ -23,7 +23,7 @@ class ViewRestEntity(View):
     def build(self):
         j = self.concepts.fetch_json(self.ref)
         self.doc = make_document_for_model(
-            MyElementFactory(self.concepts).build_root_model(j),
+            MyElementFactory(self.concepts, self.ref.concept).build_root_model(j),
             f'{self.ref.concept} {self.ref.entity_id}'
         )
         self.g = with_alternate_screen(lambda: make_grid(self.doc))
