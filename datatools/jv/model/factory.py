@@ -54,15 +54,15 @@ class JElementFactory:
         return self.set_indent_recursive(self.build_model(v, k))
 
     def build_model(self, v, k: Optional[Hashable] = None, parent: Optional[JElement] = None) -> JValueElement:
-        model = self.build_model_raw(v, k)
+        model = self.build_model_raw(v, k, parent)
         model.parent = parent
         return model
 
-    def build_model_raw(self, v, k: Optional[str]) -> JValueElement:
+    def build_model_raw(self, v, k: Optional[Hashable], parent: Optional[JElement] = None) -> JValueElement:
         if v is None:
             return self.null(k)
         elif type(v) is str:
-            return self.string(v, k)
+            return self.string(v, k, parent)
         elif type(v) is int or type(v) is float:
             return self.number(v, k)
         elif type(v) is bool:
@@ -80,12 +80,12 @@ class JElementFactory:
         e.options = self.options
         return e
 
-    def number(self, v, k):
+    def number(self, v, k, parent: Optional[JElement] = None):
         e = JNumber(v, k)
         e.options = self.options
         return e
 
-    def string(self, v, k):
+    def string(self, v, k, parent: Optional[JElement] = None):
         e = JString(v, k)
         e.options = self.options
         return e

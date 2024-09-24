@@ -49,6 +49,10 @@ def data():
 def make_document(j, footer: str = None) -> JDocument:
     factory = JElementFactory()
     model = factory.build_root_model(j)
+    return make_document_for_model(model, footer)
+
+
+def make_document_for_model(model, footer):
     model.set_collapsed_recursive(True)
     model.collapsed = False
     doc = JDocument(model)
