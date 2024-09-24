@@ -7,7 +7,7 @@ from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 from datatools.dbview.x.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
-from datatools.jv.model.factory import JElementFactory
+from datatools.jv.model.factory import JElementFactory, set_last_in_parent, set_padding
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.treeview.rich_text import Style
 
@@ -56,6 +56,9 @@ class MyElementFactory(JElementFactory):
         return e
 
     def build_row_view(self, model: Dict, references: Dict[str, Any], table_pks: List[str]) -> JObject:
+        e = JObject(model, None)
+        e.options = self.options
+
         views = []
         for k, v in model.items():
             if isinstance(v, datetime.datetime):
@@ -70,7 +73,8 @@ class MyElementFactory(JElementFactory):
             else:
                 views.append(self.build_model(v, k))
 
-        return self.build_object_model(model, None, views)
+        e.set_elements(set_last_in_parent(set_padding(views)))
+        return e
 
 
 def make_references(conn, table) -> Dict[str, Any]:

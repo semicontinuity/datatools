@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from typing import List, Optional, Hashable, Dict
+from typing import List, Optional, Hashable
 
 from datatools.jv.model import JObject, JArray, JViewOptions
 from datatools.jv.model.JArray import JArray
@@ -68,45 +68,49 @@ class JElementFactory:
         elif type(v) is bool:
             return self.boolean(v, k)
         elif type(v) is dict or type(v) is defaultdict:
-            return self.build_object_model(v, k, self.build_object_fields_models(v))
+            return self.object(v, k)
         elif type(v) is list:
-            return self.build_array_model(v, k, self.build_array_items_models(v))
+            return self.array(v, k)
         else:
             v.set_key(k)
             return v
 
-    def boolean(self, v, k):
+    def boolean(self, v, k, parent: Optional[JElement] = None):
         e = JBoolean(v, k)
+        e.parent = parent
         e.options = self.options
         return e
 
     def number(self, v, k, parent: Optional[JElement] = None):
         e = JNumber(v, k)
+        e.parent = parent
         e.options = self.options
         return e
 
     def string(self, v, k, parent: Optional[JElement] = None):
-        e = JString(v, k)
+        e = self.make_string_element(k, v, parent)
+        e.parent = parent
         e.options = self.options
         return e
+
+    def make_string_element(self, k, v, parent: Optional[JElement] = None):
+        return JString(v, k)
 
     def null(self, k) -> JNull:
         e = JNull(None, k)
         e.options = self.options
         return e
 
-    def build_array_model(self, v, k, items_models):
-        e = JArray(v, k, set_last_in_parent(items_models))
+    def array(self, v, k, parent: Optional[JElement] = None):
+        e = JArray(v, k)
         e.options = self.options
+        e.parent = parent
+        e.set_elements(set_last_in_parent([self.build_model(v, i, e) for i, v in enumerate(v)]))
         return e
 
-    def build_object_model(self, v, k, element_models):
-        e = JObject(v, k, set_last_in_parent(set_padding(element_models)))
+    def object(self, v, k, parent: Optional[JElement] = None):
+        e = JObject(v, k)
+        e.parent = parent
         e.options = self.options
+        e.set_elements(set_last_in_parent(set_padding([self.build_model(v, k1, e) for k1, v in v.items()])))
         return e
-
-    def build_object_fields_models(self, v: Dict) -> List[JValueElement]:
-        return [self.build_model(v, k) for k, v in v.items()]
-
-    def build_array_items_models(self, v: List) -> List[JValueElement]:
-        return [self.build_model(v, i) for i, v in enumerate(v)]
