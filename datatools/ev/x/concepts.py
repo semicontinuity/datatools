@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Hashable
 
 import requests
 
@@ -34,3 +34,21 @@ class Concepts:
             return response.json()
         else:
             raise Exception(f"Got status {response.status_code} for {url}")
+
+    def find_concept(self, path: List[Hashable]):
+        print(path)
+        if self.path_matches(path, ['_embedded', 'companies', None, 'id']):
+            return 'company'
+
+    def path_matches(self, path: List[Hashable], pattern: List[Hashable]):
+        if len(path) != len(pattern):
+            return False
+        for i in range(len(path)):
+            p = pattern[i]
+            e = path[i]
+            if p is None:
+                if type(e) is not int:
+                    return False
+            elif p != e:
+                return False
+        return True
