@@ -1,17 +1,16 @@
-import sys
 from typing import Optional
 
 from picotui.defs import KEY_ENTER
 
+from datatools.dbview.share.app_types import View, EntityReference
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound_from, execute_sql
-from datatools.dbview.x.types import View, EntityReference, DbReferringRows, DbRowReference, DbTableRowsSelector, \
+from datatools.dbview.x.types import DbReferringRows, DbRowReference, DbTableRowsSelector, \
     DbSelectorClause
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.json.util import to_jsonisable
 from datatools.jv.app import loop, make_document
 from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
-from datatools.util.logging import debug
 
 
 class ViewDbReferringRows(View):

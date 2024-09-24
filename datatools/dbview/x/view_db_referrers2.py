@@ -1,12 +1,13 @@
 from collections import defaultdict
 from typing import List, Optional, Dict
 
+from datatools.dbview.share.app_types import View, EntityReference
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
 from datatools.dbview.x.get_referring_rows import get_selector_value, \
     get_pk_and_text_values_for_selected_rows
-from datatools.dbview.x.types import DbSelectorClause, EntityReference, View, DbTableRowsSelector, make_references, \
-    MyElementFactory
+from datatools.dbview.x.types import DbSelectorClause, DbTableRowsSelector, make_references
 from datatools.dbview.x.util.pg import connect_to_db
+from datatools.dbview.x.view_factory import MyElementFactory
 from datatools.jv.app import make_document, make_grid, do_loop
 from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen

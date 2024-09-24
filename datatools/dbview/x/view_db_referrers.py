@@ -3,8 +3,9 @@ from typing import Optional
 
 from picotui.defs import KEY_ENTER
 
+from datatools.dbview.share.app_types import View, EntityReference
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound
-from datatools.dbview.x.types import View, EntityReference, DbTableRowsSelector, DbReferringRows, \
+from datatools.dbview.x.types import DbTableRowsSelector, DbReferringRows, \
     DbTableColumn
 from datatools.dbview.x.util.pg import connect_to_db
 from datatools.jv.app import loop, make_document
