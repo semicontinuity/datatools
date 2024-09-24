@@ -7,7 +7,7 @@ from datatools.dbview.util.pg import execute_sql, get_table_pks
 from datatools.dbview.x.types import DbSelectorClause, DbReferrers, \
     DbTableRowsSelector, make_references
 from datatools.dbview.x.util.pg import connect_to_db
-from datatools.dbview.x.view_factory import MyElementFactory
+from datatools.dbview.x.element_factory import MyElementFactory
 from datatools.jv.app import make_document, make_grid, do_loop
 from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
