@@ -21,13 +21,7 @@ class ViewRestEntity(View):
         self.concepts = concepts
 
     def build(self):
-        url = self.concepts.url(self.ref)
-        response = requests.request('GET', url, headers=headers())
-        if 200 <= response.status_code < 300:
-            j = response.json()
-        else:
-            raise Exception(f"Got status {response.status_code} for {url}")
-
+        j = self.concepts.fetch_json(self.ref)
         self.doc = make_document_for_model(
             MyElementFactory().build_root_model(j),
             f'{self.ref.concept} {self.ref.entity_id}'
@@ -40,12 +34,3 @@ class ViewRestEntity(View):
 
     def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
         return key_code
-
-
-def headers():
-    res = {}
-    for k, v in os.environ.items():
-        if k.startswith('HEADER__'):
-            name = k.removeprefix('HEADER__').lower().replace('_', '-')
-            res[name] = v
-    return res

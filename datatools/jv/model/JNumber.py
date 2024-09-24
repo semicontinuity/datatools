@@ -7,4 +7,7 @@ from datatools.tui.treeview.rich_text import Style
 
 class JNumber(JPrimitiveElement[float]):
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return str(self.value), get_current_highlighting().for_number()
+        return str(self.value), self.value_style()
+
+    def value_style(self):
+        return get_current_highlighting().for_number()

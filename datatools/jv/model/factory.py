@@ -64,13 +64,13 @@ class JElementFactory:
         elif type(v) is str:
             return self.string(v, k, parent)
         elif type(v) is int or type(v) is float:
-            return self.number(v, k)
+            return self.number(v, k, parent)
         elif type(v) is bool:
-            return self.boolean(v, k)
+            return self.boolean(v, k, parent)
         elif type(v) is dict or type(v) is defaultdict:
-            return self.object(v, k)
+            return self.object(v, k, parent)
         elif type(v) is list:
-            return self.array(v, k)
+            return self.array(v, k, parent)
         else:
             v.set_key(k)
             return v
@@ -82,10 +82,13 @@ class JElementFactory:
         return e
 
     def number(self, v, k, parent: Optional[JElement] = None):
-        e = JNumber(v, k)
+        e = self.make_number_element(v, k, parent)
         e.parent = parent
         e.options = self.options
         return e
+
+    def make_number_element(self, v, k, parent: Optional[JElement] = None):
+        return JNumber(v, k)
 
     def string(self, v, k, parent: Optional[JElement] = None):
         e = self.make_string_element(k, v, parent)
@@ -96,9 +99,10 @@ class JElementFactory:
     def make_string_element(self, k, v, parent: Optional[JElement] = None):
         return JString(v, k)
 
-    def null(self, k) -> JNull:
+    def null(self, k, parent: Optional[JElement] = None) -> JNull:
         e = JNull(None, k)
         e.options = self.options
+        e.parent = parent
         return e
 
     def array(self, v, k, parent: Optional[JElement] = None):

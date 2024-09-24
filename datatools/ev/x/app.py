@@ -23,10 +23,20 @@ def main():
     concepts = Concepts(
         json.loads(os.environ['CONCEPTS']),
         protocol,
-        host
+        host,
+        headers()
     )
     parse_path = concepts.parse_path(path)
     run_app(parse_path, create_view)
+
+
+def headers():
+    res = {}
+    for k, v in os.environ.items():
+        if k.startswith('HEADER__'):
+            name = k.removeprefix('HEADER__').lower().replace('_', '-')
+            res[name] = v
+    return res
 
 
 if __name__ == "__main__":
