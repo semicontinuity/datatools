@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
+import json
 import os
 
 from datatools.dbview.share.app_support import run_app, View
 from datatools.dbview.x.types import EntityReference
+from datatools.ev.x.concepts import Concepts
 from datatools.ev.x.types import RestEntity
 from datatools.ev.x.view_rest_entity import ViewRestEntity
 
 
-def main():
-    run_app(RestEntity(initial_url()), create_view)
-
-
 def create_view(e_ref: EntityReference) -> View:
     if type(e_ref) is RestEntity:
-        return ViewRestEntity(e_ref)
+        return ViewRestEntity(e_ref, concepts)
 
 
-def initial_url():
+def main():
+    global concepts
     protocol = os.environ.get('PROTOCOL', 'http')
     host = os.environ['HOST']
     path = os.environ['__REST']
-    url = f'{protocol}://{host}/{path}'
-    return url
+
+    concepts = Concepts(
+        json.loads(os.environ['CONCEPTS']),
+        protocol,
+        host
+    )
+    parse_path = concepts.parse_path(path)
+    run_app(parse_path, create_view)
 
 
 if __name__ == "__main__":

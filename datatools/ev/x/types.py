@@ -5,4 +5,5 @@ from datatools.dbview.share.app_types import EntityReference
 
 @dataclass
 class RestEntity(EntityReference):
-    url: str
+    concept: str
+    entity_id: str

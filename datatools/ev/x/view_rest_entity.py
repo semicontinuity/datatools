@@ -9,22 +9,26 @@ from datatools.jv.app import make_document, make_grid, do_loop
 from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 
+from datatools.ev.x.concepts import Concepts
+
 
 class ViewRestEntity(View):
     ref: RestEntity
     doc: JDocument
 
-    def __init__(self, ref: RestEntity) -> None:
+    def __init__(self, ref: RestEntity, concepts: Concepts) -> None:
         self.ref = ref
+        self.concepts = concepts
 
     def build(self):
-        response = requests.request('GET', self.ref.url, headers=headers())
+        url = self.concepts.url(self.ref)
+        response = requests.request('GET', url, headers=headers())
         if 200 <= response.status_code < 300:
             j = response.json()
         else:
-            raise Exception(f"Got status {response.status_code} for {self.ref.url}")
+            raise Exception(f"Got status {response.status_code} for {url}")
 
-        self.doc = make_document(j)
+        self.doc = make_document(j, f'{self.ref.concept} {self.ref.entity_id}')
         self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
     def run(self) -> Optional[EntityReference]:
