@@ -12,7 +12,7 @@ from datatools.json.coloring import COLORING_SINGLE
 from datatools.json.json_viz_helper import *
 from datatools.json.structure_analyzer import *
 from datatools.util.meta_io import presentation_or_default
-from datatools.util.html_util import *
+from util.html.elements import *
 from datatools.util.logging import debug, stderr_print
 
 verbose = False

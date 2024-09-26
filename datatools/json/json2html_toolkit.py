@@ -1,5 +1,5 @@
 from datatools.json.json_viz_helper import *
-from datatools.util.html_util import *
+from util.html.elements import *
 
 
 class HtmlToolkit:

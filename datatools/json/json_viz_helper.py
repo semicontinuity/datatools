@@ -2,10 +2,10 @@ import html
 import random
 from string import Template
 from string import ascii_lowercase, digits
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from datatools.json.util import is_primitive
-from datatools.util.html_util import *
+from util.html.elements import *
 
 
 def random_id(size, chars=ascii_lowercase + digits):
@@ -193,7 +193,7 @@ $long_texts
         return self.html_template.substitute(
             title=self.title,
             view=str(self.root),
-            style="\n".join((self.hide_rules(n) for n in range(2,20))),
+            style="\n".join((self.hide_rules(n) for n in range(2, 20))),
             long_texts="\n".join(f'<template id="{k}">{v}</template>' for k, v in tk.long_texts.items())
         )
 
