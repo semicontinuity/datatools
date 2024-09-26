@@ -1,15 +1,23 @@
-from typing import Iterable, Union, Any, Dict
+from types import GeneratorType
+from typing import Iterable, Union, Any, Dict, List
 
 
 class Element:
     tag: str
-    contents: Iterable[Any]
+    contents: List[Any]
     attrs: Dict[str, Union[str, Iterable[str]]]
 
     def __init__(self, tag, *contents, **attrs):
         self.tag = tag
-        self.contents = contents
+        self.contents = [e for e in self.traverse(contents)]
         self.attrs = attrs
+
+    def traverse(self, e):
+        if isinstance(e, GeneratorType) or isinstance(e, list) or isinstance(e, tuple):
+            for i in e:
+                yield from self.traverse(i)
+        else:
+            yield e
 
     def __str__(self):
         """
