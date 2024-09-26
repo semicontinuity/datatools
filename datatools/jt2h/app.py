@@ -4,6 +4,8 @@ import sys
 from json import JSONDecodeError
 
 from datatools.util.logging import stderr_print
+from util.html.element import Element
+from util.html.elements import table, td, tr
 
 
 def data():
@@ -14,8 +16,16 @@ def data():
 
 
 def main():
-    j = data()
-    print(j)
+    # j = data()
+    # print(j)
+
+    t = table(
+        tr(
+            td(),
+            td('...')
+        )
+    )
+    print(t)
 
 
 if __name__ == "__main__":

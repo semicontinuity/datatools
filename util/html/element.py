@@ -15,11 +15,14 @@ class Element:
         """
         Renders this element as HTML string
         """
-        separator = '\n' if self.contents else ''
+
+        separator = '\n' if bool(self.contents) and any(type(s) is not str for s in self.contents) else ''
         attrs_str = self.attrs_str()
         open_tag = f'<{self.tag}{" " + attrs_str if attrs_str else ""}>'
         close_tag = f'</{self.tag}>'
-        return open_tag + separator.join(str(element) for element in self.contents if element is not None) + close_tag
+        body = separator.join(str(element) for element in self.contents if element is not None)
+
+        return open_tag + separator + body + separator + close_tag
 
     def attrs_str(self) -> str:
         """
