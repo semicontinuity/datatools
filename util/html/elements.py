@@ -1,6 +1,22 @@
 from util.html.element import Element
 
 
+def html(*contents, **attrs):
+    return Element('html', *contents, **attrs)
+
+
+def head(*contents, **attrs):
+    return Element('head', *contents, **attrs)
+
+
+def style(*contents, **attrs):
+    return Element('style', *contents, **attrs)
+
+
+def body(*contents, **attrs):
+    return Element('body', *contents, **attrs)
+
+
 def table(*contents, **attrs):
     return Element('table', *contents, **attrs)
 

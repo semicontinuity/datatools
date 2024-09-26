@@ -30,14 +30,14 @@ class MatrixNode:
             table(
                 thead(
                     tr(
-                        tk.custom_th('#'),
-                        *[tk.custom_th(str(i)) for i in range(self.width)]
+                        tk.th_with_span('#'),
+                        *[tk.th_with_span(str(i)) for i in range(self.width)]
                     )
                 ),
                 tbody(
                     *[
                         tr(
-                            tk.custom_th(str(y)),
+                            tk.th_with_span(str(y)),
                             *[
                                 tk.td_value_with_color(cell, "a_v")  # all cells are primitives
                                 for cell in sub_j
@@ -97,7 +97,7 @@ class ArrayOfNestableObjectsNode:
             thead(
                 *[
                     tr(
-                        tk.custom_th('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
+                        tk.th_with_span('#', rowspan=depth, onclick="toggle(this)") if level == 0 else None,
                         *[
                             th(
                                 span(name),
@@ -107,7 +107,7 @@ class ArrayOfNestableObjectsNode:
                             )
                             for i, (name, value) in enumerate(items_at_level(self.descriptor, level + 1))
                         ],
-                        tk.custom_th('-', rowspan=depth, onclick="toggle(this)") if len(
+                        tk.th_with_span('-', rowspan=depth, onclick="toggle(this)") if len(
                             self.pruned) > 0 and level == 0 else None,
                     )
                     for level in range(depth)
@@ -119,7 +119,7 @@ class ArrayOfNestableObjectsNode:
             tbody(
                 *[
                     tr(
-                        tk.custom_th(r['#']),
+                        tk.th_with_span(r['#']),
                         *[
                             td_value_with_attrs(self.column_id_to_attrs[leaf_path], child_by_path(r, leaf_path))
                             for leaf_path in self.paths_of_leaves
@@ -163,7 +163,7 @@ class ObjectNode:
         return table(
             *[
                 thead(
-                    *[tk.custom_th(key) for key in self.fields]
+                    *[tk.th_with_span(key) for key in self.fields]
                 ),
                 tr(
                     *[td(value) for value in self.fields.values()]
@@ -177,7 +177,7 @@ class ObjectNode:
 
     @staticmethod
     def vertical_html_tr(key, value):
-        return tr(tk.custom_th(key, clazz='ov_th'), tk.td_value_with_color(value, "ov_v"))
+        return tr(tk.th_with_span(key, clazz='ov_th'), tk.td_value_with_color(value, "ov_v"))
 
 
 def td_value_with_attrs(attrs: ColumnAttrs, value):

@@ -1,5 +1,5 @@
-import html
 import random
+from html import escape
 from string import Template
 from string import ascii_lowercase, digits
 from typing import Optional, Dict, Any
@@ -18,13 +18,13 @@ class CustomHtmlToolkit:
     def __init__(self) -> None:
         self.long_texts = {}
 
-    def custom_th(self, *contents, **attrs):
+    def th_with_span(self, *contents, **attrs):
         return th(span(*contents), **attrs)
 
     def td_value_with_color(self, value, clazz=None, bg=None):
         leaf = is_primitive(value)
         data_type = f'{type(value).__name__}' if leaf else None
-        value_repr = html.escape(value) if type(value) is str else value
+        value_repr = escape(value) if type(value) is str else value
         return td(
             self.value_e(value_repr, leaf),
             clazz=(clazz, data_type, 'plain' if bg is None else None),
@@ -54,7 +54,7 @@ class PageNode:
 <link rel="icon" href="data:,">
 
 <style>
-body {font-family: monospace; display: inline-block; background: #F0F0E0;}
+body {font-family: monospace; display: inline-block; background: #F0F0E0; margin: 0;}
 main {display: inline-flex; border-left: solid 2px darkgrey; border-right: solid 2px darkgrey;}
 thead {border: solid 1px darkgray;}
 table {border-collapse: collapse; padding: 0;}
@@ -240,14 +240,14 @@ class ListNode:
     def html_numbered_table_impl(self, collapsed: bool):
         return table(
             thead(
-                tk.custom_th('#', clazz='a', onclick="toggle(this)"),
-                tk.custom_th(f'{len(self.records)} items', clazz='a')
+                th(span('#'), clazz='a', onclick="toggle(this)"),
+                th(span(f'{len(self.records)} items'), clazz='a')
             ) if collapsed else None,
             tbody(
-                *[
-                    tr(tk.custom_th(str(pos), clazz='a'), tk.td_value_with_color(self.records[pos], "a_v"))
+                (
+                    tr(th(span(pos), clazz='a'), tk.td_value_with_color(self.records[pos], "a_v"))
                     for pos in range(len(self.records))
-                ],
+                ),
                 clazz="collapsed" if collapsed else None
             ),
             clazz="a"

@@ -52,7 +52,7 @@ class ObjectNode:
         return table(
             *[
                 thead(
-                    *[tk.custom_th(key) for key in self.fields]
+                    *[tk.th_with_span(key) for key in self.fields]
                 ),
                 tr(
                     *[td(value) for value in self.fields.values()]
@@ -66,7 +66,7 @@ class ObjectNode:
 
     @staticmethod
     def vertical_html_tr(key, value):
-        return tr(tk.custom_th(key, clazz='ov_th'), tk.td_value_with_color(value, "ov_v"))
+        return tr(tk.th_with_span(key, clazz='ov_th'), tk.td_value_with_color(value, "ov_v"))
 
 
 class MatrixNode:
@@ -81,14 +81,14 @@ class MatrixNode:
             table(
                 thead(
                     tr(
-                        tk.custom_th('#'),
-                        *[tk.custom_th(str(i)) for i in range(self.width)]
+                        tk.th_with_span('#'),
+                        *[tk.th_with_span(str(i)) for i in range(self.width)]
                     )
                 ),
                 tbody(
                     *[
                         tr(
-                            tk.custom_th(str(y)),
+                            tk.th_with_span(str(y)),
                             *[
                                 tk.td_value_with_color(cell, "a_v")  # all cells are primitives
                                 for cell in sub_j
