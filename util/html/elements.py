@@ -13,6 +13,10 @@ def style(*contents, **attrs):
     return Element('style', *contents, **attrs)
 
 
+def script(*contents, **attrs):
+    return Element('script', *contents, **attrs)
+
+
 def body(*contents, **attrs):
     return Element('body', *contents, **attrs)
 

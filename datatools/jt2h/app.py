@@ -5,7 +5,7 @@ from json import JSONDecodeError
 from typing import Dict, List
 
 from datatools.util.logging import stderr_print
-from util.html.elements import table, td, tr, html, head, body, style, thead, tbody, th
+from util.html.elements import table, td, tr, html, head, body, style, thead, tbody, th, span, script
 
 
 def data():
@@ -25,11 +25,20 @@ class Log:
         return str(
             table(
                 thead(
-                    th(column) for column in self.columns
+                    th(),
+                    (
+                        th(column) for column in self.columns
+                    )
                 ),
                 tbody(
                     tr(
-                        td(row[column]) for column in self.columns
+                        th(
+                            span('>', onclick='swapClass(this, "TR", "regular", "expanded")')
+                        ),
+                        (
+                            td(row[column]) for column in self.columns
+                        ),
+                        clazz='regular'
                     )
                     for row in self.j
                 )
@@ -56,7 +65,20 @@ def main():
                 td {padding-left: 0.25em; padding-right: 0.25em;}
                 th {border-left: solid 2px darkgrey;}
                 '''
-            )
+            ),
+            script('''
+function swapClass(element, tagName, class1, class2) {
+  while (element.tagName !== tagName) element = element.parentElement;
+  const classes = element.classList;
+  if (classes.contains(class1)) {
+     classes.remove(class1);
+     classes.add(class2);
+  } else {
+     classes.remove(class2);
+     classes.add(class1);
+  }
+}
+                  ''')
         ),
 
         body(
