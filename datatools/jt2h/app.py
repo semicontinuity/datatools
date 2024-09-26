@@ -5,7 +5,7 @@ from json import JSONDecodeError
 from typing import Dict, List
 
 from datatools.util.logging import stderr_print
-from util.html.elements import table, td, tr, html, head, body, style, thead, tbody, th, span, script
+from util.html.elements import table, td, tr, html, head, body, style, thead, tbody, th, span, script, pre
 
 
 def data():
@@ -43,7 +43,11 @@ class Log:
                         ),
                         tr(
                             th(clazz='details'),
-                            td('details', colspan=len(self.columns), clazz='details')
+                            td(
+                                pre(json.dumps(row, indent=2)),
+                                colspan=len(self.columns),
+                                clazz='details'
+                            )
                         ),
                         clazz='regular'
                     ) for row in self.j
@@ -72,10 +76,18 @@ def main():
                 th {border-left: solid 2px darkgrey;}
                 
                 td.details {background: #D0D0D0;}
+
                 tbody.regular th.details {display: none;}
                 tbody.regular td.details {display: none;}
+
                 tbody.regular span.expanded {display: none;}
+                tbody.regular span.regular  {cursor: zoom-in;}
                 tbody.expanded span.regular {display: none;}
+                tbody.expanded span.expanded {cursor: zoom-out;}
+                
+                .key {font-color: blue;}
+                
+                pre {font-size: 144%;} 
                 '''
             ),
             script('''

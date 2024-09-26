@@ -59,3 +59,7 @@ def div(*contents, **attrs):
 
 def span(*contents, **attrs):
     return Element('span', *contents, **attrs)
+
+
+def pre(*contents, **attrs):
+    return Element('pre', *contents, **attrs)
