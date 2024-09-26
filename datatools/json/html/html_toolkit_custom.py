@@ -7,10 +7,6 @@ from datatools.json.util import is_primitive
 from util.html.elements import *
 
 
-def random_id(size, chars=ascii_lowercase + digits):
-    return ''.join(random.choice(chars) for _ in range(size))
-
-
 class CustomHtmlToolkit:
     long_texts: Dict
 
@@ -35,12 +31,11 @@ class CustomHtmlToolkit:
 
     def possibly_overlayed_span(self, *contents, **attrs):
         if len(contents) == 1 and type(contents[0]) is str and len(contents[0]) > 100:
-            text_id = random_id(8)
+            text_id = self.random_id(8)
             self.long_texts[text_id] = contents[0]
             return span('...', data_text=str(contents[0]), onclick=f'openOverlay("{text_id}")', clazz='button')
         else:
             return span(*contents, **attrs)
 
-
-tk = CustomHtmlToolkit()
-
+    def random_id(self, size, chars=ascii_lowercase + digits):
+        return ''.join(random.choice(chars) for _ in range(size))
