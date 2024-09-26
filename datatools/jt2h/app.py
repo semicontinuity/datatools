@@ -30,17 +30,23 @@ class Log:
                         th(column) for column in self.columns
                     )
                 ),
-                tbody(
-                    tr(
-                        th(
-                            span('>', onclick='swapClass(this, "TR", "regular", "expanded")')
+                (
+                    tbody(
+                        tr(
+                            th(
+                                span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='regular'),
+                                span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
+                            ),
+                            (
+                                td(row[column]) for column in self.columns
+                            ),
                         ),
-                        (
-                            td(row[column]) for column in self.columns
+                        tr(
+                            th(clazz='details'),
+                            td('details', colspan=len(self.columns), clazz='details')
                         ),
                         clazz='regular'
-                    )
-                    for row in self.j
+                    ) for row in self.j
                 )
             )
         )
@@ -64,6 +70,12 @@ def main():
                 td {border-left: solid 2px darkgrey;}
                 td {padding-left: 0.25em; padding-right: 0.25em;}
                 th {border-left: solid 2px darkgrey;}
+                
+                td.details {background: #D0D0D0;}
+                tbody.regular th.details {display: none;}
+                tbody.regular td.details {display: none;}
+                tbody.regular span.expanded {display: none;}
+                tbody.expanded span.regular {display: none;}
                 '''
             ),
             script('''
