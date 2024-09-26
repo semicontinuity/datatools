@@ -1,10 +1,11 @@
-from datatools.json.json_viz_helper import *
+from datatools.json.html.json_viz_helper import *
+from datatools.json.html.page_node import PageNode
 from util.html.elements import *
 
 
 class HtmlToolkit:
     def page_node(self, j, descriptor):
-        return PageNode(self.node(j, descriptor), "")
+        return PageNode(self.node(j, descriptor), "", self)
 
     def node(self, j, descriptor):
         if descriptor.is_primitive():
@@ -34,15 +35,16 @@ class HtmlToolkit:
         return ObjectNode(j, descriptor, True, self)
 
     def matrix_node(self, j, descriptor):
-        return MatrixNode(j, descriptor.length, descriptor.item.length)
+        return MatrixNode(j, descriptor.length, descriptor.item.length, self)
 
     # def uniform_table_node(self, j, item_descriptor):
     #     return UniformTableNode(j, item_descriptor, self)
 
 
 class ObjectNode:
-    def __init__(self, j, descriptor, vertical, kit):
-        self.fields = {key: kit.node(subj, descriptor.dict[key]) for key, subj in j.items()}
+    def __init__(self, j, descriptor, vertical, tk):
+        self.tk = tk
+        self.fields = {key: tk.node(subj, descriptor.dict[key]) for key, subj in j.items()}
         self.vertical = vertical
 
     def __str__(self):
@@ -52,7 +54,7 @@ class ObjectNode:
         return table(
             *[
                 thead(
-                    *[tk.th_with_span(key) for key in self.fields]
+                    *[self.tk.th_with_span(key) for key in self.fields]
                 ),
                 tr(
                     *[td(value) for value in self.fields.values()]
@@ -64,16 +66,16 @@ class ObjectNode:
     def vertical_html(self):
         return table(*[self.vertical_html_tr(key, value) for key, value in self.fields.items()], clazz="ov")
 
-    @staticmethod
-    def vertical_html_tr(key, value):
-        return tr(tk.th_with_span(key, clazz='ov_th'), tk.td_value_with_color(value, "ov_v"))
+    def vertical_html_tr(self, key, value):
+        return tr(self.tk.th_with_span(key, clazz='ov_th'), self.tk.td_value_with_color(value, "ov_v"))
 
 
 class MatrixNode:
-    def __init__(self, j, height, width):
+    def __init__(self, j, height, width, tk):
         self.data = j
         self.height = height
         self.width = width
+        self.tk = tk
 
     def __str__(self):
         return div(

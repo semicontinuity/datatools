@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from json import JSONDecodeError
 
-from datatools.json.json2html_toolkit import *
+from datatools.json.html.json2html_toolkit import *
 from datatools.json.structure_discovery import *
 from datatools.util.logging import stderr_print
 

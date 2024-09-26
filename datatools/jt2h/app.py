@@ -4,7 +4,7 @@ import sys
 from json import JSONDecodeError
 
 from datatools.util.logging import stderr_print
-from util.html.elements import table, td, tr, thead, th, span, html, head, body, style
+from util.html.elements import table, td, tr, html, head, body, style
 
 
 def data():

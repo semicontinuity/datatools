@@ -9,11 +9,12 @@ from json import JSONDecodeError
 
 from datatools.json.coloring import *
 from datatools.json.coloring import COLORING_SINGLE
-from datatools.json.json_viz_helper import *
+from datatools.json.html.json_viz_helper import *
+from datatools.json.html.page_node import PageNode
 from datatools.json.structure_analyzer import *
+from datatools.util.logging import debug, stderr_print
 from datatools.util.meta_io import presentation_or_default
 from util.html.elements import *
-from datatools.util.logging import debug, stderr_print
 
 verbose = False
 
@@ -277,7 +278,11 @@ def main():
     else:
         j = json.load(sys.stdin)
 
-    print(PageNode(node(j, None, False), presentation.get("title", "")))
+    print(
+        PageNode(
+            node(j, None, False), presentation.get("title", ""), CustomHtmlToolkit()
+        )
+    )
 
 
 if __name__ == "__main__":
