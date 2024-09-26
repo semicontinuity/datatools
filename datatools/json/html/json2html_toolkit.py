@@ -4,6 +4,10 @@ from util.html.elements import *
 
 
 class HtmlToolkit:
+
+    def __init__(self, tk) -> None:
+        self.tk = tk
+
     def page_node(self, j, descriptor):
         return PageNode(self.node(j, descriptor), "", self)
 
@@ -26,10 +30,10 @@ class HtmlToolkit:
         return str(j)
 
     def list_of_single_record(self, element, element_descriptor):
-        return ListNode([self.node(element, element_descriptor)])
+        return ListNode([self.node(element, element_descriptor)], self.tk)
 
     def list_of_multi_record(self, j, descriptor):
-        return ListNode([self.node(j[index], descriptor.list[index]) for index in range(len(descriptor.list))])
+        return ListNode([self.node(j[index], descriptor.list[index]) for index in range(len(descriptor.list))], self.tk)
 
     def object_node(self, j, descriptor):
         return ObjectNode(j, descriptor, True, self)

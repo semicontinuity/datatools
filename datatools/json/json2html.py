@@ -10,6 +10,7 @@ from json import JSONDecodeError
 from datatools.json.coloring import *
 from datatools.json.coloring import COLORING_SINGLE
 from datatools.json.html.json_viz_helper import *
+from datatools.json.html.list_node import ListNode
 from datatools.json.html.page_node import PageNode
 from datatools.json.structure_analyzer import *
 from datatools.util.logging import debug, stderr_print
@@ -201,7 +202,7 @@ def td_value_with_attrs(attrs: ColumnAttrs, value):
 
 
 def list_node(j, parent, in_array_of_nestable_obj: bool):
-    result = ListNode(None)
+    result = ListNode(None, tk=tk)
     records = [node(subj, result, in_array_of_nestable_obj) for subj in j]
     result.records = records
     return result
