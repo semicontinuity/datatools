@@ -2,8 +2,8 @@ from typing import Optional
 
 from picotui.defs import KEY_ENTER
 
-from datatools.ev.x.concepts import Concepts
-from datatools.ev.x.types import RestEntity
+from datatools.ev.x.http.concepts import Concepts
+from datatools.ev.x.http.types import RestEntity
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.factory import JElementFactory

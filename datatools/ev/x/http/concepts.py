@@ -2,7 +2,7 @@ from typing import Dict, List, Hashable
 
 import requests
 
-from datatools.ev.x.types import RestEntity
+from datatools.ev.x.http.types import RestEntity
 
 
 class Concepts:
