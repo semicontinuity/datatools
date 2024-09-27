@@ -1,4 +1,5 @@
 import datetime
+from uuid import UUID
 
 from datatools.util.frozendict import FrozenDict
 
@@ -36,7 +37,7 @@ def to_jsonisable(obj):
         return [to_jsonisable(e) for e in obj]
     elif isinstance(obj, bytearray):
         return [e for e in obj]
-    elif isinstance(obj, datetime.datetime):
+    elif isinstance(obj, datetime.datetime) or isinstance(obj, UUID):
         return str(obj)
     else:
         return to_jsonisable(obj.__dict__)
