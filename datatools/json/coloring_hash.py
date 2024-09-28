@@ -1,12 +1,23 @@
 from typing import Tuple
 
+import mmh3
 
-def hash_code(s):
+
+def hash_code0(s):
     """ Consistent hash """
     hh = 0
     for c in s:
         hh = (31 * hh + ord(c)) % 4294967296
     return hh
+
+
+def hash_code(x):
+    """ Consistent hash """
+    if type(x) is int:
+        return x
+    if type(x) is bool:
+        return int(x)
+    return mmh3.hash(x, 237)
 
 
 def color_string(color: Tuple[int, int, int]):

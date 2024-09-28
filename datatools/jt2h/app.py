@@ -2,12 +2,10 @@
 import json
 import sys
 from json import JSONDecodeError
-from typing import Dict, List
 
-from datatools.json.coloring import ColumnAttrs
-from datatools.json.coloring_hash import hash_to_rgb, hash_code, color_string
+from datatools.jt2h.log_node import Log
 from datatools.util.logging import stderr_print
-from util.html.elements import table, td, tr, html, head, body, style, thead, tbody, th, span, script, pre
+from util.html.elements import html, head, body, style, script
 
 
 def data():
@@ -17,71 +15,10 @@ def data():
     return j
 
 
-class Log:
-
-    def __init__(self, j: List[Dict]) -> None:
-        self.columns = ['time', 'level', 'message']
-        self.j = j
-        self.column_attrs: Dict[str, ColumnAttrs] = {column: self.compute_column_attrs(j, column) for column in self.columns}
-
-    @staticmethod
-    def compute_column_attrs(j, column: str) -> ColumnAttrs:
-        attr = ColumnAttrs()
-        for record in j:
-            attr.add_value(record[column])
-        attr.compute_coloring()
-        return attr
-
-    def cell_bg_color(self, column, value):
-        attrs = self.column_attrs.get(column)
-        if attrs is None:
-            return None
-
-        string_value = str(value)
-        if not attrs.is_colored(string_value):
-            return None
-
-        return color_string(hash_to_rgb(attrs.value_hashes.get(string_value) or hash_code(string_value)))
-
-    def __str__(self) -> str:
-        return str(
-            table(
-                thead(
-                    th(),
-                    (
-                        th(column) for column in self.columns
-                    )
-                ),
-                (
-                    tbody(
-                        tr(
-                            th(
-                                span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='regular'),
-                                span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
-                            ),
-                            (
-                                td(row[column], style='background-color: ' + self.cell_bg_color(column, row[column]))
-                                for column in self.columns
-                            ),
-                        ),
-                        tr(
-                            th(clazz='details'),
-                            td(
-                                pre(json.dumps(row, indent=2)),
-                                colspan=len(self.columns),
-                                clazz='details'
-                            )
-                        ),
-                        clazz='regular'
-                    ) for row in self.j
-                )
-            )
-        )
-
 
 def main():
     j = data()
-    log = Log(j)
+    columns = ['time', 'level', 'method', 'requestID', 'msg']
 
     h = html(
 
@@ -98,6 +35,8 @@ def main():
                 td {padding-left: 0.25em; padding-right: 0.25em;}
                 th {border-left: solid 2px darkgrey;}
                 
+                td:last-child { width: 100%; }
+                
                 td.details {background: #D0D0D0;}
 
                 tbody.regular th.details {display: none;}
@@ -111,7 +50,7 @@ def main():
                 .key {font-color: blue;}
                 
                 pre {font-size: 144%;} 
-                '''
+                ''' + "\n".join(hide_rules(n) for n in range(2, len(columns) + 2))
             ),
             script('''
 function swapClass(element, tagName, class1, class2) {
@@ -129,15 +68,20 @@ function swapClass(element, tagName, class1, class2) {
         ),
 
         body(
-            log
+            Log(j, columns)
         )
     )
 
     print(h)
 
 
+def hide_rules(n):
+    return f"""
+table.hide-c-{n}>tbody>tr>td:nth-child({n})>span {{display:none;}}
+table.hide-c-{n}>thead>tr>th:nth-child({n})>span {{display:none;}}
+table.hide-c-{n}>thead>tr>th:nth-child({n})>span.compact {{display:inherit;}}
+"""
+
+
 if __name__ == "__main__":
-    try:
-        main()
-    except JSONDecodeError as ex:
-        stderr_print("Reads json. Outputs html.")
+    main()
