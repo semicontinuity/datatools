@@ -5,32 +5,40 @@ import os
 from datatools.dbview.x.util.pg import get_where_clauses
 from datatools.json.util import to_jsonisable
 
+import clickhouse_connect
+
 
 def main():
-    import clickhouse_connect
+    hostname = os.environ['YC_CH_HOST']
+    database = os.environ['YC_CH_DATABASE']
+    user = os.environ['YC_CH_USER']
+    password = os.environ['YC_CH_PASSWORD']
+    table = os.environ['TABLE']
 
-    CLICKHOUSE_CLOUD_HOSTNAME = os.environ['YC_CH_HOST']
-    CLICKHOUSE_CLOUD_USER = os.environ['YC_CH_USER']
-    CLICKHOUSE_CLOUD_PASSWORD = os.environ['YC_CH_PASSWORD']
-    CLICKHOUSE_CLOUD_DATABASE = os.environ['YC_CH_DATABASE']
+    where_clause = get_where_clauses()[-1]
 
+    res = fetch(hostname, database, user, password, table, where_clause)
+
+    for row in res:
+        print(json.dumps(to_jsonisable({k: to_jsonisable(v) for k, v in row.items()})))
+
+
+def fetch(hostname, database, user, password, table, where_clause):
     client = clickhouse_connect.get_client(
-        host=CLICKHOUSE_CLOUD_HOSTNAME,
+        host=hostname,
         port=8443,
         secure=True,
         verify=False,
-        username=CLICKHOUSE_CLOUD_USER,
-        password=CLICKHOUSE_CLOUD_PASSWORD,
-        database=CLICKHOUSE_CLOUD_DATABASE
+        username=user,
+        password=password,
+        database=database
     )
-
-    column, op, value = get_where_clauses()[-1]
-    result = client.query(f"select * from cdr where {column} {op} {value}")
-
-    rows = result.result_rows
-    if len(rows) != 1:
-        return
-    print(json.dumps(to_jsonisable(rows[0]), indent=2))
+    column, op, value = where_clause
+    result = client.query(f"select * from {table} where {column} {op} {value}")
+    res = []
+    for row in result.result_rows:
+        res.append({column_name: row[i] for i, column_name in enumerate(result.column_names)})
+    return res
 
 
 if __name__ == '__main__':
