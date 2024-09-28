@@ -1,6 +1,7 @@
 from typing import Dict, Hashable, List
 
-from datatools.json.coloring import ColumnAttrs, compute_column_attrs, compute_cross_column_attrs
+from datatools.json.coloring import ColumnAttrs, compute_column_attrs
+from datatools.json.coloring_cross_column import compute_cross_column_attrs
 from datatools.json.structure_discovery import Discovery, Descriptor, AnyDescriptor, MappingDescriptor, \
     compute_column_paths, descriptor_by_path, child_by_path, compute_row_paths
 from datatools.json2ansi_toolkit.complex_table_node import ComplexTableNode

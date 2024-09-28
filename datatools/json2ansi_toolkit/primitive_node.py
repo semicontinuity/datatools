@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 
-from datatools.json.coloring import ColumnAttrs, hash_to_rgb_dark, hash_code
+from datatools.json.coloring import ColumnAttrs
+from datatools.json.coloring_hash import hash_to_rgb_dark, hash_code
 from datatools.json2ansi_toolkit.border_style import BorderStyle
 from datatools.json2ansi_toolkit.text_cell import TextCell
 from datatools.tui.buffer.json2ansi_buffer import Buffer

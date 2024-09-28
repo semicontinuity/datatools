@@ -2,6 +2,8 @@ import sys
 
 from datatools.json.coloring import *
 from datatools.json.coloring import COLORING_SINGLE
+from datatools.json.coloring_cross_column import compute_cross_column_attrs
+from datatools.json.coloring_hash import hash_to_rgb, hash_code
 from datatools.json.html.object_node_old import ObjectNode
 from datatools.json.structure_analyzer import *
 from datatools.util.logging import debug
