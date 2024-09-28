@@ -19,7 +19,9 @@ class Log:
     def compute_column_attrs(j, column: str) -> ColumnAttrs:
         attr = ColumnAttrs()
         for record in j:
-            attr.add_value(record[column])
+            cell = record.get(column)
+            if cell is not None:
+                attr.add_value(cell)
         attr.compute_coloring()
         return attr
 
@@ -58,8 +60,8 @@ class Log:
                             ),
                             (
                                 td(
-                                    span(row[column]),
-                                    style=self.cell_bg_color_style(column, row[column])
+                                    span(row.get(column)),
+                                    style=self.cell_bg_color_style(column, row.get(column))
                                 )
                                 for column in self.columns
                             ),

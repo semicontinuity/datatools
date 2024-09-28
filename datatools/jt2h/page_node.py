@@ -11,7 +11,7 @@ def page_node(column_count: int, contents):
                 '''
                 body {font-family: monospace; display: inline-block; background: #F0F0E0; margin: 0;}
                 thead {border: solid 1px darkgray;}
-                table {border-collapse: collapse; padding: 0;}
+                table {border-collapse: collapse; padding: 0; white-space: nowrap;}
                 table {background: white;}
                 th {border-top: solid 1px darkgrey; border-bottom: solid 1px darkgrey; background: #DDD; padding-left: 0.5ex; padding-right: 0.5ex;}
                 td {border-top: solid 1px #CCC; border-bottom: solid 1px #CCC; padding: 0;}
@@ -36,6 +36,7 @@ def page_node(column_count: int, contents):
                 
                 .compact {display:none;}
                 
+                span { white-space: pre;}
                 pre {font-size: 144%;} 
                 ''' + "\n".join(hide_rules(n) for n in range(2, column_count + 2))
             ),
