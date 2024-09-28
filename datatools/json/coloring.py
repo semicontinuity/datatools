@@ -45,8 +45,9 @@ class ColumnAttrs:
         threshold = 2.5 * sqrt(self.value_count)
         if len(self.non_unique_value_counts) == 1 and len(self.unique_values) == 0:
             return COLORING_SINGLE
-        elif len(self.non_unique_value_counts) == 0 or (
-                len(self.unique_values) == 0 and len(self.non_unique_value_counts) == 1):
+        elif len(self.non_unique_value_counts) == 0:
+            return COLORING_NONE
+        elif len(self.unique_values) == 0 and len(self.non_unique_value_counts) == 1:
             return COLORING_NONE
         elif len(self.unique_values) + len(self.non_unique_value_counts) < threshold:
             return COLORING_HASH_ALL
@@ -64,12 +65,3 @@ class ColumnAttrs:
 
     def is_frequent(self, s: str):
         return s in self.non_unique_value_counts
-
-
-def compute_column_attrs(j, column_id: Hashable, cell_value_function: Callable[[Any, Any], Any]) -> ColumnAttrs:
-    attr = ColumnAttrs()
-    for record in j:
-        cell = cell_value_function(record, column_id)
-        attr.add_value(cell)
-    attr.compute_coloring()
-    return attr

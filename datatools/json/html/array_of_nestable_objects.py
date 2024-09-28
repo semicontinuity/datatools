@@ -28,12 +28,20 @@ class ArrayOfNestableObjectsNode:
         self.column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
 
         for column_id in self.paths_of_leaves:
-            self.column_id_to_attrs[column_id] = compute_column_attrs(j, column_id, child_by_path)
+            self.column_id_to_attrs[column_id] = self.compute_column_attrs(j, column_id, child_by_path)
         debug('done')
 
         debug('compute_cross_column_attrs')
         compute_cross_column_attrs(j, self.column_id_to_attrs, child_by_path)
         debug('done')
+
+    def compute_column_attrs(self, j, column_id: Hashable, cell_value_function: Callable[[Any, Any], Any]) -> ColumnAttrs:
+        attr = ColumnAttrs()
+        for record in j:
+            cell = cell_value_function(record, column_id)
+            attr.add_value(cell)
+        attr.compute_coloring()
+        return attr
 
     def __str__(self):
         depth = depth_of(self.descriptor) - 1

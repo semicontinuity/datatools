@@ -1,6 +1,6 @@
-from typing import Dict, Hashable, List
+from typing import Dict, Hashable, List, Callable, Any
 
-from datatools.json.coloring import ColumnAttrs, compute_column_attrs
+from datatools.json.coloring import ColumnAttrs
 from datatools.json.coloring_cross_column import compute_cross_column_attrs
 from datatools.json.structure_discovery import Discovery, Descriptor, AnyDescriptor, MappingDescriptor, \
     compute_column_paths, descriptor_by_path, child_by_path, compute_row_paths
@@ -138,7 +138,7 @@ class AnsiToolkit(UiFactory):
         column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
         for column_path in column_paths:
             if descriptor_by_path(item_descriptor, column_path).is_primitive():
-                column_id_to_attrs[column_path] = compute_column_attrs(rows, column_path, child_by_path)
+                column_id_to_attrs[column_path] = self.compute_column_attrs(rows, column_path, child_by_path)
         compute_cross_column_attrs(rows, column_id_to_attrs, child_by_path)
 
         body = RegularTable([
@@ -170,7 +170,7 @@ class AnsiToolkit(UiFactory):
         column_id_to_attrs: Dict[Hashable, ColumnAttrs] = {}
         for column_path in column_paths:
             if descriptor_by_path(item_descriptor, column_path).is_primitive():
-                column_id_to_attrs[column_path] = compute_column_attrs(rows, column_path, child_by_path)
+                column_id_to_attrs[column_path] = self.compute_column_attrs(rows, column_path, child_by_path)
         compute_cross_column_attrs(rows, column_id_to_attrs, child_by_path)
 
         body = RegularTable([
@@ -182,6 +182,14 @@ class AnsiToolkit(UiFactory):
         # column_headers.set_level_heights(column_headers.max_level_heights())
 
         return ComplexTableNode(body, column_headers, row_headers, self.style.table, HeaderNode('#', False, AnsiToolkit.instance.style.header))
+
+    def compute_column_attrs(self, j, column_id: Hashable, cell_value_function: Callable[[Any, Any], Any]) -> ColumnAttrs:
+        attr = ColumnAttrs()
+        for record in j:
+            cell = cell_value_function(record, column_id)
+            attr.add_value(cell)
+        attr.compute_coloring()
+        return attr
 
     def uniform_table_node2_tr(self, row, row_descriptor, column_paths, column_id_to_attrs):
         debug("uniform_table_node2_tr", row_descriptor=row_descriptor)
