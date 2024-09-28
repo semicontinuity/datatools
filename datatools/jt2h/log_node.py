@@ -41,7 +41,12 @@ class Log:
                 thead(
                     th(),
                     (
-                        th(column) for column in self.columns
+                        th(
+                            span(column, clazz='regular'),
+                            span(column[:1] + '.', clazz='compact'),
+                            onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")'
+                        )
+                        for i, column in enumerate(self.columns)
                     )
                 ),
                 (
@@ -52,7 +57,10 @@ class Log:
                                 span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
                             ),
                             (
-                                td(row[column], style=self.cell_bg_color_style(column, row[column]))
+                                td(
+                                    span(row[column]),
+                                    style=self.cell_bg_color_style(column, row[column])
+                                )
                                 for column in self.columns
                             ),
                         ),
