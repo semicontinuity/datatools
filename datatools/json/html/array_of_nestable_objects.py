@@ -1,4 +1,5 @@
 import sys
+from typing import Hashable, Callable
 
 from datatools.json.coloring import *
 from datatools.json.coloring import COLORING_SINGLE

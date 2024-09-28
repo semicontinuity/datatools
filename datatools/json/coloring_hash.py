@@ -1,9 +1,16 @@
+from typing import Tuple
+
+
 def hash_code(s):
     """ Consistent hash """
     hh = 0
     for c in s:
         hh = (31 * hh + ord(c)) % 4294967296
     return hh
+
+
+def color_string(color: Tuple[int, int, int]):
+    return '#' + '{:02x}'.format(color[0]) + '{:02x}'.format(color[1]) + '{:02x}'.format(color[2])
 
 
 def hash_to_rgb(h, offset=0xE0):
@@ -30,7 +37,7 @@ def hash_to_rgb(h, offset=0xE0):
     h = (h - g3) // 4
     b3 = (h % 3) & 0x3
 
-    return r6*16 + r5*8 + r3 + offset, g6*16 + g5*8 + g3 + offset, b6*16 + b5*8 + b3 + offset
+    return r6 * 16 + r5 * 8 + r3 + offset, g6 * 16 + g5 * 8 + g3 + offset, b6 * 16 + b5 * 8 + b3 + offset
 
 
 def hash_to_rgb_dark(h):

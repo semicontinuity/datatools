@@ -1,6 +1,6 @@
 from collections import defaultdict
 from math import sqrt
-from typing import Dict, Set, Callable, Any, Hashable
+from typing import Dict, Set
 
 from datatools.json.util import is_primitive
 
