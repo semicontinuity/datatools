@@ -68,6 +68,13 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
         if (del_entity := self.entity_deleted_f(row)) is not None:
             self.delete(self.entities, del_entity)
 
+        for i in range(len(self.entities) - 1, -1, -1):
+            if self.entities[i] is not None:
+                break
+        else:
+            i = -1
+        del self.entities[i + 1:]
+
         return res
 
     @staticmethod

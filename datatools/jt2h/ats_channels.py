@@ -2,12 +2,11 @@ from typing import Dict, Optional, Tuple
 
 
 def channel_created(row: Dict) -> Optional[str]:
-    method = row.get('method')
-    payload = row.get('payload')
-    if method == 'CreateChannel' and payload is not None:
-        if (channel_info := payload.get('channelInfo')) is not None:
-            if (channel_id := channel_info.get('channelId')) is not None:
-                return channel_id
+    if row.get('method') == 'CreateChannel':
+        if (payload := row.get('payload')) is not None:
+            if (channel_info := payload.get('channelInfo')) is not None:
+                if (channel_id := channel_info.get('channelId')) is not None:
+                    return channel_id
 
 
 def channel_deleted(row: Dict) -> Optional[str]:
@@ -71,7 +70,9 @@ def channel_color(channel_id: str) -> str:
 
 def channel_event_type(row: Dict) -> Optional[str]:
     if (payload := row.get('payload')) is not None:
-        if (event := payload.get('event')) is not None:
+        if (payload.get('channelInfo')) is not None:
+            return 'created'
+        elif (event := payload.get('event')) is not None:
             if (channel_event := event.get('channelEvent')) is not None:
                 if (event2 := channel_event.get('event')) is not None:
                     if (event2.get('commandCompleted')) is not None:
@@ -82,3 +83,5 @@ def channel_event_type(row: Dict) -> Optional[str]:
                         return 'closed'
                     else:
                         return 'connected?'
+            elif (event.get('channelAppended')) is not None:
+                return 'channelAppended'
