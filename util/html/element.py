@@ -38,7 +38,7 @@ class Element:
         Use single quotes, because inside can be yaml/json with lots of double quotes.
         """
         return ' '.join((
-            f"{k if k != 'clazz' else 'class'}='{Element.attr_value_str(v)}'"
+            f"{k.replace('_', '-') if k != 'clazz' else 'class'}='{Element.attr_value_str(v)}'"
             for k, v in self.attrs.items()
             if v is not None
         ))

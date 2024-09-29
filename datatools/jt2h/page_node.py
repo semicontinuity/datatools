@@ -9,35 +9,32 @@ def page_node(column_count: int, contents):
         head(
             style(
                 '''
-                body {font-family: monospace; display: inline-block; background: #F0F0E0; margin: 0;}
-                thead {border: solid 1px darkgray;}
-                table {border-collapse: collapse; padding: 0; white-space: nowrap;}
-                table {background: white;}
-                th {border-top: solid 1px darkgrey; border-bottom: solid 1px darkgrey; background: #DDD; padding-left: 0.5ex; padding-right: 0.5ex;}
-                td {border-top: solid 1px #CCC; border-bottom: solid 1px #CCC; padding: 0;}
-                td {border-left: solid 2px darkgrey;}
-                td {padding-left: 0.25em; padding-right: 0.25em;}
-                th {border-left: solid 2px darkgrey;}
-                
-                td:last-child { width: 100%; }
-                
-                td.details {background: #D0D0D0;}
+body {font-family: monospace; display: inline-block; background: #F0F0E0; margin: 0;}
+thead {border: solid 1px darkgray;}
+table {border-collapse: collapse; padding: 0; white-space: nowrap;}
+table {background: white;}
+th {border-top: solid 1px darkgrey; border-bottom: solid 1px darkgrey; background: #DDD; padding-left: 0.5ex; padding-right: 0.5ex;}
+td {border-top: solid 1px #CCC; border-bottom: solid 1px #CCC; padding: 0;}
+td {border-left: solid 2px darkgrey;}
+td {padding-left: 0.25em; padding-right: 0.25em;}
+th {border-left: solid 2px darkgrey;}
 
-                tbody.regular th.details {display: none;}
-                tbody.regular td.details {display: none;}
+td:last-child { width: 100%; }
 
-                tbody.regular span.expanded {display: none;}
-                tbody.regular span.regular  {cursor: zoom-in;}
-                
-                tbody.expanded span.regular {display: none;}
-                tbody.expanded span.expanded {cursor: zoom-out;}
+td.details {background: #D0D0D0;}
+tbody.regular th.details {display: none;}
+tbody.regular td.details {display: none;}
+tbody.regular span.expanded {display: none;}
+tbody.regular span.regular  {cursor: zoom-in;}
 
-                thead th {cursor: zoom-out;}
-                
-                .compact {display:none;}
-                
-                span { white-space: nowrap;}
-                pre {font-size: 144%;} 
+tbody.expanded span.regular {display: none;}
+tbody.expanded span.expanded {cursor: zoom-out;}
+thead th {cursor: zoom-out;}
+
+.compact {display:none;}
+
+span { white-space: nowrap;}
+pre {font-size: 144%;} 
                 ''' + "\n".join(hide_rules(n) for n in range(2, column_count + 2))
             ),
             script('''
