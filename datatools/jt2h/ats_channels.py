@@ -81,4 +81,4 @@ def channel_event_type(row: Dict) -> Optional[str]:
                     elif (event2.get('closed')) is not None:
                         return 'closed'
                     else:
-                        return 'event'
+                        return 'connected?'
