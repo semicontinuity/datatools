@@ -41,8 +41,6 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
         entity_use = None
         if (new_entity := self.entity_created_f(row)) is not None:
             self.entities.append(new_entity)
-        elif (del_entity := self.entity_deleted_f(row)) is not None:
-            self.delete(self.entities, del_entity)
         else:
             entity_use = self.entity_used_f(row)
 
@@ -51,7 +49,7 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
                 continue
             if type(entity) is not str:
                 raise  Exception(entity)
-        return td(
+        res = td(
             (
                 span(
                     entity_use[1] if (
@@ -66,6 +64,11 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
             ),
             style='border-top: 0; border-bottom: 0;'
         )
+
+        if (del_entity := self.entity_deleted_f(row)) is not None:
+            self.delete(self.entities, del_entity)
+
+        return res
 
     @staticmethod
     def delete(entities, del_entity):
