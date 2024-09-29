@@ -18,6 +18,12 @@ def channel_deleted(row: Dict) -> Optional[str]:
     elif method == 'ReceiveRoomEvents' and row.get('msg') == 'Removing closed channel':
         if (channel_id := row.get('channelID')) is not None:
             return channel_id
+    elif (payload := row.get('payload')) is not None:
+        if (event := payload.get('event')) is not None:
+            if (channel_event := event.get('channelEvent')) is not None:
+                if (event2 := channel_event.get('event')) is not None:
+                    if (event2.get('closed')) is not None:
+                        return channel_event.get('channelId')
 
 
 def channel_use(row: Dict) -> Optional[Tuple[str, str]]:
