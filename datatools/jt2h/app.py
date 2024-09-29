@@ -2,6 +2,7 @@
 import json
 import sys
 
+from datatools.jt2h.channels import channel_deleted, channel_created, channel_color
 from datatools.jt2h.column_renderer_colored import ColumnRendererColored
 from datatools.jt2h.column_renderer_entities_lifecycle import ColumnRendererEntitiesLifecycle
 from datatools.jt2h.log_node import Log
@@ -23,7 +24,7 @@ def main():
         ColumnRendererColored(j, 'method'),
         ColumnRendererColored(j, 'requestID'),
         ColumnRendererColored(j, 'msg'),
-        ColumnRendererEntitiesLifecycle(j, 'ch'),
+        ColumnRendererEntitiesLifecycle(j, 'ch', channel_color, channel_created, channel_deleted),
     ]
     contents = Log(j, column_renderers)
     print(page_node(len(column_renderers), contents))
