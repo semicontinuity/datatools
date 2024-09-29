@@ -2,6 +2,7 @@
 import json
 import sys
 
+from datatools.jt2h.column_renderer_colored import ColumnRendererColored
 from datatools.jt2h.log_node import Log
 from datatools.jt2h.page_node import page_node
 
@@ -15,9 +16,15 @@ def data():
 
 def main():
     j = data()
-    columns = ['time', 'level', 'method', 'requestID', 'msg']
-    contents = Log(j, columns)
-    print(page_node(len(columns), contents))
+    column_renderers = [
+        ColumnRendererColored(j, 'time'),
+        ColumnRendererColored(j, 'level'),
+        ColumnRendererColored(j, 'method'),
+        ColumnRendererColored(j, 'requestID'),
+        ColumnRendererColored(j, 'msg'),
+    ]
+    contents = Log(j, column_renderers)
+    print(page_node(len(column_renderers), contents))
 
 
 if __name__ == "__main__":

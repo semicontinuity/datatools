@@ -36,7 +36,7 @@ def page_node(column_count: int, contents):
                 
                 .compact {display:none;}
                 
-                span { white-space: pre;}
+                span { white-space: nowrap;}
                 pre {font-size: 144%;} 
                 ''' + "\n".join(hide_rules(n) for n in range(2, column_count + 2))
             ),

@@ -1,41 +1,15 @@
 import json
 from typing import Dict, List
 
-from datatools.json.coloring import ColumnAttrs
-from datatools.json.coloring_hash import hash_to_rgb, hash_code, color_string
+from datatools.jt2h.column_renderer import ColumnRenderer
 from util.html.elements import table, td, tr, thead, tbody, th, span, pre
 
 
 class Log:
 
-    def __init__(self, j: List[Dict], columns: List) -> None:
-        self.columns = columns
+    def __init__(self, j: List[Dict], column_renderers: List[ColumnRenderer]) -> None:
         self.j = j
-        self.column_attrs: Dict[str, ColumnAttrs] = {
-            column: self.compute_column_attrs(j, column) for column in self.columns
-        }
-
-    @staticmethod
-    def compute_column_attrs(j, column: str) -> ColumnAttrs:
-        attr = ColumnAttrs()
-        for record in j:
-            cell = record.get(column)
-            if cell is not None:
-                attr.add_value(cell)
-        attr.compute_coloring()
-        return attr
-
-    def cell_bg_color_style(self, column, value):
-        attrs = self.column_attrs.get(column)
-        if attrs is None:
-            return None
-
-        string_value = str(value)
-        if not attrs.is_colored(string_value):
-            return None
-
-        return 'background-color: ' + color_string(
-            hash_to_rgb(attrs.value_hashes.get(string_value) or hash_code(string_value)))
+        self.column_renderers = column_renderers
 
     def __str__(self) -> str:
         return str(
@@ -44,11 +18,11 @@ class Log:
                     th(),
                     (
                         th(
-                            span(column, clazz='regular'),
-                            span(column[:1] + '.', clazz='compact'),
+                            span(column_renderer.column, clazz='regular'),
+                            span(column_renderer.column[:1] + '.', clazz='compact'),
                             onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")'
                         )
-                        for i, column in enumerate(self.columns)
+                        for i, column_renderer in enumerate(self.column_renderers)
                     )
                 ),
                 (
@@ -59,18 +33,15 @@ class Log:
                                 span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
                             ),
                             (
-                                td(
-                                    span(row.get(column)),
-                                    style=self.cell_bg_color_style(column, row.get(column))
-                                )
-                                for column in self.columns
+                                column_renderer.render_cell(row)
+                                for column_renderer in self.column_renderers
                             ),
                         ),
                         tr(
                             th(clazz='details'),
                             td(
                                 pre(json.dumps(row, indent=2)),
-                                colspan=len(self.columns),
+                                colspan=len(self.column_renderers),
                                 clazz='details'
                             )
                         ),
