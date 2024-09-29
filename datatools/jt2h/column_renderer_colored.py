@@ -8,8 +8,8 @@ from util.html.elements import td, span
 
 class ColumnRendererColored(ColumnRenderer):
 
-    def __init__(self, data: List[Dict], column: str):
-        super().__init__(column)
+    def __init__(self, column: str, collapsed: bool, data: List[Dict]):
+        super().__init__(column, collapsed)
         self.attrs = self.compute_column_attrs(data, column)
 
     @staticmethod
