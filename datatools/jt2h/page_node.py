@@ -16,7 +16,7 @@ table {background: white;}
 th {border-top: solid 1px darkgrey; border-bottom: solid 1px darkgrey; background: #DDD; padding-left: 0.5ex; padding-right: 0.5ex;}
 td {border-top: solid 1px #CCC; border-bottom: solid 1px #CCC; padding: 0;}
 td {border-left: solid 2px darkgrey;}
-td {padding-left: 0.25em; padding-right: 0.25em;}
+td {padding-left: 0.5em; padding-right: 0.5em;}
 th {border-left: solid 2px darkgrey;}
 
 td:last-child { width: 100%; }

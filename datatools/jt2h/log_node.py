@@ -12,41 +12,45 @@ class Log:
         self.column_renderers = column_renderers
 
     def __str__(self) -> str:
-        return str(
-            table(
-                thead(
-                    th(),
-                    (
-                        th(
-                            span(column_renderer.column, clazz='regular'),
-                            span(column_renderer.column[:1] + '.', clazz='compact'),
-                            onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")'
-                        )
-                        for i, column_renderer in enumerate(self.column_renderers)
-                    )
-                ),
+        t = table(
+            thead(
+                th(),
                 (
-                    tbody(
-                        tr(
-                            th(
-                                span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='regular'),
-                                span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
-                            ),
-                            (
-                                column_renderer.render_cell(row)
-                                for column_renderer in self.column_renderers
-                            ),
-                        ),
-                        tr(
-                            th(clazz='details'),
-                            td(
-                                pre(json.dumps(row, indent=2)),
-                                colspan=len(self.column_renderers),
-                                clazz='details'
-                            )
-                        ),
-                        clazz='regular'
-                    ) for row in self.j
+                    th(
+                        span(column_renderer.column, clazz='regular'),
+                        span(column_renderer.column[:1] + '.', clazz='compact'),
+                        onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")'
+                    )
+                    for i, column_renderer in enumerate(self.column_renderers)
                 )
+            ),
+            (
+                tbody(
+                    tr(
+                        th(
+                            span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='regular'),
+                            span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
+                        ),
+                        (
+                            column_renderer.render_cell(row)
+                            for column_renderer in self.column_renderers
+                        ),
+                    ),
+                    tr(
+                        th(clazz='details'),
+                        td(
+                            pre(json.dumps(row, indent=2)),
+                            colspan=len(self.column_renderers),
+                            clazz='details'
+                        )
+                    ),
+                    clazz='regular'
+                ) for row in self.j
+            ),
+            clazz=' '.join(
+                f"hide-c-{i + 2}"
+                for i, column_renderer in enumerate(self.column_renderers)
+                if column_renderer.collapsed
             )
         )
+        return str(t)

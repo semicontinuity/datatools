@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 
 def channel_created(row: Dict) -> Optional[str]:
@@ -20,7 +20,14 @@ def channel_deleted(row: Dict) -> Optional[str]:
             return channel_id
 
 
-def channel_used(row: Dict) -> Optional[str]:
+def channel_use(row: Dict) -> Optional[Tuple[str, str]]:
+    channel_id = used_channel_id(row)
+    if channel_id is None:
+        return None
+    return channel_id, used_channel_icon(row)
+
+
+def used_channel_id(row: Dict) -> Optional[str]:
     if (payload := row.get('payload')) is not None:
         if (info := payload.get('info')) is not None:
             if (channel_id := info.get('channelId')) is not None:
@@ -32,6 +39,15 @@ def channel_used(row: Dict) -> Optional[str]:
             if (channel_event := event.get('channelEvent')) is not None:
                 if (channel_id := channel_event.get('channelId')) is not None:
                     return channel_id
+
+
+def used_channel_icon(row: Dict) -> str:
+    if row.get('method') == 'ReceiveRoomEvents':
+        return '◀'
+    elif row.get('method') is not None:
+        return '▶'
+    else:
+        return '?'
 
 
 def channel_color(channel_id: str) -> str:
@@ -54,3 +70,9 @@ def channel_event_type(row: Dict) -> Optional[str]:
                 if (event2 := channel_event.get('event')) is not None:
                     if (event2.get('commandCompleted')) is not None:
                         return 'commandCompleted'
+                    elif (event2.get('channelAppendedEvent')) is not None:
+                        return 'channelAppendedEvent'
+                    elif (event2.get('closed')) is not None:
+                        return 'closed'
+                    else:
+                        return 'event'
