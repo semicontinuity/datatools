@@ -16,14 +16,9 @@ def main():
     table = os.environ['TABLE']
 
     where_clause = get_where_clauses()[-1]
+    column, op, value = where_clause
+    query = f"select * from {table} where {column} {op} {value}"
 
-    res = fetch(hostname, database, user, password, table, where_clause)
-
-    for row in res:
-        print(json.dumps(to_jsonisable({k: to_jsonisable(v) for k, v in row.items()})))
-
-
-def fetch(hostname, database, user, password, table, where_clause):
     client = clickhouse_connect.get_client(
         host=hostname,
         port=8443,
@@ -33,12 +28,14 @@ def fetch(hostname, database, user, password, table, where_clause):
         password=password,
         database=database
     )
-    column, op, value = where_clause
-    result = client.query(f"select * from {table} where {column} {op} {value}")
-    res = []
-    for row in result.result_rows:
-        res.append({column_name: row[i] for i, column_name in enumerate(result.column_names)})
-    return res
+    result = client.query(query)
+    res = [
+        {column_name: row1[i] for i, column_name in enumerate(result.column_names)}
+        for row1 in result.result_rows
+    ]
+
+    for row in res:
+        print(json.dumps(to_jsonisable({k: to_jsonisable(v) for k, v in row.items()})))
 
 
 if __name__ == '__main__':

@@ -13,6 +13,10 @@ class Style:
     fg: Optional[Sequence[int]] = None
     bg: Optional[Sequence[int]] = None
 
+    def with_attr(self, attr: int):
+        self.attr = attr
+        return self
+
 
 def render_spans_substr(spans: List[Tuple[AnyStr, Style]], start: int, end: int) -> AnyStr:
     result = ''

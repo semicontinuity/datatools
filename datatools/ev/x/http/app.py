@@ -47,8 +47,7 @@ def main():
         host,
         headers()
     )
-    parse_path = concepts.parse_path(path)
-    run_app(parse_path, create_view)
+    run_app(concepts.match_entity(path), create_view)
 
 
 def headers():

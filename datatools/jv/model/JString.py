@@ -13,7 +13,7 @@ class JString(JPrimitiveElement[str]):
         else:
             return self.value, self.value_style()
 
-    def value_style(self):
+    def value_style(self) -> Style:
         return get_current_highlighting().for_string(self)
 
     @staticmethod
