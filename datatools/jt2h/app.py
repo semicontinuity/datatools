@@ -25,10 +25,10 @@ def main():
         ColumnRendererCustom('time', False, lambda row: span(datetime.fromisoformat(row['time']).astimezone().strftime('%H:%M:%S.%f'))),
         ColumnRendererColored('level', True, j),
         ColumnRendererColored('requestID', True, j),
-        ColumnRendererColored('msg', False, j),
         ColumnRendererColored('method', False, j),
         ColumnRendererEntitiesLifecycle('ch', False, j, channel_color, channel_created, channel_deleted, channel_use),
         ColumnRendererCustom('event', False, lambda row: span(channel_event_type(row))),
+        ColumnRendererColored('msg', False, j),
     ]
     contents = Log(j, column_renderers)
     print(page_node(len(column_renderers), contents))

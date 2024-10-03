@@ -81,6 +81,8 @@ def channel_event_type(row: Dict) -> Optional[str]:
                         return 'channelAppendedEvent'
                     elif (event2.get('closed')) is not None:
                         return 'closed'
+                    elif (event2.get('speechkitChannelEvent')) is not None:
+                        return 'speechkitChannelEvent'
                     else:
                         return 'connected?'
             elif (event.get('channelAppended')) is not None:

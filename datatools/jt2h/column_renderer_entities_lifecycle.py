@@ -28,7 +28,8 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
         entities = set()
         for row in reversed(data):
             if (new_entity := self.entity_created_f(row)) is not None:
-                entities.remove(new_entity)
+                if new_entity in entities:
+                    entities.remove(new_entity)
             elif (del_entity := self.entity_deleted_f(row)) is not None:
                 entities.add(del_entity)
             # elif (use_entity := self.entity_used_f(row)) is not None:
