@@ -1,4 +1,5 @@
-from typing import Dict, List, Hashable, Any
+from typing import Dict, List, Any
+from urllib.parse import urlparse
 
 import requests
 
@@ -18,13 +19,19 @@ class Concepts:
 
     def match_entity(self, path: str) -> RestEntity:
         for concept_name, concept_def in self.concepts.items():
-            match = self.path_match(path, concept_def['path'])
+            concept_path = concept_def['path']
+            concept_path_parts = urlparse(concept_path)
+            match = self.path_match(path, concept_path_parts.path)
             if match is not None:
                 return RestEntity(concept_name, match)
 
     def fetch_json(self, entity: RestEntity):
         concept_def = self.concepts[entity.concept]
-        url = f'{self.protocol}://{self.host}/{self.replace_path_vars(concept_def["path"], entity.variables)}'
+        concept_path = concept_def["path"]
+        parsed_url = urlparse(concept_path)
+        path = self.replace_path_vars(parsed_url.path, entity.variables)
+        query = '' if parsed_url.query == '' else '?' + parsed_url.query
+        url = f'{self.protocol}://{self.host}/{path}{query}'
         response = requests.request('GET', url, headers=self.headers, verify=False)
         if 200 <= response.status_code < 300:
             return response.json()
