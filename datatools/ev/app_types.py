@@ -14,3 +14,13 @@ class View:
 
     def run(self) -> Optional[EntityReference]:
         pass
+
+
+class Realm:
+    name: str
+
+    def __init__(self, name):
+        self.name = name
+
+    def create_view(self, e_ref: EntityReference) -> View:
+        pass

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 import os
+from typing import Dict
 
 from datatools.dbview.x.util.pg import get_where_clauses
 from datatools.ev.app_support import run_app, View
+from datatools.ev.app_types import Realm
 from datatools.ev.x.pg.realm_pg import RealmPg
-from datatools.ev.x.pg.types import EntityReference, DbRowReference, DbSelectorClause, DbReferrers, \
-    DbTableRowsSelector
-from datatools.ev.x.pg.view_db_referrers import ViewDbReferrers
-from datatools.ev.x.pg.view_db_row import ViewDbRow
+from datatools.ev.x.pg.types import EntityReference, DbRowReference, DbSelectorClause, DbTableRowsSelector
 
 
 def get_env(key):
@@ -18,13 +17,14 @@ def get_env(key):
 
 
 realm = RealmPg(
+    None,
     get_env('HOST'),
     get_env('PORT'),
     get_env('DB_NAME'),
     get_env('DB_USER'),
     get_env('PASSWORD'),
 )
-realms = {None: realm}
+realms: Dict[str, Realm] = {None: realm}
 
 
 def main():
@@ -36,14 +36,12 @@ def main():
         )
     )
 
-    run_app({}, ref, create_view)
+    run_app(realms, ref, create_view)
 
 
 def create_view(e_ref: EntityReference) -> View:
-    if type(e_ref) is DbRowReference:
-        return ViewDbRow(realms[e_ref.realm_name], e_ref.selector)
-    elif type(e_ref) is DbReferrers:
-        return ViewDbReferrers(realms[e_ref.realm_name], e_ref.selector)
+    if isinstance(e_ref, EntityReference):
+        return realms[e_ref.realm_name].create_view(e_ref)
 
 
 if __name__ == "__main__":
