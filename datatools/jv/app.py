@@ -69,9 +69,9 @@ def make_grid(document: JDocument):
 
 
 def do_loop(g):
-    key_code = g.loop()
+    loop_result = g.loop()
     cur_line = g.cur_line
-    return key_code, cur_line
+    return loop_result, cur_line
 
 
 def handle_loop_result(document, key_code, cur_line: int) -> Tuple[int, Any]:

@@ -37,8 +37,14 @@ class ViewDbRow(View):
             self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
     def run(self) -> Optional[EntityReference]:
-        key_code, cur_line = with_alternate_screen(lambda: do_loop(self.g))
-        return self.handle_loop_result(self.doc, key_code, cur_line)
+        loop_result, cur_line = with_alternate_screen(lambda: do_loop(self.g))
+        return self.handle_loop_result(self.doc, loop_result, cur_line)
+
+    def handle_loop_result(self, document, loop_result, cur_line: int) -> Optional[EntityReference]:
+        if loop_result == KEY_F1:
+            return DbReferrers(self.selector)
+        else:
+            return loop_result
 
     def get_entity_row(self, conn, table: str, where: List[DbSelectorClause]):
         if not where:
@@ -56,9 +62,3 @@ class ViewDbRow(View):
         if len(rows) != 1:
             raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
         return rows[0]
-
-    def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
-        if key_code == KEY_F1:
-            return DbReferrers(self.selector)
-        else:
-            return key_code

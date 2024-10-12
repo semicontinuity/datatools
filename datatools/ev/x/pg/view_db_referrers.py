@@ -32,8 +32,11 @@ class ViewDbReferrers(View):
             self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
     def run(self) -> Optional[EntityReference]:
-        key_code, cur_line = with_alternate_screen(lambda: do_loop(self.g))
-        return self.handle_loop_result(self.doc, key_code, cur_line)
+        loop_result, cur_line = with_alternate_screen(lambda: do_loop(self.g))
+        return self.handle_loop_result(self.doc, loop_result, cur_line)
+
+    def handle_loop_result(self, document, loop_result, cur_line: int) -> Optional[EntityReference]:
+        return loop_result
 
     def make_inbound_references_models(self, conn):
         inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
@@ -93,9 +96,3 @@ class ViewDbReferrers(View):
             ]
 
         return result
-
-    def handle_loop_result(self, document, key_code, cur_line: int) -> Optional[EntityReference]:
-        #if type(key_code) is not int and type(key_code) is not str:
-        #    # Not key_code - EntityReference
-        #    return key_code
-        return key_code
