@@ -1,6 +1,6 @@
 from typing import Optional, Any, Callable
 
-from datatools.dbview.share.app_types import View
+from datatools.ev.app_types import View
 from datatools.tui.picotui_keys import KEY_ALT_SHIFT_LEFT, KEY_ALT_SHIFT_RIGHT
 
 

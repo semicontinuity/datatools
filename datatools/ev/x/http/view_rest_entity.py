@@ -1,6 +1,6 @@
 from typing import Optional
 
-from datatools.dbview.share.app_types import View, EntityReference
+from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.http.concepts import Concepts
 from datatools.ev.x.http.element_factory import MyElementFactory
 from datatools.ev.x.http.types import RestEntity

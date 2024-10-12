@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import List, Optional, Dict
 
-from datatools.dbview.share.app_types import View, EntityReference
+from datatools.ev.app_types import View, EntityReference
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
 from datatools.dbview.x.get_referring_rows import get_selector_value, \
     get_pk_and_text_values_for_selected_rows

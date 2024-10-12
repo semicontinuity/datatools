@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from picotui.defs import KEY_F1
 
-from datatools.dbview.share.app_types import View, EntityReference
+from datatools.ev.app_types import View, EntityReference
 from datatools.dbview.util.pg import execute_sql, get_table_pks
 from datatools.dbview.x.types import DbSelectorClause, DbReferrers, \
     DbTableRowsSelector, make_references

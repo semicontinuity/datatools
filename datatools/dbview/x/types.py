@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Dict, Any
 
-from datatools.dbview.share.app_types import EntityReference, View
+from datatools.ev.app_types import EntityReference
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 
 

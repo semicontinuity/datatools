@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from datatools.dbview.share.app_types import EntityReference
+from datatools.ev.app_types import EntityReference
 
 
 @dataclass
