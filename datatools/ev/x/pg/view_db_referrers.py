@@ -14,7 +14,7 @@ from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
 
-class ViewDbReferrers2(View):
+class ViewDbReferrers(View):
     selector: DbTableRowsSelector
     doc: JDocument
 

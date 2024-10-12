@@ -1,5 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
+
+
+@dataclass
+class Realm:
+    name: str
+    properties: Dict[str, str]
 
 
 @dataclass
