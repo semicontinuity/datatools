@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 from picotui.defs import KEY_ENTER
 
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
-from datatools.dbview.x.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
+from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
 from datatools.jv.model.factory import JElementFactory, set_last_in_parent, set_padding

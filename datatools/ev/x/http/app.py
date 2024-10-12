@@ -24,7 +24,7 @@ import json
 import os
 
 from datatools.ev.app_support import run_app, View
-from datatools.dbview.x.types import EntityReference
+from datatools.ev.x.pg.types import EntityReference
 from datatools.ev.x.http.concepts import Concepts
 from datatools.ev.x.http.types import RestEntity
 from datatools.ev.x.http.view_rest_entity import ViewRestEntity

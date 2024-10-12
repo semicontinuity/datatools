@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from datatools.dbview.x.types import EntityReference, DbRowReference, DbSelectorClause, DbReferrers, \
+from datatools.ev.x.pg.types import EntityReference, DbRowReference, DbSelectorClause, DbReferrers, \
     DbTableRowsSelector
 from datatools.dbview.x.util.pg import get_env, get_where_clauses
-from datatools.dbview.x.view_db_referrers2 import ViewDbReferrers2
-from datatools.dbview.x.view_db_row import ViewDbRow
+from datatools.ev.x.pg.view_db_referrers import ViewDbReferrers2
+from datatools.ev.x.pg.view_db_row import ViewDbRow
 from datatools.ev.app_support import run_app, View
 
 
