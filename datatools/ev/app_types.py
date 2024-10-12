@@ -1,16 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional
 
 
-@dataclass
-class Realm:
-    name: str
-    properties: Dict[str, str]
-
-
-@dataclass
+@dataclass(kw_only=True)
 class EntityReference:
-    pass
+    realm_name: str
 
 
 @dataclass

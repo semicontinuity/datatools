@@ -2,12 +2,12 @@ from collections import defaultdict
 from typing import List, Optional, Dict
 
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
-from datatools.dbview.x.util.pg import connect_to_db
 from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.pg.element_factory import MyElementFactory
 from datatools.ev.x.pg.get_referring_rows import get_selector_value, \
     get_pk_and_text_values_for_selected_rows
-from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector, make_references
+from datatools.ev.x.pg.realm_pg import make_references, RealmPg
+from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
 from datatools.jv.app import make_document, make_grid, do_loop
 from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
@@ -18,11 +18,12 @@ class ViewDbReferrers(View):
     selector: DbTableRowsSelector
     doc: JDocument
 
-    def __init__(self, selector: DbTableRowsSelector) -> None:
+    def __init__(self, realm: RealmPg, selector: DbTableRowsSelector):
+        self.realm = realm
         self.selector = selector
 
     def build(self):
-        with connect_to_db() as conn:
+        with self.realm.connect_to_db() as conn:
             self.references = make_references(conn, self.selector.table)
             self.table_pks = get_table_pks(conn, self.selector.table)
             self.doc = make_document(

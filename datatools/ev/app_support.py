@@ -1,10 +1,10 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, Any, Dict
 
 from datatools.ev.app_types import View, EntityReference
 from datatools.tui.picotui_keys import KEY_ALT_SHIFT_LEFT, KEY_ALT_SHIFT_RIGHT
 
 
-def run_app(e_ref, view_factory: Callable[[EntityReference], Optional[View]]):
+def run_app(realms: Dict[str, Any], e_ref, view_factory: Callable[[EntityReference], Optional[View]]):
     history = []
     history_idx = 0
     while True:

@@ -4,9 +4,9 @@ from picotui.defs import KEY_F1
 
 from datatools.ev.app_types import View, EntityReference
 from datatools.dbview.util.pg import execute_sql, get_table_pks
+from datatools.ev.x.pg.realm_pg import make_references, RealmPg
 from datatools.ev.x.pg.types import DbSelectorClause, DbReferrers, \
-    DbTableRowsSelector, make_references
-from datatools.dbview.x.util.pg import connect_to_db
+    DbTableRowsSelector
 from datatools.ev.x.pg.element_factory import MyElementFactory
 from datatools.jv.app import make_document, make_grid, do_loop
 from datatools.jv.document import JDocument
@@ -18,11 +18,12 @@ class ViewDbRow(View):
     selector: DbTableRowsSelector
     doc: JDocument
 
-    def __init__(self, selector: DbTableRowsSelector) -> None:
+    def __init__(self, realm: RealmPg, selector: DbTableRowsSelector) -> None:
+        self.realm = realm
         self.selector = selector
 
     def build(self):
-        with connect_to_db() as conn:
+        with self.realm.connect_to_db() as conn:
             self.references = make_references(conn, self.selector.table)
             self.table_pks = get_table_pks(conn, self.selector.table)
 
@@ -42,7 +43,7 @@ class ViewDbRow(View):
 
     def handle_loop_result(self, document, loop_result, cur_line: int) -> Optional[EntityReference]:
         if loop_result == KEY_F1:
-            return DbReferrers(self.selector)
+            return DbReferrers(realm_name=None, selector=self.selector)
         else:
             return loop_result
 

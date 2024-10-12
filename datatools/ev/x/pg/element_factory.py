@@ -24,6 +24,7 @@ class MyElementFactory(JElementFactory):
 
     class JForeignKey(JString):
         # view: 'ViewDbRow'
+        foreign_table_realm_name: str
         foreign_table_name: str
         foreign_table_pk: str
 
@@ -34,7 +35,8 @@ class MyElementFactory(JElementFactory):
             if key == KEY_ENTER:
                 # referred = self.view.references[self.key]
                 return DbRowReference(
-                    DbTableRowsSelector(
+                    realm_name=self.foreign_table_realm_name,
+                    selector=DbTableRowsSelector(
                         table=self.foreign_table_name,
                         where=[DbSelectorClause(self.foreign_table_pk, '=', f"'{self.value}'")]
                     )
@@ -55,7 +57,7 @@ class MyElementFactory(JElementFactory):
         e.options = self.options
         return e
 
-    def build_row_view(self, model: Dict, references: Dict[str, Any], table_pks: List[str]) -> JObject:
+    def build_row_view(self, model: Dict, references: Dict[str, Dict], table_pks: List[str]) -> JObject:
         e = JObject(model, None)
         e.options = self.options
 
@@ -67,6 +69,7 @@ class MyElementFactory(JElementFactory):
                 views.append(self.primary_key(v, k))
             elif type(v) is str and k in references:
                 node = self.foreign_key(v, k)
+                node.foreign_table_realm_name = None
                 node.foreign_table_name = references[k]['concept']
                 node.foreign_table_pk = references[k]['concept-pk']
                 views.append(node)
@@ -75,15 +78,3 @@ class MyElementFactory(JElementFactory):
 
         e.set_elements(set_last_in_parent(set_padding(views)))
         return e
-
-
-def make_references(conn, table) -> Dict[str, Any]:
-    """ Returns dict: column_name -> { foreign table name + foreign table column } """
-    outbound_relations = get_table_foreign_keys_outbound(conn, table)
-    return {
-        entry['column_name']: {
-            'concept': entry['foreign_table_name'],
-            'concept-pk': entry['foreign_column_name'],
-        }
-        for entry in outbound_relations
-    }
