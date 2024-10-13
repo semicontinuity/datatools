@@ -57,7 +57,7 @@ class MyElementFactory(JElementFactory):
         e.options = self.options
         return e
 
-    def build_row_view(self, model: Dict, references: Dict[str, Dict], table_pks: List[str], links: Dict[str, Dict]) -> JObject:
+    def build_row_view(self, model: Dict, references: Dict[str, Dict], table_pks: List[str], links: Dict[str, Dict], realm: 'RealmPg') -> JObject:
         """
         references is dict: column_name -> { "concept":"...", "concept-pk":"..." }
         aux_references is dict: column_name -> { "concept":"...", "concept-pk":"..." }
@@ -79,7 +79,7 @@ class MyElementFactory(JElementFactory):
                 views.append(node)
             elif type(v) is str and k in references:
                 node = self.foreign_key(v, k)
-                node.foreign_table_realm_name = None
+                node.foreign_table_realm_name = realm.name
                 node.foreign_table_name = references[k]['concept']
                 node.foreign_table_pk = references[k]['concept-pk']
                 views.append(node)

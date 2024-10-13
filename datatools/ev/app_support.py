@@ -11,7 +11,8 @@ def run_app(realms: Dict[str, Any], e_ref):
         # e_ref is EntityReference or key code
         if isinstance(e_ref, EntityReference):
             if e_ref.realm_name not in realms:
-                raise ValueError('Unknown realm ' + e_ref.realm_name)
+                raise ValueError('Unknown realm', e_ref.realm_name)
+            print('nav', e_ref)
             view = realms[e_ref.realm_name].create_view(e_ref)
         else:
             view = None

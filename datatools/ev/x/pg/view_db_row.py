@@ -3,7 +3,7 @@ from typing import List, Optional
 from picotui.defs import KEY_F1
 
 from datatools.dbview.util.pg import execute_sql, get_table_pks
-from datatools.ev.app_types import View, EntityReference, Realm
+from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.pg.element_factory import MyElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbReferrers, \
     DbTableRowsSelector
@@ -32,7 +32,8 @@ class ViewDbRow(View):
                     self.get_entity_row(conn, self.selector.table, self.selector.where),
                     self.references,
                     self.table_pks,
-                    self.realm.links.get(self.selector.table) or {}
+                    self.realm.links.get(self.selector.table) or {},
+                    self.realm,
                 ),
                 self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
             )
@@ -44,7 +45,7 @@ class ViewDbRow(View):
 
     def handle_loop_result(self, document, loop_result, cur_line: int) -> Optional[EntityReference]:
         if loop_result == KEY_F1:
-            return DbReferrers(realm_name=None, selector=self.selector)
+            return DbReferrers(realm_name=self.realm.name, selector=self.selector)
         else:
             return loop_result
 

@@ -15,7 +15,7 @@ class ViewDbReferrers(View):
     selector: DbTableRowsSelector
     doc: JDocument
 
-    def __init__(self, realm: Realm, selector: DbTableRowsSelector):
+    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector):
         self.realm = realm
         self.selector = selector
 
@@ -58,7 +58,8 @@ class ViewDbReferrers(View):
             key | value,
             {k: {'concept': table, 'concept-pk': k} for k in key},
             [],
-            {}
+            {},
+            self.realm
         )
 
     def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
