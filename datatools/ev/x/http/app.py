@@ -24,10 +24,9 @@ import json
 import os
 from typing import Dict
 
-from datatools.ev.app_support import run_app, View
+from datatools.ev.app_support import run_app
 from datatools.ev.app_types import Realm
 from datatools.ev.x.http.realm_rest import RealmRest
-from datatools.ev.x.pg.types import EntityReference
 
 
 def headers():
@@ -57,13 +56,7 @@ realms: Dict[str, Realm] = {None: realm}
 
 
 def main():
-    e_ref = realm.match_entity(get_env('__REST'))
-    run_app({}, e_ref, create_view)
-
-
-def create_view(e_ref: EntityReference) -> View:
-    if isinstance(e_ref, EntityReference):
-        return realms[e_ref.realm_name].create_view(e_ref)
+    run_app(realms, realm.match_entity(get_env('__REST')))
 
 
 if __name__ == "__main__":

@@ -46,12 +46,7 @@ def main():
         )
     )
 
-    run_app(realms, e_ref, create_view)
-
-
-def create_view(e_ref: EntityReference) -> View:
-    if isinstance(e_ref, EntityReference):
-        return realms[e_ref.realm_name].create_view(e_ref)
+    run_app(realms, e_ref)
 
 
 if __name__ == "__main__":
