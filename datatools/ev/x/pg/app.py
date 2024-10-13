@@ -4,10 +4,10 @@ import os
 from typing import Dict
 
 from datatools.dbview.x.util.pg import get_where_clauses
-from datatools.ev.app_support import run_app, View
+from datatools.ev.app_support import run_app
 from datatools.ev.app_types import Realm
 from datatools.ev.x.pg.realm_pg import RealmPg
-from datatools.ev.x.pg.types import EntityReference, DbRowReference, DbSelectorClause, DbTableRowsSelector
+from datatools.ev.x.pg.types import DbRowReference, DbSelectorClause, DbTableRowsSelector
 
 
 def get_env(key):
@@ -17,36 +17,38 @@ def get_env(key):
     return value
 
 
-def links():
-    p = os.getenv('LINKS')
+def links(p):
     if p is None:
         return {}
     else:
         return json.loads(p)
 
 
-realm = RealmPg(
-    None,
-    get_env('HOST'),
-    get_env('PORT'),
-    get_env('DB_NAME'),
-    get_env('DB_USER'),
-    get_env('PASSWORD'),
-    links(),
-)
-realms: Dict[str, Realm] = {None: realm}
+def realms() -> Dict[str, Realm]:
+    return {
+        None: RealmPg(
+            None,
+            get_env('HOST'),
+            get_env('PORT'),
+            get_env('DB_NAME'),
+            get_env('DB_USER'),
+            get_env('PASSWORD'),
+            links(os.getenv('LINKS'))
+        )
+    }
 
 
 def main():
-    e_ref = DbRowReference(
-        realm_name=None,
-        selector=DbTableRowsSelector(
-            table=get_env('TABLE'),
-            where=[DbSelectorClause(*w) for w in get_where_clauses()]
+    run_app(
+        realms(),
+        DbRowReference(
+            realm_name=None,
+            selector=DbTableRowsSelector(
+                table=get_env('TABLE'),
+                where=[DbSelectorClause(*w) for w in get_where_clauses()]
+            )
         )
     )
-
-    run_app(realms, e_ref)
 
 
 if __name__ == "__main__":

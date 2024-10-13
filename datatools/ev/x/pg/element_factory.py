@@ -73,7 +73,7 @@ class MyElementFactory(JElementFactory):
                 views.append(self.primary_key(v, k))
             elif type(v) is str and k in links:
                 node = self.foreign_key(v, k)
-                node.foreign_table_realm_name = links[k]['concept']
+                node.foreign_table_realm_name = links[k]['realm']
                 node.foreign_table_name = links[k]['concept']
                 node.foreign_table_pk = links[k]['concept-pk']
                 views.append(node)
