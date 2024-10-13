@@ -65,18 +65,19 @@ class MyElementFactory(JElementFactory):
         e = JObject(model, None)
         e.options = self.options
 
+        # NB can be both in links and PKs! Print PKs first.
         views = []
         for k, v in model.items():
             if isinstance(v, datetime.datetime):
                 views.append(self.date_time(v, k))
-            elif type(v) is str and k in table_pks:
-                views.append(self.primary_key(v, k))
             elif type(v) is str and k in links:
                 node = self.foreign_key(v, k)
                 node.foreign_table_realm_name = links[k]['realm']
                 node.foreign_table_name = links[k]['concept']
                 node.foreign_table_pk = links[k]['concept-pk']
                 views.append(node)
+            elif type(v) is str and k in table_pks:
+                views.append(self.primary_key(v, k))
             elif type(v) is str and k in references:
                 node = self.foreign_key(v, k)
                 node.foreign_table_realm_name = realm.name
