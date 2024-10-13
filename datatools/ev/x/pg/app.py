@@ -38,7 +38,7 @@ realms: Dict[str, Realm] = {None: realm}
 
 
 def main():
-    ref = DbRowReference(
+    e_ref = DbRowReference(
         realm_name=None,
         selector=DbTableRowsSelector(
             table=get_env('TABLE'),
@@ -46,7 +46,7 @@ def main():
         )
     )
 
-    run_app(realms, ref, create_view)
+    run_app(realms, e_ref, create_view)
 
 
 def create_view(e_ref: EntityReference) -> View:

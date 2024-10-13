@@ -2,7 +2,6 @@ from typing import Optional
 
 from picotui.defs import KEY_ENTER
 
-from datatools.ev.x.http.concepts import Concepts
 from datatools.ev.x.http.types import RestEntity
 from datatools.jv.model.JElement import JElement
 from datatools.jv.model.JNumber import JNumber
@@ -13,10 +12,10 @@ from datatools.tui.treeview.rich_text import Style
 
 
 class MyElementFactory(JElementFactory):
-    concepts: Concepts
+    concepts: 'RealmRest'
     entity: RestEntity
 
-    def __init__(self, concepts: Concepts, entity: RestEntity):
+    def __init__(self, concepts: 'RealmRest', entity: RestEntity):
         super().__init__(None)
         self.concepts = concepts
         self.entity = entity

@@ -22,32 +22,12 @@
 
 import json
 import os
+from typing import Dict
 
 from datatools.ev.app_support import run_app, View
+from datatools.ev.app_types import Realm
+from datatools.ev.x.http.realm_rest import RealmRest
 from datatools.ev.x.pg.types import EntityReference
-from datatools.ev.x.http.concepts import Concepts
-from datatools.ev.x.http.types import RestEntity
-from datatools.ev.x.http.view_rest_entity import ViewRestEntity
-
-
-def create_view(e_ref: EntityReference) -> View:
-    if type(e_ref) is RestEntity:
-        return ViewRestEntity(e_ref, concepts)
-
-
-def main():
-    global concepts
-    protocol = os.environ.get('PROTOCOL', '')
-    host = os.environ['HOST']
-    path = os.environ['__REST']
-
-    concepts = Concepts(
-        json.loads(os.environ['CONCEPTS']),
-        protocol,
-        host,
-        headers()
-    )
-    run_app({}, concepts.match_entity(path), create_view)
 
 
 def headers():
@@ -57,6 +37,33 @@ def headers():
             name = k.removeprefix('HEADER__').lower().replace('_', '-')
             res[name] = v
     return res
+
+
+def get_env(key):
+    value = os.getenv(key)
+    if value is None:
+        raise Exception(f'Must set {key}')
+    return value
+
+
+realm = RealmRest(
+    None,
+    json.loads(get_env('CONCEPTS')),
+    get_env('PROTOCOL'),
+    get_env('HOST'),
+    headers()
+)
+realms: Dict[str, Realm] = {None: realm}
+
+
+def main():
+    e_ref = realm.match_entity(get_env('__REST'))
+    run_app({}, e_ref, create_view)
+
+
+def create_view(e_ref: EntityReference) -> View:
+    if isinstance(e_ref, EntityReference):
+        return realms[e_ref.realm_name].create_view(e_ref)
 
 
 if __name__ == "__main__":

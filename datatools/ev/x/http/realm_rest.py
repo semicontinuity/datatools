@@ -3,19 +3,26 @@ from urllib.parse import urlparse
 
 import requests
 
+from datatools.ev.app_types import Realm, EntityReference, View
 from datatools.ev.x.http.types import RestEntity
+from datatools.ev.x.http.view_rest_entity import ViewRestEntity
 
 
-class Concepts:
+class RealmRest(Realm):
     concepts: Dict[str, Any]
     protocol: str
     host: str
 
-    def __init__(self, concepts: Dict[str, Any], protocol: str, host: str, headers: Dict[str, str]) -> None:
+    def __init__(self, name: str, concepts: Dict[str, Any], protocol: str, host: str, headers: Dict[str, str]) -> None:
+        super().__init__(name)
         self.concepts = concepts
         self.protocol = protocol
         self.host = host
         self.headers = headers
+
+    def create_view(self, e_ref: EntityReference) -> View:
+        if type(e_ref) is RestEntity:
+            return ViewRestEntity(e_ref, self)
 
     def match_entity(self, path: str) -> RestEntity:
         for concept_name, concept_def in self.concepts.items():
@@ -23,7 +30,7 @@ class Concepts:
             concept_path_parts = urlparse(concept_path)
             match = self.path_match(path, concept_path_parts.path)
             if match is not None:
-                return RestEntity(concept_name, match)
+                return RestEntity(realm_name=None, concept=concept_name, variables=match)
 
     def fetch_json(self, entity: RestEntity):
         concept_def = self.concepts[entity.concept]
@@ -41,13 +48,13 @@ class Concepts:
     def find_link_spec(self, concept: str, json_path: str):
         concept_def = self.concepts[concept]
         for link in concept_def['links']:
-            match = Concepts.path_list_match(json_path.split('.'), link['json_path'].split('.'))
+            match = RealmRest.path_list_match(json_path.split('.'), link['json_path'].split('.'))
             if match is not None:
                 return link['concept'], link['value']
 
     @staticmethod
     def path_match(path: str, pattern: str):
-        return Concepts.path_list_match(path.split('/'), pattern.split('/'))
+        return RealmRest.path_list_match(path.split('/'), pattern.split('/'))
 
     @staticmethod
     def path_list_match(path_parts: List[str], pattern_parts: List[str]):

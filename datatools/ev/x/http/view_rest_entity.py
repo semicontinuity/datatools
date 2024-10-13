@@ -1,7 +1,6 @@
 from typing import Optional
 
 from datatools.ev.app_types import View, EntityReference
-from datatools.ev.x.http.concepts import Concepts
 from datatools.ev.x.http.element_factory import MyElementFactory
 from datatools.ev.x.http.types import RestEntity
 from datatools.jv.app import make_grid, do_loop, make_document_for_model
@@ -13,7 +12,7 @@ class ViewRestEntity(View):
     ref: RestEntity
     doc: JDocument
 
-    def __init__(self, ref: RestEntity, concepts: Concepts) -> None:
+    def __init__(self, ref: RestEntity, concepts: 'RealmRest') -> None:
         self.ref = ref
         self.concepts = concepts
 
