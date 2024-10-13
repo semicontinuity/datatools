@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import os
 from typing import Dict
 
@@ -16,6 +17,14 @@ def get_env(key):
     return value
 
 
+def links():
+    p = os.getenv('LINKS')
+    if p is None:
+        return {}
+    else:
+        return json.loads(p)
+
+
 realm = RealmPg(
     None,
     get_env('HOST'),
@@ -23,6 +32,7 @@ realm = RealmPg(
     get_env('DB_NAME'),
     get_env('DB_USER'),
     get_env('PASSWORD'),
+    links(),
 )
 realms: Dict[str, Realm] = {None: realm}
 

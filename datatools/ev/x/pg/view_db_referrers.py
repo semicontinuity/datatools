@@ -54,7 +54,12 @@ class ViewDbReferrers(View):
     def referring_record(self, referrer: Dict, table: str):
         key = referrer['key']
         value = referrer['value']
-        return MyElementFactory().build_row_view(key | value, {k: {'concept': table, 'concept-pk': k} for k in key}, [])
+        return MyElementFactory().build_row_view(
+            key | value,
+            {k: {'concept': table, 'concept-pk': k} for k in key},
+            [],
+            {}
+        )
 
     def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
         debug('make_referring_rows_model', table=table, where=where)

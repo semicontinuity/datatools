@@ -19,14 +19,23 @@ class RealmPg(Realm):
     db_name: str
     db_user: str
     db_password: str
+    links: Dict[str, Dict]
 
-    def __init__(self, name: str, host: str, port: str, db_name: str, db_user: str, db_password: str) -> None:
+    def __init__(self, name: str, host: str, port: str, db_name: str, db_user: str, db_password: str, links: Dict[str, Dict]):
         super().__init__(name)
         self.host = host
         self.port = port
         self.db_name = db_name
         self.db_user = db_user
         self.db_password = db_password
+        self.links = links
+
+    def find_link_spec(self, concept: str, json_path: str):
+        concept_def = self.links[concept]
+        for link in concept_def['links']:
+            match = json_path == link['json_path']
+            if match is not None:
+                return link['concept'], link['value']
 
     def create_view(self, e_ref: EntityReference) -> View:
         if isinstance(e_ref, DbRowReference):
@@ -76,7 +85,7 @@ class RealmPg(Realm):
             {k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
     def make_references(self, conn, table) -> Dict[str, Any]:
-        """ Returns dict: column_name -> { foreign table name + foreign table column } """
+        """ Returns dict: column_name -> { "concept":"...", "concept-pk":"..." } """
         outbound_relations = get_table_foreign_keys_outbound(conn, table)
         return {
             entry['column_name']: {

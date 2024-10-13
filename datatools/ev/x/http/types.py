@@ -4,7 +4,7 @@ from typing import Dict
 from datatools.ev.app_types import EntityReference
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RestEntity(EntityReference):
     concept: str
     # entity_id: str

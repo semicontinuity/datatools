@@ -62,7 +62,7 @@ class MyElementFactory(JElementFactory):
         if link_spec:
             concept, var = link_spec
             vars = { k: v for k, v in self.entity.variables.items() if k in self.concepts.get_path_variables(concept)} | {var: str(v)}
-            target = RestEntity(concept, vars)
+            target = RestEntity(realm_name=None, concept=concept, variables=vars)
             return link_element_f(v, k).set_entity(target)
         else:
             return plain_element_f(v, k)

@@ -14,10 +14,11 @@ from datatools.util.logging import debug
 
 
 class ViewDbRow(View):
+    realm: 'RealmPg'
     selector: DbTableRowsSelector
     doc: JDocument
 
-    def __init__(self, realm: Realm, selector: DbTableRowsSelector) -> None:
+    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector) -> None:
         self.realm = realm
         self.selector = selector
 
@@ -30,7 +31,8 @@ class ViewDbRow(View):
                 MyElementFactory().build_row_view(
                     self.get_entity_row(conn, self.selector.table, self.selector.where),
                     self.references,
-                    self.table_pks
+                    self.table_pks,
+                    self.realm.links.get(self.selector.table) or {}
                 ),
                 self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
             )
