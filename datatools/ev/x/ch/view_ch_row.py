@@ -1,31 +1,27 @@
 from typing import List, Optional
 
-from picotui.defs import KEY_F1
-
-from datatools.dbview.util.pg import get_table_pks
 from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
-from datatools.ev.x.pg.types import DbSelectorClause, DbReferrers, \
-    DbTableRowsSelector
+from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
 from datatools.jv.app import make_document, make_grid, do_loop
 from datatools.jv.document import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
 
-class ViewDbRow(View):
-    realm: 'RealmPg'
+class ViewChRow(View):
+    realm: 'RealmClickhouse'
     selector: DbTableRowsSelector
     doc: JDocument
 
-    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector) -> None:
+    def __init__(self, realm: 'RealmClickhouse', selector: DbTableRowsSelector) -> None:
         self.realm = realm
         self.selector = selector
 
     def build(self):
         with self.realm.connect_to_db() as conn:
-            self.references = self.realm.make_references(conn, self.selector.table)
-            self.table_pks = get_table_pks(conn, self.selector.table)
+            self.references = {}
+            self.table_pks = []
 
             self.doc = make_document(
                 DbElementFactory().build_row_view(
@@ -44,10 +40,7 @@ class ViewDbRow(View):
         return self.handle_loop_result(self.doc, loop_result, cur_line)
 
     def handle_loop_result(self, document, loop_result, cur_line: int) -> Optional[EntityReference]:
-        if loop_result == KEY_F1:
-            return DbReferrers(realm_name=self.realm.name, selector=self.selector)
-        else:
-            return loop_result
+        return loop_result
 
     def get_entity_row(self, conn, table: str, where: List[DbSelectorClause]):
         if not where:

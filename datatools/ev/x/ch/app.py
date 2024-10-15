@@ -3,39 +3,38 @@ import json
 import os
 
 from datatools.dbview.x.util.pg import get_where_clauses
-from datatools.json.util import to_jsonisable
-
-import clickhouse_connect
+from datatools.ev.app_support import run_app
+from datatools.ev.x.ch.realm_clickhouse import RealmClickhouse
+from datatools.ev.x.ch.types import ClickhouseRowEntity
+from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause
 
 
 def main():
-    hostname = os.environ['YC_CH_HOST']
-    database = os.environ['YC_CH_DATABASE']
-    user = os.environ['YC_CH_USER']
-    password = os.environ['YC_CH_PASSWORD']
-    table = os.environ['TABLE']
-
-    where_clause = get_where_clauses()[-1]
-    column, op, value = where_clause
-    query = f"select * from {table} where {column} {op} {value}"
-
-    client = clickhouse_connect.get_client(
-        host=hostname,
-        port=8443,
-        secure=True,
-        verify=False,
-        username=user,
-        password=password,
-        database=database
+    realm = RealmClickhouse(
+        name=None,
+        hostname=os.environ['YC_CH_HOST'],
+        database=os.environ['YC_CH_DATABASE'],
+        user=os.environ['YC_CH_USER'],
+        password=os.environ['YC_CH_PASSWORD'],
+        links=links(os.getenv('LINKS'))
     )
-    result = client.query(query)
-    res = [
-        {column_name: row1[i] for i, column_name in enumerate(result.column_names)}
-        for row1 in result.result_rows
-    ]
+    run_app(
+        {None: realm},
+        ClickhouseRowEntity(
+            realm_name=None,
+            selector=DbTableRowsSelector(
+                table=os.environ['TABLE'],
+                where=[DbSelectorClause(*w) for w in get_where_clauses()]
+            )
+        )
+    )
 
-    for row in res:
-        print(json.dumps(to_jsonisable({k: to_jsonisable(v) for k, v in row.items()})))
+
+def links(p):
+    if p is None:
+        return {}
+    else:
+        return json.loads(p)
 
 
 if __name__ == '__main__':

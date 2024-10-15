@@ -37,6 +37,7 @@ class RealmPg(Realm):
             if match is not None:
                 return link['concept'], link['value']
 
+    # override
     def create_view(self, e_ref: EntityReference) -> View:
         if isinstance(e_ref, DbRowReference):
             return ViewDbRow(self, e_ref.selector)
@@ -62,7 +63,7 @@ class RealmPg(Realm):
         if this_column != where_column:
             sql = f"SELECT {this_column} from {table} where {where_column} {where_op} {where_value}"
             debug(sql)
-            rows = execute_sql(conn, sql)
+            rows = self.execute_query(conn, sql)
             if len(rows) != 1:
                 raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
             selector_value = "'" + rows[0][this_column] + "'"
@@ -80,7 +81,7 @@ class RealmPg(Realm):
 
         sql = f"SELECT {', '.join(columns)} from {table} where {selector_column_name}={selector_column_value} limit {limit}"
         debug(sql)
-        rows = execute_sql(conn, sql)
+        rows = self.execute_query(conn, sql)
         return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [
             {k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
@@ -94,3 +95,6 @@ class RealmPg(Realm):
             }
             for entry in outbound_relations
         }
+
+    def execute_query(self, conn, sql):
+        return execute_sql(conn, sql)

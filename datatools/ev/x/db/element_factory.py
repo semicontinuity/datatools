@@ -1,9 +1,8 @@
 import datetime
-from typing import List, Dict, Any
+from typing import List, Dict
 
 from picotui.defs import KEY_ENTER
 
-from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
@@ -12,7 +11,7 @@ from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.treeview.rich_text import Style
 
 
-class MyElementFactory(JElementFactory):
+class DbElementFactory(JElementFactory):
 
     class JDateTime(JString):
         def value_style(self):
@@ -43,17 +42,17 @@ class MyElementFactory(JElementFactory):
                 )
 
     def foreign_key(self, v, k):
-        e = MyElementFactory.JForeignKey(v, k)
+        e = DbElementFactory.JForeignKey(v, k)
         e.options = self.options
         return e
 
     def primary_key(self, v, k):
-        e = MyElementFactory.JPrimaryKey(v, k)
+        e = DbElementFactory.JPrimaryKey(v, k)
         e.options = self.options
         return e
 
     def date_time(self, v, k):
-        e = MyElementFactory.JDateTime(str(v), k)
+        e = DbElementFactory.JDateTime(str(v), k)
         e.options = self.options
         return e
 

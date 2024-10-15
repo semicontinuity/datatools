@@ -2,8 +2,8 @@ from collections import defaultdict
 from typing import List, Optional, Dict
 
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
-from datatools.ev.app_types import View, EntityReference, Realm
-from datatools.ev.x.pg.element_factory import MyElementFactory
+from datatools.ev.app_types import View, EntityReference
+from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
 from datatools.jv.app import make_document, make_grid, do_loop
 from datatools.jv.document import JDocument
@@ -54,7 +54,7 @@ class ViewDbReferrers(View):
     def referring_record(self, referrer: Dict, table: str):
         key = referrer['key']
         value = referrer['value']
-        return MyElementFactory().build_row_view(
+        return DbElementFactory().build_row_view(
             key | value,
             {k: {'concept': table, 'concept-pk': k} for k in key},
             [],
