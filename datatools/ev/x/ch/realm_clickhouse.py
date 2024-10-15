@@ -6,6 +6,7 @@ from clickhouse_connect.driver import Client
 from datatools.ev.app_types import Realm, EntityReference, View
 from datatools.ev.x.ch.types import ClickhouseRowEntity
 from datatools.ev.x.ch.view_ch_row import ViewChRow
+from datatools.json.util import to_jsonisable
 
 
 class RealmClickhouse(Realm):
@@ -50,6 +51,6 @@ class RealmClickhouse(Realm):
     def execute_query(self, conn: Client, query: str):
         result = conn.query(query)
         return [
-            {column_name: row[i] for i, column_name in enumerate(result.column_names)}
+            {column_name: to_jsonisable(row[i]) for i, column_name in enumerate(result.column_names)}
             for row in result.result_rows
         ]
