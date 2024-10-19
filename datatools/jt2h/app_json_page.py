@@ -3,6 +3,7 @@ import json
 import sys
 
 from datatools.jt2h.json_node import JsonNode
+from datatools.jt2h.json_node_css import JSON_NODE_CSS
 from util.html.elements import html, body, head, style
 
 
@@ -22,7 +23,7 @@ def page_node(contents):
                     font-family: monospace; background-color: #e0f0fa;
                 }
                 ''',
-                JsonNode.CSS,
+                JSON_NODE_CSS,
             )
         ),
         body(

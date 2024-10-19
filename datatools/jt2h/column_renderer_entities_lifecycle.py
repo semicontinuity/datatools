@@ -6,6 +6,28 @@ from util.html.elements import td, span
 
 class ColumnRendererEntitiesLifecycle(ColumnRenderer):
 
+    CSS = '''  
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 4px;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+} 
+    '''
+
     def __init__(
             self,
             column: str,

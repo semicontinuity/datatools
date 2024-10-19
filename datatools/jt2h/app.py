@@ -7,8 +7,10 @@ from datatools.jt2h.ats_channels import channel_deleted, channel_created, channe
 from datatools.jt2h.column_renderer_colored import ColumnRendererColored
 from datatools.jt2h.column_renderer_custom import ColumnRendererCustom
 from datatools.jt2h.column_renderer_entities_lifecycle import ColumnRendererEntitiesLifecycle
-from datatools.jt2h.log_node import Log
+from datatools.jt2h.json_node_css import JSON_NODE_CSS
+from datatools.jt2h.log_node import LogNode
 from datatools.jt2h.page_node import page_node
+from datatools.jt2h.page_node_css import PAGE_NODE_CSS
 from util.html.elements import span
 
 
@@ -21,6 +23,7 @@ def data():
 
 def main():
     j = data()
+
     column_renderers = [
         ColumnRendererCustom('time', False, lambda row: span(datetime.fromisoformat(row['time']).astimezone().strftime('%H:%M:%S.%f'))),
         ColumnRendererColored('level', True, j),
@@ -30,9 +33,16 @@ def main():
         ColumnRendererCustom('event', False, lambda row: span(channel_event_type(row))),
         ColumnRendererColored('msg', False, j),
     ]
-    contents = Log(j, column_renderers)
+    log = LogNode(j, column_renderers)
+
     print("""<!DOCTYPE html>""")
-    print(page_node(len(column_renderers), contents))
+    print(
+        page_node(
+            contents=log,
+            css=PAGE_NODE_CSS + log.css() + JSON_NODE_CSS,
+            js=LogNode.JS
+        )
+    )
 
 
 if __name__ == "__main__":
