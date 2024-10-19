@@ -1,5 +1,8 @@
 from typing import Hashable
 
+import mmh3
+
+from datatools.json.coloring_hash import color_string, hash_to_rgb, hash_to_rgb_dark
 from datatools.json.util import escape
 from util.html.elements import span, div
 
@@ -9,10 +12,10 @@ class JsonNode:
 
     CSS = """
 .key {
-    color: indigo; ;
+    color: darkblue;
 }
 .string {
-    color: teal; font-weight: bold;
+    color: navy; font-weight: bold;
 }
 .number {
     color: darkred; font-weight: bold
@@ -35,16 +38,23 @@ class JsonNode:
         return str(self.json_node(self.j))
 
     @staticmethod
+    def key_color_style(indent: int):
+        return JsonNode.style_for_indent(indent, offset=0xE0)
+
+    @staticmethod
+    def style_for_indent(indent: int, offset: int):
+        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(indent), 1), offset=offset))
+
+    @staticmethod
     def json_indent(indent: int):
         if indent > 0:
             return span('&nbsp;' * indent)
 
     @staticmethod
-    def json_key(key: str, key_space: int):
+    def json_key(indent: int, key: str, key_space: int):
         if type(key) is str:
             return [
-                span('"' + key + '"', clazz='key'),
-                span('&nbsp;' * (key_space - len(key))),
+                span('"' + key + '"', '&nbsp;' * (key_space - len(key)), clazz='key', style=JsonNode.key_color_style(indent)),
                 span(' : '),
             ]
 
@@ -64,9 +74,9 @@ class JsonNode:
     def json_simple_node(self, v, key: str, key_space: int, indent: int, last: bool):
         return div(
             self.json_indent(indent),
-            self.json_key(key, key_space),
+            self.json_key(indent, key, key_space),
             self.json_primitive(v),
-            span(',') if not last else None,
+            span(',', clazz='comma') if not last else None,
         )
 
     def json_complex_node(
@@ -85,7 +95,7 @@ class JsonNode:
             div(
                 div(
                     self.json_indent(indent),
-                    self.json_key(key, key_space),
+                    self.json_key(indent, key, key_space),
                     span(start)
                 ),
 
@@ -97,7 +107,7 @@ class JsonNode:
                 div(
                     self.json_indent(indent),
                     span(end),
-                    ',' if not last else None
+                    span(',', clazz='comma') if not last else None
                 ),
             )
 

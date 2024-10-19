@@ -21,7 +21,7 @@ th {border-left: solid 2px darkgrey;}
 
 td:last-child { width: 100%; }
 
-td.details { background: #e0f0fa; font-size: 100%;}
+td.details { background: #e0e8ec; font-size: 100%;}
 tbody.regular th.details {display: none;}
 tbody.regular td.details {display: none;}
 tbody.regular span.expanded {display: none;}
