@@ -1,4 +1,3 @@
-import sys
 from typing import Dict, List, Optional, Callable, Tuple
 
 from datatools.jt2h.column_renderer import ColumnRenderer
@@ -52,18 +51,24 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
                 continue
             if type(entity) is not str:
                 raise Exception(entity)
+
         res = td(
             (
-                span(
-                    entity_use[1] if (
-                            entity is not None
-                            and entity_use is not None
-                            and entity == entity_use[0]
-                    ) else '&nbsp;',
-                    None if entity is None else span(entity, clazz='tooltip-text'),
-                    style=(None if entity is None else 'color: white; background-color: ' + self.entity_color_f(entity)),
-                    clazz=None if entity is None else 'tooltip'
-                )
+                [
+                    span(
+                        entity_use[1] if (
+                                entity is not None
+                                and entity_use is not None
+                                and entity == entity_use[0]
+                        ) else '&nbsp;',
+                        None if entity is None else span(entity, clazz='tooltip-text'),
+                        style=(
+                            None if entity is None else 'color: white; background-color: ' + self.entity_color_f(
+                                entity)),
+                        clazz=None if entity is None else 'tooltip'
+                    ),
+                    ' '
+                ]
                 for entity in self.entities
             ),
             style='border-top: 0; border-bottom: 0;'
