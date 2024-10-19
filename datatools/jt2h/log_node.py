@@ -2,6 +2,7 @@ from typing import Dict, List
 
 from datatools.jt2h.column_renderer import ColumnRenderer
 from datatools.jt2h.json_node import JsonNode
+from datatools.jt2h.json_node_delegate_yaml import JsonNodeDelegateYaml
 from util.html.elements import table, td, tr, thead, tbody, th, span
 
 
@@ -39,7 +40,7 @@ class LogNode:
                     tr(
                         th(clazz='details'),
                         td(
-                            JsonNode(row),
+                            JsonNode(row, JsonNodeDelegateYaml()),
                             colspan=len(self.column_renderers),
                             clazz='details'
                         )
