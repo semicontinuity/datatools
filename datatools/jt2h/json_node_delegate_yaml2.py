@@ -64,8 +64,9 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             return div(
                 div(start),
                 div(
-                    span('&nbsp;' * 2, style='display: inline-block;'),
-                    span(*contents, style='display: inline-block;'),
+                    span('&nbsp;' * 2, style=''),
+                    span(*contents, style=' width: 100%;'),
+                    style='display: flex;'
                 ),
                 style=self.style_for_indent() + 'padding-left: 0.25em; border-left: solid 1px darkgray;'
             )
