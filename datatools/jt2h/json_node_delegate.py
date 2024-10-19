@@ -11,7 +11,7 @@ class JsonNodeDelegate:
         self.cur_indent = 0
 
     def style_for_indent(self):
-        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 1)))
+        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 0), offset=0xD0)) + ';'
 
     def indent(self):
         if self.cur_indent > 0:
@@ -55,7 +55,7 @@ class JsonNodeDelegate:
         else:
             return span(v, clazz='number')
 
-    def object_node(self, start, contents, end):
+    def object_node(self, key, start, contents, end):
         return div(start, *contents, end)
 
     def object_node_start(self, key: str, key_space: int):
@@ -72,7 +72,7 @@ class JsonNodeDelegate:
         )
         return res
 
-    def array_node(self, start, contents, end):
+    def array_node(self, key, start, contents, end):
         return div(start, *contents, end)
 
     def array_node_start(self, key: str, max_key_size: int):

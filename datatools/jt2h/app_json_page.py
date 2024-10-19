@@ -4,7 +4,7 @@ import sys
 
 from datatools.jt2h.json_node import JsonNode
 from datatools.jt2h.json_node_css import JSON_NODE_CSS
-from datatools.jt2h.json_node_delegate_yaml import JsonNodeDelegateYaml
+from datatools.jt2h.json_node_delegate_yaml2 import JsonNodeDelegateYaml2
 from util.html.elements import html, body, head, style
 
 
@@ -34,9 +34,10 @@ def page_node(contents):
 
 
 def main():
+    print("""<!DOCTYPE html>""")
     print(
         page_node(
-            JsonNode(data(), JsonNodeDelegateYaml())
+            JsonNode(data(), JsonNodeDelegateYaml2())
         )
     )
 

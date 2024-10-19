@@ -3,6 +3,7 @@ from typing import Dict, List
 from datatools.jt2h.column_renderer import ColumnRenderer
 from datatools.jt2h.json_node import JsonNode
 from datatools.jt2h.json_node_delegate_yaml import JsonNodeDelegateYaml
+from datatools.jt2h.json_node_delegate_yaml2 import JsonNodeDelegateYaml2
 from util.html.elements import table, td, tr, thead, tbody, th, span
 
 
@@ -40,7 +41,7 @@ class LogNode:
                     tr(
                         th(clazz='details'),
                         td(
-                            JsonNode(row, JsonNodeDelegateYaml()),
+                            JsonNode(row, JsonNodeDelegateYaml2()),
                             colspan=len(self.column_renderers),
                             clazz='details'
                         )
@@ -91,7 +92,7 @@ span { white-space: nowrap;}
     '''
 
     CSS_DYNAMIC_ELEMENTS = '''
-td.details { background: #e0e8ec; font-size: 100%;}
+td.details { padding: 0; background: #d0d8dc; font-size: 100%; border: solid 2px darkgray;}
 tbody.regular th.details {display: none;}
 tbody.regular td.details {display: none;}
 tbody.regular span.expanded {display: none;}
