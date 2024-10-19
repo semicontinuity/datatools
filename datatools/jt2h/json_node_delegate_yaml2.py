@@ -32,7 +32,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             self.key(key, key_space),
             ' ',
             self.primitive(v),
-            style=self.style_for_indent() + 'padding-left: 0.25em; border-left: solid 1px darkgray; ',
+            style=self.style_for_indent() + 'padding-left: 0.5em; border-left: solid 0.1em darkgray; ',
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -64,11 +64,11 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             return div(
                 div(start),
                 div(
-                    span('&nbsp;' * 2, style=''),
-                    span(*contents, style=' width: 100%;'),
+                    span('&nbsp;'),
+                    span(*contents, style='width: 100%;'),
                     style='display: flex;'
                 ),
-                style=self.style_for_indent() + 'padding-left: 0.25em; border-left: solid 1px darkgray;'
+                style=self.style_for_indent() + 'padding-left: 0.5em; border-left: solid 0.1em darkgray;'
             )
         else:
             return div(*contents, style=self.style_for_indent())
