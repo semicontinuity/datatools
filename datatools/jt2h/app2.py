@@ -16,11 +16,31 @@ def data():
 def page_node(contents):
     return html(
         head(
-            style(
-                '''
-                body {font-family: monospace;}
-                '''
-            )
+            style('''
+body {
+    font-family: monospace; background-color: #e0f0fa;
+}
+
+.key {
+    color: indigo; ;
+}
+.string {
+    color: teal; font-weight: bold;
+}
+.number {
+    color: darkred; font-weight: bold
+}
+.true {
+    color: green; font-weight: bold; 
+}
+.false {
+    color: brown; font-weight: bold; 
+}
+.null {
+    color: black; font-weight: bold; 
+}
+'''
+                  )
         ),
         body(
             contents
@@ -36,7 +56,8 @@ def json_indent(indent: int):
 def json_key(key: str, key_space: int):
     if type(key) is str:
         return [
-            span('"' + key + '"' + ('&nbsp;' * (key_space - len(key)))),
+            span('"' + key + '"', clazz='key'),
+            span('&nbsp;' * (key_space - len(key))),
             span(' : '),
         ]
 
@@ -66,11 +87,15 @@ def json_complex_node(items, key: str, key_space: int, indent: int, start: str, 
 
 def json_primitive(v):
     if v is None:
-        return span('null')
+        return span('null', clazz='null')
     elif type(v) is str:
-        return span('"' + ''.join([escape(c) for c in v]) + '"')
+        return span('"' + ''.join([escape(c) for c in v]) + '"', clazz='string')
+    elif v is True:
+        return span('true', clazz='true')
+    elif v is False:
+        return span('false', clazz='false')
     else:
-        return span(v)
+        return span(v, clazz='number')
 
 
 def json_simple_node(v, key: str, key_space: int, indent: int, last: bool):
