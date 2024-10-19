@@ -36,7 +36,6 @@ class JsonNodeDelegate:
         return '"' + key + '"'
 
     def simple_node(self, v, key: str, key_space: int, last: bool):
-        # print(f'<div>@simple {key} {self.cur_indent}</div>')
         return div(
             self.indent(),
             self.key(key, key_space),
@@ -56,6 +55,9 @@ class JsonNodeDelegate:
         else:
             return span(v, clazz='number')
 
+    def object_node(self, start, contents, end):
+        return div(start, *contents, end)
+
     def object_node_start(self, key: str, key_space: int):
         res = div(
             self.indent(), self.key(key, key_space), span('{')
@@ -69,6 +71,9 @@ class JsonNodeDelegate:
             self.indent(), span('}'), span(',', clazz='comma') if not last else None
         )
         return res
+
+    def array_node(self, start, contents, end):
+        return div(start, *contents, end)
 
     def array_node_start(self, key: str, max_key_size: int):
         res = div(
