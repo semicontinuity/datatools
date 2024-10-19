@@ -44,8 +44,8 @@ class JElementFactory:
     def set_indent_recursive(self, model: JValueElement, indent: int = 0) -> JValueElement:
         model.indent = indent
         if issubclass(type(model), JComplexElement):
-            model.start.indent = indent
-            model.end.indent = indent
+            model.start.indent_node = indent
+            model.end.indent_node = indent
             for e in model.elements:
                 self.set_indent_recursive(e, indent + self.options.indent)
         return model

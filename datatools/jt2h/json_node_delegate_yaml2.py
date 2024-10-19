@@ -4,7 +4,7 @@ from util.html.elements import div, span, table, tr, td
 
 class JsonNodeDelegateYaml2(JsonNodeDelegate):
 
-    def indent(self):
+    def indent_node(self):
         pass
 
     def key_repr(self, key):
@@ -76,13 +76,13 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
     def complex_node_start(self, key, max_key_size):
         if type(key) is str:
             res = self.key_str(key, max_key_size)
-            self.cur_indent += 2
+            self.cur_indent += 1
             return res
         elif type(key) is int:
             res = span('-', style=self.style_for_indent())
-            self.cur_indent += 2
+            self.cur_indent += 1
             return res
 
     def complex_node_end(self, key):
         if key is not None:
-            self.cur_indent -= 2
+            self.cur_indent -= 1
