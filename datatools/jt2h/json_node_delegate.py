@@ -10,8 +10,8 @@ class JsonNodeDelegate:
     def __init__(self):
         self.cur_indent = 0
 
-    def style_for_indent(self, color_offset: int):
-        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 1), offset=color_offset))
+    def style_for_indent(self):
+        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 1)))
 
     def indent(self):
         if self.cur_indent > 0:
@@ -27,7 +27,7 @@ class JsonNodeDelegate:
                 self.key_repr(key),
                 '&nbsp;' * (key_space - len(key)),
                 clazz='key',
-                style=self.style_for_indent(color_offset=0xE0)
+                style=self.style_for_indent()
             ),
             span(' : '),
         ]
@@ -57,21 +57,17 @@ class JsonNodeDelegate:
             return span(v, clazz='number')
 
     def object_node_start(self, key: str, key_space: int):
-        # print(f'<div>+start {key} {self.cur_indent}</div>')
         res = div(
             self.indent(), self.key(key, key_space), span('{')
         )
         self.cur_indent += 2
-        # print(f'<div>-start {key} {self.cur_indent}</div>')
         return res
 
     def object_node_end(self, key: str, last: bool):
-        # print(f'<div>+end {self.cur_indent}</div>')
         self.cur_indent -= 2
         res = div(
             self.indent(), span('}'), span(',', clazz='comma') if not last else None
         )
-        # print(f'<div>-end {self.cur_indent}</div>')
         return res
 
     def array_node_start(self, key: str, max_key_size: int):

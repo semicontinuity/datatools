@@ -11,7 +11,7 @@ class JsonNodeDelegateYaml(JsonNodeDelegate):
         if type(key) is str:
             return self.key_str(key, key_space)
         elif type(key) is int:
-            return '- '
+            return [span('-', style=self.style_for_indent()), ' ']
 
     def simple_node(self, v, key: str, key_space: int, last: bool):
         return div(
@@ -41,7 +41,7 @@ class JsonNodeDelegateYaml(JsonNodeDelegate):
             self.cur_indent += 2
         elif type(key) is int:
             res.append(
-                div(self.indent(), '-')
+                div(self.indent(), span('-', style=self.style_for_indent()))
             )
             self.cur_indent += 2
         return res
