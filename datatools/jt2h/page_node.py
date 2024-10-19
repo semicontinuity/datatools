@@ -34,7 +34,27 @@ thead th {cursor: zoom-out;}
 .compact {display:none;}
 
 span { white-space: nowrap;}
-pre {font-size: 144%;} 
+pre {font-size: 144%;}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 4px;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+} 
                 ''' + "\n".join(hide_rules(n) for n in range(2, column_count + 2))
             ),
             script('''

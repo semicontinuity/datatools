@@ -1,3 +1,4 @@
+import sys
 from typing import Dict, Optional, Tuple
 
 
@@ -33,7 +34,9 @@ def channel_use(row: Dict) -> Optional[Tuple[str, str]]:
 
 
 def used_channel_id(row: Dict) -> Optional[str]:
-    if (payload := row.get('payload')) is not None:
+    if (channel_id := row.get('channelID')) is not None:
+        return channel_id
+    elif (payload := row.get('payload')) is not None:
         if (info := payload.get('info')) is not None:
             if (channel_id := info.get('channelId')) is not None:
                 return channel_id
@@ -44,6 +47,10 @@ def used_channel_id(row: Dict) -> Optional[str]:
             if (channel_event := event.get('channelEvent')) is not None:
                 if (channel_id := channel_event.get('channelId')) is not None:
                     return channel_id
+            elif (channel_appended := event.get('channelAppended')) is not None:
+                if (channel := channel_appended.get('channel')) is not None:
+                    if (channel_id := channel.get('channelId')) is not None:
+                        return channel_id
 
 
 def used_channel_icon(row: Dict) -> str:
@@ -57,13 +64,13 @@ def used_channel_icon(row: Dict) -> str:
 
 def channel_color(channel_id: str) -> str:
     if channel_id.startswith('sip://'):
-        return 'darkblue'
+        return 'deepskyblue'
     elif channel_id.startswith('recording://'):
         return 'darkred'
     elif channel_id.startswith('s3://'):
-        return 'darkgreen'
+        return 'green'
     elif channel_id.startswith('sk://'):
-        return 'gold'
+        return '#c0c000'
     elif channel_id.startswith('tg://'):
         return 'gray'
 

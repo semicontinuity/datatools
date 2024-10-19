@@ -1,3 +1,4 @@
+import sys
 from typing import Dict, List, Optional, Callable, Tuple
 
 from datatools.jt2h.column_renderer import ColumnRenderer
@@ -31,9 +32,12 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
                 if new_entity in entities:
                     entities.remove(new_entity)
             elif (del_entity := self.entity_deleted_f(row)) is not None:
-                entities.add(del_entity)
-            # elif (use_entity := self.entity_used_f(row)) is not None:
-            #     entities.add(use_entity)
+                if del_entity not in entities:
+                    entities.add(del_entity)
+            elif (use_entity := self.entity_used_f(row)) is not None:
+                print(use_entity, use_entity[0], file=sys.stderr)
+                if use_entity[0] not in entities:
+                    entities.add(use_entity[0])
         res = list(entities)
         res.reverse()
         return res
@@ -49,7 +53,7 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
             if entity is None:
                 continue
             if type(entity) is not str:
-                raise  Exception(entity)
+                raise Exception(entity)
         res = td(
             (
                 span(
@@ -58,8 +62,9 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
                             and entity_use is not None
                             and entity == entity_use[0]
                     ) else '&nbsp;',
-                    # style=(None if entity is None else 'color: white; background-color: red')
-                    style=(None if entity is None else 'color: white; background-color: ' + self.entity_color_f(entity))
+                    None if entity is None else span(entity, clazz='tooltip-text'),
+                    style=(None if entity is None else 'color: white; background-color: ' + self.entity_color_f(entity)),
+                    clazz=None if entity is None else 'tooltip'
                 )
                 for entity in self.entities
             ),
