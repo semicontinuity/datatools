@@ -1,8 +1,8 @@
-import json
 from typing import Dict, List
 
 from datatools.jt2h.column_renderer import ColumnRenderer
-from util.html.elements import table, td, tr, thead, tbody, th, span, pre
+from datatools.jt2h.json_node import JsonNode
+from util.html.elements import table, td, tr, thead, tbody, th, span
 
 
 class Log:
@@ -39,7 +39,7 @@ class Log:
                     tr(
                         th(clazz='details'),
                         td(
-                            pre(json.dumps(row, indent=2)),
+                            JsonNode(row),
                             colspan=len(self.column_renderers),
                             clazz='details'
                         )

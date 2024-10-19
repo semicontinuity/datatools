@@ -22,7 +22,7 @@ def page_node(contents):
                     font-family: monospace; background-color: #e0f0fa;
                 }
                 ''',
-                JsonNode.style,
+                JsonNode.CSS,
             )
         ),
         body(

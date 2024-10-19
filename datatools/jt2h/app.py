@@ -31,6 +31,7 @@ def main():
         ColumnRendererColored('msg', False, j),
     ]
     contents = Log(j, column_renderers)
+    print("""<!DOCTYPE html>""")
     print(page_node(len(column_renderers), contents))
 
 

@@ -23,7 +23,6 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
         self.entity_deleted_f = entity_deleted_f
         self.entity_used_f = entity_used_f
         self.entities = self.initial_entities(data)
-        # self.entities = []
 
     def initial_entities(self, data: List) -> List:
         entities = set()
@@ -35,7 +34,6 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
                 if del_entity not in entities:
                     entities.add(del_entity)
             elif (use_entity := self.entity_used_f(row)) is not None:
-                print(use_entity, use_entity[0], file=sys.stderr)
                 if use_entity[0] not in entities:
                     entities.add(use_entity[0])
         res = list(entities)

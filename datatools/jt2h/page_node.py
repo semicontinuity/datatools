@@ -1,3 +1,4 @@
+from datatools.jt2h.json_node import JsonNode
 from util.html.elements import html, head, body, style, script
 
 
@@ -6,6 +7,7 @@ def page_node(column_count: int, contents):
 
         head(
             style(
+                JsonNode.CSS +
                 '''
 body {font-family: monospace; display: inline-block; background: #F0F0E0; margin: 0;}
 thead {border: solid 1px darkgray;}
@@ -19,7 +21,7 @@ th {border-left: solid 2px darkgrey;}
 
 td:last-child { width: 100%; }
 
-td.details {background: #D0D0D0;}
+td.details { background: #e0f0fa; font-size: 100%;}
 tbody.regular th.details {display: none;}
 tbody.regular td.details {display: none;}
 tbody.regular span.expanded {display: none;}
@@ -32,7 +34,6 @@ thead th {cursor: zoom-out;}
 .compact {display:none;}
 
 span { white-space: nowrap;}
-pre {font-size: 144%;}
 
 .tooltip {
   position: relative;

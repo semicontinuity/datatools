@@ -7,7 +7,7 @@ from util.html.elements import span, div
 class JsonNode:
     j: Hashable
 
-    style = """
+    CSS = """
 .key {
     color: indigo; ;
 }
