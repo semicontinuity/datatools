@@ -15,51 +15,28 @@ class JsonNode:
     def __str__(self) -> str:
         return str(self.json_node(self.j))
 
-    def json_complex_node(
-            self,
-            items,
-            key: str,
-            key_space: int,
-            start: str,
-            end: str,
-            content_key_space: int,
-            last: bool,
-            size: int):
+    def json_node(self, v, key = None, max_key_size: int = 0, last: bool = True):
+        if type(v) is dict:
+            child_max_key_size = max(len(k) for k in v) if v else 0
 
-        return \
-            div(
-                self.delegate.complex_node_start(key, key_space, start),
+            return div(
+                self.delegate.object_node_start(key, max_key_size,),
 
                 [
-                    self.json_node(v, k, content_key_space, i == size - 1)
-                    for i, (k, v) in enumerate(items)
+                    self.json_node(v1, k1, child_max_key_size, i == len(v) - 1)
+                    for i, (k1, v1) in enumerate(v.items())
                 ],
 
-                self.delegate.complex_node_end(end, last),
-            )
-
-    def json_node(self, v, key: str = None, key_space: int = 0, last: bool = True):
-        if type(v) is dict:
-            return self.json_complex_node(
-                items=v.items(),
-                key=key,
-                key_space=key_space,
-                start='{',
-                end='}',
-                content_key_space=max(len(k) for k in v) if v else 0,
-                last=last,
-                size=len(v)
+                self.delegate.object_node_end(key, last),
             )
         elif type(v) is list:
-            return self.json_complex_node(
-                items=enumerate(v),
-                key=key,
-                key_space=key_space,
-                start='[',
-                end=']',
-                content_key_space=0,
-                last=last,
-                size=len(v)
+            return div(
+                self.delegate.array_node_start(key, max_key_size),
+                [
+                    self.json_node(v2, k2, 0, k2 == len(v) - 1)
+                    for k2, v2 in enumerate(v)
+                ],
+                self.delegate.array_node_end(key, last),
             )
         else:
-            return self.delegate.simple_node(v, key, key_space, last)
+            return self.delegate.simple_node(v, key, max_key_size, last)

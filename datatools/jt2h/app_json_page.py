@@ -4,6 +4,7 @@ import sys
 
 from datatools.jt2h.json_node import JsonNode
 from datatools.jt2h.json_node_css import JSON_NODE_CSS
+from datatools.jt2h.json_node_delegate_yaml import JsonNodeDelegateYaml
 from util.html.elements import html, body, head, style
 
 
@@ -20,7 +21,7 @@ def page_node(contents):
             style(
                 '''
                 body {
-                    font-family: monospace; background-color: #e0f0fa;
+                    font-family: monospace; background-color: #e0e0e0;
                 }
                 ''',
                 JSON_NODE_CSS,
@@ -35,9 +36,7 @@ def page_node(contents):
 def main():
     print(
         page_node(
-            JsonNode(
-                data()
-            )
+            JsonNode(data(), JsonNodeDelegateYaml())
         )
     )
 

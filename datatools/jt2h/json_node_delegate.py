@@ -19,15 +19,18 @@ class JsonNodeDelegate:
 
     def key(self, key: str, key_space: int):
         if type(key) is str:
-            return [
-                span(
-                    self.key_repr(key),
-                    '&nbsp;' * (key_space - len(key)),
-                    clazz='key',
-                    style=self.style_for_indent(color_offset=0xE0)
-                ),
-                span(' : '),
-            ]
+            return self.key_str(key, key_space)
+
+    def key_str(self, key, key_space):
+        return [
+            span(
+                self.key_repr(key),
+                '&nbsp;' * (key_space - len(key)),
+                clazz='key',
+                style=self.style_for_indent(color_offset=0xE0)
+            ),
+            span(' : '),
+        ]
 
     def key_repr(self, key):
         return '"' + key + '"'
@@ -53,20 +56,34 @@ class JsonNodeDelegate:
         else:
             return span(v, clazz='number')
 
-    def complex_node_start(self, key: str, key_space: int, start: str):
+    def object_node_start(self, key: str, key_space: int):
         # print(f'<div>+start {key} {self.cur_indent}</div>')
         res = div(
-            self.indent(), self.key(key, key_space), span(start)
+            self.indent(), self.key(key, key_space), span('{')
         )
         self.cur_indent += 2
         # print(f'<div>-start {key} {self.cur_indent}</div>')
         return res
 
-    def complex_node_end(self, end: str, last: bool):
+    def object_node_end(self, key: str, last: bool):
         # print(f'<div>+end {self.cur_indent}</div>')
         self.cur_indent -= 2
         res = div(
-            self.indent(), span(end), span(',', clazz='comma') if not last else None
+            self.indent(), span('}'), span(',', clazz='comma') if not last else None
         )
         # print(f'<div>-end {self.cur_indent}</div>')
+        return res
+
+    def array_node_start(self, key: str, max_key_size: int):
+        res = div(
+            self.indent(), self.key(key, max_key_size), span('[')
+        )
+        self.cur_indent += 2
+        return res
+
+    def array_node_end(self, key: str, last: bool):
+        self.cur_indent -= 2
+        res = div(
+            self.indent(), span(']'), span(',', clazz='comma') if not last else None
+        )
         return res
