@@ -1,4 +1,3 @@
-import sys
 from typing import Dict, Optional, Tuple
 
 
@@ -11,13 +10,6 @@ def channel_created(row: Dict) -> Optional[str]:
 
 
 def channel_deleted(row: Dict) -> Optional[str]:
-    method = row.get('method')
-    # if method == 'CloseChannel' and (payload := row.get('payload')) is not None:
-    #     if (channel_id := payload.get('channelId')) is not None:
-    #         return channel_id
-    # elif method == 'ReceiveRoomEvents' and row.get('msg') == 'Removing closed channel':
-    #     if (channel_id := row.get('channelID')) is not None:
-    #         return channel_id
     if (payload := row.get('payload')) is not None:
         if (event := payload.get('event')) is not None:
             if (channel_event := event.get('channelEvent')) is not None:

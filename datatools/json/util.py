@@ -45,3 +45,13 @@ def to_jsonisable(obj):
 
 def ext_jsonisable(func):
     return lambda obj: to_jsonisable(func(obj))
+
+
+def escape(c: str):
+    if c == '\b': return "\\b"
+    if c == '\t': return "\\t"
+    if c == '\n': return "\\n"
+    if c == '\r': return "\\r"
+    if c == '\\': return "\\\\"
+    if c == '"': return "\\\""
+    return c

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from util.html.elements import html, head, body, style, script
 
 

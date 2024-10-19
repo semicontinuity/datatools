@@ -23,14 +23,20 @@ class Element:
         """
         Renders this element as HTML string
         """
-
-        separator = '\n' if bool(self.contents) and any(type(s) is not str for s in self.contents) else ''
+        separator = '' if (not bool(self.contents) or all(self.is_simple(s) for s in self.contents)) else '\n'
         attrs_str = self.attrs_str()
         open_tag = f'<{self.tag}{" " + attrs_str if attrs_str else ""}>'
         close_tag = f'</{self.tag}>'
         body = separator.join(str(element) for element in self.contents if element is not None)
 
         return open_tag + separator + body + separator + close_tag
+
+    def __repr__(self) -> str:
+        return f'<{self.tag}>'
+
+    @staticmethod
+    def is_simple(s):
+        return (s is None) or (type(s) is str) or (type(s) is Element and s.tag == 'span')
 
     def attrs_str(self) -> str:
         """
