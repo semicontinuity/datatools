@@ -28,11 +28,10 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             return span('-', style=self.style_for_indent())
 
     def simple_node(self, v, key: str, key_space: int, last: bool):
-        return div(
+        return self.node(
             self.key(key, key_space),
             ' ',
             self.primitive(v),
-            style=self.style_for_indent() + 'padding-left: 0.5em; border-left: solid 0.1em darkgray; ',
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -61,17 +60,16 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
 
     def complex_node(self, key, contents, start):
         if key is not None:
-            return div(
+            return self.node(
                 div(start),
                 div(
                     span('&nbsp;'),
                     span(*contents, style='width: 100%;'),
                     style='display: flex;'
                 ),
-                style=self.style_for_indent() + 'padding-left: 0.5em; border-left: solid 0.1em darkgray;'
             )
         else:
-            return div(*contents, style=self.style_for_indent())
+            return div(*contents)
 
     def complex_node_start(self, key, max_key_size):
         if type(key) is str:
@@ -86,3 +84,10 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
     def complex_node_end(self, key):
         if key is not None:
             self.cur_indent -= 1
+
+
+    def node(self, *c):
+        return div(
+            *c,
+            style=self.style_for_indent() + 'padding-left: 0.5em; border-left: solid 0.1em darkgray; ',
+        )

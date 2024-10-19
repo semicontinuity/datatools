@@ -12,7 +12,7 @@ class JsonNodeDelegate:
         self.cur_indent = 0
 
     def style_for_indent(self):
-        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 0xBADDECAF), offset=0xD0)) + ';'
+        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 0x10ADF00D), offset=0xD0)) + ';'
 
     def indent_node(self):
         if self.cur_indent > 0:
