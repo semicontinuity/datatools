@@ -41,7 +41,7 @@ class JsonNode:
 
             self.delegate.array_node_start(key, max_key_size),
             [
-                self.node(vv, kk, 0, kk == len(vv) - 1)
+                self.node(vv, kk, 0, kk == len(v) - 1)
                 for kk, vv in enumerate(v)
             ],
             self.delegate.array_node_end(key, last),

@@ -40,15 +40,15 @@ class Element:
 
     def attrs_str(self) -> str:
         """
-        Render attributes of this Element as sting.
+        Render attributes of this Element as string.
         Use single quotes, because inside can be yaml/json with lots of double quotes.
         """
         return ' '.join((
-            f"{k.replace('_', '-') if k != 'clazz' else 'class'}='{Element.attr_value_str(v)}'"
+            f"{k.replace('_', '-') if k != 'clazz' else 'class'}='{Element.attr_str(v)}'"
             for k, v in self.attrs.items()
-            if v is not None
+            if v is not None and v != ''
         ))
 
     @staticmethod
-    def attr_value_str(v: Union[str, Iterable[str]]):
+    def attr_str(v: Union[str, Iterable[str]]):
         return ' '.join((item for item in v if item is not None)) if isinstance(v, Iterable) and not type(v) is str else str(v)

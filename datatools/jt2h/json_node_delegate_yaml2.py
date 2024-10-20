@@ -8,8 +8,7 @@ from util.html.elements import div, span
 class JsonNodeDelegateYaml2(JsonNodeDelegate):
 
     def __init__(self):
-        self.indent = 2
-        self.cur_indent = 0
+        self.level = 0
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -60,12 +59,12 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
     def complex_node_start(self, key: Optional[Hashable], max_key_size):
         if key is not None:
             res = self.key(key, max_key_size)
-            self.cur_indent += 1
+            self.level += 1
             return res
 
     def complex_node_end(self, key: Optional[Hashable]):
         if key is not None:
-            self.cur_indent -= 1
+            self.level -= 1
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -73,7 +72,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
         return div(
             *c,
             clazz='j-node',
-            style=style_for_indent(self.cur_indent),
+            style=style_for_indent(self.level),
         )
 
     def key(self, key: Optional[Hashable], max_key_size: int):
@@ -82,7 +81,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
         elif type(key) is int:
             return span('-')
 
-    def key_str(self, key: Optional[str], max_key_size):
+    def key_str(self, key: Optional[str], max_key_size: int):
         return [
             span(
                 self.key_repr(key),

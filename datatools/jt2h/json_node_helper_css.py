@@ -1,4 +1,4 @@
-JSON_NODE_CSS = """
+JSON_NODE_HELPER_CSS = """
 .key {
     color: darkblue;
 }
