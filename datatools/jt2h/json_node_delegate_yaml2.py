@@ -1,4 +1,5 @@
 from datatools.jt2h.json_node_delegate import JsonNodeDelegate
+from datatools.jt2h.json_node_helper import style_for_indent
 from util.html.elements import div, span
 
 
@@ -64,7 +65,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
         return div(
             *c,
             clazz='j-node',
-            style=self.style_for_indent(),
+            style=style_for_indent(self.cur_indent),
         )
 
     def key(self, key: str, key_space: int):
