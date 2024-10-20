@@ -1,5 +1,5 @@
 from datatools.jt2h.json_node_delegate import JsonNodeDelegate
-from util.html.elements import div, span, table, tr, td
+from util.html.elements import div, span
 
 
 class JsonNodeDelegateYaml2(JsonNodeDelegate):
@@ -38,7 +38,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
     def complex_node(self, key, contents, start):
         if key is not None:
             return self.node(
-                div(start),
+                start,
                 div(
                     span('&nbsp;'),
                     span(*contents, style='width: 100%;'),
@@ -60,14 +60,18 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def node(self, *c):
+        return div(
+            *c,
+            clazz='j-node',
+            style=self.style_for_indent(),
+        )
+
     def key(self, key: str, key_space: int):
         if type(key) is str:
             return self.key_str(key, key_space)
         elif type(key) is int:
             return span('-')
-
-    def key_repr(self, key):
-        return key
 
     def key_str(self, key, key_space):
         return [
@@ -79,10 +83,5 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             span(' :'),
         ]
 
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def node(self, *c):
-        return div(
-            *c,
-            style=self.style_for_indent() + 'padding-left: 0.5em; border-left: solid 0.1em darkgray; ',
-        )
+    def key_repr(self, key):
+        return key

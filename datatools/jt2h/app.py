@@ -8,6 +8,7 @@ from datatools.jt2h.column_renderer_colored import ColumnRendererColored
 from datatools.jt2h.column_renderer_custom import ColumnRendererCustom
 from datatools.jt2h.column_renderer_entities_lifecycle import ColumnRendererEntitiesLifecycle
 from datatools.jt2h.json_node_css import JSON_NODE_CSS
+from datatools.jt2h.json_node_delegate_yaml2_css import YAML_NODE_CSS
 from datatools.jt2h.log_node import LogNode
 from datatools.jt2h.page_node import page_node
 from datatools.jt2h.page_node_css import PAGE_NODE_CSS
@@ -39,7 +40,7 @@ def main():
     print(
         page_node(
             contents=log,
-            css=PAGE_NODE_CSS + log.css() + JSON_NODE_CSS,
+            css=PAGE_NODE_CSS + log.css() + JSON_NODE_CSS + YAML_NODE_CSS,
             js=LogNode.JS
         )
     )
