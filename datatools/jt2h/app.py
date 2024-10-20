@@ -40,7 +40,7 @@ def main():
     print(
         page_node(
             contents=log,
-            css=PAGE_NODE_CSS + log.css() + JSON_NODE_CSS + YAML_NODE_CSS,
+            css=[PAGE_NODE_CSS, log.css(), JSON_NODE_CSS, YAML_NODE_CSS],
             js=LogNode.JS
         )
     )

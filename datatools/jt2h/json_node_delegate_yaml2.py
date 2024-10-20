@@ -41,8 +41,8 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
                 start,
                 div(
                     span('&nbsp;'),
-                    span(*contents, style='width: 100%;'),
-                    style='display: flex;'
+                    span(*contents, clazz='j-value'),
+                    clazz='j-value-node',
                 ),
             )
         else:

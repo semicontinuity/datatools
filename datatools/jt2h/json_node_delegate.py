@@ -11,30 +11,7 @@ class JsonNodeDelegate:
         self.indent = 2
         self.cur_indent = 0
 
-    def style_for_indent(self):
-        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 0x10ADF00D), offset=0xD0)) + ';'
-
-    def indent_node(self):
-        if self.cur_indent > 0:
-            return span('&nbsp;' * (self.cur_indent * self.indent))
-
-    def key(self, key: str, key_space: int):
-        if type(key) is str:
-            return self.key_str(key, key_space)
-
-    def key_str(self, key, key_space):
-        return [
-            span(
-                self.key_repr(key),
-                '&nbsp;' * (key_space - len(key)),
-                clazz='key',
-                style=self.style_for_indent()
-            ),
-            span(' : '),
-        ]
-
-    def key_repr(self, key):
-        return '"' + key + '"'
+    # ------------------------------------------------------------------------------------------------------------------
 
     def simple_node(self, v, key: str, key_space: int, last: bool):
         return div(
@@ -55,6 +32,8 @@ class JsonNodeDelegate:
             return span('false', clazz='false')
         else:
             return span(v, clazz='number')
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def object_node(self, key, start, contents, end):
         return div(start, *contents, end)
@@ -89,3 +68,58 @@ class JsonNodeDelegate:
             self.indent_node(), span(']'), span(',', clazz='comma') if not last else None
         )
         return res
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def complex_node(self, key, contents, start):
+        if key is not None:
+            return self.node(
+                start,
+                div(
+                    span('&nbsp;'),
+                    span(*contents, clazz='j-value'),
+                    clazz='j-value-node',
+                ),
+            )
+        else:
+            return div(*contents)
+
+    def complex_node_start(self, key, max_key_size, c: str):
+        res = div(
+            self.indent_node(), self.key(key, max_key_size), span(c)
+        )
+        self.cur_indent += 1
+        return res
+
+    def complex_node_end(self, key, last: bool, c: str):
+        self.cur_indent -= 1
+        return div(
+            self.indent_node(), span(c), span(',', clazz='comma') if not last else None
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def indent_node(self):
+        if self.cur_indent > 0:
+            return span('&nbsp;' * (self.cur_indent * self.indent))
+
+    def key(self, key: str, key_space: int):
+        if type(key) is str:
+            return self.key_str(key, key_space)
+
+    def key_str(self, key, key_space):
+        return [
+            span(
+                self.key_repr(key),
+                '&nbsp;' * (key_space - len(key)),
+                clazz='key',
+                style=self.style_for_indent()
+            ),
+            span(' : '),
+        ]
+
+    def key_repr(self, key):
+        return '"' + key + '"'
+
+    def style_for_indent(self):
+        return 'background-color: ' + color_string(hash_to_rgb(mmh3.hash(str(self.cur_indent), 0x10ADF00D), offset=0xD0)) + ';'
