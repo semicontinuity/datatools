@@ -1,15 +1,21 @@
 from datatools.jt2h.json_node_delegate import JsonNodeDelegate
-from datatools.jt2h.json_node_helper import style_for_indent
+from datatools.jt2h.json_node_helper import style_for_indent, primitive_node
 from util.html.elements import div, span
 
 
 class JsonNodeDelegateYaml2(JsonNodeDelegate):
 
-    def simple_node(self, v, key: str, key_space: int, last: bool):
+    def __init__(self):
+        self.indent = 2
+        self.cur_indent = 0
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def simple_node(self, v, key: str, max_key_size: int, last: bool):
         return self.node(
-            self.key(key, key_space),
+            self.key(key, max_key_size),
             ' ',
-            self.primitive(v),
+            primitive_node(v),
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -68,17 +74,17 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             style=style_for_indent(self.cur_indent),
         )
 
-    def key(self, key: str, key_space: int):
+    def key(self, key: str, max_key_size: int):
         if type(key) is str:
-            return self.key_str(key, key_space)
+            return self.key_str(key, max_key_size)
         elif type(key) is int:
             return span('-')
 
-    def key_str(self, key, key_space):
+    def key_str(self, key, max_key_size):
         return [
             span(
                 self.key_repr(key),
-                '&nbsp;' * (key_space - len(key)),
+                '&nbsp;' * (max_key_size - len(key)),
                 clazz='key',
             ),
             span(' :'),

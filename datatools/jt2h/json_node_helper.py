@@ -5,7 +5,7 @@ from datatools.json.util import escape
 from util.html.elements import span
 
 
-def primitive(v):
+def primitive_node(v):
     if v is None:
         return span('null', clazz='null')
     elif type(v) is str:

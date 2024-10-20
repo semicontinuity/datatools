@@ -1,16 +1,22 @@
 from datatools.jt2h.json_node_delegate import JsonNodeDelegate
 
-from datatools.jt2h.json_node_helper import style_for_indent
+from datatools.jt2h.json_node_helper import style_for_indent, primitive_node
 from util.html.elements import span, div
 
 
 class JsonNodeDelegateJson(JsonNodeDelegate):
 
-    def simple_node(self, v, key: str, key_space: int, last: bool):
+    def __init__(self):
+        self.indent = 2
+        self.cur_indent = 0
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def simple_node(self, v, key: str, max_key_size: int, last: bool):
         return div(
             self.indent_node(),
-            self.key(key, key_space),
-            self.primitive(v),
+            self.key(key, max_key_size),
+            primitive_node(v),
             span(',', clazz='comma') if not last else None,
         )
 
@@ -61,15 +67,15 @@ class JsonNodeDelegateJson(JsonNodeDelegate):
         if self.cur_indent > 0:
             return span('&nbsp;' * (self.cur_indent * self.indent))
 
-    def key(self, key: str, key_space: int):
+    def key(self, key: str, max_key_size: int):
         if type(key) is str:
-            return self.key_str(key, key_space)
+            return self.key_str(key, max_key_size)
 
-    def key_str(self, key, key_space):
+    def key_str(self, key, max_key_size):
         return [
             span(
                 self.key_repr(key),
-                '&nbsp;' * (key_space - len(key)),
+                '&nbsp;' * (max_key_size - len(key)),
                 clazz='key',
                 style=style_for_indent(self.cur_indent)
             ),
