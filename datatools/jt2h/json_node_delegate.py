@@ -36,53 +36,29 @@ class JsonNodeDelegate:
     # ------------------------------------------------------------------------------------------------------------------
 
     def object_node(self, key, start, contents, end):
-        return div(start, *contents, end)
+        return self.complex_node(start, contents, end)
 
-    def object_node_start(self, key: str, key_space: int):
-        res = div(
-            self.indent_node(), self.key(key, key_space), span('{')
-        )
-        self.cur_indent += 1
-        return res
+    def object_node_start(self, key: str, max_key_size: int):
+        return self.complex_node_start(key, max_key_size, '{')
 
     def object_node_end(self, key: str, last: bool):
-        self.cur_indent -= 1
-        res = div(
-            self.indent_node(), span('}'), span(',', clazz='comma') if not last else None
-        )
-        return res
-
-    def array_node(self, key, start, contents, end):
-        return div(start, *contents, end)
-
-    def array_node_start(self, key: str, max_key_size: int):
-        res = div(
-            self.indent_node(), self.key(key, max_key_size), span('[')
-        )
-        self.cur_indent += 1
-        return res
-
-    def array_node_end(self, key: str, last: bool):
-        self.cur_indent -= 1
-        res = div(
-            self.indent_node(), span(']'), span(',', clazz='comma') if not last else None
-        )
-        return res
+        return self.complex_node_end(last, '}')
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def complex_node(self, key, contents, start):
-        if key is not None:
-            return self.node(
-                start,
-                div(
-                    span('&nbsp;'),
-                    span(*contents, clazz='j-value'),
-                    clazz='j-value-node',
-                ),
-            )
-        else:
-            return div(*contents)
+    def array_node(self, key, start, contents, end):
+        return self.complex_node(start, contents, end)
+
+    def array_node_start(self, key: str, max_key_size: int):
+        return self.complex_node_start(key, max_key_size, '[')
+
+    def array_node_end(self, key: str, last: bool):
+        return self.complex_node_end(last, ']')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def complex_node(self, start, contents, end):
+        return div(start, *contents, end)
 
     def complex_node_start(self, key, max_key_size, c: str):
         res = div(
@@ -91,11 +67,12 @@ class JsonNodeDelegate:
         self.cur_indent += 1
         return res
 
-    def complex_node_end(self, key, last: bool, c: str):
+    def complex_node_end(self, last: bool, c: str):
         self.cur_indent -= 1
-        return div(
+        res = div(
             self.indent_node(), span(c), span(',', clazz='comma') if not last else None
         )
+        return res
 
     # ------------------------------------------------------------------------------------------------------------------
 
