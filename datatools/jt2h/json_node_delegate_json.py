@@ -1,3 +1,5 @@
+from typing import Hashable, Optional
+
 from datatools.jt2h.json_node_delegate import JsonNodeDelegate
 
 from datatools.jt2h.json_node_helper import style_for_indent, primitive_node
@@ -12,7 +14,7 @@ class JsonNodeDelegateJson(JsonNodeDelegate):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def simple_node(self, v, key: str, max_key_size: int, last: bool):
+    def simple_node(self, v, key: Optional[Hashable], max_key_size: int, last: bool):
         return div(
             self.indent_node(),
             self.key(key, max_key_size),
@@ -67,11 +69,11 @@ class JsonNodeDelegateJson(JsonNodeDelegate):
         if self.cur_indent > 0:
             return span('&nbsp;' * (self.cur_indent * self.indent))
 
-    def key(self, key: str, max_key_size: int):
+    def key(self, key: Optional[str], max_key_size: int):
         if type(key) is str:
             return self.key_str(key, max_key_size)
 
-    def key_str(self, key, max_key_size):
+    def key_str(self, key: Optional[str], max_key_size):
         return [
             span(
                 self.key_repr(key),
@@ -82,5 +84,5 @@ class JsonNodeDelegateJson(JsonNodeDelegate):
             span(' : '),
         ]
 
-    def key_repr(self, key):
+    def key_repr(self, key: str):
         return '"' + key + '"'
