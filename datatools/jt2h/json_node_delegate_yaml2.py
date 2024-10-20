@@ -4,29 +4,6 @@ from util.html.elements import div, span, table, tr, td
 
 class JsonNodeDelegateYaml2(JsonNodeDelegate):
 
-    def indent_node(self):
-        pass
-
-    def key_repr(self, key):
-        return key
-
-    def key_str(self, key, key_space):
-        return [
-            span(
-                self.key_repr(key),
-                '&nbsp;' * (key_space - len(key)),
-                clazz='key',
-                style=self.style_for_indent()
-            ),
-            span(' :'),
-        ]
-
-    def key(self, key: str, key_space: int):
-        if type(key) is str:
-            return self.key_str(key, key_space)
-        elif type(key) is int:
-            return span('-', style=self.style_for_indent())
-
     def simple_node(self, v, key: str, key_space: int, last: bool):
         return self.node(
             self.key(key, key_space),
@@ -72,12 +49,8 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             return div(*contents)
 
     def complex_node_start(self, key, max_key_size):
-        if type(key) is str:
-            res = self.key_str(key, max_key_size)
-            self.cur_indent += 1
-            return res
-        elif type(key) is int:
-            res = span('-', style=self.style_for_indent())
+        if key is not None:
+            res = self.key(key, max_key_size)
             self.cur_indent += 1
             return res
 
@@ -85,6 +58,28 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
         if key is not None:
             self.cur_indent -= 1
 
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def key(self, key: str, key_space: int):
+        if type(key) is str:
+            return self.key_str(key, key_space)
+        elif type(key) is int:
+            return span('-')
+
+    def key_repr(self, key):
+        return key
+
+    def key_str(self, key, key_space):
+        return [
+            span(
+                self.key_repr(key),
+                '&nbsp;' * (key_space - len(key)),
+                clazz='key',
+            ),
+            span(' :'),
+        ]
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def node(self, *c):
         return div(
