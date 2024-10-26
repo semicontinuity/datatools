@@ -1,8 +1,10 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
+
+from picotui.defs import KEY_ENTER
 
 from datatools.dbview.util.pg import get_table_pks
 from datatools.ev.app_types import View, EntityReference
-from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause
+from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
 from datatools.jt.app.app_kit import load_data_bundle, CmdLineParams
 from datatools.jt.app.ng.main import grid
 from datatools.jt.model.data_bundle import DataBundle
@@ -16,6 +18,7 @@ from datatools.tui.terminal import screen_size_or_default
 class ViewDbRows(View):
     realm: 'RealmPg'
     selector: DbTableRowsSelector
+    rows: List[Dict]
 
     def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector) -> None:
         self.realm = realm
@@ -25,24 +28,37 @@ class ViewDbRows(View):
     def build(self):
         with self.realm.connect_to_db() as conn:
             self.table_pks = get_table_pks(conn, self.selector.table)
-            rows = self.get_entity_rows(conn, self.selector.table, self.selector.where)
+            self.rows = self.get_entity_rows(conn, self.selector.table, self.selector.where)
+            self.table_pks = get_table_pks(conn, self.selector.table)
 
             self.g = with_alternate_screen(
                 lambda: grid(
                     screen_size_or_default(),
                     load_data_bundle(
                         CmdLineParams(),
-                        rows,
+                        self.rows,
                     )
                 )
             )
 
     def run(self) -> Optional[EntityReference]:
         loop_result, cur_line = with_alternate_screen(lambda: self.do_loop(self.g))
+        if loop_result == KEY_ENTER:
+            sel_entity = self.rows[cur_line]
+            return DbRowReference(
+                realm_name=self.realm.name,
+                selector=DbTableRowsSelector(
+                    table=self.selector.table,
+                    where=[DbSelectorClause(pk, '=', "'" + sel_entity[pk] + "'") for pk in self.table_pks]
+                )
+            )
+
 
     def get_entity_rows(self, conn, table: str, where: List[DbSelectorClause]):
         where_string = self.make_where_string(where)
-        sql = f"SELECT * from {table} where {where_string}"
+        sql = f"SELECT * from {table}"
+        if where_string:
+            sql += f" where {where_string}"
         return self.realm.execute_query(conn, sql)
 
     @staticmethod
