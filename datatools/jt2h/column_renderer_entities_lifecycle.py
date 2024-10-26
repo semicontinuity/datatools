@@ -68,12 +68,6 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
         else:
             entity_use = self.entity_used_f(row)
 
-        for entity in self.entities:
-            if entity is None:
-                continue
-            if type(entity) is not str:
-                raise Exception(entity)
-
         res = td(
             (
                 [
@@ -84,6 +78,7 @@ class ColumnRendererEntitiesLifecycle(ColumnRenderer):
                                 and entity == entity_use[0]
                         ) else '&nbsp;',
                         None if entity is None else span(entity, clazz='tooltip-text'),
+
                         style=(
                             None if entity is None else 'color: white; background-color: ' + self.entity_color_f(
                                 entity)),
