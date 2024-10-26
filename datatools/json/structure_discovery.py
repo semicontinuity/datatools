@@ -66,10 +66,10 @@ class PrimitiveDescriptor(Descriptor):
     primitive: str
 
     def __eq__(self, o) -> bool:
-        return type(o) is type(self) and self.primitive == o.primitive_node
+        return type(o) is type(self) and self.primitive == o.primitive
 
     def merge_with(self, o) -> 'Descriptor':
-        if type(o) != PrimitiveDescriptor or self.primitive != o.primitive_node:
+        if type(o) != PrimitiveDescriptor or self.primitive != o.primitive:
             return AnyDescriptor()
         return self
 
