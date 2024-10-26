@@ -53,7 +53,6 @@ class ViewDbRows(View):
                 )
             )
 
-
     def get_entity_rows(self, conn, table: str, where: List[DbSelectorClause]):
         where_string = self.make_where_string(where)
         sql = f"SELECT * from {table}"
