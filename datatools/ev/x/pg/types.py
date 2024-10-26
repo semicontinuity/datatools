@@ -24,6 +24,11 @@ class DbTableColumn:
 
 
 @dataclass(kw_only=True)
+class DbRowsReference(EntityReference):
+    selector: DbTableRowsSelector
+
+
+@dataclass(kw_only=True)
 class DbRowReference(EntityReference):
     selector: DbTableRowsSelector
 

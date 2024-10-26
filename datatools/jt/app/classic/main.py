@@ -21,7 +21,7 @@
 import json
 from typing import List
 
-from datatools.jt.app.app_kit import Applet, app_kit_main
+from datatools.jt.app.app_kit import Applet, app_kit_main, init_from_state
 from datatools.jt.app.classic.pack_columns import pick_displayed_columns
 from datatools.jt.logic.auto_column_renderers import column_renderers
 from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE
@@ -49,15 +49,6 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
     g.total_lines = len(data_bundle.orig_data)
     init_from_state(g, data_bundle.state)
     return g
-
-
-def init_from_state(g, state):
-    top_line = state[STATE_TOP_LINE]
-    if 0 <= top_line < g.total_lines:
-        g.top_line = top_line
-    cur_line = state[STATE_CUR_LINE]
-    if top_line <= cur_line < g.total_lines:
-        g.cur_line = cur_line
 
 
 def app_router(app, exit_code):

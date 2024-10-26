@@ -3,8 +3,7 @@ import json
 
 from datatools.json2ansi.app import make_json2ansi_applet
 from datatools.json2ansi_toolkit.default_style import default_style
-from datatools.jt.app.app_kit import Applet, app_kit_main, default_state
-from datatools.jt.app.classic.main import init_from_state
+from datatools.jt.app.app_kit import Applet, app_kit_main, default_state, init_from_state
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_renderers import make_renderers

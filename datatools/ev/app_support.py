@@ -1,6 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from datatools.ev.app_types import EntityReference
+from datatools.ev.app_types import EntityReference, View
 from datatools.tui.picotui_keys import KEY_ALT_SHIFT_LEFT, KEY_ALT_SHIFT_RIGHT
 
 
@@ -12,7 +12,7 @@ def run_app(realms: Dict[str, Any], e_ref):
         if isinstance(e_ref, EntityReference):
             if e_ref.realm_name not in realms:
                 raise ValueError('Unknown realm', e_ref.realm_name)
-            view = realms[e_ref.realm_name].create_view(e_ref)
+            view: Optional[View] = realms[e_ref.realm_name].create_view(e_ref)
         else:
             view = None
 

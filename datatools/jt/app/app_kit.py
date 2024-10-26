@@ -11,7 +11,7 @@ from datatools.json.util import to_jsonisable
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_values_info import compute_column_values_info
-from datatools.jt.model.data_bundle import DataBundle
+from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE
 from datatools.jt.model.exit_codes import EXIT_CODE_ESCAPE
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
@@ -199,7 +199,16 @@ def store_data_bundle(data_bundle: DataBundle):
 
 
 def default_state():
-    return {'top_line': 0, 'cur_line': 0}
+    return {STATE_TOP_LINE: 0, STATE_CUR_LINE: 0}
+
+
+def init_from_state(g, state):
+    top_line = state.get(STATE_TOP_LINE) or 0
+    if 0 <= top_line < g.total_lines:
+        g.top_line = top_line
+    cur_line = state.get(STATE_CUR_LINE) or 0
+    if top_line <= cur_line < g.total_lines:
+        g.cur_line = cur_line
 
 
 def load_data(params: CmdLineParams):

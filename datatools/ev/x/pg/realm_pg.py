@@ -6,9 +6,10 @@ import psycopg2
 from datatools.dbview.util.pg import execute_sql, describe_table
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 from datatools.ev.app_types import EntityReference, View, Realm
-from datatools.ev.x.pg.types import DbRowReference, DbReferrers
+from datatools.ev.x.pg.types import DbRowReference, DbRowsReference, DbReferrers
 from datatools.ev.x.pg.view_db_referrers import ViewDbReferrers
 from datatools.ev.x.pg.view_db_row import ViewDbRow
+from datatools.ev.x.pg.view_db_rows import ViewDbRows
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
@@ -39,7 +40,9 @@ class RealmPg(Realm):
 
     # override
     def create_view(self, e_ref: EntityReference) -> View:
-        if isinstance(e_ref, DbRowReference):
+        if isinstance(e_ref, DbRowsReference):
+            return ViewDbRows(self, e_ref.selector)
+        elif isinstance(e_ref, DbRowReference):
             return ViewDbRow(self, e_ref.selector)
         elif isinstance(e_ref, DbReferrers):
             return ViewDbReferrers(self, e_ref.selector)
