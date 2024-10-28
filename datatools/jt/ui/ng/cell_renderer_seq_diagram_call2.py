@@ -13,6 +13,17 @@ from datatools.tui.buffer.json2ansi_buffer import Buffer
 
 @dataclass
 class ColumnRendererSeqDiagramCall2(ColumnRendererBase):
+    """
+    Renders column with "sequence diagram".
+
+    █————►█
+    ▒————►▒
+       █————►█
+       ▒————►▒
+
+    Data from 4 columns is used.
+    "Lane" corresponds to a "lane", while "sub-lane" actually corresponds to a color.
+    """
     type = 'seq-diagram-call2'
     columnSourceLane: str = None
     columnSourceSubLane: str = None
@@ -94,7 +105,7 @@ class WSeqDiagramCallCellRenderer2(WColumnRenderer):
             occurred(t, +1)
 
         # Layout the graph:
-        # - Nodes with higher rank (more pointed at) will be more on the right
+        # - Nodes with higher rank (more pointed at) will be more to the right
         # - Nodes with the same rank will be sorted according to their occurrence order
         self.layout = [value for value in occurrence]
         self.layout.sort(key=lambda k: (rank[k], occurrence[k]))

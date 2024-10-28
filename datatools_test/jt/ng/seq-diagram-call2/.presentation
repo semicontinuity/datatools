@@ -1,0 +1,21 @@
+{
+  "columns": {
+
+    "call": {
+      "title": "call",
+      "visible": true,
+      "renderers": [
+        {
+          "type": "seq-diagram-call2",
+          "columnSourceLane": "callerApp",
+          "columnSourceSubLane": "callerApp",
+          "columnTargetLane": "app",
+          "columnTargetSubLane": "routine"
+        },
+        {
+          "type": "indicator"
+        }
+      ]
+    }
+  }
+}
