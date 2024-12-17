@@ -9,6 +9,10 @@ def head(*contents, **attrs):
     return Element('head', *contents, **attrs)
 
 
+def title(*contents, **attrs):
+    return Element('title', *contents, **attrs)
+
+
 def style(*contents, **attrs):
     return Element('style', *contents, **attrs)
 

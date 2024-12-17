@@ -6,12 +6,12 @@ from datatools.jt2h.json_node import JsonNode
 from datatools.jt2h.json_node_delegate_yaml2 import JsonNodeDelegateYaml2
 from datatools.jt2h.json_node_delegate_yaml2_css import JSON_NODE_DELEGATE_YAML_CSS
 from datatools.jt2h.json_node_helper_css import JSON_NODE_HELPER_CSS
-from util.html.elements import html, body, head, style
+from util.html.elements import html, body, head, style, title as _title
 from util.html.page_node import PageNode
 
 PAGE_CSS = '''
 body {
-    font-family: monospace; background-color: #e0e0e0;
+    font-family: monospace; font-size: x-large; background-color: #e0e0e0;
 }
 '''
 
@@ -23,10 +23,11 @@ def data():
     return j
 
 
-def page_node(data):
+def page_node(data, title_string: str = None):
     return PageNode(
         html(
             head(
+                _title(title_string),
                 style(
                     PAGE_CSS,
                     JSON_NODE_HELPER_CSS,
