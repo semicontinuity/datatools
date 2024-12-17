@@ -54,7 +54,8 @@ class RealmPg(Realm):
             dbname=self.db_name,
             user=self.db_user,
             password=self.db_password,
-            sslmode="verify-full",
+            sslmode="verify-ca",
+            # sslmode="verify-full",
             target_session_attrs="read-write"
         )
 
