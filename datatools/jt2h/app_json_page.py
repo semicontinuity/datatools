@@ -7,6 +7,7 @@ from datatools.jt2h.json_node_delegate_yaml2 import JsonNodeDelegateYaml2
 from datatools.jt2h.json_node_delegate_yaml2_css import JSON_NODE_DELEGATE_YAML_CSS
 from datatools.jt2h.json_node_helper_css import JSON_NODE_HELPER_CSS
 from util.html.elements import html, body, head, style
+from util.html.page_node import PageNode
 
 PAGE_CSS = '''
 body {
@@ -22,28 +23,25 @@ def data():
     return j
 
 
-def page_node(contents):
-    return html(
-        head(
-            style(
-                PAGE_CSS,
-                JSON_NODE_HELPER_CSS,
-                JSON_NODE_DELEGATE_YAML_CSS,
+def page_node(data):
+    return PageNode(
+        html(
+            head(
+                style(
+                    PAGE_CSS,
+                    JSON_NODE_HELPER_CSS,
+                    JSON_NODE_DELEGATE_YAML_CSS,
+                )
+            ),
+            body(
+                JsonNode(data, JsonNodeDelegateYaml2())
             )
-        ),
-        body(
-            contents
         )
     )
 
 
 def main():
-    print("""<!DOCTYPE html>""")
-    print(
-        page_node(
-            JsonNode(data(), JsonNodeDelegateYaml2())
-        )
-    )
+    print(page_node(data()))
 
 
 if __name__ == '__main__':
