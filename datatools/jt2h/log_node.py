@@ -19,7 +19,7 @@ class LogNode:
                 (
                     th(
                         span(column_renderer.column, clazz='regular'),
-                        span(column_renderer.column[:1] + '.', clazz='compact'),
+                        span(column_renderer.column[:1], clazz='compact'),
                         onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")'
                     )
                     for i, column_renderer in enumerate(self.column_renderers)
