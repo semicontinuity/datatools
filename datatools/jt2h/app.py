@@ -3,6 +3,7 @@ import json
 import sys
 from collections import defaultdict
 
+from datatools.json.util import is_primitive
 from datatools.jt2h.column_renderer_colored import ColumnRendererColored
 from datatools.jt2h.json_node_delegate_yaml2_css import JSON_NODE_DELEGATE_YAML_CSS
 from datatools.jt2h.json_node_helper_css import JSON_NODE_HELPER_CSS
@@ -55,14 +56,18 @@ def page_node_for(log_node, script_text: str, title_str: str):
 
 def column_renderers_auto(j):
     column_counts = defaultdict(int)
+    complex_columns = set()
 
     for row in j:
-        for k in row:
+        for k, v in row.items():
+            if not is_primitive(v):
+                complex_columns.add(k)
             column_counts[k] += 1
 
     return [
         ColumnRendererColored(k, column_counts[k] != len(j), j)
         for k in column_counts
+        if k not in complex_columns
     ]
 
 
