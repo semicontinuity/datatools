@@ -349,6 +349,8 @@ def run():
         return data
     elif len(sys.argv) and sys.argv[1] == "extract_patterns":
         return extract_patterns(load_data())
+    elif len(sys.argv) and sys.argv[1] == "make_hashes":
+        return make_hashes(load_data())
 
 
 def annotate_lines(records: Sequence[Any], classify_field: str, result_field: str, category_f: Callable[[Sequence], str]):
@@ -373,6 +375,10 @@ def extract_patterns(lines: List[str]) -> list[list[str]]:
     group_to_lookup = invert(buckets)
 
     return [group_to_lookup[tuple(token for token in tokenize(line))] for line in lines]
+
+
+def make_hashes(lines: List[str]) -> list[int]:
+    return [hash(p) & 0xFFFFFFFF for p in extract_patterns(lines)]
 
 
 @run_once
