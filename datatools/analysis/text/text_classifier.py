@@ -29,7 +29,7 @@ and classify messages inside these groups. This is much faster and more reliable
 
 This module provides function to classify and annotate a field in json-lines data (pre-grouped by another field).
 
-Usage: python3 -m datatools.logs.text_classifier annotate_lines "message" "_message_kind"
+Usage: python3 -m datatools.analysis.text.text_classifier annotate_lines "message" "_message_kind"
 (will classify the field "message" and produce the field "_message_kind"; no pre-grouping)
 Input is expected on STDIN as sequence of json lines (e.g. as produced by jq -c)
 """
@@ -214,7 +214,7 @@ def bucketize(tokenized_strings) -> Dict[Tuple[str, ...], List[str]]:
     return pattern_to_tokenized_strings
 
 
-def grouped_data(data, group_field: str):
+def grouped_data(data, group_field: str) -> Dict[str, List[Any]]:
     group_to_group_data: Dict[str, List[Any]] = defaultdict(list)
     for record in data:
         group_to_group_data[record[group_field]].append(record)
@@ -336,7 +336,7 @@ def run():
         # <classify_field> <result_field> [<group_by_field>]
         group_field = sys.argv[4] if len(sys.argv) == 5 else None
         data = load_data()
-        data_groups = {None: data if group_field is None else grouped_data(data, group_field)}
+        data_groups = {None: data} if group_field is None else grouped_data(data, group_field)
 
         if os.environ.get("PATTERNS") == '1':
             category_f = lambda p: ''.join(('*' if part is None else part) for part in p)
@@ -347,11 +347,13 @@ def run():
             annotate_lines(group_data, classify_field=sys.argv[2], result_field=sys.argv[3], category_f=category_f)
 
         return data
+    elif len(sys.argv) and sys.argv[1] == "extract_patterns":
+        return extract_patterns(load_data())
 
 
 def annotate_lines(records: Sequence[Any], classify_field: str, result_field: str, category_f: Callable[[Sequence], str]):
-    debug(f"Annotating")
-    classify_field_values = [j[classify_field] for j in records]
+    debug(f"Annotating", size=len(records), classify_field=classify_field, result_field=result_field)
+    classify_field_values = [record[classify_field] for record in records]
     tokenized_strings = [[token for token in tokenize(value)] for value in classify_field_values]
 
     buckets: Dict[Tuple[str, ...], List[str]] = make_buckets(tokenized_strings)
@@ -362,6 +364,15 @@ def annotate_lines(records: Sequence[Any], classify_field: str, result_field: st
         p = group_to_lookup[tuple(token for token in tokenize(message))]
         category = category_f(p)
         record[result_field] = category
+
+
+def extract_patterns(lines: List[str]) -> list[list[str]]:
+    tokenized_strings = [[token for token in tokenize(value)] for value in lines]
+
+    buckets: Dict[Tuple[str, ...], List[str]] = make_buckets(tokenized_strings)
+    group_to_lookup = invert(buckets)
+
+    return [group_to_lookup[tuple(token for token in tokenize(line))] for line in lines]
 
 
 @run_once

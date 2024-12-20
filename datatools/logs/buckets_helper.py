@@ -45,7 +45,7 @@ def compute_stats_for_tokenized(tokenized_strings: Sequence[Sequence[str]], rati
 
         token2quality[token] = quality
         total_quality += quality
-    debug('total_quality', total_quality)
+    debug("compute_stats_for_tokenized", total_quality=total_quality)
 
         # total_support += len(token2lines[token])
 
