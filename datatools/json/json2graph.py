@@ -18,6 +18,7 @@ Examples of supported JSONs:
 """
 
 import json
+import os
 import sys
 from collections import defaultdict
 from typing import List, Set, Dict
@@ -55,7 +56,7 @@ def qualified_edge_list_to_graph(edges: List, **kwargs):
 
         new_edges.append([node_from, node_to])
 
-    return group_specs_and_edge_list_to_graph(groups, new_edges)
+    return group_specs_and_edge_list_to_graph(groups, new_edges, **kwargs)
 
 
 def group_specs_and_edge_list_to_graph(groups: Dict, edges: List, **kwargs):
@@ -134,8 +135,10 @@ def adj_dict_to_graph(d, **kwargs):
 
 
 def to_graph(o):
-    attr = {"node_attr": {'height': '0'}, "graph_attr": {"concentrate": "true"}}
-
+    attr = {
+        "node_attr": {'height': '0'},
+        "graph_attr": {"concentrate": "true"}
+    }
     if type(o) is list:
         records: List = o
         if len(records) == 2 and type(records[0]) is dict and type(records[1]) is list:
@@ -159,4 +162,7 @@ def to_graph(o):
 
 
 if __name__ == "__main__":
-    sys.stdout.buffer.write(str(to_graph(json.load(sys.stdin)).source).encode('utf-8'))
+    graph = to_graph(json.load(sys.stdin))
+    if os.environ['LR']:
+        graph.graph_attr['rankdir'] = 'LR'
+    sys.stdout.buffer.write(str(graph.source).encode('utf-8'))
