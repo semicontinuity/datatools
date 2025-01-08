@@ -163,6 +163,6 @@ def to_graph(o):
 
 if __name__ == "__main__":
     graph = to_graph(json.load(sys.stdin))
-    if os.environ['LR']:
+    if os.environ.get('LR'):
         graph.graph_attr['rankdir'] = 'LR'
     sys.stdout.buffer.write(str(graph.source).encode('utf-8'))

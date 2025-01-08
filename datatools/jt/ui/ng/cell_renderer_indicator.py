@@ -66,7 +66,7 @@ class WIndicatorCellRenderer(WColumnRenderer):
             return super().background_color(row_emphasized)
 
         if self.bg is None:
-            if type(value) is dict or type(value) is list:
+            if type(value) is dict or type(value) is list or type(value) is float:
                 return self.bg
             else:
                 return hash_to_rgb(hash_code(value), offset=64)
