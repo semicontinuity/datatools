@@ -7,17 +7,19 @@
 #
 # {
 #   "concept-name": {
-#     "path": "base path like api/v1/entity",
+#     "path": "api/v1/entity/{variable_name}",
 #     "links": [
 #       {
-#         "path_pattern": ["path", "elements", null, "element"],
-#         "concept": "referenced-concept"
+#         "json_path": "path.elements.*.element",
+#         "value": "variable-name",
+#         "concept": "referenced-concept",
+#         "values": [ { "value": "var_name", "key": "path" }, ... ]
 #       }
 #     ]
 #   }
 # }
 #
-# null in path pattern means "any array element"
+# "values" is optional
 ####################################################################
 
 import json

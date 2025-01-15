@@ -20,7 +20,7 @@ class ViewRestEntity(View):
         j = self.concepts.fetch_json(self.ref)
         self.doc = make_document_for_model(
             MyElementFactory(self.concepts, self.ref).build_root_model(j),
-            f'{self.ref.concept} {self.ref.variables}'
+            footer=f'{self.ref.concept} {self.ref.variables}'
         )
         self.g = with_alternate_screen(lambda: make_grid(self.doc))
 

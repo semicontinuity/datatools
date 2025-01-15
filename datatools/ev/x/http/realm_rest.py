@@ -54,7 +54,7 @@ class RealmRest(Realm):
         for link in concept_def['links']:
             match = RealmRest.path_list_match(json_path.split('.'), link['json_path'].split('.'))
             if match is not None:
-                return link['concept'], link['value']
+                return link['concept'], link['value'], link.get('values')
 
     @staticmethod
     def path_match(path: str, pattern: str):
