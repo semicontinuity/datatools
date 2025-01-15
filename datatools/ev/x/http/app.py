@@ -56,7 +56,11 @@ realms: Dict[str, Realm] = {None: realm}
 
 
 def main():
-    run_app(realms, realm.match_entity(get_env('__REST')))
+    entity = realm.match_entity(get_env('__REST'))
+    if parameters := os.getenv('PARAMETERS'):
+        entity.query = json.loads(parameters)
+
+    run_app(realms, entity)
 
 
 if __name__ == "__main__":

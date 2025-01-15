@@ -1,3 +1,4 @@
+import urllib
 from typing import Dict, List, Any
 from urllib.parse import urlparse
 
@@ -38,6 +39,9 @@ class RealmRest(Realm):
         parsed_url = urlparse(concept_path)
         path = self.replace_path_vars(parsed_url.path, entity.variables)
         query = '' if parsed_url.query == '' else '?' + parsed_url.query
+        if query == '' and entity.query:
+            query = '?' + urllib.parse.urlencode(entity.query)
+
         url = f'{self.protocol}://{self.host}/{path}{query}'
         response = requests.request('GET', url, headers=self.headers, verify=False)
         if 200 <= response.status_code < 300:
