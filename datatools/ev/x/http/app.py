@@ -58,7 +58,11 @@ realms: Dict[str, Realm] = {None: realm}
 
 
 def main():
-    entity = realm.match_entity(get_env('__REST'))
+    path = get_env('__REST') or ""
+    path = path.split('!', 1)[0].removesuffix('/')
+    print(path)
+
+    entity = realm.match_entity(path)
     if parameters := os.getenv('PARAMETERS'):
         entity.query = json.loads(parameters)
 
