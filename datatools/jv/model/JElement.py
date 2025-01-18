@@ -56,3 +56,6 @@ class JElement(TreeNode):
             node = node.get_value_element()
             path.append(node.key)
             node = node.parent
+
+    def __contains__(self, item):
+        return type(self.key) is str and item in self.key

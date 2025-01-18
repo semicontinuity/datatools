@@ -16,3 +16,6 @@ class JString(JPrimitiveElement[str]):
 
     def value_style(self) -> Style:
         return get_current_highlighting().for_string(self)
+
+    def __contains__(self, item):
+        return super().__contains__(item) or item in self.value

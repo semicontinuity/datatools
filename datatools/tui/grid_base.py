@@ -55,6 +55,7 @@ class WGridBase(Editor):
                         self.redraw() # strange, redraw_body is not enough (footer disappears)
                     else:
                         self.redraw_lines(self.cur_line - 1, 2)
+            return True
         elif key == KEY_UP:
             if self.cur_line > 0:
                 old_line = self.cur_line
@@ -73,6 +74,7 @@ class WGridBase(Editor):
                     else:
                         # better to re-draw just 2 changed lines!
                         self.redraw_lines(self.cur_line, 2)
+            return True
 
         elif key == KEY_PGDN:
             if self.cur_line + 1 != self.total_lines:  # if not on the very last line
@@ -94,6 +96,7 @@ class WGridBase(Editor):
                     else:
                         # better to re-draw just min.number of changed lines!
                         self.redraw_lines(self.top_line, self.total_lines - self.top_line)
+            return True
 
         elif key == KEY_PGUP:
             if self.cur_line > 0:  # if not on the very first line
@@ -107,6 +110,7 @@ class WGridBase(Editor):
                 else:
                     # better to re-draw just min. number of changed lines, if does not scroll
                     self.redraw_lines(self.top_line, min(self.rows_view_height, self.total_lines - self.top_line))
+            return True
 
         elif key == KEY_CTRL_END:
             if self.cur_line + 1 != self.total_lines:  # if not on the very last line
@@ -119,11 +123,13 @@ class WGridBase(Editor):
                 else:  # everything must be visible already; must move cursor to the last line
                     self.cur_line = self.total_lines - 1
                     self.redraw_content()
+            return True
         elif key == KEY_CTRL_HOME:
             if self.cur_line > 0:  # if not on the very first line
                 self.top_line = 0
                 self.cur_line = 0
                 self.redraw_content()
+            return True
         else:
             return False
 

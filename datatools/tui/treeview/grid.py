@@ -110,7 +110,7 @@ class WGrid(WGridBase, Thread):
     def handle_cursor_keys(self, key):
         result = super().handle_cursor_keys(key)
         if result is None or result:
-            return
+            return result
 
         content_width = self.document.width
         content_height = self.document.height
@@ -118,52 +118,64 @@ class WGrid(WGridBase, Thread):
             if self.x_shift + self.width < content_width:
                 self.x_shift += 1
                 self.redraw()
+            return True
         elif key == KEY_CTRL_LEFT:
             if self.x_shift > 0:
                 self.x_shift -= 1
                 self.redraw()
+            return True
         elif key == KEY_DOWN:
             if self.top_line + self.height < content_height:
                 self.top_line += 1
                 self.redraw()
+            return True
         elif key == KEY_UP:
             if self.top_line > 0:
                 self.top_line -= 1
                 self.redraw()
+            return True
 
         elif key == KEY_END:
             if self.x_shift + self.width < content_width:
                 self.x_shift = content_width - self.width
                 self.redraw()
+            return True
         elif key == KEY_HOME:
             if self.x_shift > 0:
                 self.x_shift = 0
                 self.redraw()
+            return True
         elif key == KEY_CTRL_END:
             if self.top_line + self.height < content_height:
                 self.top_line = content_height - self.height
                 self.redraw()
+            return True
         elif key == KEY_CTRL_HOME:
             if self.top_line > 0:
                 self.top_line = 0
                 self.redraw()
+            return True
 
         elif key == KEY_PGDN:
             if self.top_line + self.height < content_height:
                 self.top_line = min(self.top_line + self.height, content_height - self.height)
                 self.redraw()
+            return True
         elif key == KEY_PGUP:
             if self.top_line > 0:
                 self.top_line = max(0, self.top_line - self.height)
                 self.redraw()
+            return True
         elif key == KEY_ALT_RIGHT:
             if self.x_shift + self.width < content_width:
                 self.x_shift = min(self.x_shift + HORIZONTAL_PAGE_SIZE, content_width - self.width)
                 self.redraw()
+            return True
         elif key == KEY_ALT_LEFT:
             if self.x_shift > 0:
                 self.x_shift = max(0, self.x_shift - HORIZONTAL_PAGE_SIZE)
                 self.redraw()
+            return True
 
         elif key == KEY_LEFT:
             line = self.document.collapse(self.cur_line)
@@ -176,11 +188,13 @@ class WGrid(WGridBase, Thread):
 
             self.clear()
             self.redraw()
+            return True
         elif key == KEY_RIGHT:
             self.document.expand(self.cur_line)
             self.document.layout()
             self.layout()
             self.redraw()
+            return True
         elif key == KEY_TAB or key == KEY_SHIFT_TAB:
             line = self.document.collapse_recursive(self.cur_line, key == KEY_SHIFT_TAB)
 
@@ -192,6 +206,7 @@ class WGrid(WGridBase, Thread):
             self.cur_line = line
             self.layout()
             self.redraw()
+            return True
         elif key == KEY_CTRL_SHIFT_RIGHT:
             line = self.document.collapse_children(self.cur_line, False)
 
@@ -203,6 +218,7 @@ class WGrid(WGridBase, Thread):
             self.cur_line = line
             self.layout()
             self.redraw()
+            return True
 
     def request_redraw(self):
         self.event_queue.put(...)

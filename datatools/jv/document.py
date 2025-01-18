@@ -1,4 +1,4 @@
-from typing import Hashable, List
+from typing import Hashable, List, Optional
 
 from datatools.tui.treeview.treedocument import TreeDocument
 
@@ -27,3 +27,11 @@ class JDocument(TreeDocument):
 
     def selected_path(self, line) -> List[Hashable]:
         return self.rows[line].path()
+
+    def search(self, search_str: str, from_line: int) -> Optional[int]:
+        for i in range(from_line, len(self.rows)):
+            if search_str in self.rows[i]:
+                return i
+        for i in range(0, from_line):
+            if search_str in self.rows[i]:
+                return i

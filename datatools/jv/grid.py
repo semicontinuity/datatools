@@ -1,3 +1,5 @@
+from typing import Optional
+
 from datatools.tui.picotui_keys import KEY_INSERT
 from datatools.tui.treeview.grid import WGrid
 from datatools.tui.treeview.treedocument import TreeDocument
@@ -12,8 +14,10 @@ class JGrid(WGrid):
         self.search_str = ""
 
     def handle_cursor_keys(self, key):
-        self.search_str = ""
-        return super().handle_cursor_keys(key)
+        result = super().handle_cursor_keys(key)
+        if result is not None:
+            self.search_str = ""
+            return result
 
     def handle_edit_key(self, key):
         if key == KEY_INSERT:
@@ -36,11 +40,16 @@ class JGrid(WGrid):
 
     def handle_typed_key(self, key):
         self.search_str += key.decode("utf-8")
-        # line = self.search()
-        # if line is not None:
-        #     content_height = self.height - 3
-        #     if line >= self.top_line + content_height:
-        #         delta = line - self.cur_line
-        #         self.top_line += delta
-        #     self.cur_line = line
-        #     self.redraw_lines(self.top_line, content_height)
+        line = self.search()
+        if line is not None:
+            content_height = self.height
+            if line >= self.top_line + content_height:
+                delta = line - self.cur_line
+                self.top_line += delta
+            self.cur_line = line
+            self.redraw_lines(self.top_line, content_height)
+
+    def search(self) -> Optional[int]:
+        if self.search_str == "":
+            return None
+        return self.document.search(self.search_str, self.cur_line)
