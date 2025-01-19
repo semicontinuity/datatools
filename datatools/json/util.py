@@ -37,6 +37,8 @@ def to_jsonisable(obj):
         return [to_jsonisable(e) for e in obj]
     elif isinstance(obj, bytearray):
         return [e for e in obj]
+    elif isinstance(obj, bytes):
+        return str(obj)
     elif isinstance(obj, datetime.datetime) or isinstance(obj, UUID):
         return str(obj)
     else:
