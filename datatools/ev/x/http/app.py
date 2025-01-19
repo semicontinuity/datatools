@@ -59,7 +59,7 @@ realms: Dict[str, Realm] = {None: realm}
 
 def main():
     path = get_env('__REST') or ""
-    path = path.split('!', 1)[0].removesuffix('/')
+    path = path.split('@', 1)[0].removesuffix('/')
     print(path)
 
     entity = realm.match_entity(path)
