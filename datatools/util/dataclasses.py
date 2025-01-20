@@ -1,10 +1,13 @@
 import dataclasses
 
 from datatools.util.logging import debug
+from datetime import datetime
 
 
 def dataclass_from_dict(klass, d, klass_map = None):
-    if type(klass) is str and klass_map:
+    if type(klass) is datetime:
+        return datetime.strptime(d, '%Y-%m-%d %H:%M:%S%z')
+    elif type(klass) is str and klass_map:
         klass = klass_map[klass]
 
     is_dataclass = dataclasses.is_dataclass(klass)

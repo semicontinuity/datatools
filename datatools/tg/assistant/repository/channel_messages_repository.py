@@ -1,5 +1,6 @@
 import json
 import pathlib
+from datetime import datetime
 from typing import List, Dict, Union
 
 from datatools.tg.assistant.model.tg_message import TgMessage
@@ -27,6 +28,20 @@ class ChannelMessageRepository:
     def get_max_id(self):
         return self.max_id
 
+    def resolve_topic_id(self, m: Union[TgMessage, TgMessageService]) -> int:
+        if m is None:
+            return None
+        elif type(m) == TgMessageService:
+            return m.id
+        else:
+            if m.reply_to is None:
+                return 1
+            else:
+                if m.reply_to.reply_to_top_id is not None:
+                    return m.reply_to.reply_to_top_id
+                elif m.reply_to.reply_to_msg_id is not None:
+                    return self.resolve_topic_id(self.get_message(m.reply_to.reply_to_msg_id))
+
     def get_message(self, message_id: int) -> Union[TgMessage, TgMessageService]:
         j = self.data.get(message_id)
         if j is None:
@@ -50,3 +65,6 @@ class ChannelMessageRepository:
 
         res.reverse()
         return res
+
+    def get_latest_topic_messages(self, topic_id: int, since: str) -> List[Union[TgMessage, TgMessageService]]:
+        return [m for m in (self.get_latest_messages(since)) if self.resolve_topic_id(m) == topic_id]
