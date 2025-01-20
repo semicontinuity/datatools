@@ -50,7 +50,7 @@ def dataclass_from_dict(klass, d, klass_map = None):
         field_types = {f.name: f.type for f in dataclasses.fields(klass)}
         debug('dataclass_from_dict', klass=klass, field_types=field_types)
 
-        res = {f: dataclass_from_dict(field_types[f], d[f], klass_map) for f, v in d.items() if f != 'type'}
+        res = {f: dataclass_from_dict(field_types[f], d[f], klass_map) for f, v in d.items() if f != 'type' and f in field_types}
 
         # res = {}
         # for f, v in d.items():

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import sys
 
 import click
 from telethon.tl.functions.messages import GetMessagesRequest
@@ -23,6 +24,9 @@ async def do_dump_message(client, channel_id: int, message_id: int):
 
     async for message in client.iter_messages(channel_id, ids=[message_id]):
         # print(f"Message ID: {message.id}, Sender: {message.sender_id}, Text: {message.text}")
+        if message is None:
+            sys.exit(1)
+            
         print(
             json.dumps(
                 to_jsonisable(message.to_dict()),

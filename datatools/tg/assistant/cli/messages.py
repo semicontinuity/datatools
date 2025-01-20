@@ -17,4 +17,8 @@ from datatools.tg.assistant.repository.channel_messages_repository import Channe
     help="Channel ID",
 )
 def messages(session_slug: str, channel_id: int):
-    ChannelMessageRepository(cache_folder(session_slug), channel_id).load()
+    repository = ChannelMessageRepository(cache_folder(session_slug), channel_id)
+    repository.load()
+
+    for i in range(1, repository.get_max_id()):
+        print(repository.get_message(i))
