@@ -20,5 +20,9 @@ def messages(session_slug: str, channel_id: int):
     repository = ChannelMessageRepository(cache_folder(session_slug), channel_id)
     repository.load()
 
-    for i in range(1, repository.get_max_id()):
-        print(repository.get_message(i))
+    # for i in range(1, repository.get_max_id()):
+    #     print(repository.get_message(i))
+
+    messages = repository.get_latest_messages('2025-01-15')
+    for message in messages:
+        print(message)

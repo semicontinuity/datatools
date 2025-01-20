@@ -1,6 +1,6 @@
 import json
 import pathlib
-from typing import List, Dict
+from typing import List, Dict, Union
 
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.model.tg_message_service import TgMessageService
@@ -27,7 +27,7 @@ class ChannelMessageRepository:
     def get_max_id(self):
         return self.max_id
 
-    def get_message(self, message_id: int):
+    def get_message(self, message_id: int) -> Union[TgMessage, TgMessageService]:
         j = self.data.get(message_id)
         if j is None:
             return None
@@ -35,3 +35,18 @@ class ChannelMessageRepository:
             return dataclass_from_dict(TgMessage, j)
         else:
             return dataclass_from_dict(TgMessageService, j)
+
+    def get_latest_messages(self, date_gte: str) -> List[Union[TgMessage, TgMessageService]]:
+        res = []
+        i = self.max_id
+
+        while i > 0:
+            m = self.get_message(i)
+            if m is not None:
+                if m.date < date_gte:
+                    break
+                res.append(m)
+            i -= 1
+
+        res.reverse()
+        return res
