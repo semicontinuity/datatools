@@ -12,6 +12,7 @@ from datatools.jv.highlighting.holder import set_current_highlighting, get_curre
 from datatools.tg.assistant.view.document import TgDocument
 from datatools.tg.assistant.view.element_factory import TgElementFactory
 from datatools.tg.assistant.view.grid import TgGrid
+from datatools.tg.assistant.view.model.VFolder import VFolder
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
@@ -40,8 +41,15 @@ def do_make_json_tree_applet(grid_context: GridContext, popup, document: TreeDoc
 
 def make_document() -> TgDocument:
     factory = TgElementFactory()
-    model = factory.string("item", None)
-    return make_document_for_model(model, "footer")
+
+    folder = VFolder()
+    folder.set_elements(
+        [
+            factory.string("item", None)
+        ]
+    )
+
+    return make_document_for_model(folder, "footer")
 
 
 def make_document_for_model(model, footer):
