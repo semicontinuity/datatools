@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import sys
 from typing import Tuple, Any
 
@@ -10,8 +9,8 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
-from datatools.jv.model.factory import JElementFactory
 from datatools.tg.assistant.view.document import TgDocument
+from datatools.tg.assistant.view.element_factory import TgElementFactory
 from datatools.tg.assistant.view.grid import TgGrid
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
@@ -39,16 +38,10 @@ def do_make_json_tree_applet(grid_context: GridContext, popup, document: TreeDoc
     )
 
 
-def data():
-    lines = [line for line in sys.stdin]
-    s = ''.join(lines)
-    return json.loads(s)
-
-
-def make_document(j, footer: str = None) -> TgDocument:
-    factory = JElementFactory()
-    model = factory.build_root_model(j)
-    return make_document_for_model(model, footer)
+def make_document() -> TgDocument:
+    factory = TgElementFactory()
+    model = factory.string("item", None)
+    return make_document_for_model(model, "footer")
 
 
 def make_document_for_model(model, footer):
@@ -85,7 +78,7 @@ if get_current_highlighting() is None:
 
 
 if __name__ == "__main__":
-    doc: TgDocument = make_document(data())    # must consume stdin first
+    doc: TgDocument = make_document()
     key_code, cur_line = with_alternate_screen(lambda: loop(doc))
     exit_code, output = handle_loop_result(doc, key_code, cur_line)
     if output is not None:
