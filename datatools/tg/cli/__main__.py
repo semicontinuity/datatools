@@ -1,6 +1,7 @@
 import click
 
 from datatools.tg.cli.channel import channel
+from datatools.tg.cli.channel_participants import channel_participants
 from datatools.tg.cli.channels import channels
 from datatools.tg.cli.dialogs import dialogs
 from datatools.tg.cli.groups import groups
@@ -16,6 +17,7 @@ def main():
 
 main.add_command(channel)
 main.add_command(channels)
+main.add_command(channel_participants)
 main.add_command(groups)
 main.add_command(dialogs)
 main.add_command(message)
