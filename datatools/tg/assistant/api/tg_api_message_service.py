@@ -2,6 +2,6 @@ from dataclasses import dataclass
 
 
 @dataclass
-class TgMessageService:
+class TgApiMessageService:
     id: int
     date: str

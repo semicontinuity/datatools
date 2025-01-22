@@ -18,5 +18,4 @@ async def new_telegram_client(telethon_session_slug: str):
     api_id = int(read_from(folder / 'api_id').strip())
     api_hash = read_from(folder / 'api_hash').strip()
     session_file_name = str(folder / 'session.session')
-    telegram_client = TelegramClient(session_file_name, api_id, api_hash)
-    return telegram_client
+    return TelegramClient(session_file_name, api_id, api_hash)

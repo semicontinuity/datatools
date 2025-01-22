@@ -2,8 +2,8 @@ import json
 import pathlib
 from typing import List, Dict, Union
 
-from datatools.tg.assistant.model.api.tg_message import TgMessage
-from datatools.tg.assistant.model.api.tg_message_service import TgMessageService
+from datatools.tg.assistant.api.tg_api_message import TgApiMessage
+from datatools.tg.assistant.api.tg_api_message_service import TgApiMessageService
 from datatools.util.dataclasses import dataclass_from_dict
 
 
@@ -27,10 +27,10 @@ class ChannelMessageRepository:
     def get_max_id(self):
         return self.max_id
 
-    def resolve_topic_id(self, m: Union[TgMessage, TgMessageService]) -> int:
+    def resolve_topic_id(self, m: Union[TgApiMessage, TgApiMessageService]) -> int:
         if m is None:
             return None
-        elif type(m) == TgMessageService:
+        elif type(m) == TgApiMessageService:
             return m.id
         else:
             if m.reply_to is None:
@@ -41,16 +41,16 @@ class ChannelMessageRepository:
                 elif m.reply_to.reply_to_msg_id is not None:
                     return self.resolve_topic_id(self.get_message(m.reply_to.reply_to_msg_id))
 
-    def get_message(self, message_id: int) -> Union[TgMessage, TgMessageService]:
+    def get_message(self, message_id: int) -> Union[TgApiMessage, TgApiMessageService]:
         j = self.data.get(message_id)
         if j is None:
             return None
         if j['_'] == 'Message':
-            return dataclass_from_dict(TgMessage, j)
+            return dataclass_from_dict(TgApiMessage, j)
         else:
-            return dataclass_from_dict(TgMessageService, j)
+            return dataclass_from_dict(TgApiMessageService, j)
 
-    def get_latest_messages(self, date_gte: str) -> List[Union[TgMessage, TgMessageService]]:
+    def get_latest_messages(self, date_gte: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
         res = []
         i = self.max_id
 
@@ -65,5 +65,5 @@ class ChannelMessageRepository:
         res.reverse()
         return res
 
-    def get_latest_topic_messages(self, topic_id: int, since: str) -> List[Union[TgMessage, TgMessageService]]:
+    def get_latest_topic_messages(self, topic_id: int, since: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
         return [m for m in (self.get_latest_messages(since)) if self.resolve_topic_id(m) == topic_id]
