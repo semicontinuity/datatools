@@ -42,14 +42,11 @@ def do_make_json_tree_applet(grid_context: GridContext, popup, document: TreeDoc
 def make_document() -> TgDocument:
     factory = TgElementFactory()
 
-    folder = VFolder()
-    folder.set_elements(
-        [
-            factory.string("item", None)
-        ]
-    )
+    root = VFolder()
+    root.set_elements([factory.string("item", None)])
+    root.indent_recursive(0)
 
-    return make_document_for_model(folder, "footer")
+    return make_document_for_model(root, "footer")
 
 
 def make_document_for_model(model, footer):

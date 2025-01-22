@@ -5,7 +5,6 @@ from datatools.tui.treeview.treenode import TreeNode
 
 
 class VElement(TreeNode):
-
     indent: int
 
     def __init__(self) -> None:
@@ -17,3 +16,6 @@ class VElement(TreeNode):
         return [(' ' * self.indent, Style())] + [self.rich_text()]
 
     def rich_text(self) -> Tuple[AnyStr, Style]: pass
+
+    def indent_recursive(self, indent: int):
+        self.indent = indent

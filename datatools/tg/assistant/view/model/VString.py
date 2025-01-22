@@ -4,7 +4,7 @@ from datatools.tg.assistant.view.model.VElement import VElement
 from datatools.tui.treeview.rich_text import Style
 
 
-class JString(VElement):
+class VString(VElement):
 
     def __init__(self, value: Any) -> None:
         super().__init__()
