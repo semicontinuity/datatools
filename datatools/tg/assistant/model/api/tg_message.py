@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from datatools.tg.assistant.model.tg_message_reply_header import TgMessageReplyHeader
+from datatools.tg.assistant.model.api.tg_message_reply_header import TgMessageReplyHeader
 
 
 @dataclass

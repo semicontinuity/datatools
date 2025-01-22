@@ -10,9 +10,8 @@ from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.tg.assistant.view.document import TgDocument
-from datatools.tg.assistant.view.element_factory import TgElementFactory
+from datatools.tg.assistant.view.document_factory import make_document
 from datatools.tg.assistant.view.grid import TgGrid
-from datatools.tg.assistant.view.model.VFolder import VFolder
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
@@ -21,16 +20,16 @@ from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.util.object_exporter import init_object_exporter, ObjectExporter
 
 
-def make_json_tree_applet(document: TgDocument, screen_size, popup: bool = False):
+def make_tg_tree_applet(document: TgDocument, screen_size, popup: bool = False):
     screen_width, screen_height = screen_size
     grid_context = GridContext(0, 0, screen_width, screen_height)
     document.layout()
     document.optimize_layout(screen_height)
     document.layout()
-    return do_make_json_tree_applet(grid_context, popup, document)
+    return do_make_tg_tree_applet(grid_context, popup, document)
 
 
-def do_make_json_tree_applet(grid_context: GridContext, popup, document: TreeDocument):
+def do_make_tg_tree_applet(grid_context: GridContext, popup, document: TreeDocument):
     return Applet(
         'jv',
         grid(document, grid_context, grid_class=TgGrid),
@@ -39,30 +38,12 @@ def do_make_json_tree_applet(grid_context: GridContext, popup, document: TreeDoc
     )
 
 
-def make_document() -> TgDocument:
-    factory = TgElementFactory()
-
-    root = VFolder()
-    root.set_elements([factory.string("item", None)])
-    root.indent_recursive(0)
-
-    return make_document_for_model(root, "footer")
-
-
-def make_document_for_model(model, footer):
-    model.set_collapsed_recursive(True)
-    model.collapsed = False
-    doc = TgDocument(model)
-    doc.footer = footer
-    return doc
-
-
 def loop(document: TgDocument):
     return do_loop(make_grid(document))
 
 
 def make_grid(document: TgDocument):
-    return make_json_tree_applet(document, screen_size_or_default()).g
+    return make_tg_tree_applet(document, screen_size_or_default()).g
 
 
 def do_loop(g):

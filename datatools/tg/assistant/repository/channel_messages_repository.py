@@ -1,10 +1,9 @@
 import json
 import pathlib
-from datetime import datetime
 from typing import List, Dict, Union
 
-from datatools.tg.assistant.model.tg_message import TgMessage
-from datatools.tg.assistant.model.tg_message_service import TgMessageService
+from datatools.tg.assistant.model.api.tg_message import TgMessage
+from datatools.tg.assistant.model.api.tg_message_service import TgMessageService
 from datatools.util.dataclasses import dataclass_from_dict
 
 
