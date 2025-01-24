@@ -52,8 +52,13 @@ class TreeDocument:
         else:
             return ' ' * (x_to - x_from)
 
-    def collapse(self, line: int):
-        pass
+    def collapse(self, line) -> int:
+        parent = self.rows[line].parent
+        if parent is not None:
+            parent.collapsed = True
+            return parent.line
+        else:
+            return line
 
     def expand(self, line):
         self.rows[line].collapsed = False

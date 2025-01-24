@@ -57,6 +57,8 @@ def do_loop(g):
 def handle_loop_result(document, key_code, cur_line: int) -> Tuple[int, Any]:
     if key_code == KEY_ENTER:
         return EXIT_CODE_ENTER, ''
+    else:
+        return 0, None
 
 
 if ObjectExporter.INSTANCE is None:
