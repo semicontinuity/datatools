@@ -5,7 +5,7 @@ from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
-from datatools.tg.assistant.view.document import TgDocument
+from datatools.tg.assistant.view.tg_document import TgDocument
 from datatools.tg.assistant.view.model.VForum import VForum
 from datatools.tg.assistant.view.model.VRoot import VRoot
 from datatools.tg.assistant.view.model.VSummary import VSummary
@@ -39,21 +39,21 @@ class TgDocumentFactory:
         return v_forum
 
     async def make_topics(self, tg_channel: TgChannel) -> List[VTopic]:
-        return [self.make_topic(t) for t in await self.topic_repository.get_models(tg_channel)]
+        return [await self.make_topic(t) for t in await self.topic_repository.get_models(tg_channel)]
 
-    def make_topic(self, tg_topic: TgTopic):
+    async def make_topic(self, tg_topic: TgTopic):
         v_topic = VTopic(tg_topic)
-        v_topic.set_elements([])
+        v_topic.set_elements(await self.make_messages(tg_topic))
         return v_topic
 
-    async def make_messages(self, tg_topic: TgTopic) -> List[VTopic]:
-        # return [VSummary(t) for t in topic_models.na]
-        return []
+    async def make_messages(self, tg_topic: TgTopic) -> List[VSummary]:
+        messages = tg_topic.get_latest_messages('2025-01-15')
+        return [VSummary(t.message) for t in messages]
 
-    def make_document_for_model(self, model, footer):
-        model.set_collapsed_recursive(True)
-        model.collapsed = False
-        doc = TgDocument(model)
+    def make_document_for_model(self, root, footer):
+        root.set_collapsed_recursive(True)
+        root.collapsed = False
+        doc = TgDocument(root)
         doc.footer = footer
         doc.layout()
         return doc

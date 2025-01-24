@@ -11,8 +11,8 @@ from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.tg import cache_folder, new_telegram_client
-from datatools.tg.assistant.view.document import TgDocument
-from datatools.tg.assistant.view.document_factory import TgDocumentFactory
+from datatools.tg.assistant.view.tg_document import TgDocument
+from datatools.tg.assistant.view.tg_document_factory import TgDocumentFactory
 from datatools.tg.assistant.view.grid import TgGrid
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER
 from datatools.tui.screen_helper import with_alternate_screen

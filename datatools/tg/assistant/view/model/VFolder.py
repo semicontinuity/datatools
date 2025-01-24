@@ -34,6 +34,11 @@ class VFolder(VElement):
         for e in self.elements:
             e.indent_recursive(indent + 2)
 
+    def set_collapsed_recursive(self, collapsed: bool):
+        super().set_collapsed_recursive(collapsed)
+        for element in self.elements:
+            element.set_collapsed_recursive(collapsed)
+
     def rich_text(self) -> Tuple[AnyStr, Style]:
         return self.text, Style(0, (64, 160, 192))
 
