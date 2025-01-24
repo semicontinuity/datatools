@@ -1,5 +1,3 @@
-from time import sleep
-
 from datatools.tui.treeview.treedocument import TreeDocument
 
 

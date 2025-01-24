@@ -13,7 +13,7 @@ from datatools.jv.highlighting.holder import set_current_highlighting, get_curre
 from datatools.tg import cache_folder, new_telegram_client
 from datatools.tg.assistant.view.tg_document import TgDocument
 from datatools.tg.assistant.view.tg_document_factory import TgDocumentFactory
-from datatools.tg.assistant.view.grid import TgGrid
+from datatools.tg.assistant.view.tg_grid import TgGrid
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default

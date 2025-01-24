@@ -1,6 +1,6 @@
 from typing import Tuple, AnyStr, Any
 
-from datatools.tg.assistant.view.model.VElement import VElement
+from datatools.tg.assistant.view.model.v_element import VElement
 from datatools.tui.treeview.rich_text import Style
 
 

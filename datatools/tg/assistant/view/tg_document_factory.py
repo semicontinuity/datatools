@@ -6,10 +6,10 @@ from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
 from datatools.tg.assistant.view.tg_document import TgDocument
-from datatools.tg.assistant.view.model.VForum import VForum
-from datatools.tg.assistant.view.model.VRoot import VRoot
-from datatools.tg.assistant.view.model.VSummary import VSummary
-from datatools.tg.assistant.view.model.VTopic import VTopic
+from datatools.tg.assistant.view.model.v_forum import VForum
+from datatools.tg.assistant.view.model.v_root import VRoot
+from datatools.tg.assistant.view.model.v_summary import VSummary
+from datatools.tg.assistant.view.model.v_topic import VTopic
 
 
 class TgDocumentFactory:
@@ -48,7 +48,7 @@ class TgDocumentFactory:
 
     async def make_messages(self, tg_topic: TgTopic) -> List[VSummary]:
         messages = tg_topic.get_latest_messages('2025-01-15')
-        return [VSummary(t.message) for t in messages]
+        return [VSummary(t.message.replace('\n', ' | ')) for t in messages]
 
     def make_document_for_model(self, root, footer):
         root.set_collapsed_recursive(True)
