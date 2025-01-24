@@ -1,7 +1,7 @@
 import click
 
 from datatools.tg import cache_folder
-from datatools.tg.assistant.repository.channel_messages_repository import ChannelMessageRepository
+from datatools.tg.assistant.repository.channel_message_repository import ChannelMessageRepository
 
 
 @click.command()

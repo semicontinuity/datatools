@@ -14,8 +14,8 @@ class ChannelTopicRepository:
     def __init__(self, client) -> None:
         self.client = client
 
-    async def get_models(self, channel: TgChannel) -> list[TgTopic]:
-        ch = await self.client.get_entity(channel.id)
+    async def get_models(self, tg_channel: TgChannel) -> list[TgTopic]:
+        ch = await self.client.get_entity(tg_channel.id)
 
         response: ForumTopics = await self.client(
             GetForumTopicsRequest(
@@ -28,4 +28,4 @@ class ChannelTopicRepository:
             )
         )
         topics: List[ForumTopic] = response.topics
-        return [TgTopic(id=d.id, name=d.title) for d in topics]
+        return [TgTopic(id=d.id, name=d.title, tg_channel=tg_channel) for d in topics]
