@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-
+import asyncio
+import os
 import sys
 from typing import Tuple, Any
 
@@ -9,6 +10,7 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
+from datatools.tg import cache_folder, new_telegram_client
 from datatools.tg.assistant.view.document import TgDocument
 from datatools.tg.assistant.view.document_factory import make_document
 from datatools.tg.assistant.view.grid import TgGrid
@@ -63,10 +65,22 @@ if get_current_highlighting() is None:
     set_current_highlighting(ConsoleHighlighting())
 
 
-if __name__ == "__main__":
-    doc: TgDocument = make_document()
+async def do_main(folder, client):
+    doc: TgDocument = await make_document(folder, client)
     key_code, cur_line = with_alternate_screen(lambda: loop(doc))
     exit_code, output = handle_loop_result(doc, key_code, cur_line)
     if output is not None:
         print(output)
     sys.exit(exit_code)
+
+
+async def main():
+    telethon_session_slug = os.environ['TELETHON_SESSION_SLUG']
+    folder = cache_folder(telethon_session_slug)
+
+    async with await new_telegram_client(telethon_session_slug) as client:
+        await do_main(folder, client)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
