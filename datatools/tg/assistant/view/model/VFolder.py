@@ -7,14 +7,24 @@ from datatools.tui.treeview.rich_text import Style
 class VFolder(VElement):
     elements: List[VElement]
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, text: str) -> None:
+        super().__init__(text)
         self.elements = []
 
     def set_elements(self, elements: List[VElement]):
         self.elements = elements
         for e in elements:
             e.parent = self
+
+    def layout(self, line: int) -> int:
+        line = super().layout(line)
+        if self.collapsed:
+            return line
+        else:
+            for item in self.elements:
+                line = item.layout(line)
+            self.size = line - self.line
+            return line
 
     def indent_recursive(self, indent: int):
         super().indent_recursive(indent)

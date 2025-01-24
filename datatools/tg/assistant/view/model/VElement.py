@@ -5,11 +5,13 @@ from datatools.tui.treeview.treenode import TreeNode
 
 
 class VElement(TreeNode):
+    text: str
     indent: int
 
-    def __init__(self) -> None:
+    def __init__(self, text: str) -> None:
         super().__init__(True)
         self.indent = 0
+        self.text = text
 
     # @override
     def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:

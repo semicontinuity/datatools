@@ -2,16 +2,15 @@ from typing import Optional
 
 from datatools.jv.model import JViewOptions
 from datatools.tg.assistant.view.model.VElement import VElement
-from datatools.tg.assistant.view.model.VString import VString
+from datatools.tg.assistant.view.model.VSummary import VSummary
 
 
 class TgElementFactory:
 
-    def string(self, v, k, parent: Optional[VElement] = None):
-        e = self.make_string_element(v, parent)
-        e.parent = parent
+    def summary(self, v):
+        e = self.make_summary(v)
         e.options = JViewOptions()
         return e
 
-    def make_string_element(self, v, parent: Optional[VElement] = None):
-        return VString(v)
+    def make_summary(self, v, parent: Optional[VElement] = None):
+        return VSummary(v)
