@@ -12,7 +12,7 @@ from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.tg import cache_folder, new_telegram_client
 from datatools.tg.assistant.view.document import TgDocument
-from datatools.tg.assistant.view.document_factory import make_document
+from datatools.tg.assistant.view.document_factory import TgDocumentFactory
 from datatools.tg.assistant.view.grid import TgGrid
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
@@ -66,7 +66,7 @@ if get_current_highlighting() is None:
 
 
 async def do_main(folder, client):
-    doc: TgDocument = await make_document(folder, client)
+    doc: TgDocument = await TgDocumentFactory(folder, client).make_document()
     key_code, cur_line = with_alternate_screen(lambda: loop(doc))
     exit_code, output = handle_loop_result(doc, key_code, cur_line)
     if output is not None:

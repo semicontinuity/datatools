@@ -26,13 +26,16 @@ class VFolder(VElement):
             self.size = line - self.line
             return line
 
-    def indent_recursive(self, indent: int):
+    def indent_recursive(self, indent: int = None):
+        if indent is None:
+            indent = self.indent
+
         super().indent_recursive(indent)
         for e in self.elements:
             e.indent_recursive(indent + 2)
 
     def rich_text(self) -> Tuple[AnyStr, Style]:
-        return '{…}', Style(0, (64, 160, 192))
+        return self.text, Style(0, (64, 160, 192))
 
     def __iter__(self):
         yield self
