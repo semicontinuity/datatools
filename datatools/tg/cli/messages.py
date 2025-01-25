@@ -24,7 +24,7 @@ async def do_dump_messages(client, channel_id: int, topic_id: Optional[int], min
     #
     # message_list: List[Message] = result.messages
 
-    if max_id:
+    if max_id or min_id:
         message_list = await client.get_messages(channel_id, min_id=min_id, max_id=max_id, reverse=True)
     else:
         message_list = await client.get_messages(channel_id, limit=100)

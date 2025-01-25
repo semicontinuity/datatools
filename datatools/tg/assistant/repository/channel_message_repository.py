@@ -1,7 +1,9 @@
 import json
 import pathlib
+import sys
 from typing import List, Dict, Union
 
+from datatools.json.util import to_jsonisable
 from datatools.tg.assistant.api.tg_api_message import TgApiMessage
 from datatools.tg.assistant.api.tg_api_message_service import TgApiMessageService
 from datatools.util.dataclasses import dataclass_from_dict
@@ -11,11 +13,28 @@ class ChannelMessageRepository:
     file: pathlib.Path
     data: Dict[int, Dict]
     max_id: int
+    channel_id: int
 
-    def __init__(self, cache_folder: pathlib.Path, channel_id: int) -> None:
+    def __init__(self, cache_folder: pathlib.Path, client, channel_id: int) -> None:
         self.file = cache_folder / 'jsondb' / 'channels' / str(channel_id) / 'messages.jsonl'
+        self.client = client
+        self.channel_id = channel_id
 
-    def load(self):
+    async def load(self):
+        self.load_cache()
+        await self.load_recent_messages()
+
+    async def load_recent_messages(self):
+        print(f'Loading recent messages for channel {self.channel_id}', file=sys.stderr)
+        recent_messages = await self.client.get_messages(self.channel_id, min_id=self.max_id, max_id=None, reverse=True)
+        for m in recent_messages:
+            s = json.dumps(to_jsonisable(m.to_dict()), ensure_ascii=False)
+            j = json.loads(s)
+            self.max_id = j['id']
+            self.data[self.max_id] = j
+
+    def load_cache(self):
+        print(f'Loading cache for channel {self.channel_id}', file=sys.stderr)
         with open(self.file, 'r') as file:
             self.data = {}
 

@@ -10,9 +10,10 @@ from datatools.tg.assistant.repository.channel_topic_repository import ChannelTo
 
 class TgModelFactory:
 
-    def __init__(self, cache_folder: pathlib.Path, client) -> None:
+    def __init__(self, cache_folder: pathlib.Path, client, since: str) -> None:
         self.cache_folder = cache_folder
         self.client = client
+        self.since = since
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
 
@@ -25,7 +26,7 @@ class TgModelFactory:
         )
 
     async def make_tg_channel(self, d):
-        repository = self.make_channel_message_repository(d.id)
+        repository = await self.make_channel_message_repository(d.id)
         tg_channel = TgChannel(id=d.id, name=d.name, tg_topics=[], channel_message_repository=repository)
 
         forum_topics = await self.channel_topic_repository.get_forum_topics(d.id)
@@ -33,7 +34,7 @@ class TgModelFactory:
 
         return tg_channel
 
-    def make_channel_message_repository(self, channel_id: int):
-        r = ChannelMessageRepository(self.cache_folder, channel_id)
-        r.load()
+    async def make_channel_message_repository(self, channel_id: int):
+        r = ChannelMessageRepository(self.cache_folder, self.client, channel_id)
+        await r.load()
         return r

@@ -11,6 +11,9 @@ from datatools.tg.assistant.view.model.v_topic import VTopic
 
 class TgViewFactory:
 
+    def __init__(self, since) -> None:
+        self.since = since
+
     def make_root(self, tg_data: TgData):
         root = VRoot("telegram")
         root.set_elements([self.make_forum(ch) for ch in tg_data.tg_channels])
@@ -28,5 +31,5 @@ class TgViewFactory:
         return v_topic
 
     def make_messages(self, tg_topic: TgTopic) -> List[VSummary]:
-        messages = tg_topic.get_latest_messages('2025-01-15')
+        messages = tg_topic.get_latest_messages(self.since)
         return [VSummary(t.message.replace('\n', ' | ')) for t in messages]

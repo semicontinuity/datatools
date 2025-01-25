@@ -3,6 +3,7 @@ import asyncio
 import os
 import sys
 from typing import Tuple, Any
+from datetime import datetime, timedelta
 
 from picotui.defs import KEY_ENTER
 
@@ -69,9 +70,9 @@ if get_current_highlighting() is None:
     set_current_highlighting(ConsoleHighlighting())
 
 
-async def do_main(folder, client):
-    model_factory = TgModelFactory(folder, client)
-    view_factory = TgViewFactory()
+async def do_main(folder, client, since):
+    model_factory = TgModelFactory(folder, client, since)
+    view_factory = TgViewFactory(since)
     document_factory = TgDocumentFactory()
 
     tg_data = await model_factory.make_tg_data()
@@ -92,8 +93,10 @@ async def main():
     telethon_session_slug = os.environ['TELETHON_SESSION_SLUG']
     folder = cache_folder(telethon_session_slug)
 
+    since = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
+
     async with await new_telegram_client(telethon_session_slug) as client:
-        await do_main(folder, client)
+        await do_main(folder, client, since)
 
 
 if __name__ == "__main__":
