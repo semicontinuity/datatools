@@ -7,4 +7,5 @@ from datatools.tg.assistant.repository.channel_message_repository import Channel
 class TgChannel:
     id: int
     name: str
-    repository: ChannelMessageRepository
+    tg_topics: list['TgTopic']
+    channel_message_repository: ChannelMessageRepository
