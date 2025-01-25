@@ -8,17 +8,23 @@ from datatools.tg.assistant.api.tg_api_message import TgApiMessage
 from datatools.tg.assistant.api.tg_api_message_service import TgApiMessageService
 from datatools.util.dataclasses import dataclass_from_dict
 
+CACHE_FILE_SIZE = 256
+
 
 class ChannelMessageRepository:
-    file: pathlib.Path
+    files_folder: pathlib.Path
     data: Dict[int, Dict]
+    cache_max_id: int
     max_id: int
     channel_id: int
 
     def __init__(self, cache_folder: pathlib.Path, client, channel_id: int) -> None:
-        self.file = cache_folder / 'jsondb' / 'channels' / str(channel_id) / 'messages.jsonl'
+        self.files_folder = cache_folder / 'jsondb' / 'channels' / str(channel_id)
         self.client = client
         self.channel_id = channel_id
+        self.cache_max_id = 0
+        self.max_id = 0
+        self.data = {}
 
     async def load(self):
         self.load_cache()
@@ -30,18 +36,42 @@ class ChannelMessageRepository:
         for m in recent_messages:
             s = json.dumps(to_jsonisable(m.to_dict()), ensure_ascii=False)
             j = json.loads(s)
-            self.max_id = j['id']
-            self.data[self.max_id] = j
+            message_id = j['id']
+            self.data[message_id] = j
+            self.max_id = max(self.max_id, message_id)
 
     def load_cache(self):
         print(f'Loading cache for channel {self.channel_id}', file=sys.stderr)
-        with open(self.file, 'r') as file:
-            self.data = {}
 
-            for line in file:
-                j = json.loads(line)
-                self.max_id = j['id']
-                self.data[self.max_id] = j
+        i = 0
+        while True:
+            path = self.files_folder / ("%08x" % i)
+            if not path.exists():
+                break
+
+            with open(path, 'r') as file:
+                for line in file:
+                    j = json.loads(line)
+                    message_id = j['id']
+                    self.data[message_id] = j
+                    self.cache_max_id = max(self.cache_max_id, message_id)
+
+            i += CACHE_FILE_SIZE
+
+        self.max_id = self.cache_max_id
+
+    def save_cache(self):
+        print(f'Saving cache for channel {self.channel_id}', file=sys.stderr)
+
+        i = self.cache_max_id // CACHE_FILE_SIZE * CACHE_FILE_SIZE
+        while i <= self.max_id:
+            path = self.files_folder / ("%08x" % i)
+            with open(path, 'w') as file:
+                for k in range(i, i + CACHE_FILE_SIZE):
+                    j = self.data.get(k)
+                    if j:
+                        print(json.dumps(j, ensure_ascii=False), file=file)
+            i += CACHE_FILE_SIZE
 
     def get_max_id(self):
         return self.max_id

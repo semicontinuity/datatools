@@ -86,6 +86,9 @@ async def do_main(folder, client, since):
     exit_code, output = handle_loop_result(doc, key_code, cur_line)
     if output is not None:
         print(output)
+
+    tg_data.save_cache()
+
     sys.exit(exit_code)
 
 

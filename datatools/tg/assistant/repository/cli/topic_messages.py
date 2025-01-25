@@ -1,7 +1,9 @@
 import asyncio
+import json
 
 import click
 
+from datatools.json.util import to_jsonisable
 from datatools.tg import cache_folder, new_telegram_client
 from datatools.tg.assistant.repository.channel_message_repository import ChannelMessageRepository
 
@@ -39,6 +41,6 @@ async def dump_topic_messages(session_slug: str, channel_id: int, topic_id: int,
         repository = ChannelMessageRepository(cache_folder(session_slug), client, channel_id)
         await repository.load()
 
-        # messages = repository.get_latest_topic_messages(topic_id, since)
-        # for m in messages:
-        #     print(json.dumps(to_jsonisable(m), ensure_ascii=False))
+        messages = repository.get_latest_topic_messages(topic_id, since)
+        for m in messages:
+            print(json.dumps(to_jsonisable(m), ensure_ascii=False))
