@@ -1,6 +1,8 @@
 import json
 import pathlib
 import sys
+from sortedcontainers import SortedDict
+
 from typing import List, Dict, Union, ValuesView
 
 from datatools.json.util import to_jsonisable
@@ -127,10 +129,10 @@ class ChannelMessageRepository:
                 m_id = m.id
                 d = discussions.get(m_id)
                 if not d:
-                    d = TgMessage(m_id, m.message, [], False)
+                    d = TgMessage(m_id, m.message, SortedDict())
                     discussions[m_id] = d
-                elif child and not any(reply.id == child.id for reply in d.replies):
-                    d.replies.append(child)
+                elif child and child.id not in d.replies:
+                    d.replies[child.id] = child
 
                 if m.reply_to and m.reply_to.reply_to_msg_id:
                     m = self.get_raw_message(m.reply_to.reply_to_msg_id)

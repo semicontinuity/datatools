@@ -1,6 +1,8 @@
+import json
 import os
 import pathlib
 
+from datatools.json.util import to_jsonisable
 from telethon import TelegramClient
 
 
@@ -19,3 +21,7 @@ async def new_telegram_client(telethon_session_slug: str):
     api_hash = read_from(folder / 'api_hash').strip()
     session_file_name = str(folder / 'session.session')
     return TelegramClient(session_file_name, api_id, api_hash)
+
+
+def json_dump(o):
+    return json.dumps(to_jsonisable(o), ensure_ascii=False)
