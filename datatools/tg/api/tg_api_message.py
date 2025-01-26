@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from datatools.tg.assistant.api.tg_api_message_reply_header import TgApiMessageReplyHeader
-from datatools.tg.assistant.api.tg_api_peer import TgApiPeer
+from datatools.tg.api.tg_api_message_reply_header import TgApiMessageReplyHeader
+from datatools.tg.api.tg_api_peer import TgApiPeer
 
 
 @dataclass

@@ -3,11 +3,11 @@ import pathlib
 import sys
 from sortedcontainers import SortedDict
 
-from typing import List, Dict, Union, ValuesView
+from typing import List, Dict, Union
 
 from datatools.json.util import to_jsonisable
-from datatools.tg.assistant.api.tg_api_message import TgApiMessage
-from datatools.tg.assistant.api.tg_api_message_service import TgApiMessageService
+from datatools.tg.api.tg_api_message import TgApiMessage
+from datatools.tg.api.tg_api_message_service import TgApiMessageService
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.util.dataclasses import dataclass_from_dict
 

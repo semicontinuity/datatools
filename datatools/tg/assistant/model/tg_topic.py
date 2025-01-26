@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from datatools.tg.assistant.api.tg_api_message import TgApiMessage
+from datatools.tg.api import TgApiMessage
 
 
 @dataclass

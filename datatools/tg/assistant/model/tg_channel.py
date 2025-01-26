@@ -9,6 +9,7 @@ class TgChannel:
     name: str
     tg_topics: list['TgTopic']
     channel_message_repository: ChannelMessageRepository
+    participants: dict[int, 'TgUser']
 
     def save_cache(self):
         self.channel_message_repository.save_cached()

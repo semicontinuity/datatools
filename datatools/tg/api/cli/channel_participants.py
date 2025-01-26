@@ -37,5 +37,3 @@ async def do_dump_channel_participants(client, channel_id: int):
                 ensure_ascii=False
             )
         )
-
-
