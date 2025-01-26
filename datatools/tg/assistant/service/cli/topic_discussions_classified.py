@@ -1,8 +1,10 @@
 import asyncio
 
 import click
+
 from datatools.tg import cache_folder, new_telegram_client, json_dump
 from datatools.tg.assistant.repository.channel_message_repository import ChannelMessageRepository
+from datatools.tg.assistant.service.channel_message_service import ChannelMessageService
 from datatools.tg.assistant.service.discussion_classifier import DiscussionClassifier
 
 
@@ -39,5 +41,7 @@ async def dump_topic_discussions_classified(session_slug: str, channel_id: int, 
         repository = ChannelMessageRepository(cache_folder(session_slug), client, channel_id)
         await repository.load()
 
-        discussions = repository.get_latest_topic_raw_discussions(topic_id, since)
+        service = ChannelMessageService(repository, channel_id)
+
+        discussions = service.get_latest_topic_raw_discussions(topic_id, since)
         print(json_dump(DiscussionClassifier().classify(discussions)))

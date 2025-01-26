@@ -211,7 +211,7 @@ No explanations. Maintain original language/formatting.
     def __init__(self) -> None:
         self.client = Client("Qwen/Qwen2.5", verbose=False)
 
-    def classify(self, raw_discussions: list[TgMessage]):
+    def classify(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
         query = self.classify_query_discussions_part2(raw_discussions)
         print(f'Classifying discussions', file=sys.stderr)
 
@@ -228,14 +228,14 @@ No explanations. Maintain original language/formatting.
         starters = self.parse_starters_llm_response_prompt_3(response_text)
         return self.weave_discussions(raw_discussions, starters)
 
-    def classify0(self, raw_discussions: list[TgMessage]):
+    def classify0(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
         starters = self.parse_starters_llm_response(
             '#####\n48868 48868\n48915 48868\n48922 48922\n48935 48922\n48939 48922\n48942 48922\n48943 48942\n48944 48942\n48945 48942\n48946 48922\n48947 48946\n48960 48960\n48965 48965\n48966 48965\n48967 48965\n48989 48989\n48992 48989\n48995 48989\n48998 48998\n49013 48922\n49023 48965\n#####'
         )
         return self.weave_discussions(raw_discussions, starters)
 
     @staticmethod
-    def weave_discussions(raw_discussions: list[TgMessage], starters: dict[int, int]):
+    def weave_discussions(raw_discussions: list[TgMessage], starters: dict[int, int]) -> list[TgMessage]:
         """
         :param raw_discussions: list of raw discussions (every item is top-level TgMessage, not a reply)
         """
