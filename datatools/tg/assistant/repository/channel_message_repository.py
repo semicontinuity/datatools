@@ -1,7 +1,7 @@
 import json
 import pathlib
 import sys
-from typing import List, Dict, Union
+from typing import List, Dict, Union, ValuesView
 
 from datatools.json.util import to_jsonisable
 from datatools.tg.assistant.api.tg_api_message import TgApiMessage
@@ -118,5 +118,27 @@ class ChannelMessageRepository:
     def get_latest_topic_raw_messages(self, topic_id: int, since: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
         return [m for m in (self.get_latest_raw_messages(since)) if self.resolve_topic_id(m) == topic_id]
 
-    def get_latest_topic_raw_discussions(self, topic_id: int, since: str) -> List[TgMessage]:
-        return [TgMessage(m.id, m.message, []) for m in self.get_latest_topic_raw_messages(topic_id, since)]
+    def get_latest_topic_raw_discussions(self, topic_id: int, since: str) -> list[TgMessage]:
+        discussions = {}
+        raw_messages = self.get_latest_topic_raw_messages(topic_id, since)
+        for m in raw_messages:
+            child = None
+            while True:
+                m_id = m.id
+                d = discussions.get(m_id)
+                if not d:
+                    d = TgMessage(m_id, m.message, [], False)
+                    discussions[m_id] = d
+                elif child and not any(reply.id == child.id for reply in d.replies):
+                    d.replies.append(child)
+
+                if m.reply_to and m.reply_to.reply_to_msg_id:
+                    m = self.get_raw_message(m.reply_to.reply_to_msg_id)
+                    if type(m) is TgApiMessage:
+                        d.is_reply = True
+                        child = d
+                        continue
+                break
+
+        candidates = sorted(list(discussions.values()), key=lambda x: x.id)
+        return [x for x in candidates if not x.is_reply]

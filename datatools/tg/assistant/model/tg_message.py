@@ -6,3 +6,4 @@ class TgMessage:
     id: int
     message: str
     replies: list['TgMessage']
+    is_reply: bool
