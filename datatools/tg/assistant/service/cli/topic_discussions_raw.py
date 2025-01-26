@@ -6,6 +6,7 @@ import click
 from datatools.json.util import to_jsonisable
 from datatools.tg import cache_folder, new_telegram_client
 from datatools.tg.assistant.repository.channel_message_repository import ChannelMessageRepository
+from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 from datatools.tg.assistant.service.channel_message_service import ChannelMessageService
 
 
@@ -39,10 +40,13 @@ def topic_discussions_raw(session_slug: str, channel_id: int, topic_id: int, sin
 
 async def dump_topic_discussions_raw(session_slug: str, channel_id: int, topic_id: int, since: str):
     async with await new_telegram_client(session_slug) as client:
-        repository = ChannelMessageRepository(cache_folder(session_slug), client, channel_id)
-        await repository.load()
+        channel_message_repository = ChannelMessageRepository(cache_folder(session_slug), client, channel_id)
+        await channel_message_repository.load()
 
-        service = ChannelMessageService(repository, channel_id)
+        channel_participants_repository = ChannelParticipantsRepository(client, channel_id)
+        await channel_participants_repository.load()
+
+        service = ChannelMessageService(channel_message_repository, channel_participants_repository, channel_id)
 
         messages = service.get_latest_topic_raw_discussions(topic_id, since)
         for m in messages:
