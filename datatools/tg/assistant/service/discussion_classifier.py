@@ -1,6 +1,6 @@
 import re
 import sys
-
+from sortedcontainers import SortedDict
 from gradio_client import Client
 
 from datatools.tg.assistant.model.tg_message import TgMessage
@@ -108,9 +108,9 @@ Task: Link phrases to their logical predecessors in multi-threaded chats.
 Input Format:
 
     Each phrase has a header:
-    ID=[number] FOLLOWS_ID=[number|<INFER>]
+    FROM=[user] ID=[number] FOLLOWS_ID=[number|<INFER>]
 
-    Phrase IDs are numbers, that reflect chronological order of phases.
+    Phrase IDs are increasing numbers, that reflect temporal order of phases.
     <INFER> means the predecessor is unknown and needs to be determined.
 
 Instructions:
@@ -118,20 +118,20 @@ Instructions:
     Analyze Context:
 
         * Treat phrases as part of concurrent conversations (threads).
-        * Identify threads by topic continuity (e.g., subject discussed, question is answered... ).
-
+        * Identify threads by topic continuity (i.e., phrases within the topic form a consistent conversation).
+        * If FOLLOWS_ID is known (is a number), then the predecessor of the phrase has ID equal FOLLOWS_ID.
+        
         * Key indicators of topic continuity:
             * **Question-Answer Chains**: Prioritize links where a phrase directly answers a question (e.g., "Should we X?" → "Yes, let’s do X").
-            * **Username Mentions**: If a message references "@user" (even mid-sentence), link responses to the most recent message where "@user" is involved.    
-            * **Temporal Proximity**: Default to the immediately preceding message if no contradictions exist (eplied answers like "Ок" often follow their question).
+            * **Same-User Temporal Proximity**: Temporally close phrases from the same user are likely to be in the same thread (follow-up). Prioritize linking, if there is no contradiction.
+            * **Temporal Proximity**: Default to the immediately preceding message if no contradictions exist (answers like "Ок" often follow their question).
         
-        * Other indicators of topic continuity (the more matches, the more likely is topic continuity): 
-            * Next phrase in the topic shares some domain-specific keywords
-            * Next phrase in the topic contributes to the topic of the thread (e.g. continues a task list)
-            * Next phrase in the topic answers a question posed in the thread, or suggests alternative (e.g. "Should we do xyz?" - "Okay, let's do it later")
-            * Next phrase in the topic reasons about the subject of the topic  (e.g. "We could add some resources" - "Well, there is enough CPU")
-            * Next phrase in the topic has linguistic cues (e.g., "on the subject of ..." refers to prior mention of subject in the thread)
-        
+        * Other indicators of topic continuity (the more matches, the more likely is the topic continuity):
+            * Next phrase in the topic can shares some domain-specific keywords, user earlier in the thread
+            * Next phrase in the topic can contribute to the topic of the thread (e.g. continues a task list)
+            * Next phrase in the topic can suggest some alternative (e.g. "Should we do xyz now?" - "Okay, but let's do it later")
+            * Next phrase in the topic can reason about the subject of the topic  (e.g. "We could add some resources" - "Well, there is enough CPU")
+            * Next phrase in the topic can have linguistic cues (e.g., "on the subject of ..." refers to prior mention of the subject in the thread)
 
     Link Phrases:
       For each <INFER> phrase:
@@ -151,7 +151,7 @@ Input (simplified):
 
 
 #####
-ID=120 FOLLOWS_ID=<INFER>
+FROM=user1 ID=120 FOLLOWS_ID=<INFER>
 
 планирую запустить прокси
 - сначала abc
@@ -159,35 +159,40 @@ ID=120 FOLLOWS_ID=<INFER>
 #####
 ID=121 FOLLOWS_ID=120
 
-займусь запуском прокси
+FROM=user1 займусь запуском прокси
 - сначала abc
 - потом def
 или отложим на след. неделю?
+@user2
 #####
 ID=122 FOLLOWS_ID=<INFER>
 
-можно и сейчас, если время есть.
+FROM=user2 можно и сейчас, если время есть.
 #####
 ID=123 FOLLOWS_ID=<INFER>
 
-после прогона CI, 5 проблем для бэка, 55 для фронта
+FROM=user3 после прогона CI, 5 проблем для бэка, 55 для фронта
 #####
-ID=124 FOLLOWS_ID=123
+FROM=user4 ID=124 FOLLOWS_ID=<INFER>
 
 По поводу 55 проблем я посылал письмо.
 Возможно, это из-за сети.
 #####
-ID=125 FOLLOWS_ID=<INFER>
+FROM=user6 ID=125 FOLLOWS_ID=<INFER>
 
 Половина инстансов envoy недоступна. Может, забыли поднять?
 #####
-ID=126 FOLLOWS_ID=<INFER>
+FROM=user7 ID=126 FOLLOWS_ID=<INFER>
 
 Может, ещё раз попробовать?
 #####
-ID=127 FOLLOWS_ID=<INFER>
+FROM=user8 ID=127 FOLLOWS_ID=<INFER>
 
 Что касается проблем бэка - это повторяется уже неделю
+#####
+FROM=user8 ID=128 FOLLOWS_ID=<INFER>
+
+@user1
 
 
 Output:
@@ -195,9 +200,11 @@ Output:
 ID=120 FOLLOWS_ID=<INFER>
 ID=122 FOLLOWS_ID=121
 ID=123 FOLLOWS_ID=<INFER>
+ID=124 FOLLOWS_ID=<INFER>
 ID=125 FOLLOWS_ID=<INFER>
 ID=126 FOLLOWS_ID=123
 ID=127 FOLLOWS_ID=123
+ID=128 FOLLOWS_ID=127
 
 
 Your Turn:
@@ -212,8 +219,12 @@ No explanations. Maintain original language/formatting.
         self.client = Client("Qwen/Qwen2.5", verbose=False)
 
     def classify(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
-        query = self.classify_query_discussions_part2(raw_discussions)
+        flat_discussions = self.flat_discussions(raw_discussions)
+        query = self.classify_query_discussions_part2(flat_discussions)
+
         print(f'Classifying discussions', file=sys.stderr)
+        print('', file=sys.stderr)
+        print(query, file=sys.stderr)
 
         r1, r2, r3 = self.client.predict(
             api_name="/model_chat_1",
@@ -226,7 +237,7 @@ No explanations. Maintain original language/formatting.
         # return response_text
         print(response_text, file=sys.stderr)
         starters = self.parse_starters_llm_response_prompt_3(response_text)
-        return self.weave_discussions(raw_discussions, starters)
+        return self.weave_discussions(flat_discussions, starters)
 
     def classify0(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
         starters = self.parse_starters_llm_response(
@@ -235,14 +246,15 @@ No explanations. Maintain original language/formatting.
         return self.weave_discussions(raw_discussions, starters)
 
     @staticmethod
-    def weave_discussions(raw_discussions: list[TgMessage], starters: dict[int, int]) -> list[TgMessage]:
+    def weave_discussions(flat_discussions: list[TgMessage], starters: dict[int, int]) -> list[TgMessage]:
         """
-        :param raw_discussions: list of raw discussions (every item is top-level TgMessage, not a reply)
+        :param flat_discussions: list of raw discussions (every item is top-level TgMessage, not a reply)
         """
-        discussions: dict[int, TgMessage] = {d.id: d for d in raw_discussions}
+        discussions: dict[int, TgMessage] = {d.id: d for d in flat_discussions}
 
         # Use 'starters' to weave together discussions
         for d_id, starter_id in starters.items():
+            print(f'NEED LINK {d_id} to {starter_id}', file=sys.stderr)
             if d_id == starter_id:
                 continue
             super_discussion = discussions.get(starter_id)
@@ -255,7 +267,7 @@ No explanations. Maintain original language/formatting.
             super_discussion.replies[d_id] = discussion
             discussion.is_attached = True
 
-        return [d for d in discussions.values() if not d.is_attached]
+        return [d for d in discussions.values() if not d.is_attached and not d.is_reply_to]
 
     def parse_starters_llm_response(self, text) -> dict[int, int]:
         lines = text.splitlines()
@@ -295,20 +307,29 @@ No explanations. Maintain original language/formatting.
             res += ''.join('\n\n' + self.to_structured_string(r, indent + 2) for r in m.replies.values())
         return res
 
-    def classify_query_discussions_part2(self, raw_discussions: list[TgMessage]):
-        items = []
-        for raw_discussion in raw_discussions:
-            self.classify_query_discussions_part2_add_to(items, raw_discussion, 0)
-        return '\n'.join(items)
+    def classify_query_discussions_part2(self, flat_discussions: list[TgMessage]):
+        if len(flat_discussions) == 0:
+            return ''
 
-    def classify_query_discussions_part2_add_to(self, res: list[str], m: TgMessage, parent: int):
-        res.append(f"""
+        return '\n'.join([self._tg_message(item) for item in flat_discussions])
+
+    def flat_discussions(self, raw_discussions):
+        items: SortedDict[int, 'TgMessage'] = SortedDict()
+
+        for raw_discussion in raw_discussions:
+            self.classify_query_discussions_part2_add_to(items, raw_discussion)
+
+        return list(items.values())
+
+    def classify_query_discussions_part2_add_to(self, res: SortedDict[int, 'TgMessage'], m: TgMessage):
+        res[m.id] = m
+        for reply in m.replies.values():
+            self.classify_query_discussions_part2_add_to(res=res, m=reply)
+
+    def _tg_message(self, m: TgMessage):
+        return f"""
 #####
-ID={m.id} FOLLOWS_ID={parent if parent else "<INFER>"}
+FROM={m.get_username()} ID={m.id} FOLLOWS_ID={m.is_reply_to if m.is_reply_to else "<INFER>"}
 
 {m.message}
 """
-                   )
-
-        for reply in m.replies.values():
-            self.classify_query_discussions_part2_add_to(res=res, m=reply, parent=m.id)

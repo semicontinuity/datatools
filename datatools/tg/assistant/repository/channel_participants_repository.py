@@ -1,5 +1,3 @@
-import sys
-
 from datatools.tg.assistant.model.tg_user import TgUser
 from datatools.util.dataclasses import dataclass_from_dict
 
@@ -20,5 +18,4 @@ class ChannelParticipantsRepository:
                 self.data[d['id']] = dataclass_from_dict(TgUser, d)
 
     def get_user(self, user_id: int):
-        print('Resolve ', user_id, file=sys.stderr)
         return self.data.get(user_id)

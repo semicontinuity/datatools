@@ -48,4 +48,7 @@ async def dump_topic_discussions_classify_query(session_slug: str, channel_id: i
         service = ChannelMessageService(channel_message_repository, channel_participants_repository, channel_id)
 
         discussions = service.get_latest_topic_raw_discussions(topic_id, since)
-        print(DiscussionClassifier().classify_query_discussions_part2(discussions))
+        classifier = DiscussionClassifier()
+
+        flat_discussions = classifier.flat_discussions(discussions)
+        print(classifier.classify_query_discussions_part2(flat_discussions))
