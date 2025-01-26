@@ -51,4 +51,4 @@ async def dump_topic_discussions_classify_query(session_slug: str, channel_id: i
         classifier = DiscussionClassifier()
 
         flat_discussions = classifier.flat_discussions(discussions)
-        print(classifier.classify_query_discussions_part2(flat_discussions))
+        print(classifier.classify_discussions_query_data(flat_discussions))

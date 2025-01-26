@@ -7,100 +7,6 @@ from datatools.tg.assistant.model.tg_message import TgMessage
 
 
 class DiscussionClassifier:
-    PROMPT = """
-You are a helpful assistant.
-
-You are given a list of phrases from a chat. Every phrase will have an ID before it.
-Phrases can belong to several conversations.
-Conversations can be composed of consecutive phrases, or overlapping - so that multiple conversations take place simultaneously.
-Relate phrases to each other.
-
-Your task is to output the ID of phrase and ID of phrase, where the conversation has started.
-Output only the list of ID pairs, do not provide any explanations.
-
-Example output:
-#####
-123 123
-124 123
-125 123
-126 126
-127 123
-#####
-"""
-
-    PROMPT2 = """
-You are a helpful assistant.
-
-You are given a list of phrases from a chat.
-Phrases can belong to several concurrent conversations.
-
-Before every phrase, there is a header with format "ID=[ID of the phrase] FOLLOWS_ID=[ID of the phrase that is replies to or follows logically]".
-If FOLLOWS_ID is unknown, it is specified as "<INFER>".
-
-The task is: for a phrase, infer its logically preceding phrase, use its ID for FOLLOWS_ID,
-and output a line with the same format "ID=[ID of the phrase] FOLLOWS_ID=[ID of the phrase that is replies to or follows logically]".
-Typically, the logically preceding phrase is close enough.
-   
-If the preceding phrase cannot be resolved, or you are not sure, retain "<INFER>" for the value of FOLLOWS_ID.
-
-Do not provide any explanations. Output only for *unknown* values of FOLLOWS_ID. 
-
-
-Example input:
-
-#####
-ID=120 FOLLOWS_ID=<INFER>
-
-планирую запустить прокси
-- сначала abc
-- потом def
-#####
-ID=121 FOLLOWS_ID=120
-
-займусь запуском прокси
-- сначала abc
-- потом def
-или отложим на след. неделю?
-#####
-ID=122 FOLLOWS_ID=<INFER>
-
-можно и сейчас, если время есть.
-#####
-ID=123 FOLLOWS_ID=<INFER>
-
-после прогона CI, 5 проблем для бэка, 55 для фронта
-#####
-ID=124 FOLLOWS_ID=123
-
-По поводу 55 проблем я посылал письмо.
-Возможно, это из-за сети.
-#####
-ID=125 FOLLOWS_ID=<INFER>
-
-Половина инстансов envoy недоступна. Может, забыли поднять?
-#####
-ID=126 FOLLOWS_ID=<INFER>
-
-Может, ещё раз попробовать?
-#####
-ID=127 FOLLOWS_ID=<INFER>
-
-Что касается проблем бэка - это повторяется уже неделю
-
-
-Example output:
-
-ID=120 FOLLOWS_ID=<INFER>
-ID=122 FOLLOWS_ID=121
-ID=123 FOLLOWS_ID=<INFER>
-ID=125 FOLLOWS_ID=<INFER>
-ID=126 FOLLOWS_ID=123
-ID=127 FOLLOWS_ID=123
-"""
-
-
-    #             * Next phrase in the topic indicates some action applicable to the current state of the subject of the thread (e.g. "I'm starting xyz" - "Stop!")
-    # OR multiple candidates could fit
 
     PROMPT3 = """
 Role: You are a conversation threading analyzer.
@@ -219,12 +125,15 @@ No explanations. Maintain original language/formatting.
         self.client = Client("Qwen/Qwen2.5", verbose=False)
 
     def classify(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
+        if len(raw_discussions) == 0:
+            return raw_discussions
+
         flat_discussions = self.flat_discussions(raw_discussions)
-        query = self.classify_query_discussions_part2(flat_discussions)
+        query = self.classify_discussions_query_data(flat_discussions)
 
         print(f'Classifying discussions', file=sys.stderr)
-        print('', file=sys.stderr)
-        print(query, file=sys.stderr)
+        # print('', file=sys.stderr)
+        # print(query, file=sys.stderr)
 
         r1, r2, r3 = self.client.predict(
             api_name="/model_chat_1",
@@ -236,14 +145,8 @@ No explanations. Maintain original language/formatting.
 
         # return response_text
         print(response_text, file=sys.stderr)
-        starters = self.parse_starters_llm_response_prompt_3(response_text)
+        starters = self.parse_starters_llm_response(response_text)
         return self.weave_discussions(flat_discussions, starters)
-
-    def classify0(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
-        starters = self.parse_starters_llm_response(
-            '#####\n48868 48868\n48915 48868\n48922 48922\n48935 48922\n48939 48922\n48942 48922\n48943 48942\n48944 48942\n48945 48942\n48946 48922\n48947 48946\n48960 48960\n48965 48965\n48966 48965\n48967 48965\n48989 48989\n48992 48989\n48995 48989\n48998 48998\n49013 48922\n49023 48965\n#####'
-        )
-        return self.weave_discussions(raw_discussions, starters)
 
     @staticmethod
     def weave_discussions(flat_discussions: list[TgMessage], starters: dict[int, int]) -> list[TgMessage]:
@@ -273,16 +176,6 @@ No explanations. Maintain original language/formatting.
         lines = text.splitlines()
         starters = {}
         for line in lines:
-            if '#' in line.strip():
-                continue
-            key, value = line.split()
-            starters[int(key)] = int(value)
-        return starters
-
-    def parse_starters_llm_response_prompt_3(self, text) -> dict[int, int]:
-        lines = text.splitlines()
-        starters = {}
-        for line in lines:
             m = DiscussionClassifier.PROMPT3_RE.search(line)
             if m:
                 key = m.group(1)
@@ -290,46 +183,31 @@ No explanations. Maintain original language/formatting.
                 starters[int(key)] = int(value)
         return starters
 
-    def classify_query_discussions_part(self, raw_discussions: list[TgMessage]):
-        return '\n'.join([
-            f"""        
-#####
-{self.to_structured_string(d)}
-
-"""
-            for d in raw_discussions
-        ])
-
-    def to_structured_string(self, m: TgMessage, indent: int = 0):
-        res = f'{m.id}\n\n' if not indent else ''
-        res += "\n".join([(' ' * (indent - 2) + '| ' if indent else '') + s for s in m.message.split('\n')])
-        if m.replies:
-            res += ''.join('\n\n' + self.to_structured_string(r, indent + 2) for r in m.replies.values())
-        return res
-
-    def classify_query_discussions_part2(self, flat_discussions: list[TgMessage]):
+    def classify_discussions_query_data(self, flat_discussions: list[TgMessage]):
         if len(flat_discussions) == 0:
             return ''
 
         return '\n'.join([self._tg_message(item) for item in flat_discussions])
 
+    def _tg_message(self, m: TgMessage):
+            return f"""
+    #####
+    FROM={m.get_username()} ID={m.id} FOLLOWS_ID={m.is_reply_to if m.is_reply_to else "<INFER>"}
+
+    {m.message}
+    """
+
     def flat_discussions(self, raw_discussions):
         items: SortedDict[int, 'TgMessage'] = SortedDict()
 
         for raw_discussion in raw_discussions:
-            self.classify_query_discussions_part2_add_to(items, raw_discussion)
+            self.flat_discussions_add_to(items, raw_discussion)
 
-        return list(items.values())
+        result = list(items.values())
+        print(f'Flattened discussions: size={len(result)}', file=sys.stderr)
+        return result
 
-    def classify_query_discussions_part2_add_to(self, res: SortedDict[int, 'TgMessage'], m: TgMessage):
+    def flat_discussions_add_to(self, res: SortedDict[int, 'TgMessage'], m: TgMessage):
         res[m.id] = m
         for reply in m.replies.values():
-            self.classify_query_discussions_part2_add_to(res=res, m=reply)
-
-    def _tg_message(self, m: TgMessage):
-        return f"""
-#####
-FROM={m.get_username()} ID={m.id} FOLLOWS_ID={m.is_reply_to if m.is_reply_to else "<INFER>"}
-
-{m.message}
-"""
+            self.flat_discussions_add_to(res=res, m=reply)

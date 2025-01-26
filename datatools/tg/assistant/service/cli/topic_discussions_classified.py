@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 import click
 
@@ -48,4 +49,6 @@ async def dump_topic_discussions_classified(session_slug: str, channel_id: int, 
         service = ChannelMessageService(channel_message_repository, channel_participants_repository, channel_id)
 
         discussions = service.get_latest_topic_raw_discussions(topic_id, since)
+        print(f'Fetched {len(discussions)} discussions', file=sys.stderr)
+
         print(json_dump(DiscussionClassifier().classify(discussions)))

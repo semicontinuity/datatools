@@ -61,4 +61,7 @@ class ChannelMessageService:
                 break
 
         candidates = sorted(list(discussions.values()), key=lambda x: x.id)
-        return [x for x in candidates if not x.is_reply]
+        result = [x for x in candidates if not x.is_reply]
+
+        print(f'get_latest_topic_raw_discussions: {len(result)} roots', file=sys.stderr)
+        return result
