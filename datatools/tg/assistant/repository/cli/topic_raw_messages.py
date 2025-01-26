@@ -32,15 +32,15 @@ from datatools.tg.assistant.repository.channel_message_repository import Channel
     required=True,
     help="Since",
 )
-def topic_messages(session_slug: str, channel_id: int, topic_id: int, since: str):
-    asyncio.run(dump_topic_messages(session_slug, channel_id, topic_id, since))
+def topic_raw_messages(session_slug: str, channel_id: int, topic_id: int, since: str):
+    asyncio.run(dump_topic_raw_messages(session_slug, channel_id, topic_id, since))
 
 
-async def dump_topic_messages(session_slug: str, channel_id: int, topic_id: int, since: str):
+async def dump_topic_raw_messages(session_slug: str, channel_id: int, topic_id: int, since: str):
     async with await new_telegram_client(session_slug) as client:
         repository = ChannelMessageRepository(cache_folder(session_slug), client, channel_id)
         await repository.load()
 
-        messages = repository.get_latest_topic_messages(topic_id, since)
+        messages = repository.get_latest_topic_raw_messages(topic_id, since)
         for m in messages:
             print(json.dumps(to_jsonisable(m), ensure_ascii=False))

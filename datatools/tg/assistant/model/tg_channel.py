@@ -11,4 +11,4 @@ class TgChannel:
     channel_message_repository: ChannelMessageRepository
 
     def save_cache(self):
-        self.channel_message_repository.save_cache()
+        self.channel_message_repository.save_cached()

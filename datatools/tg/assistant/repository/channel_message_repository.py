@@ -6,6 +6,7 @@ from typing import List, Dict, Union
 from datatools.json.util import to_jsonisable
 from datatools.tg.assistant.api.tg_api_message import TgApiMessage
 from datatools.tg.assistant.api.tg_api_message_service import TgApiMessageService
+from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.util.dataclasses import dataclass_from_dict
 
 CACHE_FILE_SIZE = 256
@@ -27,10 +28,10 @@ class ChannelMessageRepository:
         self.data = {}
 
     async def load(self):
-        self.load_cache()
-        await self.load_recent_messages()
+        self.load_cached()
+        await self.load_not_cached()
 
-    async def load_recent_messages(self):
+    async def load_not_cached(self):
         print(f'Loading recent messages for channel {self.channel_id}', file=sys.stderr)
         recent_messages = await self.client.get_messages(self.channel_id, min_id=self.max_id, max_id=None, reverse=True)
         for m in recent_messages:
@@ -40,7 +41,7 @@ class ChannelMessageRepository:
             self.data[message_id] = j
             self.max_id = max(self.max_id, message_id)
 
-    def load_cache(self):
+    def load_cached(self):
         print(f'Loading cache for channel {self.channel_id}', file=sys.stderr)
 
         i = 0
@@ -60,7 +61,7 @@ class ChannelMessageRepository:
 
         self.max_id = self.cache_max_id
 
-    def save_cache(self):
+    def save_cached(self):
         print(f'Saving cache for channel {self.channel_id}', file=sys.stderr)
 
         i = self.cache_max_id // CACHE_FILE_SIZE * CACHE_FILE_SIZE
@@ -88,9 +89,9 @@ class ChannelMessageRepository:
                 if m.reply_to.reply_to_top_id is not None:
                     return m.reply_to.reply_to_top_id
                 elif m.reply_to.reply_to_msg_id is not None:
-                    return self.resolve_topic_id(self.get_message(m.reply_to.reply_to_msg_id))
+                    return self.resolve_topic_id(self.get_raw_message(m.reply_to.reply_to_msg_id))
 
-    def get_message(self, message_id: int) -> Union[None, TgApiMessage, TgApiMessageService]:
+    def get_raw_message(self, message_id: int) -> Union[None, TgApiMessage, TgApiMessageService]:
         j = self.data.get(message_id)
         if j is None:
             return None
@@ -99,12 +100,12 @@ class ChannelMessageRepository:
         else:
             return dataclass_from_dict(TgApiMessageService, j)
 
-    def get_latest_messages(self, date_gte: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
+    def get_latest_raw_messages(self, date_gte: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
         res = []
         i = self.max_id
 
         while i > 0:
-            m = self.get_message(i)
+            m = self.get_raw_message(i)
             if m is not None:
                 if m.date < date_gte:
                     break
@@ -114,5 +115,8 @@ class ChannelMessageRepository:
         res.reverse()
         return res
 
-    def get_latest_topic_messages(self, topic_id: int, since: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
-        return [m for m in (self.get_latest_messages(since)) if self.resolve_topic_id(m) == topic_id]
+    def get_latest_topic_raw_messages(self, topic_id: int, since: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
+        return [m for m in (self.get_latest_raw_messages(since)) if self.resolve_topic_id(m) == topic_id]
+
+    def get_latest_topic_raw_discussions(self, topic_id: int, since: str) -> List[TgMessage]:
+        return [TgMessage(m.id, m.message, []) for m in self.get_latest_topic_raw_messages(topic_id, since)]

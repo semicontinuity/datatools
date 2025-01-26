@@ -11,4 +11,4 @@ class TgTopic:
     tg_channel: 'TgChannel'
 
     def get_latest_messages(self, since: str) -> List[TgApiMessage]:
-        return self.tg_channel.channel_message_repository.get_latest_topic_messages(self.id, since)
+        return self.tg_channel.channel_message_repository.get_latest_topic_raw_messages(self.id, since)
