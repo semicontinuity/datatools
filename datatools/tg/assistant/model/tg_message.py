@@ -14,6 +14,7 @@ class TgMessage:
     is_reply: bool = False
     is_reply_to: int = None
     is_attached: bool = False
+    viewed: bool = False
 
     def get_username(self):
         if not self.from_user:

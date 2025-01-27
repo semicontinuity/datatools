@@ -10,7 +10,7 @@ class VTopic(VFolder):
 
     # @override
     def text_style(self) -> Style:
-        return Style(0, (192, 192, 64))
+        return Style(0, (192, 192, 64)) if self.elements else Style(0, (96, 96, 32))
 
     # @override
     def show_plus_minus(self):
