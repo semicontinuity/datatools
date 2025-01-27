@@ -10,12 +10,12 @@ from datatools.tg.assistant.repository.channel_participants_repository import Ch
 
 
 class ChannelMessageService:
-    repository: ChannelApiMessageRepository
+    channel_api_message_repository: ChannelApiMessageRepository
     channel_participants_repository: ChannelParticipantsRepository
     channel_id: int
 
     def __init__(self, repository: ChannelApiMessageRepository, channel_participants_repository: ChannelParticipantsRepository, channel_id: int) -> None:
-        self.repository = repository
+        self.channel_api_message_repository = repository
         self.channel_participants_repository = channel_participants_repository
         self.channel_id = channel_id
 
@@ -24,7 +24,7 @@ class ChannelMessageService:
         :return: "ROOTs" of discussions (with replies nested)
         """
         discussions = {}
-        raw_messages = self.repository.get_latest_topic_raw_messages(topic_id, since)
+        raw_messages = self.channel_api_message_repository.get_latest_topic_raw_messages(topic_id, since)
         if not raw_messages:
             return []
 
@@ -52,7 +52,7 @@ class ChannelMessageService:
                     d.replies[child.id] = child
 
                 if raw_message.reply_to and raw_message.reply_to.reply_to_msg_id:
-                    raw_message = self.repository.get_raw_message(raw_message.reply_to.reply_to_msg_id)
+                    raw_message = self.channel_api_message_repository.get_raw_message(raw_message.reply_to.reply_to_msg_id)
                     # print(f'REPLIES {type(raw_message)}', file=sys.stderr)
 
                     # if raw_message.id == 2:

@@ -1,12 +1,14 @@
 import dataclasses
+import traceback
 
 from datatools.util.logging import debug
-from datetime import datetime
+import datetime
 
 
 def dataclass_from_dict(klass, d, klass_map = None):
-    if type(klass) is datetime:
-        return datetime.strptime(d, '%Y-%m-%d %H:%M:%S%z')
+    if klass is datetime.datetime:
+        debug('dataclass_from_dict', parse_date_time=d)
+        return datetime.datetime.strptime(d, '%Y-%m-%d %H:%M:%S%z')
     elif type(klass) is str and klass_map:
         klass = klass_map[klass]
 
@@ -43,6 +45,9 @@ def dataclass_from_dict(klass, d, klass_map = None):
         else:
             debug('dataclass_from_dict', klass=klass, is_dataclass=is_dataclass, has_origin=False)
 
+    if type(d) is str or type(d) is int or type(d) is float or type(d) is bool or d is None:
+        return d
+
     try:
         if "type" in d:
             the_type = d["type"]
@@ -50,10 +55,11 @@ def dataclass_from_dict(klass, d, klass_map = None):
             if the_type == 'stripes-time-series':
                 debug('dataclass_from_dict', _='#####################################################')
             debug('dataclass_from_dict', the_type=the_type, klass=klass)
+
         field_types = {f.name: f.type for f in dataclasses.fields(klass)}
         debug('dataclass_from_dict', klass=klass, field_types=field_types)
 
-        res = {f: dataclass_from_dict(field_types[f], d[f], klass_map) for f, v in d.items() if f != 'type' and f in field_types}
+        res = {f: dataclass_from_dict(field_types[f], d.get(f), klass_map) for f, v in d.items() if f != 'type' and f in field_types}
 
         # res = {}
         # for f, v in d.items():
@@ -64,8 +70,14 @@ def dataclass_from_dict(klass, d, klass_map = None):
         #         debug('dataclass_from_dict', f=f, field_type=field_type, value=value)
         #         res[f] = value
 
-        return klass(**res)
-    except:
+        debug('dataclass_from_dict', instantiating=str(klass))
+        res = klass(**res)
+        debug('dataclass_from_dict', instantiated=str(klass))
+        return res
+    except Exception:
+
+        # print(traceback.format_exc())
+
         # 'regular' case when d is not dataclass (code!)
         debug('dataclass_from_dict', regular=True, d=d)
         return d

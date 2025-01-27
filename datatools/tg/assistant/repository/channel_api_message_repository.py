@@ -10,6 +10,8 @@ from datatools.util.dataclasses import dataclass_from_dict
 
 CACHE_FILE_SIZE = 256
 
+# TODO: Separate to ApiMessageService (tg comm) and repo
+
 
 class ChannelApiMessageRepository:
     files_folder: pathlib.Path
