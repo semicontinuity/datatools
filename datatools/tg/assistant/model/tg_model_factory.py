@@ -7,6 +7,7 @@ from datatools.tg.assistant.repository.channel_message_repository import Channel
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
+from datatools.tg.assistant.service.channel_message_service import ChannelMessageService
 
 
 class TgModelFactory:
@@ -18,6 +19,9 @@ class TgModelFactory:
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
 
+    async def init(self):
+        await self.channel_participants_repository
+
     async def make_tg_data(self):
         dialogs = await self.channel_repository.get_dialogs()
         return TgData(
@@ -27,13 +31,16 @@ class TgModelFactory:
         )
 
     async def make_tg_channel(self, d):
-        channel_message_repository = await self.make_channel_message_repository(d.id)
+        participants_repo = ChannelParticipantsRepository(self.client, d.id)
+        await participants_repo.load()
+
+        repo = await self.make_channel_message_repository(d.id)
         tg_channel = TgChannel(
             id=d.id,
             name=d.name,
             tg_topics=[],
-            channel_message_repository=channel_message_repository,
-            participants=await self.make_channel_participants(d.id)
+            channel_message_repository=repo,
+            channel_message_service=ChannelMessageService(repo, participants_repo, d.id),
         )
 
         forum_topics = await self.channel_topic_repository.get_forum_topics(d.id)
@@ -45,7 +52,3 @@ class TgModelFactory:
         r = ChannelMessageRepository(self.cache_folder, self.client, channel_id)
         await r.load()
         return r
-
-    async def make_channel_participants(self, channel_id: int):
-        r = ChannelParticipantsRepository(self.client, channel_id)
-        return await r.load()

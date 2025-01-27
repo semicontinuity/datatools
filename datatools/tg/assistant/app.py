@@ -87,7 +87,7 @@ async def do_main(folder, client, since):
     if output is not None:
         print(output)
 
-    tg_data.save_cached()
+    tg_data.save_cache()
 
     sys.exit(exit_code)
 

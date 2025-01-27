@@ -4,8 +4,8 @@ from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.view.model.v_forum import VForum
+from datatools.tg.assistant.view.model.v_message import VMessage
 from datatools.tg.assistant.view.model.v_root import VRoot
-from datatools.tg.assistant.view.model.v_summary import VSummary
 from datatools.tg.assistant.view.model.v_topic import VTopic
 
 
@@ -30,6 +30,6 @@ class TgViewFactory:
         v_topic.set_elements(self.make_messages(tg_topic))
         return v_topic
 
-    def make_messages(self, tg_topic: TgTopic) -> List[VSummary]:
-        messages = tg_topic.get_latest_messages(self.since)
-        return [VSummary(t.message.replace('\n', ' | ')) for t in messages]
+    def make_messages(self, tg_topic: TgTopic) -> List[VMessage]:
+        discussions = tg_topic.get_latest_discussions(self.since)
+        return [VMessage(t.message.replace('\n', ' | ')) for t in discussions]
