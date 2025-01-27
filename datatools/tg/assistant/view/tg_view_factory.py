@@ -39,6 +39,6 @@ class TgViewFactory:
         return [self.make_message(t) for t in discussions]
 
     def make_message(self, tg_message: TgMessage) -> VMessage:
-        v = VMessage(tg_message.message.replace('\n', ' | '))
+        v = VMessage(tg_message)
         v.set_elements(self.make_messages_list(tg_message.replies.values()))
         return v

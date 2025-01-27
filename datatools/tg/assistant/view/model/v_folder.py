@@ -4,6 +4,7 @@ from datatools.tg.assistant.view.model.v_element import VElement
 from datatools.tui.treeview.rich_text import Style
 
 
+# abstract
 class VFolder(VElement):
     elements: List[VElement]
 
@@ -41,10 +42,17 @@ class VFolder(VElement):
 
     # @override
     def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
-        return [(' ' * self.indent, Style())] + [self.rich_text()]
+        return [(' ' * self.indent, self.style_for_plus_minus())] + self.spans_for_plus_minus() + [self.rich_text()]
 
-    def text_style(self) -> Style:
-        return Style(0, (64, 160, 192))
+    def show_plus_minus(self):
+        return True
+
+    def spans_for_plus_minus(self):
+        return [('⊞ ' if self.collapsed else '⊟ ', self.style_for_plus_minus())] if self.show_plus_minus() \
+            else [('⊡ ', self.style_for_plus_minus())]
+
+    def style_for_plus_minus(self):
+        return Style(0, (96, 96, 96))
 
     def __iter__(self):
         yield self
