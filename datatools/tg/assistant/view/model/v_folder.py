@@ -39,8 +39,12 @@ class VFolder(VElement):
         for element in self.elements:
             element.set_collapsed_recursive(collapsed)
 
-    def rich_text(self) -> Tuple[AnyStr, Style]:
-        return self.text, Style(0, (64, 160, 192))
+    # @override
+    def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
+        return [(' ' * self.indent, Style())] + [self.rich_text()]
+
+    def text_style(self) -> Style:
+        return Style(0, (64, 160, 192))
 
     def __iter__(self):
         yield self

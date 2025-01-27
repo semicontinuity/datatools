@@ -2,6 +2,7 @@ from typing import List
 
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
+from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.view.model.v_forum import VForum
 from datatools.tg.assistant.view.model.v_message import VMessage
@@ -32,4 +33,12 @@ class TgViewFactory:
 
     def make_messages(self, tg_topic: TgTopic) -> List[VMessage]:
         discussions = tg_topic.get_latest_discussions(self.since)
-        return [VMessage(t.message.replace('\n', ' | ')) for t in discussions]
+        return self.make_messages_list(discussions)
+
+    def make_messages_list(self, discussions):
+        return [self.make_message(t) for t in discussions]
+
+    def make_message(self, tg_message: TgMessage) -> VMessage:
+        v = VMessage(tg_message.message.replace('\n', ' | '))
+        v.set_elements(self.make_messages_list(tg_message.replies.values()))
+        return v

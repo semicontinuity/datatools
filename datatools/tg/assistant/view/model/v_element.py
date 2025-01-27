@@ -17,7 +17,10 @@ class VElement(TreeNode):
     def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
         return [(' ' * self.indent, Style())] + [self.rich_text()]
 
-    def rich_text(self) -> Tuple[AnyStr, Style]: pass
+    def rich_text(self) -> Tuple[AnyStr, Style]:
+        return self.text, self.text_style()
+
+    def text_style(self) -> Style: pass
 
     def indent_recursive(self, indent: int):
         self.indent = indent

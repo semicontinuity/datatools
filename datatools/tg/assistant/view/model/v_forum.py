@@ -11,5 +11,5 @@ class VForum(VFolder):
         super().__init__(tg_channel.name)
         self.tg_channel = tg_channel
 
-    def rich_text(self) -> Tuple[AnyStr, Style]:
-        return self.tg_channel.name, Style(0, (224, 64, 128))
+    def text_style(self) -> Style:
+        return Style(0, (224, 64, 128))
