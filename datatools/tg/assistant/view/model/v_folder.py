@@ -42,7 +42,7 @@ class VFolder(VElement):
 
     # @override
     def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
-        return [(' ' * self.indent, self.style_for_plus_minus())] + self.spans_for_plus_minus() + [self.rich_text()]
+        return [(' ' * self.indent, self.style_for_plus_minus())] + self.spans_for_plus_minus() + self.rich_text()
 
     def show_plus_minus(self):
         return True

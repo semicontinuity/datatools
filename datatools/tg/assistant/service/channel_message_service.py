@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 
 from sortedcontainers import SortedDict
 
@@ -36,8 +37,12 @@ class ChannelMessageService:
 
                 d = discussions.get(m_id)
                 if not d:
-
-                    d = TgMessage(m_id, raw_message.message, SortedDict())
+                    d = TgMessage(
+                        id=m_id,
+                        date=datetime.fromisoformat(raw_message.date),
+                        message=raw_message.message,
+                        replies=SortedDict()
+                    )
                     if raw_message.from_id and raw_message.from_id.is_user():
                         d.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
 

@@ -15,10 +15,10 @@ class VElement(TreeNode):
 
     # @override
     def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
-        return [(' ' * self.indent, Style())] + [self.rich_text()]
+        return [(' ' * self.indent, Style())] + self.rich_text()
 
-    def rich_text(self) -> Tuple[AnyStr, Style]:
-        return self.text, self.text_style()
+    def rich_text(self) -> list[Tuple[AnyStr, Style]]:
+        return [(self.text, self.text_style())]
 
     def text_style(self) -> Style: pass
 
