@@ -11,7 +11,7 @@ from datatools.util.dataclasses import dataclass_from_dict
 CACHE_FILE_SIZE = 256
 
 
-class ChannelMessageRepository:
+class ChannelApiMessageRepository:
     files_folder: pathlib.Path
     data: Dict[int, Dict]
     cache_max_id: int
@@ -45,7 +45,7 @@ class ChannelMessageRepository:
 
         i = 0
         while True:
-            path = self.files_folder / ("%08x" % i)
+            path = self.files_folder / self.file_name(i)
             if not path.exists():
                 break
 
@@ -65,13 +65,16 @@ class ChannelMessageRepository:
 
         i = self.cache_max_id // CACHE_FILE_SIZE * CACHE_FILE_SIZE
         while i <= self.max_id:
-            path = self.files_folder / ("%08x" % i)
+            path = self.files_folder / self.file_name(i)
             with open(path, 'w') as file:
                 for k in range(i, i + CACHE_FILE_SIZE):
                     j = self.data.get(k)
                     if j:
                         print(json.dumps(j, ensure_ascii=False), file=file)
             i += CACHE_FILE_SIZE
+
+    def file_name(self, i):
+        return "raw_%08x" % i
 
     def get_max_id(self):
         return self.max_id

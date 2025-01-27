@@ -5,16 +5,16 @@ from sortedcontainers import SortedDict
 
 from datatools.tg.api.tg_api_message import TgApiMessage
 from datatools.tg.assistant.model.tg_message import TgMessage
-from datatools.tg.assistant.repository.channel_message_repository import ChannelMessageRepository
+from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 
 
 class ChannelMessageService:
-    repository: ChannelMessageRepository
+    repository: ChannelApiMessageRepository
     channel_participants_repository: ChannelParticipantsRepository
     channel_id: int
 
-    def __init__(self, repository: ChannelMessageRepository, channel_participants_repository: ChannelParticipantsRepository, channel_id: int) -> None:
+    def __init__(self, repository: ChannelApiMessageRepository, channel_participants_repository: ChannelParticipantsRepository, channel_id: int) -> None:
         self.repository = repository
         self.channel_participants_repository = channel_participants_repository
         self.channel_id = channel_id

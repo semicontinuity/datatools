@@ -3,7 +3,7 @@ import pathlib
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_topic import TgTopic
-from datatools.tg.assistant.repository.channel_message_repository import ChannelMessageRepository
+from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
@@ -49,6 +49,6 @@ class TgModelFactory:
         return tg_channel
 
     async def make_channel_message_repository(self, channel_id: int):
-        r = ChannelMessageRepository(self.cache_folder, self.client, channel_id)
+        r = ChannelApiMessageRepository(self.cache_folder, self.client, channel_id)
         await r.load()
         return r
