@@ -1,3 +1,4 @@
+import sys
 from typing import AnyStr
 
 from datatools.tg.assistant.model.tg_message import TgMessage
@@ -10,6 +11,8 @@ class VMessage(VFolder):
 
     def __init__(self, tg_message: TgMessage) -> None:
         self.tg_message = tg_message
+        # print(f'TG: {tg_message}\n', file=sys.stderr)
+
         self.time = self.tg_message.date.astimezone().strftime("%b %d %H:%M")
         super().__init__(tg_message.message.replace('\n', ' | '))
 

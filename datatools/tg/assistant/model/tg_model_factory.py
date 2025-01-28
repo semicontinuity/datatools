@@ -45,8 +45,12 @@ class TgModelFactory:
     async def make_channel_message_service(self, channel_id: int):
         channel_participants_repository = ChannelParticipantsRepository(self.client, channel_id)
         await channel_participants_repository.load()
-        channel_api_message_repository = await self.make_channel_message_repository(channel_id)
+
+        channel_api_message_repository = ChannelApiMessageRepository(self.cache_folder, self.client, channel_id)
+        await channel_api_message_repository.load()
+
         channel_ext_message_repository = ChannelExtMessageRepository(self.cache_folder, channel_id)
+        # channel_ext_message_repository.load_cached()
 
         return ChannelMessageService(
             channel_ext_message_repository,
@@ -54,8 +58,3 @@ class TgModelFactory:
             channel_participants_repository,
             channel_id
         )
-
-    async def make_channel_message_repository(self, channel_id: int):
-        r = ChannelApiMessageRepository(self.cache_folder, self.client, channel_id)
-        await r.load()
-        return r

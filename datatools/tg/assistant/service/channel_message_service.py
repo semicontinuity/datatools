@@ -30,6 +30,7 @@ class ChannelMessageService:
 
     def save_caches(self):
         self.channel_api_message_repository.save_cached()
+        self.channel_ext_message_repository.save_cached()
 
     def get_latest_topic_raw_discussions(self, topic_id: int, since: str) -> list[TgMessage]:
         """
@@ -49,7 +50,7 @@ class ChannelMessageService:
 
                 discussion = discussions.get(m_id)
                 if not discussion:
-                    discussion = self.new_tg_message(m_id, raw_message)
+                    discussion = self.tg_message_for(raw_message)
                     discussions[m_id] = discussion
 
                 elif child and child.id not in discussion.replies:
@@ -75,9 +76,13 @@ class ChannelMessageService:
         print(f'get_latest_topic_raw_discussions: {len(result)} roots', file=sys.stderr)
         return result
 
-    def new_tg_message(self, m_id, raw_message):
+    def tg_message_for(self, raw_message):
+        cached_tg_message = self.channel_ext_message_repository.get_message(raw_message.id)
+        if cached_tg_message:
+            return cached_tg_message
+
         tg_message = TgMessage(
-            id=m_id,
+            id=raw_message.id,
             date=datetime.fromisoformat(raw_message.date),
             message=raw_message.message,
             replies=SortedDict()
@@ -85,5 +90,7 @@ class ChannelMessageService:
 
         if raw_message.from_id and raw_message.from_id.is_user():
             tg_message.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
+
+        self.channel_ext_message_repository.put_message(tg_message)
 
         return tg_message

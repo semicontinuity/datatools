@@ -46,7 +46,10 @@ class ChannelExtMessageRepository:
             if x.is_file() and x.name.startswith(CACHE_FILE_PREFIX):
                 with open(x, 'r') as file:
                     for line in file:
-                        self.put_message(dataclass_from_dict(TgMessage, json.loads(line)))
+                        d: TgMessage = dataclass_from_dict(TgMessage, json.loads(line))
+                        # print(f'LOADED: {d}\n', file=sys.stderr)
+                        # print(f'LOADED: {d.date}\n', file=sys.stderr)
+                        self.put_message(d)
 
     def save_cached(self):
         print(f'Saving cache for channel {self.channel_id}', file=sys.stderr)
