@@ -50,9 +50,6 @@ class ChannelMessageService:
                 discussion = discussions.get(m_id)
                 if not discussion:
                     discussion = self.new_tg_message(m_id, raw_message)
-                    if raw_message.from_id and raw_message.from_id.is_user():
-                        discussion.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
-
                     discussions[m_id] = discussion
 
                 elif child and child.id not in discussion.replies:
@@ -79,9 +76,14 @@ class ChannelMessageService:
         return result
 
     def new_tg_message(self, m_id, raw_message):
-        return TgMessage(
+        tg_message = TgMessage(
             id=m_id,
             date=datetime.fromisoformat(raw_message.date),
             message=raw_message.message,
             replies=SortedDict()
         )
+
+        if raw_message.from_id and raw_message.from_id.is_user():
+            tg_message.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
+
+        return tg_message

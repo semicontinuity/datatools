@@ -32,8 +32,9 @@ class TgViewFactory:
         return v_topic
 
     def make_messages(self, tg_topic: TgTopic) -> List[VMessage]:
-        discussions = tg_topic.get_latest_discussions(self.since)
-        return self.make_messages_list(discussions)
+        return self.make_messages_list(
+            tg_topic.get_latest_discussions(self.since)
+        )
 
     def make_messages_list(self, discussions):
         return [self.make_message(t) for t in discussions]

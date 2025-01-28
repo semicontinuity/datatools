@@ -2,8 +2,8 @@
 import asyncio
 import os
 import sys
-from typing import Tuple, Any
 from datetime import datetime, timedelta
+from typing import Any
 
 from picotui.defs import KEY_ENTER
 
@@ -57,7 +57,7 @@ def do_loop(g):
     return loop_result, cur_line
 
 
-def handle_loop_result(document, key_code, cur_line: int) -> Tuple[int, Any]:
+def handle_loop_result(document, key_code, cur_line: int) -> tuple[int, Any]:
     if key_code == KEY_ENTER:
         return EXIT_CODE_ENTER, ''
     else:

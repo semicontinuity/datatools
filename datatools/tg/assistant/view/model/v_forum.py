@@ -1,5 +1,3 @@
-from typing import Tuple, AnyStr
-
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.view.model.v_folder import VFolder
 from datatools.tui.treeview.rich_text import Style

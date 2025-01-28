@@ -1,4 +1,4 @@
-from typing import AnyStr, Tuple, List
+from typing import AnyStr
 
 from datatools.tui.treeview.rich_text import Style
 from datatools.tui.treeview.treenode import TreeNode
@@ -14,10 +14,10 @@ class VElement(TreeNode):
         self.text = text
 
     # @override
-    def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
+    def spans(self, render_state=None) -> list[tuple[AnyStr, Style]]:
         return [(' ' * self.indent, Style())] + self.rich_text()
 
-    def rich_text(self) -> list[Tuple[AnyStr, Style]]:
+    def rich_text(self) -> list[tuple[AnyStr, Style]]:
         return [(self.text, self.text_style())]
 
     def text_style(self) -> Style: pass

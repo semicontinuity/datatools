@@ -1,4 +1,4 @@
-from typing import List, Tuple, AnyStr
+from typing import AnyStr
 
 from datatools.tg.assistant.view.model.v_element import VElement
 from datatools.tui.treeview.rich_text import Style
@@ -6,13 +6,13 @@ from datatools.tui.treeview.rich_text import Style
 
 # abstract
 class VFolder(VElement):
-    elements: List[VElement]
+    elements: list[VElement]
 
     def __init__(self, text: str) -> None:
         super().__init__(text)
         self.elements = []
 
-    def set_elements(self, elements: List[VElement]):
+    def set_elements(self, elements: list[VElement]):
         self.elements = elements
         for e in elements:
             e.parent = self
@@ -41,7 +41,7 @@ class VFolder(VElement):
             element.set_collapsed_recursive(collapsed)
 
     # @override
-    def spans(self, render_state=None) -> List[Tuple[AnyStr, Style]]:
+    def spans(self, render_state=None) -> list[tuple[AnyStr, Style]]:
         return [(' ' * self.indent, self.style_for_plus_minus())] + self.spans_for_plus_minus() + self.rich_text()
 
     def show_plus_minus(self):

@@ -1,4 +1,4 @@
-from typing import Tuple, AnyStr
+from typing import AnyStr
 
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.view.model.v_folder import VFolder
@@ -13,15 +13,22 @@ class VMessage(VFolder):
         self.time = self.tg_message.date.astimezone().strftime("%b %d %H:%M")
         super().__init__(tg_message.message.replace('\n', ' | '))
 
-    def rich_text(self) -> list[Tuple[AnyStr, Style]]:
+    def rich_text(self) -> list[tuple[AnyStr, Style]]:
         boldness = self.boldness()
-        return [
-            (self.time, Style(boldness, (64, 64, 64))),
-            (' ', Style()),
-            (self.tg_message.from_user.username if self.tg_message.from_user else '?', Style(boldness, (128, 128, 128))),
-            (' ', Style()),
-            (self.text, Style(boldness, (64, 160, 192))),
-        ]
+
+        res = [(self.time, Style(boldness, (64, 64, 64)))]
+
+        user = None
+        if self.tg_message.from_user:
+            user = self.tg_message.from_user.username
+        if user:
+            res.append((' ', Style()))
+            res.append((user, Style(boldness, (128, 128, 128))))
+
+        res.append((' ', Style()))
+        res.append((self.text, Style(boldness, (64, 160, 192))))
+
+        return res
 
     # @override
     def show_plus_minus(self):
