@@ -6,16 +6,25 @@ from sortedcontainers import SortedDict
 from datatools.tg.api.tg_api_message import TgApiMessage
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
+from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 
 
 class ChannelMessageService:
+    channel_ext_message_repository: ChannelExtMessageRepository
     channel_api_message_repository: ChannelApiMessageRepository
     channel_participants_repository: ChannelParticipantsRepository
     channel_id: int
 
-    def __init__(self, repository: ChannelApiMessageRepository, channel_participants_repository: ChannelParticipantsRepository, channel_id: int) -> None:
-        self.channel_api_message_repository = repository
+    def __init__(
+            self,
+            channel_ext_message_repository: ChannelExtMessageRepository,
+            channel_api_message_repository: ChannelApiMessageRepository,
+            channel_participants_repository: ChannelParticipantsRepository,
+            channel_id: int
+    ) -> None:
+        self.channel_ext_message_repository = channel_ext_message_repository
+        self.channel_api_message_repository = channel_api_message_repository
         self.channel_participants_repository = channel_participants_repository
         self.channel_id = channel_id
 
@@ -35,21 +44,16 @@ class ChannelMessageService:
             while True:
                 m_id = raw_message.id
 
-                d = discussions.get(m_id)
-                if not d:
-                    d = TgMessage(
-                        id=m_id,
-                        date=datetime.fromisoformat(raw_message.date),
-                        message=raw_message.message,
-                        replies=SortedDict()
-                    )
+                discussion = discussions.get(m_id)
+                if not discussion:
+                    discussion = self.new_tg_message(m_id, raw_message)
                     if raw_message.from_id and raw_message.from_id.is_user():
-                        d.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
+                        discussion.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
 
-                    discussions[m_id] = d
+                    discussions[m_id] = discussion
 
-                elif child and child.id not in d.replies:
-                    d.replies[child.id] = child
+                elif child and child.id not in discussion.replies:
+                    discussion.replies[child.id] = child
 
                 if raw_message.reply_to and raw_message.reply_to.reply_to_msg_id:
                     raw_message = self.channel_api_message_repository.get_raw_message(raw_message.reply_to.reply_to_msg_id)
@@ -59,9 +63,9 @@ class ChannelMessageService:
                     #     print(f'REPLIES {raw_message}', file=sys.stderr)
 
                     if type(raw_message) is TgApiMessage:
-                        d.is_reply = True
-                        d.is_reply_to = raw_message.id
-                        child = d
+                        discussion.is_reply = True
+                        discussion.is_reply_to = raw_message.id
+                        child = discussion
                         continue
                 break
 
@@ -70,3 +74,11 @@ class ChannelMessageService:
 
         print(f'get_latest_topic_raw_discussions: {len(result)} roots', file=sys.stderr)
         return result
+
+    def new_tg_message(self, m_id, raw_message):
+        return TgMessage(
+            id=m_id,
+            date=datetime.fromisoformat(raw_message.date),
+            message=raw_message.message,
+            replies=SortedDict()
+        )

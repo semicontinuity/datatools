@@ -11,7 +11,7 @@ from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
-from datatools.tg import cache_folder, new_telegram_client
+from datatools.tg import to_cache_folder, new_telegram_client
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
 from datatools.tg.assistant.view.tg_document import TgDocument
 from datatools.tg.assistant.view.tg_document_factory import TgDocumentFactory
@@ -94,9 +94,10 @@ async def do_main(folder, client, since):
 
 async def main():
     telethon_session_slug = os.environ['TELETHON_SESSION_SLUG']
-    folder = cache_folder(telethon_session_slug)
+    folder = to_cache_folder(telethon_session_slug)
 
     since = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
+    print(f'Will load discussions since {since}', file=sys.stderr)
 
     async with await new_telegram_client(telethon_session_slug) as client:
         await do_main(folder, client, since)

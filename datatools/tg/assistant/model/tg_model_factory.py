@@ -4,6 +4,7 @@ from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
+from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
@@ -26,24 +27,32 @@ class TgModelFactory:
         dialogs = await self.channel_repository.get_dialogs()
         return TgData(
             [
-                await self.make_tg_channel(d) for d in dialogs
+                await self.make_tg_channel(dialog) for dialog in dialogs
             ]
         )
 
-    async def make_tg_channel(self, d):
-        participants_repo = ChannelParticipantsRepository(self.client, d.id)
+    async def make_tg_channel(self, dialog):
+        channel_id = dialog.id
+        participants_repo = ChannelParticipantsRepository(self.client, channel_id)
         await participants_repo.load()
 
-        repo = await self.make_channel_message_repository(d.id)
+        channel_api_message_repository = await self.make_channel_message_repository(channel_id)
+        channel_ext_message_repository = ChannelExtMessageRepository(self.cache_folder, channel_id)
+
         tg_channel = TgChannel(
-            id=d.id,
-            name=d.name,
+            id=channel_id,
+            name=dialog.name,
             tg_topics=[],
-            channel_message_repository=repo,
-            channel_message_service=ChannelMessageService(repo, participants_repo, d.id),
+            channel_message_repository=channel_api_message_repository,
+            channel_message_service=ChannelMessageService(
+                channel_ext_message_repository,
+                channel_api_message_repository,
+                participants_repo,
+                channel_id
+            ),
         )
 
-        forum_topics = await self.channel_topic_repository.get_forum_topics(d.id)
+        forum_topics = await self.channel_topic_repository.get_forum_topics(channel_id)
         tg_channel.tg_topics = [TgTopic(id=d.id, name=d.title, tg_channel=tg_channel) for d in forum_topics]
 
         return tg_channel

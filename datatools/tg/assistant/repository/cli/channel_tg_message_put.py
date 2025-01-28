@@ -2,7 +2,7 @@ import json
 
 import click
 
-from datatools.tg import cache_folder
+from datatools.tg import to_cache_folder
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
 from datatools.util.dataclasses import dataclass_from_dict
@@ -30,7 +30,7 @@ def channel_tg_message_put(session_slug: str, channel_id: int, message: str):
 
 
 def _do_put(session_slug: str, channel_id: int, message: TgMessage):
-    repository = ChannelExtMessageRepository(cache_folder(session_slug), channel_id)
+    repository = ChannelExtMessageRepository(to_cache_folder(session_slug), channel_id)
     repository.load_cached()
     repository.put_message(message)
     repository.save_cached()

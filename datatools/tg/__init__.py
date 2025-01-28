@@ -11,12 +11,12 @@ def read_from(file_path: pathlib.Path) -> str:
         return file.read()
 
 
-def cache_folder(telethon_session_slug: str) -> pathlib.Path:
+def to_cache_folder(telethon_session_slug: str) -> pathlib.Path:
     return pathlib.Path(os.environ['HOME']) / '.telethon' / telethon_session_slug
 
 
 async def new_telegram_client(telethon_session_slug: str):
-    folder = cache_folder(telethon_session_slug)
+    folder = to_cache_folder(telethon_session_slug)
     api_id = int(read_from(folder / 'api_id').strip())
     api_hash = read_from(folder / 'api_hash').strip()
     session_file_name = str(folder / 'session.session')
