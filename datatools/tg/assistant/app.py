@@ -71,7 +71,7 @@ if get_current_highlighting() is None:
 
 
 async def do_main(folder, client, since):
-    model_factory = TgModelFactory(folder, client, since)
+    model_factory = TgModelFactory(folder, client)
     view_factory = TgViewFactory(since)
     document_factory = TgDocumentFactory()
 
@@ -87,7 +87,7 @@ async def do_main(folder, client, since):
     if output is not None:
         print(output)
 
-    tg_data.save_cache()
+    tg_data.save_caches()
 
     sys.exit(exit_code)
 

@@ -13,15 +13,11 @@ from datatools.tg.assistant.service.channel_message_service import ChannelMessag
 
 class TgModelFactory:
 
-    def __init__(self, cache_folder: pathlib.Path, client, since: str) -> None:
+    def __init__(self, cache_folder: pathlib.Path, client) -> None:
         self.cache_folder = cache_folder
         self.client = client
-        self.since = since
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
-
-    async def init(self):
-        await self.channel_participants_repository
 
     async def make_tg_data(self):
         dialogs = await self.channel_repository.get_dialogs()
@@ -33,29 +29,31 @@ class TgModelFactory:
 
     async def make_tg_channel(self, dialog):
         channel_id = dialog.id
-        participants_repo = ChannelParticipantsRepository(self.client, channel_id)
-        await participants_repo.load()
-
-        channel_api_message_repository = await self.make_channel_message_repository(channel_id)
-        channel_ext_message_repository = ChannelExtMessageRepository(self.cache_folder, channel_id)
 
         tg_channel = TgChannel(
             id=channel_id,
             name=dialog.name,
             tg_topics=[],
-            channel_message_repository=channel_api_message_repository,
-            channel_message_service=ChannelMessageService(
-                channel_ext_message_repository,
-                channel_api_message_repository,
-                participants_repo,
-                channel_id
-            ),
+            channel_message_service=await self.make_channel_message_service(channel_id),
         )
 
         forum_topics = await self.channel_topic_repository.get_forum_topics(channel_id)
         tg_channel.tg_topics = [TgTopic(id=d.id, name=d.title, tg_channel=tg_channel) for d in forum_topics]
 
         return tg_channel
+
+    async def make_channel_message_service(self, channel_id: int):
+        channel_participants_repository = ChannelParticipantsRepository(self.client, channel_id)
+        await channel_participants_repository.load()
+        channel_api_message_repository = await self.make_channel_message_repository(channel_id)
+        channel_ext_message_repository = ChannelExtMessageRepository(self.cache_folder, channel_id)
+
+        return ChannelMessageService(
+            channel_ext_message_repository,
+            channel_api_message_repository,
+            channel_participants_repository,
+            channel_id
+        )
 
     async def make_channel_message_repository(self, channel_id: int):
         r = ChannelApiMessageRepository(self.cache_folder, self.client, channel_id)

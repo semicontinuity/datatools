@@ -28,6 +28,9 @@ class ChannelMessageService:
         self.channel_participants_repository = channel_participants_repository
         self.channel_id = channel_id
 
+    def save_caches(self):
+        self.channel_api_message_repository.save_cached()
+
     def get_latest_topic_raw_discussions(self, topic_id: int, since: str) -> list[TgMessage]:
         """
         :return: "ROOTs" of discussions (with replies nested)

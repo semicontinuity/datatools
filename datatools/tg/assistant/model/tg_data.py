@@ -8,6 +8,6 @@ from datatools.tg.assistant.model.tg_channel import TgChannel
 class TgData:
     tg_channels: List[TgChannel]
 
-    def save_cache(self):
+    def save_caches(self):
         for ch in self.tg_channels:
-            ch.save_cache()
+            ch.save_caches()
