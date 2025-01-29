@@ -5,16 +5,16 @@ import sys
 from sortedcontainers import SortedDict
 
 from datatools.json.util import to_jsonisable
-from datatools.tg.assistant.model.tg_message import TgMessage
+from datatools.tg.assistant.model.tg_ext_message import TgExtMessage
 from datatools.util.dataclasses import dataclass_from_dict
 
 CACHE_FILE_SIZE = 256
-CACHE_FILE_PREFIX = 'msg_'
+CACHE_FILE_PREFIX = 'ext_'
 
 
 class ChannelExtMessageRepository:
     files_folder: pathlib.Path
-    buckets: SortedDict[int, SortedDict[int, TgMessage]]
+    buckets: SortedDict[int, SortedDict[int, TgExtMessage]]
     channel_id: int
 
     def __init__(self, cache_folder: pathlib.Path, channel_id: int) -> None:
@@ -25,10 +25,10 @@ class ChannelExtMessageRepository:
     def file_name(self, i):
         return f"{CACHE_FILE_PREFIX}%08x" % i
 
-    def get_message(self, message_id: int) -> TgMessage:
+    def get_message(self, message_id: int) -> TgExtMessage:
         return self._bucket(message_id).get(message_id)
 
-    def put_message(self, message: TgMessage):
+    def put_message(self, message: TgExtMessage):
         self._bucket(message.id)[message.id] = message
 
     def _bucket(self, message_id: int):
@@ -46,9 +46,7 @@ class ChannelExtMessageRepository:
             if x.is_file() and x.name.startswith(CACHE_FILE_PREFIX):
                 with open(x, 'r') as file:
                     for line in file:
-                        d: TgMessage = dataclass_from_dict(TgMessage, json.loads(line))
-                        # print(f'LOADED: {d}\n', file=sys.stderr)
-                        # print(f'LOADED: {d.date}\n', file=sys.stderr)
+                        d: TgExtMessage = dataclass_from_dict(TgExtMessage, json.loads(line))
                         self.put_message(d)
 
     def save_cached(self):

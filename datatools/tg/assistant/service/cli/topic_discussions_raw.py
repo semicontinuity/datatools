@@ -42,6 +42,6 @@ async def dump_topic_discussions_raw(session_slug: str, channel_id: int, topic_i
         model_factory = TgModelFactory(cache_folder, client)
         channel_message_service = await model_factory.make_channel_message_service(channel_id)
 
-        messages = channel_message_service.get_latest_topic_raw_discussions(topic_id, since)
-        for m in messages:
+        discussions = channel_message_service.get_latest_topic_discussion_forest(topic_id, since)
+        for m in discussions:
             print(json.dumps(to_jsonisable(m), ensure_ascii=False))

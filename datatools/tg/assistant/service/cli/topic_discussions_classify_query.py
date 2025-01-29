@@ -3,6 +3,7 @@ import asyncio
 import click
 
 from datatools.tg import to_cache_folder, new_telegram_client
+from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
 from datatools.tg.assistant.service.discussion_classifier import DiscussionClassifier
 
@@ -41,7 +42,7 @@ async def dump_topic_discussions_classify_query(session_slug: str, channel_id: i
         model_factory = TgModelFactory(cache_folder, client)
         channel_message_service = await model_factory.make_channel_message_service(channel_id)
 
-        discussions = channel_message_service.get_latest_topic_raw_discussions(topic_id, since)
+        discussions: list[TgMessage] = channel_message_service.get_latest_topic_discussion_forest(topic_id, since)
         classifier = DiscussionClassifier()
 
         flat_discussions = classifier.flat_discussions(discussions)

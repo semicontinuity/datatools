@@ -95,7 +95,7 @@ class ChannelApiMessageRepository:
                 elif m.reply_to.reply_to_msg_id is not None:
                     return self.resolve_topic_id(self.get_raw_message(m.reply_to.reply_to_msg_id))
 
-    def get_raw_message(self, message_id: int) -> Union[None, TgApiMessage, TgApiMessageService]:
+    def get_raw_message(self, message_id: int) -> None | TgApiMessage | TgApiMessageService:
         j = self.data.get(message_id)
         if j is None:
             return None

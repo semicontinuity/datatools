@@ -4,6 +4,7 @@ from datetime import datetime
 from sortedcontainers import SortedDict
 
 from datatools.tg.api.tg_api_message import TgApiMessage
+from datatools.tg.assistant.model.tg_ext_message import TgExtMessage
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
 from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
@@ -32,11 +33,11 @@ class ChannelMessageService:
         self.channel_api_message_repository.save_cached()
         self.channel_ext_message_repository.save_cached()
 
-    def get_latest_topic_raw_discussions(self, topic_id: int, since: str) -> list[TgMessage]:
+    def get_latest_topic_discussion_forest(self, topic_id: int, since: str) -> list[TgMessage]:
         """
-        :return: "ROOTs" of discussions (with replies nested)
+        :return: forest with "ROOTs" of discussions (with replies nested)
         """
-        discussions = {}
+        discussions = dict()
         raw_messages = self.channel_api_message_repository.get_latest_topic_raw_messages(topic_id, since)
         if not raw_messages:
             return []
@@ -58,31 +59,29 @@ class ChannelMessageService:
 
                 if raw_message.reply_to and raw_message.reply_to.reply_to_msg_id:
                     raw_message = self.channel_api_message_repository.get_raw_message(raw_message.reply_to.reply_to_msg_id)
-                    # print(f'REPLIES {type(raw_message)}', file=sys.stderr)
-
-                    # if raw_message.id == 2:
-                    #     print(f'REPLIES {raw_message}', file=sys.stderr)
 
                     if type(raw_message) is TgApiMessage:
-                        discussion.is_reply = True
-                        discussion.is_reply_to = raw_message.id
+                        discussion.ext.is_reply = True
+                        discussion.ext.is_reply_to = raw_message.id
                         child = discussion
                         continue
                 break
 
         candidates = sorted(list(discussions.values()), key=lambda x: x.id)
-        result = [x for x in candidates if not x.is_reply]
+        result = [x for x in candidates if not x.ext.is_reply]
 
         print(f'get_latest_topic_raw_discussions: {len(result)} roots', file=sys.stderr)
         return result
 
     def tg_message_for(self, raw_message):
-        cached_tg_message = self.channel_ext_message_repository.get_message(raw_message.id)
-        if cached_tg_message:
-            return cached_tg_message
+        tg_ext_message = self.channel_ext_message_repository.get_message(raw_message.id)
+        if tg_ext_message is None:
+            tg_ext_message = TgExtMessage(raw_message.id)
+            self.channel_ext_message_repository.put_message(tg_ext_message)
 
         tg_message = TgMessage(
             id=raw_message.id,
+            ext=tg_ext_message,
             date=datetime.fromisoformat(raw_message.date),
             message=raw_message.message,
             replies=SortedDict()
@@ -90,7 +89,5 @@ class ChannelMessageService:
 
         if raw_message.from_id and raw_message.from_id.is_user():
             tg_message.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
-
-        self.channel_ext_message_repository.put_message(tg_message)
 
         return tg_message

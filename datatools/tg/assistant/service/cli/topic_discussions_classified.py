@@ -42,7 +42,7 @@ async def dump_topic_discussions_classified(session_slug: str, channel_id: int, 
         model_factory = TgModelFactory(cache_folder, client)
         channel_message_service = await model_factory.make_channel_message_service(channel_id)
 
-        discussions = channel_message_service.get_latest_topic_raw_discussions(topic_id, since)
+        discussions = channel_message_service.get_latest_topic_discussion_forest(topic_id, since)
         print(f'Fetched {len(discussions)} discussions', file=sys.stderr)
 
         print(json_dump(DiscussionClassifier().classify(discussions)))
