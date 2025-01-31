@@ -8,6 +8,21 @@ from datatools.ev.app_support import run_app
 from datatools.ev.app_types import Realm
 from datatools.ev.x.pg.realm_pg import RealmPg
 from datatools.ev.x.pg.types import DbRowReference, DbSelectorClause, DbTableRowsSelector, DbRowsReference
+from datatools.util.logging import debug
+
+
+def get_host():
+    if os.getenv('LOCAL_PORT'):
+        # tunnel
+        return 'localhost'
+    return get_env('HOST')
+
+
+def get_port():
+    if os.getenv('LOCAL_PORT'):
+        # tunnel
+        return get_env('LOCAL_PORT')
+    return get_env('PORT')
 
 
 def get_env(key):
@@ -28,8 +43,8 @@ def realms() -> Dict[str, Realm]:
     return {
         None: RealmPg(
             None,
-            get_env('HOST'),
-            get_env('PORT'),
+            get_host(),
+            get_port(),
             get_env('DB_NAME'),
             get_env('DB_USER'),
             get_env('PASSWORD'),

@@ -31,6 +31,21 @@ class RealmPg(Realm):
         self.db_password = db_password
         self.links = links
 
+    def connect_to_db(self):
+        debug('Connecting')
+        c = psycopg2.connect(
+            host=self.host,
+            port=self.port,
+            dbname=self.db_name,
+            user=self.db_user,
+            password=self.db_password,
+            # sslmode="verify-ca",
+            # sslmode="verify-full",
+            target_session_attrs="read-write"
+        )
+        debug('Connected')
+        return c
+
     def find_link_spec(self, concept: str, json_path: str):
         concept_def = self.links[concept]
         for link in concept_def['links']:
@@ -46,18 +61,6 @@ class RealmPg(Realm):
             return ViewDbRow(self, e_ref.selector)
         elif isinstance(e_ref, DbReferrers):
             return ViewDbReferrers(self, e_ref.selector)
-
-    def connect_to_db(self):
-        return psycopg2.connect(
-            host=self.host,
-            port=self.port,
-            dbname=self.db_name,
-            user=self.db_user,
-            password=self.db_password,
-            sslmode="verify-ca",
-            # sslmode="verify-full",
-            target_session_attrs="read-write"
-        )
 
     def get_selector_value(self, conn, inbound_relation, table, where):
         this_column = inbound_relation['foreign_column_name']
