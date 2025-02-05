@@ -6,14 +6,15 @@ from typing import Dict
 from datatools.dbview.x.util.pg import get_where_clauses
 from datatools.ev.app_support import run_app
 from datatools.ev.app_types import Realm
-from datatools.ev.x.pg.realm_pg_x import PgPropertySource
+from datatools.ev.x.pg.pg_data_source import PgDataSource
+from datatools.ev.x.pg.realm_pg import RealmPg
 from datatools.ev.x.pg.types import DbRowReference, DbSelectorClause, DbTableRowsSelector, DbRowsReference
 
 
-property_source = PgPropertySource(os.environ)
+data_source = PgDataSource(os.environ)
 
 
-def links(p):
+def load_links(p):
     if p is None:
         return {}
     else:
@@ -21,8 +22,13 @@ def links(p):
 
 
 def realms() -> Dict[str, Realm]:
+    links = load_links(os.getenv('LINKS'))
     return {
-        None: property_source.realm_pg(name=None, links=links(os.getenv('LINKS')))
+        None: RealmPg(
+            None,
+            data_source,
+            links
+        )
     }
 
 
@@ -35,7 +41,7 @@ def main():
 
 def initial_entity_ref():
     where_clauses = get_where_clauses()
-    table = property_source.get_env('TABLE')
+    table = data_source.get_env('TABLE')
 
     if len(where_clauses) == 1 and where_clauses[0][1] == '=':
         return DbRowReference(

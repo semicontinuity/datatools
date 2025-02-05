@@ -1,25 +1,27 @@
-from typing import Dict
+import psycopg2
 
-from datatools.ev.x.pg.realm_pg import RealmPg
-import os
-import json
+from datatools.util.logging import debug
 
 
-class PgPropertySource:
+class PgDataSource:
 
     def __init__(self, props):
         self.props = props
 
-    def realm_pg(self, name: str, links: Dict[str, Dict]) -> RealmPg:
-        return RealmPg(
-            name,
-            self.get_host(),
-            self.get_port(),
-            self.get_env('DB_NAME'),
-            self.get_env('DB_USER'),
-            self.get_env('PASSWORD'),
-            links
+    def connect_to_db(self):
+        debug('Connecting')
+        c = psycopg2.connect(
+            host=self.get_host(),
+            port=self.get_port(),
+            dbname=self.get_env('DB_NAME'),
+            user=self.get_env('DB_USER'),
+            password=self.get_env('PASSWORD'),
+            # sslmode="verify-ca",
+            # sslmode="verify-full",
+            target_session_attrs="read-write"
         )
+        debug('Connected')
+        return c
 
     def get_host(self):
         if self.props.get('LOCAL_PORT'):

@@ -1,11 +1,10 @@
 from typing import Dict, Any
 from typing import Tuple, List
 
-import psycopg2
-
 from datatools.dbview.util.pg import execute_sql, describe_table
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 from datatools.ev.app_types import EntityReference, View, Realm
+from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.types import DbRowReference, DbRowsReference, DbReferrers
 from datatools.ev.x.pg.view_db_referrers import ViewDbReferrers
 from datatools.ev.x.pg.view_db_row import ViewDbRow
@@ -15,36 +14,16 @@ from datatools.util.logging import debug
 
 
 class RealmPg(Realm):
-    host: str
-    port: str
-    db_name: str
-    db_user: str
-    db_password: str
+    data_source: PgDataSource
     links: Dict[str, Dict]
 
-    def __init__(self, name: str, host: str, port: str, db_name: str, db_user: str, db_password: str, links: Dict[str, Dict]):
+    def __init__(self, name: str, data_source: PgDataSource, links: Dict[str, Dict]):
         super().__init__(name)
-        self.host = host
-        self.port = port
-        self.db_name = db_name
-        self.db_user = db_user
-        self.db_password = db_password
+        self.data_source = data_source
         self.links = links
 
     def connect_to_db(self):
-        debug('Connecting')
-        c = psycopg2.connect(
-            host=self.host,
-            port=self.port,
-            dbname=self.db_name,
-            user=self.db_user,
-            password=self.db_password,
-            # sslmode="verify-ca",
-            # sslmode="verify-full",
-            target_session_attrs="read-write"
-        )
-        debug('Connected')
-        return c
+        return self.data_source.connect_to_db()
 
     def find_link_spec(self, concept: str, json_path: str):
         concept_def = self.links[concept]
