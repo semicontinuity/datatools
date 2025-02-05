@@ -6,30 +6,11 @@ from typing import Dict
 from datatools.dbview.x.util.pg import get_where_clauses
 from datatools.ev.app_support import run_app
 from datatools.ev.app_types import Realm
-from datatools.ev.x.pg.realm_pg import RealmPg
+from datatools.ev.x.pg.realm_pg_x import PgPropertySource
 from datatools.ev.x.pg.types import DbRowReference, DbSelectorClause, DbTableRowsSelector, DbRowsReference
-from datatools.util.logging import debug
 
 
-def get_host():
-    if os.getenv('LOCAL_PORT'):
-        # tunnel
-        return 'localhost'
-    return get_env('HOST')
-
-
-def get_port():
-    if os.getenv('LOCAL_PORT'):
-        # tunnel
-        return get_env('LOCAL_PORT')
-    return get_env('PORT')
-
-
-def get_env(key):
-    value = os.getenv(key)
-    if value is None:
-        raise Exception(f'Must set {key}')
-    return value
+property_source = PgPropertySource(os.environ)
 
 
 def links(p):
@@ -41,15 +22,7 @@ def links(p):
 
 def realms() -> Dict[str, Realm]:
     return {
-        None: RealmPg(
-            None,
-            get_host(),
-            get_port(),
-            get_env('DB_NAME'),
-            get_env('DB_USER'),
-            get_env('PASSWORD'),
-            links(os.getenv('LINKS'))
-        )
+        None: property_source.realm_pg(name=None, links=links(os.getenv('LINKS')))
     }
 
 
@@ -62,7 +35,7 @@ def main():
 
 def initial_entity_ref():
     where_clauses = get_where_clauses()
-    table = get_env('TABLE')
+    table = property_source.get_env('TABLE')
 
     if len(where_clauses) == 1 and where_clauses[0][1] == '=':
         return DbRowReference(
