@@ -57,11 +57,13 @@ class LogNode:
         return str(t)
 
     def css(self):
-        column_renderers_css = '\n'.join(
+        return LogNode.CSS_CORE + LogNode.CSS_DYNAMIC_ELEMENTS + self.css_hide_rules() + self.css_column_renderers()
+
+    def css_column_renderers(self):
+        return '\n'.join(
             clazz.CSS
             for clazz in set(type(cr) for cr in self.column_renderers) if hasattr(clazz, 'CSS')
         )
-        return LogNode.CSS_CORE + LogNode.CSS_DYNAMIC_ELEMENTS + self.css_hide_rules() + column_renderers_css
 
     def css_hide_rules(self):
         return '\n'.join(LogNode.hide_rules(n) for n in range(2, len(self.column_renderers) + 2))

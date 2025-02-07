@@ -14,9 +14,13 @@ from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.ng.grid import WGrid
-from datatools.jt2h.app import page_node_auto
+from datatools.jt2h.app import page_node_auto, column_renderers_auto, page_node_basic_auto
+from datatools.jt2h.log_node import LogNode
+from datatools.jt2h.page_node_css import PAGE_NODE_CSS, TABLE_NODE_CSS
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.object_exporter import init_object_exporter
+from util.html.elements import style
+from util.html.md_html_node import MdHtmlNode
 
 LEAF_CONTENTS_APPLET_STYLE = default_style([48, 40, 24])
 
@@ -74,13 +78,33 @@ def app_router(applet, exit_code):
                 )
         elif exit_code == EXIT_CODE_ENTER + EXIT_CODE_ALT:
             # Alt+Enter: Exit and dump current cell as JSON
-            print(json.dumps({ applet.data_bundle.state[STATE_CUR_COLUMN_KEY]: applet.data_bundle.state[STATE_CUR_CELL_VALUE] } ))
+            print(json.dumps(
+                {applet.data_bundle.state[STATE_CUR_COLUMN_KEY]: applet.data_bundle.state[STATE_CUR_CELL_VALUE]}))
             return None
         elif exit_code == EXIT_CODE_F12 + EXIT_CODE_CTRL:
-            # F12: Exit and dump table contents as HTML
+            # F12: Exit and dump table contents as Rich HTML
             print(page_node_auto(applet.data_bundle.orig_data))
             return None
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT:
+            # F12: Exit and dump table contents as HTML for insertion into markdown
+            j = applet.data_bundle.orig_data
+            print(
+                MdHtmlNode(
+                    style(
+                        TABLE_NODE_CSS,
+                        LogNode.CSS_CORE
+                    ),
+                    LogNode(j, column_renderers_auto(j))
+                )
+            )
+            return None
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT + EXIT_CODE_SHIFT:
+            # F12: Exit and dump table contents as basic HTML
+            j = applet.data_bundle.orig_data
+            print(page_node_basic_auto(j))
+            return None
         elif exit_code <= EXIT_CODE_MAX_REGULAR:
+            # Any other key: Dump document as JSON
             if exit_code_key_has_modifier(exit_code, EXIT_CODE_SHIFT):
                 print(json.dumps(applet.data_bundle.orig_data))
                 return None
@@ -98,7 +122,8 @@ def time_series_column(data_bundle: DataBundle):
             return name
 
 
-def nested_table_applet(cell_j, column_contents_metadata: Metadata, column_contents_presentation: Presentation) -> Applet:
+def nested_table_applet(cell_j, column_contents_metadata: Metadata,
+                        column_contents_presentation: Presentation) -> Applet:
     values_info = compute_column_values_info(cell_j, column_contents_metadata or Metadata())
     metadata = enrich_metadata(cell_j, column_contents_metadata or Metadata())
     presentation = enrich_presentation(cell_j, values_info, metadata, column_contents_presentation or Presentation())
