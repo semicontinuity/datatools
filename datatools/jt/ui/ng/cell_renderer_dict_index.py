@@ -23,6 +23,7 @@ class ColumnRendererDictIndexHashColored(ColumnRenderer):
 
 class WDictIndexCellRenderer(WColumnRenderer):
     dictionary: Dict[str, int]
+    render_data: RenderData
 
     def __init__(self, render_data: RenderData):
         self.render_data = render_data

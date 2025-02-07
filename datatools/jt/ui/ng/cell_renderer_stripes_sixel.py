@@ -16,6 +16,8 @@ class WStripesSixelCellRenderer(WColumnRenderer):
     SIXELS_PER_STRIPE: int = 2   # characters are assumed to be 20x10 by sixel-compatible terminals
     STRIPES_PER_CHAR = SIXELS_PER_CHAR // SIXELS_PER_STRIPE
 
+    render_data: RenderData
+
     def __init__(
             self,
             column_renderer: ColumnRenderer,

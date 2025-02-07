@@ -13,6 +13,7 @@ from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR
 from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
+from datatools.jt.ui.ng.cell_renderer_indicator import WIndicatorCellRenderer
 from datatools.jt.ui.ng.grid import WGrid
 from datatools.jt2h.app import page_node_auto, page_node_basic_auto, md_table_node
 from datatools.jt2h.app_json_page import page_node, md_node
@@ -56,6 +57,10 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
     return g
 
 
+def filter_non_collapsed(r: dict, collapsed: dict[str, bool]):
+    return {k: v for k, v in r.items() if not collapsed.get(k)}
+
+
 def app_router(applet, exit_code):
     """ return new app to run or None if the just finished app won't start a new app """
     if applet.app_id == 'jtng':
@@ -81,8 +86,9 @@ def app_router(applet, exit_code):
 
         elif exit_code == EXIT_CODE_F12:
             # F12: Exit and dump table contents as basic HTML
+            collapsed = collapsed_columns(applet)
             j = applet.data_bundle.orig_data
-            print(page_node_basic_auto(j))
+            print(page_node_basic_auto([filter_non_collapsed(r, collapsed) for r in j]))
             return None
         elif exit_code == EXIT_CODE_F12 + EXIT_CODE_CTRL:
             # Ctrl+F12: Exit and dump table contents as HTML with JS
@@ -114,6 +120,14 @@ def app_router(applet, exit_code):
             print(json.dumps(applet.data_bundle.orig_data[applet.data_bundle.state[STATE_CUR_LINE]]))
 
     return None
+
+
+def collapsed_columns(applet):
+    collapsed = {}
+    for i in range(applet.g.column_count):
+        r = applet.g.column_cell_renderer_f(i).delegate()
+        collapsed[r.render_data.column_key] = type(r) == WIndicatorCellRenderer
+    return collapsed
 
 
 def time_series_column(data_bundle: DataBundle):
