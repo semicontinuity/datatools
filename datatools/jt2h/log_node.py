@@ -8,19 +8,21 @@ from util.html.elements import table, td, tr, thead, tbody, th, span
 
 class LogNode:
 
-    def __init__(self, j: List[Dict], column_renderers: List[ColumnRenderer]) -> None:
+    def __init__(self, j: List[Dict], column_renderers: List[ColumnRenderer], dynamic_columns: bool = True, dynamic_rows: bool = True) -> None:
         self.j = j
         self.column_renderers = column_renderers
+        self.dynamic_columns = dynamic_columns
+        self.dynamic_rows = dynamic_rows
 
     def __str__(self) -> str:
         t = table(
             thead(
-                th(),
+                th() if self.dynamic_columns else None,
                 (
                     th(
                         span(column_renderer.column, clazz='regular'),
-                        span(column_renderer.column[:1], clazz='compact'),
-                        onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")'
+                        span(column_renderer.column[:1], clazz='compact') if self.dynamic_columns else None,
+                        onclick=f'toggleParentClass(this, "TABLE", "hide-c-{i + 2}")' if self.dynamic_columns else None
                     )
                     for i, column_renderer in enumerate(self.column_renderers)
                 )
@@ -31,20 +33,20 @@ class LogNode:
                         th(
                             span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='regular'),
                             span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
-                        ),
+                        ) if self.dynamic_columns else None,
                         (
                             column_renderer.render_cell(row)
                             for column_renderer in self.column_renderers
                         ),
                     ),
                     tr(
-                        th(clazz='details'),
+                        th(clazz='details') if self.dynamic_columns else None,
                         td(
                             JsonNode(row, JsonNodeDelegateYaml2()),
                             colspan=len(self.column_renderers),
                             clazz='details'
                         )
-                    ),
+                    ) if self.dynamic_rows else None,
                     clazz='regular'
                 ) for row in self.j
             ),
@@ -52,7 +54,7 @@ class LogNode:
                 f"hide-c-{i + 2}"
                 for i, column_renderer in enumerate(self.column_renderers)
                 if column_renderer.collapsed
-            )
+            ) if self.dynamic_columns else None
         )
         return str(t)
 

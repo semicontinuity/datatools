@@ -82,10 +82,15 @@ def app_router(applet, exit_code):
                 {applet.data_bundle.state[STATE_CUR_COLUMN_KEY]: applet.data_bundle.state[STATE_CUR_CELL_VALUE]}))
             return None
         elif exit_code == EXIT_CODE_F12 + EXIT_CODE_CTRL:
-            # F12: Exit and dump table contents as Rich HTML
+            # F12: Exit and dump table contents as HTML with JS
             print(page_node_auto(applet.data_bundle.orig_data))
             return None
         elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT:
+            # F12: Exit and dump table contents as basic HTML
+            j = applet.data_bundle.orig_data
+            print(page_node_basic_auto(j))
+            return None
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT + EXIT_CODE_SHIFT:
             # F12: Exit and dump table contents as HTML for insertion into markdown
             j = applet.data_bundle.orig_data
             print(
@@ -94,14 +99,9 @@ def app_router(applet, exit_code):
                         TABLE_NODE_CSS,
                         LogNode.CSS_CORE
                     ),
-                    LogNode(j, column_renderers_auto(j))
+                    LogNode(j, column_renderers_auto(j), dynamic_columns=False, dynamic_rows=False)
                 )
             )
-            return None
-        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT + EXIT_CODE_SHIFT:
-            # F12: Exit and dump table contents as basic HTML
-            j = applet.data_bundle.orig_data
-            print(page_node_basic_auto(j))
             return None
         elif exit_code <= EXIT_CODE_MAX_REGULAR:
             # Any other key: Dump document as JSON

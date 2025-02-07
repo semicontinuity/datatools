@@ -38,7 +38,7 @@ def page_node_basic_auto(j, title_str: str = None):
             ),
 
             body(
-                LogNode(j, column_renderers_auto(j))
+                LogNode(j, column_renderers_auto(j), dynamic_columns=False, dynamic_rows=False)
             )
         )
     )
