@@ -14,13 +14,10 @@ from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.ng.grid import WGrid
-from datatools.jt2h.app import page_node_auto, column_renderers_auto, page_node_basic_auto
-from datatools.jt2h.log_node import LogNode
-from datatools.jt2h.page_node_css import PAGE_NODE_CSS, TABLE_NODE_CSS
+from datatools.jt2h.app import page_node_auto, page_node_basic_auto, md_table_node
+from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.object_exporter import init_object_exporter
-from util.html.elements import style
-from util.html.md_html_node import MdHtmlNode
 
 LEAF_CONTENTS_APPLET_STYLE = default_style([48, 40, 24])
 
@@ -77,32 +74,35 @@ def app_router(applet, exit_code):
                     True
                 )
         elif exit_code == EXIT_CODE_ENTER + EXIT_CODE_ALT:
-            # Alt+Enter: Exit and dump current cell as JSON
+            # Alt+Enter: Exit and dump current cell WITH COLUMN NAME as JSON
             print(json.dumps(
                 {applet.data_bundle.state[STATE_CUR_COLUMN_KEY]: applet.data_bundle.state[STATE_CUR_CELL_VALUE]}))
             return None
-        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_CTRL:
-            # F12: Exit and dump table contents as HTML with JS
-            print(page_node_auto(applet.data_bundle.orig_data))
-            return None
-        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT:
+
+        elif exit_code == EXIT_CODE_F12:
             # F12: Exit and dump table contents as basic HTML
             j = applet.data_bundle.orig_data
             print(page_node_basic_auto(j))
             return None
-        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT + EXIT_CODE_SHIFT:
-            # F12: Exit and dump table contents as HTML for insertion into markdown
-            j = applet.data_bundle.orig_data
-            print(
-                MdHtmlNode(
-                    style(
-                        TABLE_NODE_CSS,
-                        LogNode.CSS_CORE
-                    ),
-                    LogNode(j, column_renderers_auto(j), dynamic_columns=False, dynamic_rows=False)
-                )
-            )
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_CTRL:
+            # Ctrl+F12: Exit and dump table contents as HTML with JS
+            print(page_node_auto(applet.data_bundle.orig_data))
             return None
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_SHIFT:
+            # Shift+F12: Exit and dump table contents as HTML for insertion into markdown
+            j = applet.data_bundle.orig_data
+            print(md_table_node(j))
+            return None
+
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT:
+            # Alt+F12: Exit and dump cell contents as HTML
+            print(page_node(applet.data_bundle.state[STATE_CUR_CELL_VALUE]))
+            return None
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT + EXIT_CODE_SHIFT:
+            # Alt+Shift+F12: Exit and dump cell contents as HTML for markdown
+            print(md_node(applet.data_bundle.state[STATE_CUR_CELL_VALUE]))
+            return None
+
         elif exit_code <= EXIT_CODE_MAX_REGULAR:
             # Any other key: Dump document as JSON
             if exit_code_key_has_modifier(exit_code, EXIT_CODE_SHIFT):

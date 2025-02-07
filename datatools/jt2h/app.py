@@ -11,6 +11,7 @@ from datatools.jt2h.log_node import LogNode
 from datatools.jt2h.log_node_js import LOG_NODE_JS
 from datatools.jt2h.page_node_css import PAGE_NODE_CSS, TABLE_NODE_CSS
 from util.html.elements import html, head, style, script, body, title
+from util.html.md_html_node import MdHtmlNode
 from util.html.page_node import PageNode
 
 
@@ -23,6 +24,16 @@ def data():
 
 def main():
     print(page_node_auto(data()))
+
+
+def md_table_node(j):
+    return MdHtmlNode(
+        style(
+            TABLE_NODE_CSS,
+            LogNode.CSS_CORE
+        ),
+        LogNode(j, column_renderers_auto(j), dynamic_columns=False, dynamic_rows=False)
+    )
 
 
 def page_node_basic_auto(j, title_str: str = None):

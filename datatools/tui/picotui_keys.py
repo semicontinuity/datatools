@@ -54,9 +54,12 @@ KEY_F11 = b'\x1b[23~'
 KEY_CTRL_F11 = b'\x1b[23;5~'
 
 KEY_F12 = b'\x1b[24~'
+KEY_SHIFT_F12 = b'\x1b[24;2~'
 KEY_ALT_F12 = b'\x1b[24;3~'
 KEY_ALT_SHIFT_F12 = b'\x1b[24;4~'
 KEY_CTRL_F12 = b'\x1b[24;5~'
+KEY_CTRL_SHIFT_F12 = b'\x1b[24;6~'
+KEY_CTRL_ALT_SHIFT_F12 = b'\x1b[24;8~'
 
 KEY_ALT_0 = b'\x1b0'
 KEY_ALT_1 = b'\x1b1'
