@@ -10,39 +10,43 @@ from json import JSONDecodeError
 from datatools.json.html.html_toolkit_custom import *
 from datatools.json.html.html_toolkit_old import OldToolkit
 from datatools.json.html.page_node import PageNode
+from datatools.jt2h.app_json_page import md_node, page_node
 from datatools.util.logging import stderr_print
 from datatools.util.meta_io import presentation_or_default
 
 
-def main():
+def to_blocks_html(j, page_title: str = None):
     if os.environ.get("PIPE_HEADERS_IN"):
         print("Head", file=sys.stderr)
-    if os.environ.get("V") == "1":
-        global verbose
-        verbose = True
-
     presentation = presentation_or_default(default={})
-
-    if len(sys.argv) == 2:
-        presentation["title"] = sys.argv[1]
-    if len(sys.argv) == 3:
-        with open(sys.argv[2]) as json_file:
-            j = json.load(json_file)
-    else:
-        j = json.load(sys.stdin)
-
     ctk = CustomHtmlToolkit()
     old_tk = OldToolkit(ctk)
 
-    print(
-        PageNode(
-            old_tk.node(j, None, False), presentation.get("title", ""), ctk
-        )
+    return PageNode(
+        old_tk.node(j, None, False), page_title or presentation.get("title"), ctk
     )
 
 
-if __name__ == "__main__":
+def main():
+    argv = sys.argv[1:]
+
     try:
-        main()
+        j = json.load(sys.stdin)
     except JSONDecodeError as ex:
         stderr_print("Reads json. Outputs html.")
+        sys.exit(1)
+
+    page_title = argv[argv.index('-t') + 1] if '-t' in argv else None
+    yaml = '-y' in argv
+    markdown = '-m' in argv
+
+    if yaml:
+        print(page_node(j, page_title))
+    elif markdown:
+        print(md_node(j))
+    else:
+        print(to_blocks_html(j, page_title))
+
+
+if __name__ == "__main__":
+    main()
