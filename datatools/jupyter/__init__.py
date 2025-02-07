@@ -6,11 +6,11 @@ from datatools.jt2h.app import page_node_auto
 from datatools.jt2h.app_json_page import page_node
 
 
-def JSON_TAB(data, title=None, tab_name=None):
+def JSON_TAB(data, title: str = None, tab_name: str = None):
     return render(str(page_node(data, title)), tab_name, title)
 
 
-def JSON_TABLE_TAB(data, title=None, tab_name=None):
+def JSON_TABLE_TAB(data, title: str = None, tab_name: str = None):
     return render(str(page_node_auto(data, title_str=title)), tab_name, title)
 
 

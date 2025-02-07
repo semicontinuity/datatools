@@ -14,6 +14,7 @@ from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.ui.ng.grid import WGrid
+from datatools.jt2h.app import page_node_auto
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.object_exporter import init_object_exporter
 
@@ -71,14 +72,21 @@ def app_router(applet, exit_code):
                     {"anchor": {"x": 0, "y": (applet.data_bundle.state.get(STATE_CUR_LINE_Y))}},
                     True
                 )
-        if exit_code == EXIT_CODE_ENTER + EXIT_CODE_ALT:
+        elif exit_code == EXIT_CODE_ENTER + EXIT_CODE_ALT:
+            # Alt+Enter: Exit and dump current cell as JSON
             print(json.dumps({ applet.data_bundle.state[STATE_CUR_COLUMN_KEY]: applet.data_bundle.state[STATE_CUR_CELL_VALUE] } ))
             return None
-        if exit_code <= EXIT_CODE_MAX_REGULAR:
+        elif exit_code == EXIT_CODE_F12 + EXIT_CODE_CTRL:
+            # F12: Exit and dump table contents as HTML
+            print(page_node_auto(applet.data_bundle.orig_data))
+            return None
+        elif exit_code <= EXIT_CODE_MAX_REGULAR:
             if exit_code_key_has_modifier(exit_code, EXIT_CODE_SHIFT):
                 print(json.dumps(applet.data_bundle.orig_data))
                 return None
+
         if exit_code != EXIT_CODE_ESCAPE:
+            # Dump current line as JSON
             print(json.dumps(applet.data_bundle.orig_data[applet.data_bundle.state[STATE_CUR_LINE]]))
 
     return None
