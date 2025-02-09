@@ -1,10 +1,10 @@
 import re
 import sys
 
-from sortedcontainers import SortedDict
 from yndx.st.lib.llm import LargeLanguageModel
 
 from datatools.tg.assistant.model.tg_message import TgMessage
+from datatools.tg.assistant.service.discussion_forest_flattener import flat_discussion_forest
 
 
 class DiscussionClassifier:
@@ -134,13 +134,14 @@ Provide no explanations. Maintain original language/formatting.
     def __init__(self, llm: LargeLanguageModel) -> None:
         self.llm = llm
 
-    def classify(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
-        if len(raw_discussions) == 0:
-            return raw_discussions
+    def classify(self, discussion_forest: list[TgMessage]) -> list[TgMessage]:
+        if len(discussion_forest) == 0:
+            return discussion_forest
 
-        flat_discussions = self.flat_discussions(raw_discussions)
+        return self.classify_flat_discussions(flat_discussion_forest(discussion_forest))
+
+    def classify_flat_discussions(self, flat_discussions):
         query = self.classify_discussions_query_data(flat_discussions)
-
         print(f'Classifying discussions', file=sys.stderr)
         print(f'', file=sys.stderr)
         print(f'', file=sys.stderr)
@@ -229,18 +230,3 @@ FROM={m.get_username()} ID={m.id} FOLLOWS_ID={replies_to}
 
 {m.message}
 """
-
-    def flat_discussions(self, raw_discussions):
-        items: SortedDict[int, 'TgMessage'] = SortedDict()
-
-        for raw_discussion in raw_discussions:
-            self.flat_discussions_add_to(items, raw_discussion)
-
-        result = list(items.values())
-        print(f'Flattened discussions: size={len(result)}', file=sys.stderr)
-        return result
-
-    def flat_discussions_add_to(self, res: SortedDict[int, 'TgMessage'], m: TgMessage):
-        res[m.id] = m
-        for reply in m.replies.values():
-            self.flat_discussions_add_to(res=res, m=reply)

@@ -45,7 +45,7 @@ class ChannelMessageService:
         if not raw_messages:
             return []
 
-        print(f'get_latest_topic_raw_discussions: min_id={raw_messages[0].id}, max_id={raw_messages[-1].id}', file=sys.stderr)
+        print(f'make_latest_topic_discussion_forest: min_id={raw_messages[0].id}, max_id={raw_messages[-1].id}', file=sys.stderr)
 
         raw_messages_dict = dict()
         for raw_message in raw_messages:
@@ -91,7 +91,7 @@ class ChannelMessageService:
 
         result = [x for x in candidates if not x.ext.is_reply_to and not x.ext.is_inferred_reply_to]
 
-        print(f'get_latest_topic_raw_discussions: {len(result)} roots', file=sys.stderr)
+        print(f'make_latest_topic_discussion_forest: {len(result)} roots', file=sys.stderr)
         return result
 
     def tg_ext_message_for(self, message_id: int):

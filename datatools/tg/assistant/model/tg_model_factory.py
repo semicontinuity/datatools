@@ -1,4 +1,5 @@
 import pathlib
+import sys
 
 from telethon import TelegramClient
 from telethon.tl.custom import Dialog
@@ -12,6 +13,7 @@ from datatools.tg.assistant.repository.channel_participants_repository import Ch
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
 from datatools.tg.assistant.service.channel_message_service import ChannelMessageService
+from datatools.tg.assistant.service.discussion_forest_flattener import flat_discussion_forest
 from datatools.tg.assistant.service.message_summarizer_service import MessageSummarizerService
 
 
@@ -49,14 +51,18 @@ class TgModelFactory:
         return tg_channel
 
     def make_tg_topic(self, d, tg_channel: TgChannel):
-        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(d.id,
-                                                                                                                   self.since)
+        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(d.id,                                                                                                                   self.since)
+        discussion_forest = tg_channel.channel_message_service.make_latest_topic_discussion_forest(messages)
+        flat_discussions = flat_discussion_forest(discussion_forest)
+        inference_done = all(flat_discussion.ext.inference_done() for flat_discussion in flat_discussions)
+        print('inference_done', inference_done, file=sys.stderr)
+
         return TgTopic(
             id=d.id,
             name=d.title,
             tg_channel=tg_channel,
             latest_raw_messages=messages,
-            latest_discussions=tg_channel.channel_message_service.make_latest_topic_discussion_forest(messages)
+            latest_discussions=discussion_forest
         )
 
     async def make_channel_message_service(self, channel_id: int):
