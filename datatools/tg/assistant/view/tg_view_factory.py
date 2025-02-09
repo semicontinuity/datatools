@@ -45,14 +45,13 @@ class TgViewFactory:
     def make_message(self, tg_message: TgMessage) -> VMessage:
         sub_messages = self.make_messages_list(tg_message.replies.values())
 
-        lines = split_text_into_lines0(tg_message.message)
-        if len(lines) <= 1:
+        message_lines = split_text_into_lines0(tg_message.message)
+        if len(message_lines) <= 1:
             children = sub_messages
         else:
-            tg_message.ext.summary = '-'
-            width = max(len(l) for l in lines)
-            children = [VMessageLine(l + ' ' * (width - len(l))) for l in lines] + sub_messages
+            width = max(len(l) for l in message_lines)
+            children = [VMessageLine(l + ' ' * (width - len(l))) for l in message_lines] + sub_messages
 
-        v = VMessage(tg_message)
+        v = VMessage(tg_message, message_lines)
         v.set_elements(children)
         return v
