@@ -11,15 +11,14 @@ class VMessage(VFolder):
 
     def __init__(self, tg_message: TgMessage) -> None:
         self.tg_message = tg_message
-        # print(f'TG: {tg_message}\n', file=sys.stderr)
 
         self.time = self.tg_message.date.astimezone().strftime("%b %d %H:%M")
-        super().__init__(tg_message.message.replace('\n', ' | '))
+        super().__init__(tg_message.ext.summary or tg_message.message)
 
     def rich_text(self) -> list[tuple[AnyStr, Style]]:
         boldness = self.boldness()
 
-        res = [(self.time, Style(boldness, (64, 64, 64)))]
+        res = [(self.time, Style(boldness, (80, 80, 80)))]
 
         user = None
         if self.tg_message.from_user:

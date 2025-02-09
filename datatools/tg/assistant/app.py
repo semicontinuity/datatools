@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from picotui.defs import KEY_ENTER
+from sortedcontainers import SortedDict
 from telethon import TelegramClient
 
 from datatools.jt.app.app_kit import Applet
@@ -13,7 +14,14 @@ from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.tg import to_cache_folder, new_telegram_client
+from datatools.tg.assistant.model.tg_ext_message import TgExtMessage
+from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
+from datatools.tg.assistant.model.tg_topic import TgTopic
+from datatools.tg.assistant.model.tg_user import TgUser
+from datatools.tg.assistant.view.model.v_message import VMessage
+from datatools.tg.assistant.view.model.v_message_line import VMessageLine
+from datatools.tg.assistant.view.model.v_topic import VTopic
 from datatools.tg.assistant.view.tg_document import TgDocument
 from datatools.tg.assistant.view.tg_document_factory import TgDocumentFactory
 from datatools.tg.assistant.view.tg_grid import TgGrid
