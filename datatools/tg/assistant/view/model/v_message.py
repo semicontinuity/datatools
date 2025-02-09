@@ -2,7 +2,8 @@ from typing import AnyStr
 
 from datatools.jt.model.attributes import MASK_ITALIC, MASK_BOLD
 from datatools.tg.assistant.model.tg_message import TgMessage
-from datatools.tg.assistant.view.model import V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG
+from datatools.tg.assistant.view.model import V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG, V_READ_MESSAGE_SUMMARY_FG, \
+    V_UNREAD_MESSAGE_SUMMARY_FG
 from datatools.tg.assistant.view.model.v_folder import VFolder
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.treeview.rich_text import Style
@@ -34,9 +35,10 @@ class VMessage(VFolder):
         is_read = self.is_read()
         boldness = 0 if is_read else MASK_BOLD
         fg = V_READ_MESSAGE_FG if is_read else V_UNREAD_MESSAGE_FG
+        summary_fg = V_READ_MESSAGE_SUMMARY_FG if is_read else V_UNREAD_MESSAGE_SUMMARY_FG
 
         if self.tg_message.ext.summary:
-            return self.tg_message.ext.summary, Style(boldness, fg)
+            return self.tg_message.ext.summary, Style(boldness, summary_fg)
         else:
             if len(self.message_lines) == 0:
                 return self.tg_message.message, Style(boldness, fg)

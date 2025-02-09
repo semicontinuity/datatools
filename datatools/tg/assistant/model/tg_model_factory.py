@@ -12,6 +12,7 @@ from datatools.tg.assistant.repository.channel_participants_repository import Ch
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
 from datatools.tg.assistant.service.channel_message_service import ChannelMessageService
+from datatools.tg.assistant.service.message_summarizer_service import MessageSummarizerService
 
 
 class TgModelFactory:
@@ -21,6 +22,7 @@ class TgModelFactory:
         self.client = client
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
+        self.message_summarizer_service = MessageSummarizerService()
 
     async def make_tg_data(self) -> TgData:
         dialogs = await self.channel_repository.get_dialogs()
@@ -41,9 +43,12 @@ class TgModelFactory:
         )
 
         forum_topics = await self.channel_topic_repository.get_forum_topics(channel_id)
-        tg_channel.tg_topics = [TgTopic(id=d.id, name=d.title, tg_channel=tg_channel) for d in forum_topics]
+        tg_channel.tg_topics = [self.make_tg_topic(forum_topic, tg_channel) for forum_topic in forum_topics]
 
         return tg_channel
+
+    def make_tg_topic(self, d, tg_channel: TgChannel):
+        return TgTopic(id=d.id, name=d.title, tg_channel=tg_channel)
 
     async def make_channel_message_service(self, channel_id: int):
         channel_participants_repository = ChannelParticipantsRepository(self.client, channel_id)
@@ -59,5 +64,9 @@ class TgModelFactory:
             channel_ext_message_repository,
             channel_api_message_repository,
             channel_participants_repository,
-            channel_id
+            channel_id,
+            self.message_summarizer_service
         )
+
+    def close(self):
+        self.message_summarizer_service.stop()

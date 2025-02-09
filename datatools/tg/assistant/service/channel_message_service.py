@@ -9,6 +9,7 @@ from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
 from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
+from datatools.tg.assistant.service.message_summarizer_service import MessageSummarizerService
 
 
 class ChannelMessageService:
@@ -16,18 +17,21 @@ class ChannelMessageService:
     channel_api_message_repository: ChannelApiMessageRepository
     channel_participants_repository: ChannelParticipantsRepository
     channel_id: int
+    message_summarizer_service: MessageSummarizerService
 
     def __init__(
             self,
             channel_ext_message_repository: ChannelExtMessageRepository,
             channel_api_message_repository: ChannelApiMessageRepository,
             channel_participants_repository: ChannelParticipantsRepository,
-            channel_id: int
+            channel_id: int,
+            message_summarizer_service: MessageSummarizerService,
     ) -> None:
         self.channel_ext_message_repository = channel_ext_message_repository
         self.channel_api_message_repository = channel_api_message_repository
         self.channel_participants_repository = channel_participants_repository
         self.channel_id = channel_id
+        self.message_summarizer_service = message_summarizer_service
 
     def save_caches(self):
         self.channel_api_message_repository.save_cached()
@@ -86,6 +90,9 @@ class ChannelMessageService:
             message=raw_message.message,
             replies=SortedDict()
         )
+
+        if not tg_message.ext.summary and ('\n' in tg_message.message or len(tg_message.message) > 120):
+            self.message_summarizer_service.request_summary(tg_message)
 
         if raw_message.from_id and raw_message.from_id.is_user():
             tg_message.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)
