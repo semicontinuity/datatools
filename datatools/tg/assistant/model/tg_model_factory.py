@@ -53,7 +53,7 @@ class TgModelFactory:
         await channel_api_message_repository.load()
 
         channel_ext_message_repository = ChannelExtMessageRepository(self.cache_folder, channel_id)
-        # channel_ext_message_repository.load_cached()
+        channel_ext_message_repository.load_cached()
 
         return ChannelMessageService(
             channel_ext_message_repository,

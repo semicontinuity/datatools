@@ -1,7 +1,8 @@
 from typing import AnyStr
 
-from datatools.jt.model.attributes import MASK_ITALIC
+from datatools.jt.model.attributes import MASK_ITALIC, MASK_BOLD
 from datatools.tg.assistant.model.tg_message import TgMessage
+from datatools.tg.assistant.view.model import V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG
 from datatools.tg.assistant.view.model.v_folder import VFolder
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.treeview.rich_text import Style
@@ -17,32 +18,32 @@ class VMessage(VFolder):
         super().__init__(None)
 
     def rich_text(self) -> list[tuple[AnyStr, Style]]:
-        boldness = self.boldness()
+        is_read = self.is_read()
+        boldness = 0 if is_read else MASK_BOLD
+        user = self.tg_message.from_user.username if self.tg_message.from_user else '?'
+        user = user or '?'
 
-        res = [(self.time, Style(boldness, (80, 80, 80)))]
-
-        user = None
-        if self.tg_message.from_user:
-            user = self.tg_message.from_user.username
-        if user:
-            res.append((' ', Style()))
-            res.append((user, Style(boldness, hash_to_rgb(hash_code(user)))))
-
-        res.append((' ', Style()))
-        res.append(self.summary_rich_text())
-
-        return res
+        return [
+            (self.time, Style(boldness, (80, 80, 80))),
+            (' ', Style()),
+            (user, Style(0, hash_to_rgb(hash_code(user)))),
+            (' ', Style()), self.summary_rich_text()
+        ]
 
     def summary_rich_text(self):
+        is_read = self.is_read()
+        boldness = 0 if is_read else MASK_BOLD
+        fg = V_READ_MESSAGE_FG if is_read else V_UNREAD_MESSAGE_FG
+
         if self.tg_message.ext.summary:
-            return self.tg_message.ext.summary, Style(self.boldness(), (64, 160, 192))
+            return self.tg_message.ext.summary, Style(boldness, fg)
         else:
             if len(self.message_lines) == 0:
-                return self.tg_message.message, Style(self.boldness(), (64, 160, 192))
+                return self.tg_message.message, Style(boldness, fg)
             elif len(self.message_lines) == 1:
-                return self.message_lines[0], Style(self.boldness(), (64, 160, 192))
+                return self.message_lines[0], Style(boldness, fg)
             else:
-                return self.message_lines[0] if self.collapsed else '', Style(self.boldness() | MASK_ITALIC, (64, 160, 192))
+                return self.message_lines[0] if self.collapsed else '', Style(boldness | MASK_ITALIC, fg)
 
     # @override
     def show_plus_minus(self):
@@ -51,5 +52,9 @@ class VMessage(VFolder):
     def style_for_plus_minus(self):
         return Style(0, (96, 96, 96))
 
-    def boldness(self):
-        return 0
+    def is_read(self):
+        return self.tg_message.ext.viewed
+
+    def visit(self):
+        if len(self.message_lines) <= 1 or not self.collapsed:
+            self.tg_message.ext.viewed = True

@@ -20,3 +20,7 @@ class TgDocument(TreeDocument):
         else:
             element.collapsed = True
             return element.line
+
+    def visit(self, line: int):
+        element = self.rows[line]
+        element.visit()

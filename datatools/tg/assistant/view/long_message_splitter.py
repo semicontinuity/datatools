@@ -1,7 +1,7 @@
 import re
 
 
-def split_text_into_lines0(text: str, max_line_length=120):
+def split_text_into_lines0(text: str, max_line_length=112):
     lines = text.splitlines()
     ans = []
     for line in lines:
@@ -12,7 +12,7 @@ def split_text_into_lines0(text: str, max_line_length=120):
     return ans
 
 
-def split_text_into_lines(text: str, max_line_length=120):
+def split_text_into_lines(text: str, max_line_length=112):
     # Define regex patterns for sentence and sub-sentence boundaries
     sentence_endings = r'(?<=[.!?])\s+'
     sub_sentence_endings = r'([;,])\s*'  # Capture the delimiter (, or ;) for retention
@@ -89,8 +89,3 @@ def split_text_into_lines(text: str, max_line_length=120):
         lines.append(current_line)
 
     return lines
-
-
-# s = "и кстати мы обсуждали что для него нужна процедура миграции прописанная чтобы без даунтайма, она появилась?"
-# lines = split_text_into_lines(s)
-# print(lines)

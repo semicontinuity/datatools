@@ -50,7 +50,7 @@ class TgViewFactory:
             children = sub_messages
         else:
             width = max(len(l) for l in message_lines)
-            children = [VMessageLine(l + ' ' * (width - len(l))) for l in message_lines] + sub_messages
+            children = [VMessageLine('▏' + l + ' ' * (width - len(l)) + '▕') for l in message_lines] + sub_messages
 
         v = VMessage(tg_message, message_lines)
         v.set_elements(children)

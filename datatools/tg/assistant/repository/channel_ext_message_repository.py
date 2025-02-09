@@ -40,7 +40,7 @@ class ChannelExtMessageRepository:
         return bucket
 
     def load_cached(self):
-        print(f'Loading cache for channel {self.channel_id}', file=sys.stderr)
+        print(f'ChannelExtMessageRepository: loading cache for channel {self.channel_id}', file=sys.stderr)
 
         for x in self.files_folder.iterdir():
             if x.is_file() and x.name.startswith(CACHE_FILE_PREFIX):

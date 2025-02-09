@@ -1,8 +1,14 @@
+from datatools.jt.model.attributes import MASK_BOLD
+from datatools.tg.assistant.view.model import V_MESSAGE_LINE_BG, V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG
 from datatools.tg.assistant.view.model.v_element import VElement
 from datatools.tui.treeview.rich_text import Style
 
 
 class VMessageLine(VElement):
 
+    def __init__(self, text: str) -> None:
+        super().__init__(text)
+
     def text_style(self) -> Style:
-        return Style(attr=0, fg=(64, 160, 192), bg=(32, 48, 48))
+        boldness = 0 if self.parent.is_read() else MASK_BOLD
+        return Style(attr=boldness, fg=V_READ_MESSAGE_FG if self.parent.is_read() else V_UNREAD_MESSAGE_FG, bg=V_MESSAGE_LINE_BG)
