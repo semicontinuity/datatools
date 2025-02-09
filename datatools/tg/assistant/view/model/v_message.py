@@ -1,9 +1,8 @@
 from typing import AnyStr
 
-from datatools.jt.model.attributes import MASK_ITALIC, MASK_BOLD
+from datatools.jt.model.attributes import MASK_ITALIC, MASK_BOLD, MASK_UNDERLINE
 from datatools.tg.assistant.model.tg_message import TgMessage
-from datatools.tg.assistant.view.model import V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG, V_READ_MESSAGE_SUMMARY_FG, \
-    V_UNREAD_MESSAGE_SUMMARY_FG
+from datatools.tg.assistant.view.model import V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG
 from datatools.tg.assistant.view.model.v_folder import VFolder
 from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.treeview.rich_text import Style
@@ -27,7 +26,7 @@ class VMessage(VFolder):
         return [
             (self.time, Style(boldness, (80, 80, 80))),
             (' ', Style()),
-            (user, Style(0, hash_to_rgb(hash_code(user)))),
+            (user, Style(MASK_UNDERLINE if self.tg_message.ext.is_inferred_reply_to else 0, hash_to_rgb(hash_code(user)))),
             (' ', Style()), self.summary_rich_text()
         ]
 
@@ -35,10 +34,10 @@ class VMessage(VFolder):
         is_read = self.is_read()
         boldness = 0 if is_read else MASK_BOLD
         fg = V_READ_MESSAGE_FG if is_read else V_UNREAD_MESSAGE_FG
-        summary_fg = V_READ_MESSAGE_SUMMARY_FG if is_read else V_UNREAD_MESSAGE_SUMMARY_FG
+        summary_fg = V_READ_MESSAGE_FG if is_read else V_UNREAD_MESSAGE_FG
 
         if self.tg_message.ext.summary:
-            return self.tg_message.ext.summary, Style(boldness, summary_fg)
+            return self.tg_message.ext.summary, Style(boldness | MASK_UNDERLINE, summary_fg)
         else:
             if len(self.message_lines) == 0:
                 return self.tg_message.message, Style(boldness, fg)
