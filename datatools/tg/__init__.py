@@ -15,7 +15,7 @@ def to_cache_folder(telethon_session_slug: str) -> pathlib.Path:
     return pathlib.Path(os.environ['HOME']) / '.telethon' / telethon_session_slug
 
 
-async def new_telegram_client(telethon_session_slug: str):
+async def new_telegram_client(telethon_session_slug: str) -> TelegramClient:
     folder = to_cache_folder(telethon_session_slug)
     api_id = int(read_from(folder / 'api_id').strip())
     api_hash = read_from(folder / 'api_hash').strip()

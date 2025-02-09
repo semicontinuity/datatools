@@ -4,6 +4,7 @@ from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.model.tg_topic import TgTopic
+from datatools.tg.assistant.view.model.v_element import VElement
 from datatools.tg.assistant.view.model.v_forum import VForum
 from datatools.tg.assistant.view.model.v_message import VMessage
 from datatools.tg.assistant.view.model.v_root import VRoot
@@ -15,7 +16,7 @@ class TgViewFactory:
     def __init__(self, since) -> None:
         self.since = since
 
-    def make_root(self, tg_data: TgData):
+    def make_root(self, tg_data: TgData) -> VElement:
         root = VRoot("telegram")
         root.set_elements([self.make_forum(ch) for ch in tg_data.tg_channels])
         root.indent_recursive()

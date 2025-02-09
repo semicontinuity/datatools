@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from picotui.defs import KEY_ENTER
+from telethon import TelegramClient
 
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
@@ -70,7 +71,7 @@ if get_current_highlighting() is None:
     set_current_highlighting(ConsoleHighlighting())
 
 
-async def do_main(folder, client, since):
+async def do_main(folder, client: TelegramClient, since):
     model_factory = TgModelFactory(folder, client)
     view_factory = TgViewFactory(since)
     document_factory = TgDocumentFactory()

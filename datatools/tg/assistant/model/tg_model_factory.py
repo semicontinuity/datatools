@@ -1,5 +1,8 @@
 import pathlib
 
+from telethon import TelegramClient
+from telethon.tl.custom import Dialog
+
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_topic import TgTopic
@@ -13,13 +16,13 @@ from datatools.tg.assistant.service.channel_message_service import ChannelMessag
 
 class TgModelFactory:
 
-    def __init__(self, cache_folder: pathlib.Path, client) -> None:
+    def __init__(self, cache_folder: pathlib.Path, client: TelegramClient) -> None:
         self.cache_folder = cache_folder
         self.client = client
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
 
-    async def make_tg_data(self):
+    async def make_tg_data(self) -> TgData:
         dialogs = await self.channel_repository.get_dialogs()
         return TgData(
             [
@@ -27,8 +30,8 @@ class TgModelFactory:
             ]
         )
 
-    async def make_tg_channel(self, dialog):
-        channel_id = dialog.id
+    async def make_tg_channel(self, dialog: Dialog):
+        channel_id: int = dialog.id
 
         tg_channel = TgChannel(
             id=channel_id,
