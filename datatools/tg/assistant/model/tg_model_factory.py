@@ -3,6 +3,7 @@ import sys
 
 from telethon import TelegramClient
 from telethon.tl.custom import Dialog
+from yndx.st.lib.llm.gradio import Gradio
 
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
@@ -13,8 +14,10 @@ from datatools.tg.assistant.repository.channel_participants_repository import Ch
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
 from datatools.tg.assistant.service.channel_message_service import ChannelMessageService
+from datatools.tg.assistant.service.discussion_classifier import DiscussionClassifier
 from datatools.tg.assistant.service.discussion_forest_flattener import flat_discussion_forest
 from datatools.tg.assistant.service.message_summarizer_service import MessageSummarizerService
+from datatools.tg.assistant.service.topic_messages_weaver import TopicMessagesWeaver
 
 
 class TgModelFactory:
@@ -25,6 +28,7 @@ class TgModelFactory:
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
         self.message_summarizer_service = MessageSummarizerService()
+        self.topic_messages_weaver = TopicMessagesWeaver(DiscussionClassifier(Gradio()))
         self.since = since
 
     async def make_tg_data(self) -> TgData:
@@ -50,16 +54,16 @@ class TgModelFactory:
 
         return tg_channel
 
-    def make_tg_topic(self, d, tg_channel: TgChannel):
-        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(d.id,                                                                                                                   self.since)
+    def make_tg_topic(self, forum_topic, tg_channel: TgChannel):
+        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(forum_topic.id, self.since)
         discussion_forest = tg_channel.channel_message_service.make_latest_topic_discussion_forest(messages)
         flat_discussions = flat_discussion_forest(discussion_forest)
         inference_done = all(flat_discussion.ext.inference_done() for flat_discussion in flat_discussions)
-        print('inference_done', inference_done, file=sys.stderr)
+        print(f'inference already done: {inference_done}, channel_id: {tg_channel.id}, topic_id: {forum_topic.id}', file=sys.stderr)
 
         return TgTopic(
-            id=d.id,
-            name=d.title,
+            id=forum_topic.id,
+            name=forum_topic.title,
             tg_channel=tg_channel,
             latest_raw_messages=messages,
             latest_discussions=discussion_forest
@@ -85,3 +89,4 @@ class TgModelFactory:
 
     def close(self):
         self.message_summarizer_service.stop()
+        self.topic_messages_weaver.stop()

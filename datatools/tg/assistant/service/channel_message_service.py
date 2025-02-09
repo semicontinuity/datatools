@@ -111,7 +111,7 @@ class ChannelMessageService:
         )
 
         if not tg_message.ext.summary and ('\n' in tg_message.message or len(tg_message.message) > 120):
-            self.message_summarizer_service.request_summary(tg_message)
+            self.message_summarizer_service.submit(tg_message)
 
         if raw_message.from_id and raw_message.from_id.is_user():
             tg_message.from_user = self.channel_participants_repository.get_user(raw_message.from_id.user_id)

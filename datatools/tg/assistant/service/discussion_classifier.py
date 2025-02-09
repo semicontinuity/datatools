@@ -140,7 +140,7 @@ Provide no explanations. Maintain original language/formatting.
 
         return self.classify_flat_discussions(flat_discussion_forest(discussion_forest))
 
-    def classify_flat_discussions(self, flat_discussions):
+    def classify_flat_discussions(self, flat_discussions) -> list[TgMessage]:
         query = self.classify_discussions_query_data(flat_discussions)
         print(f'Classifying discussions', file=sys.stderr)
         print(f'', file=sys.stderr)

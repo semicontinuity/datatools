@@ -76,8 +76,9 @@ if get_current_highlighting() is None:
 def update_footer(doc: TgDocument, model_factory: TgModelFactory):
     while True:
         time.sleep(1)
-        qsize = model_factory.message_summarizer_service.executor._work_queue.qsize()
-        doc.footer = str(qsize)
+        summ_qsize = model_factory.message_summarizer_service.work_queue_size()
+        weave_qsize = model_factory.topic_messages_weaver.work_queue_size()
+        doc.footer = f'Summarize: {summ_qsize} Weave: {weave_qsize}'
 
 
 async def do_main(folder, client: TelegramClient, since):

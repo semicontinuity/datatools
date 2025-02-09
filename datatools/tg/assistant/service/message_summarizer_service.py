@@ -9,11 +9,11 @@ class MessageSummarizerService:
     llm: Zeliboba
 
     def __init__(self) -> None:
-        import warnings, urllib3
-        warnings.filterwarnings('ignore', category=urllib3.exceptions.InsecureRequestWarning)
-
         self.llm = Zeliboba()
         self.executor = ThreadPoolExecutor(max_workers=1)
+
+    def work_queue_size(self) -> int:
+        return self.executor._work_queue.qsize()
 
     def stop(self):
         self.executor.shutdown(wait=False, cancel_futures=True)
@@ -74,5 +74,5 @@ Plarform #1005 (preprod), таймаут ("first operator is unavailable")
         )
         tg_message.ext.summary = r
 
-    def request_summary(self, tg_message: TgMessage):
+    def submit(self, tg_message: TgMessage):
         self.executor.submit(self._summarize, tg_message)
