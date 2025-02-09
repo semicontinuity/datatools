@@ -1,8 +1,8 @@
-import sys
 from typing import AnyStr
 
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.view.model.v_folder import VFolder
+from datatools.tui.coloring import hash_code, hash_to_rgb
 from datatools.tui.treeview.rich_text import Style
 
 
@@ -25,7 +25,7 @@ class VMessage(VFolder):
             user = self.tg_message.from_user.username
         if user:
             res.append((' ', Style()))
-            res.append((user, Style(boldness, (128, 128, 128))))
+            res.append((user, Style(boldness, hash_to_rgb(hash_code(user)))))
 
         res.append((' ', Style()))
         res.append((self.text, Style(boldness, (64, 160, 192))))

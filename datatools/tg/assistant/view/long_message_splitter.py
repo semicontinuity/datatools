@@ -90,3 +90,7 @@ def split_text_into_lines(text: str, max_line_length=120):
 
     return lines
 
+
+# s = "и кстати мы обсуждали что для него нужна процедура миграции прописанная чтобы без даунтайма, она появилась?"
+# lines = split_text_into_lines(s)
+# print(lines)
