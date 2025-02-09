@@ -5,6 +5,7 @@ import click
 
 from datatools.tg import to_cache_folder, new_telegram_client, json_dump
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
+from datatools.tg.assistant.service import make_llm_provider
 from datatools.tg.assistant.service.discussion_classifier import DiscussionClassifier
 
 
@@ -32,11 +33,17 @@ from datatools.tg.assistant.service.discussion_classifier import DiscussionClass
     required=True,
     help="Since",
 )
-def topic_discussions_classified(session_slug: str, channel_id: int, topic_id: int, since: str):
-    asyncio.run(dump_topic_discussions_classified(session_slug, channel_id, topic_id, since))
+@click.option(
+    "--llm-provider",
+    type=str,
+    default="gradio",
+    help="LLM Provider",
+)
+def topic_discussions_classified(session_slug: str, channel_id: int, topic_id: int, since: str, llm_provider: str):
+    asyncio.run(dump_topic_discussions_classified(session_slug, channel_id, topic_id, since, llm_provider))
 
 
-async def dump_topic_discussions_classified(session_slug: str, channel_id: int, topic_id: int, since: str):
+async def dump_topic_discussions_classified(session_slug: str, channel_id: int, topic_id: int, since: str, llm_provider):
     async with await new_telegram_client(session_slug) as client:
         cache_folder = to_cache_folder(session_slug)
         model_factory = TgModelFactory(cache_folder, client)
@@ -45,4 +52,6 @@ async def dump_topic_discussions_classified(session_slug: str, channel_id: int, 
         discussions = channel_message_service.get_latest_topic_discussion_forest(topic_id, since)
         print(f'Fetched {len(discussions)} discussions', file=sys.stderr)
 
-        print(json_dump(DiscussionClassifier().classify(discussions)))
+        print(json_dump(DiscussionClassifier(make_llm_provider(llm_provider)).classify(discussions)))
+
+        channel_message_service.channel_ext_message_repository.save_cached()

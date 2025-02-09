@@ -12,8 +12,8 @@ class MessageSummarizerService:
         import warnings, urllib3
         warnings.filterwarnings('ignore', category=urllib3.exceptions.InsecureRequestWarning)
 
-        self.llm = Zeliboba(model_name=None)
-        self.executor = ThreadPoolExecutor(max_workers=2)
+        self.llm = Zeliboba()
+        self.executor = ThreadPoolExecutor(max_workers=1)
 
     def stop(self):
         self.executor.shutdown(wait=False, cancel_futures=True)

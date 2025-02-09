@@ -2,6 +2,8 @@
 import asyncio
 import os
 import sys
+import threading
+import time
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -71,6 +73,13 @@ if get_current_highlighting() is None:
     set_current_highlighting(ConsoleHighlighting())
 
 
+def update_footer(doc: TgDocument, model_factory: TgModelFactory):
+    while True:
+        time.sleep(1)
+        qsize = model_factory.message_summarizer_service.executor._work_queue.qsize()
+        doc.footer = str(qsize)
+
+
 async def do_main(folder, client: TelegramClient, since):
     model_factory = TgModelFactory(folder, client)
     view_factory = TgViewFactory(since)
@@ -82,6 +91,11 @@ async def do_main(folder, client: TelegramClient, since):
         view_factory.make_root(tg_data),
         "footer"
     )
+
+    time_thread = threading.Thread(target=lambda : update_footer(doc, model_factory), daemon=True)
+    time_thread.start()
+
+    time.sleep(5)
 
     key_code, cur_line = with_alternate_screen(lambda: loop(doc))
     exit_code, output = handle_loop_result(doc, key_code, cur_line)

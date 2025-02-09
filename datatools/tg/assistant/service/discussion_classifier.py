@@ -1,7 +1,8 @@
 import re
 import sys
+
 from sortedcontainers import SortedDict
-from gradio_client import Client
+from yndx.st.lib.llm import LargeLanguageModel
 
 from datatools.tg.assistant.model.tg_message import TgMessage
 
@@ -16,7 +17,7 @@ Input Format:
     Each phrase has a header:
     FROM=[user] ID=[number] FOLLOWS_ID=[number|<INFER>]
 
-    Phrase IDs are increasing numbers, that reflect temporal order of phases.
+    Phrase IDs are INCREASING numbers, that reflect temporal order of phases.
     <INFER> means the predecessor is unknown and needs to be determined.
 
 Instructions:
@@ -24,6 +25,7 @@ Instructions:
     Analyze Context:
 
         * Treat phrases as part of concurrent conversations (threads).
+        * Phrase IDs are increasing in every thread. 
         * Identify threads by topic continuity (i.e., phrases within the topic form a consistent conversation).
         * If FOLLOWS_ID is known (is a number), then the predecessor of the phrase has ID equal FOLLOWS_ID.
         
@@ -42,7 +44,7 @@ Instructions:
     Link Phrases:
       For each <INFER> phrase:
         * Resolve **question-answer pairs first**, even without shared keywords.
-        * Find the most recent ID in the same thread that directly precedes it temporally (thread predecessor)
+        * Find the most recent ID in the same thread that directly PRECEDES it temporally (thread predecessor). Search only in preceding phrases.
         * If no clear match exists, retain <INFER>.
 
     Output Rules:
@@ -62,39 +64,47 @@ FROM=user1 ID=120 FOLLOWS_ID=<INFER>
 планирую запустить прокси
 - сначала abc
 - потом def
-#####
-ID=121 FOLLOWS_ID=120
 
-FROM=user1 займусь запуском прокси
+#####
+FROM=user1 ID=121 FOLLOWS_ID=120
+
+займусь запуском прокси
 - сначала abc
 - потом def
 или отложим на след. неделю?
 @user2
-#####
-ID=122 FOLLOWS_ID=<INFER>
 
-FROM=user2 можно и сейчас, если время есть.
 #####
-ID=123 FOLLOWS_ID=<INFER>
+FROM=user2 ID=122 FOLLOWS_ID=<INFER>
 
-FROM=user3 после прогона CI, 5 проблем для бэка, 55 для фронта
+можно и сейчас, если время есть.
+
+#####
+FROM=user3 ID=123 FOLLOWS_ID=<INFER>
+
+после прогона CI, 5 проблем для бэка, 55 для фронта
+
 #####
 FROM=user4 ID=124 FOLLOWS_ID=<INFER>
 
 По поводу 55 проблем я посылал письмо.
 Возможно, это из-за сети.
+
 #####
 FROM=user6 ID=125 FOLLOWS_ID=<INFER>
 
 Половина инстансов envoy недоступна. Может, забыли поднять?
+
 #####
 FROM=user7 ID=126 FOLLOWS_ID=<INFER>
 
 Может, ещё раз попробовать?
+
 #####
 FROM=user8 ID=127 FOLLOWS_ID=<INFER>
 
 Что касается проблем бэка - это повторяется уже неделю
+
 #####
 FROM=user8 ID=128 FOLLOWS_ID=<INFER>
 
@@ -116,13 +126,13 @@ ID=128 FOLLOWS_ID=127
 Your Turn:
 
 Process the provided phrases. Only output updated <INFER> lines.
-No explanations. Maintain original language/formatting.
+Provide no explanations. Maintain original language/formatting.
 """
 
     PROMPT3_RE = re.compile('ID=(\\d+) FOLLOWS_ID=([\\d+]+)')
 
-    def __init__(self) -> None:
-        self.client = Client("Qwen/Qwen2.5", verbose=False)
+    def __init__(self, llm: LargeLanguageModel) -> None:
+        self.llm = llm
 
     def classify(self, raw_discussions: list[TgMessage]) -> list[TgMessage]:
         if len(raw_discussions) == 0:
@@ -132,18 +142,12 @@ No explanations. Maintain original language/formatting.
         query = self.classify_discussions_query_data(flat_discussions)
 
         print(f'Classifying discussions', file=sys.stderr)
-        # print('', file=sys.stderr)
-        # print(query, file=sys.stderr)
-
-        r1, r2, r3 = self.client.predict(
-            api_name="/model_chat_1",
-            radio="72B",
-            system=DiscussionClassifier.PROMPT3,
-            query=query,
-        )
-        response_text = r2[0][1]['text']
-
-        # return response_text
+        print(f'', file=sys.stderr)
+        print(f'', file=sys.stderr)
+        print(query, file=sys.stderr)
+        print(f'', file=sys.stderr)
+        print(f'', file=sys.stderr)
+        response_text = self.llm.invoke(DiscussionClassifier.PROMPT3, query)
         print(response_text, file=sys.stderr)
         starters = self.parse_starters_llm_response(response_text)
         return self.weave_discussions(flat_discussions, starters)
@@ -153,24 +157,43 @@ No explanations. Maintain original language/formatting.
         """
         :param flat_discussions: list of raw discussions (every item is top-level TgMessage, not a reply)
         """
+        print('weave_discussions: ', len(flat_discussions), file=sys.stderr)
         discussions: dict[int, TgMessage] = {d.id: d for d in flat_discussions}
 
         # Use 'starters' to weave together discussions
         for d_id, starter_id in starters.items():
             print(f'NEED LINK {d_id} to {starter_id}', file=sys.stderr)
             if d_id == starter_id:
+                print('WRONG', file=sys.stderr)
                 continue
-            super_discussion = discussions.get(starter_id)
+
+            if d_id < starter_id:
+                print('WRONG', file=sys.stderr)
+                # UGLY workaround! should not happen!
+                d_id, starter_id = starter_id, d_id
+            super_discussion: TgMessage = discussions.get(starter_id)
             discussion = discussions.get(d_id)
 
             if not discussion or not super_discussion:
                 # LLM has missed
                 continue
 
-            super_discussion.replies[d_id] = discussion
-            discussion.is_attached = True
+            if discussion.id in super_discussion.replies:
+                print(f'ALREADY IN REPLIES: {d_id} in replies of {starter_id}', file=sys.stderr)
+                continue
 
-        return [d for d in discussions.values() if not d.is_attached and not d.is_reply_to]
+            if super_discussion.ext.inferred_replies is None:
+                super_discussion.ext.inferred_replies = []
+            super_discussion.ext.inferred_replies.append(d_id)
+            super_discussion.ext.inferred_replies.sort()
+            discussion.ext.is_inferred_reply_to = starter_id
+
+            # super_discussion.replies[d_id] = discussion
+            print(f'ADDED {d_id} as REPLY to {starter_id}', file=sys.stderr)
+            # discussion.ext.is_attached = True
+
+        # return [d for d in discussions.values() if not d.ext.is_attached and not d.ext.is_reply_to]
+        return [d for d in flat_discussions if not d.ext.is_inferred_reply_to and not d.ext.is_reply_to]
 
     def parse_starters_llm_response(self, text) -> dict[int, int]:
         lines = text.splitlines()
@@ -190,12 +213,12 @@ No explanations. Maintain original language/formatting.
         return '\n'.join([self._tg_message(item) for item in flat_discussions])
 
     def _tg_message(self, m: TgMessage):
-            return f"""
-    #####
-    FROM={m.get_username()} ID={m.id} FOLLOWS_ID={m.is_reply_to if m.is_reply_to else "<INFER>"}
+        return f"""
+#####
+FROM={m.get_username()} ID={m.id} FOLLOWS_ID={m.ext.is_reply_to if m.ext.is_reply_to else "<INFER>"}
 
-    {m.message}
-    """
+{m.message}
+"""
 
     def flat_discussions(self, raw_discussions):
         items: SortedDict[int, 'TgMessage'] = SortedDict()

@@ -9,5 +9,7 @@ class TgExtMessage:
     summary: str = None
     is_reply: bool = False
     is_reply_to: int = None
-    is_attached: bool = False
     viewed: bool = False
+
+    inferred_replies: list[int] = None
+    is_inferred_reply_to: int = None
