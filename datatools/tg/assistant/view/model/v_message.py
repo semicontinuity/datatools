@@ -1,3 +1,4 @@
+import os
 from typing import AnyStr
 
 from datatools.jt.model.attributes import MASK_ITALIC, MASK_BOLD, MASK_UNDERLINE
@@ -15,6 +16,7 @@ class VMessage(VFolder):
         self.tg_message = tg_message
         self.message_lines = message_lines
         self.time = self.tg_message.date.astimezone().strftime("%b %d %H:%M")
+        self.show_message_ids = os.environ.get('MSG_IDS')
         super().__init__(None)
 
     def rich_text(self) -> list[tuple[AnyStr, Style]]:
@@ -25,7 +27,7 @@ class VMessage(VFolder):
 
         return [
             (self.time, Style(boldness, (80, 80, 80))),
-            (' ', Style()),
+            (f' {self.tg_message.id} ' if self.show_message_ids else ' ', Style()),
             (user, Style(MASK_UNDERLINE if self.tg_message.ext.is_inferred_reply_to else 0, hash_to_rgb(hash_code(user)))),
             (' ', Style()), self.summary_rich_text()
         ]

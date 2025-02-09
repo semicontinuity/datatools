@@ -119,5 +119,5 @@ class ChannelApiMessageRepository:
         res.reverse()
         return res
 
-    def get_latest_topic_raw_messages(self, topic_id: int, since: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
+    def get_latest_topic_raw_messages(self, topic_id: int, since: str) -> list[TgApiMessage|TgApiMessageService]:
         return [m for m in (self.get_latest_raw_messages(since)) if self.resolve_topic_id(m) == topic_id]

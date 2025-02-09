@@ -46,12 +46,13 @@ def topic_discussions_classified(session_slug: str, channel_id: int, topic_id: i
 async def dump_topic_discussions_classified(session_slug: str, channel_id: int, topic_id: int, since: str, llm_provider):
     async with await new_telegram_client(session_slug) as client:
         cache_folder = to_cache_folder(session_slug)
-        model_factory = TgModelFactory(cache_folder, client)
+        model_factory = TgModelFactory(cache_folder, client, since)
         channel_message_service = await model_factory.make_channel_message_service(channel_id)
 
         raw_messages = channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(topic_id, since)
+        print(f'Fetched {len(raw_messages)} messages in channel {channel_id}, topic {topic_id} since {since}', file=sys.stderr)
         discussions = channel_message_service.make_latest_topic_discussion_forest(raw_messages)
-        print(f'Fetched {len(discussions)} discussions', file=sys.stderr)
+        print(f'Converted to {len(discussions)} discussions in channel {channel_id}, topic {topic_id}', file=sys.stderr)
 
         print(json_dump(DiscussionClassifier(make_llm_provider(llm_provider)).classify(discussions)))
 

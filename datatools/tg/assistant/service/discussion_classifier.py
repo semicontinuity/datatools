@@ -160,6 +160,11 @@ Provide no explanations. Maintain original language/formatting.
         print('weave_discussions: ', len(flat_discussions), file=sys.stderr)
         discussions: dict[int, TgMessage] = {d.id: d for d in flat_discussions}
 
+        for d in flat_discussions:
+            # Empty array is marker: inference is done
+            if d.ext.inferred_replies is None:
+                d.ext.inferred_replies = []
+
         # Use 'starters' to weave together discussions
         for d_id, starter_id in starters.items():
             print(f'NEED LINK {d_id} to {starter_id}', file=sys.stderr)
@@ -182,8 +187,6 @@ Provide no explanations. Maintain original language/formatting.
                 print(f'ALREADY IN REPLIES: {d_id} in replies of {starter_id}', file=sys.stderr)
                 continue
 
-            if super_discussion.ext.inferred_replies is None:
-                super_discussion.ext.inferred_replies = []
             super_discussion.ext.inferred_replies.append(d_id)
             super_discussion.ext.inferred_replies.sort()
             discussion.ext.is_inferred_reply_to = starter_id
@@ -213,9 +216,16 @@ Provide no explanations. Maintain original language/formatting.
         return '\n'.join([self._tg_message(item) for item in flat_discussions])
 
     def _tg_message(self, m: TgMessage):
+        if m.ext.is_reply_to:
+            replies_to = m.ext.is_reply_to
+        elif m.ext.is_inferred_reply_to:
+            replies_to = m.ext.is_inferred_reply_to
+        else:
+            replies_to = '<INFER>'
+
         return f"""
 #####
-FROM={m.get_username()} ID={m.id} FOLLOWS_ID={m.ext.is_reply_to if m.ext.is_reply_to else "<INFER>"}
+FROM={m.get_username()} ID={m.id} FOLLOWS_ID={replies_to}
 
 {m.message}
 """

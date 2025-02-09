@@ -39,7 +39,7 @@ def topic_discussions_raw(session_slug: str, channel_id: int, topic_id: int, sin
 async def dump_topic_discussions_raw(session_slug: str, channel_id: int, topic_id: int, since: str):
     async with await new_telegram_client(session_slug) as client:
         cache_folder = to_cache_folder(session_slug)
-        model_factory = TgModelFactory(cache_folder, client)
+        model_factory = TgModelFactory(cache_folder, client, since)
         channel_message_service = await model_factory.make_channel_message_service(channel_id)
 
         raw_messages = channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(topic_id, since)

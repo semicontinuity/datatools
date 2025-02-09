@@ -17,12 +17,13 @@ from datatools.tg.assistant.service.message_summarizer_service import MessageSum
 
 class TgModelFactory:
 
-    def __init__(self, cache_folder: pathlib.Path, client: TelegramClient) -> None:
+    def __init__(self, cache_folder: pathlib.Path, client: TelegramClient, since: str) -> None:
         self.cache_folder = cache_folder
         self.client = client
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
         self.message_summarizer_service = MessageSummarizerService()
+        self.since = since
 
     async def make_tg_data(self) -> TgData:
         dialogs = await self.channel_repository.get_dialogs()
@@ -48,7 +49,15 @@ class TgModelFactory:
         return tg_channel
 
     def make_tg_topic(self, d, tg_channel: TgChannel):
-        return TgTopic(id=d.id, name=d.title, tg_channel=tg_channel)
+        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(d.id,
+                                                                                                                   self.since)
+        return TgTopic(
+            id=d.id,
+            name=d.title,
+            tg_channel=tg_channel,
+            latest_raw_messages=messages,
+            latest_discussions=tg_channel.channel_message_service.make_latest_topic_discussion_forest(messages)
+        )
 
     async def make_channel_message_service(self, channel_id: int):
         channel_participants_repository = ChannelParticipantsRepository(self.client, channel_id)

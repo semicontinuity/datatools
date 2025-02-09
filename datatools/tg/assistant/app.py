@@ -81,8 +81,8 @@ def update_footer(doc: TgDocument, model_factory: TgModelFactory):
 
 
 async def do_main(folder, client: TelegramClient, since):
-    model_factory = TgModelFactory(folder, client)
-    view_factory = TgViewFactory(since)
+    model_factory = TgModelFactory(folder, client, since)
+    view_factory = TgViewFactory()
     document_factory = TgDocumentFactory()
 
     tg_data = await model_factory.make_tg_data()

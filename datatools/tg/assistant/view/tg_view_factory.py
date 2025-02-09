@@ -15,9 +15,6 @@ from datatools.tg.assistant.view.model.v_topic import VTopic
 
 class TgViewFactory:
 
-    def __init__(self, since) -> None:
-        self.since = since
-
     def make_root(self, tg_data: TgData) -> VElement:
         root = VRoot("telegram")
         root.set_elements([self.make_forum(ch) for ch in tg_data.tg_channels])
@@ -35,9 +32,7 @@ class TgViewFactory:
         return v_topic
 
     def make_messages(self, tg_topic: TgTopic) -> List[VMessage]:
-        return self.make_messages_list(
-            tg_topic.get_latest_discussions(self.since)
-        )
+        return self.make_messages_list(tg_topic.latest_discussions)
 
     def make_messages_list(self, discussions) -> list[VMessage]:
         return [self.make_message(t) for t in discussions]
