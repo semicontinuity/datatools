@@ -41,16 +41,23 @@ class TgModelFactory:
 
     async def make_tg_channel(self, dialog: Dialog) -> TgChannel:
         channel_id: int = dialog.id
+        channel_message_service = await self.make_channel_message_service(channel_id)
 
-        tg_channel = TgChannel(
+        messages = channel_message_service.channel_api_message_repository.get_latest_raw_messages(self.since)
+        discussion_forest = channel_message_service.make_latest_topic_discussion_forest(messages)
+        flat_discussions = flat_discussion_forest(discussion_forest)
+        inference_done = all(flat_discussion.ext.inference_done() for flat_discussion in flat_discussions)
+        print(f'inference already done: {inference_done}, channel_id: {channel_id}', file=sys.stderr)
+        if not inference_done:
+            self.topic_messages_weaver.submit(flat_discussions)
+
+        return TgChannel(
             id=channel_id,
             name=dialog.name,
-            channel_message_service=await self.make_channel_message_service(channel_id),
+            channel_message_service=channel_message_service,
+            latest_raw_messages=messages,
+            latest_discussions=discussion_forest
         )
-
-        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_raw_messages(self.since)
-
-        return tg_channel
 
     async def make_tg_forum(self, dialog: Dialog) -> TgForum:
         channel_id: int = dialog.id
@@ -67,19 +74,19 @@ class TgModelFactory:
 
         return tg_forum
 
-    def make_tg_topic(self, forum_topic, tg_channel: TgForum):
-        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(forum_topic.id, self.since)
-        discussion_forest = tg_channel.channel_message_service.make_latest_topic_discussion_forest(messages)
+    def make_tg_topic(self, forum_topic, tg_forum: TgForum):
+        messages = tg_forum.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(forum_topic.id, self.since)
+        discussion_forest = tg_forum.channel_message_service.make_latest_topic_discussion_forest(messages)
         flat_discussions = flat_discussion_forest(discussion_forest)
         inference_done = all(flat_discussion.ext.inference_done() for flat_discussion in flat_discussions)
-        print(f'inference already done: {inference_done}, channel_id: {tg_channel.id}, topic_id: {forum_topic.id}', file=sys.stderr)
+        print(f'inference already done: {inference_done}, channel_id: {tg_forum.id}, topic_id: {forum_topic.id}', file=sys.stderr)
         if not inference_done:
             self.topic_messages_weaver.submit(flat_discussions)
 
         return TgTopic(
             id=forum_topic.id,
             name=forum_topic.title,
-            tg_channel=tg_channel,
+            tg_channel=tg_forum,
             latest_raw_messages=messages,
             latest_discussions=discussion_forest
         )

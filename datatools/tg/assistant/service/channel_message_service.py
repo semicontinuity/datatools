@@ -54,6 +54,9 @@ class ChannelMessageService:
         tg_messages = dict()
 
         for raw_message in raw_messages:
+            if type(raw_message) is TgApiMessageService:
+                continue
+
             child = None
             while True:
                 m_id = raw_message.id
