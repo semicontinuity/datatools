@@ -4,7 +4,7 @@ from datatools.tg.assistant.service.channel_message_service import ChannelMessag
 
 
 @dataclass
-class TgChannel:
+class TgForum:
     id: int
     forum: bool
     name: str

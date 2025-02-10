@@ -5,7 +5,7 @@ from telethon import TelegramClient
 from telethon.tl.custom import Dialog
 from yndx.st.lib.llm.gradio import Gradio
 
-from datatools.tg.assistant.model.tg_channel import TgChannel
+from datatools.tg.assistant.model.tg_forum import TgForum
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
@@ -43,7 +43,7 @@ class TgModelFactory:
         channel_id: int = dialog.id
 
         forum = dialog.entity.forum
-        tg_channel = TgChannel(
+        tg_channel = TgForum(
             id=channel_id,
             forum=forum,
             name=dialog.name,
@@ -57,7 +57,7 @@ class TgModelFactory:
 
         return tg_channel
 
-    def make_tg_topic(self, forum_topic, tg_channel: TgChannel):
+    def make_tg_topic(self, forum_topic, tg_channel: TgForum):
         messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(forum_topic.id, self.since)
         discussion_forest = tg_channel.channel_message_service.make_latest_topic_discussion_forest(messages)
         flat_discussions = flat_discussion_forest(discussion_forest)

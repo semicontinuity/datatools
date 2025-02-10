@@ -1,6 +1,6 @@
 from typing import List
 
-from datatools.tg.assistant.model.tg_channel import TgChannel
+from datatools.tg.assistant.model.tg_forum import TgForum
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.model.tg_topic import TgTopic
@@ -18,21 +18,21 @@ class TgViewFactory:
 
     def make_root(self, tg_data: TgData) -> VElement:
         root = VRoot("telegram")
-        root.set_elements([self.make_forum_or_channel(ch) for ch in tg_data.tg_channels])
+        root.set_elements([self.make_forum_or_channel(ch) for ch in tg_data.tg_forums])
         root.indent_recursive()
         return root
 
-    def make_forum_or_channel(self, tg_channel: TgChannel):
+    def make_forum_or_channel(self, tg_channel: TgForum):
         if tg_channel.forum:
             return self.make_forum(tg_channel)
         else:
             return self.make_channel(tg_channel)
 
-    def make_channel(self, tg_channel: TgChannel):
+    def make_channel(self, tg_channel: TgForum):
         v_channel = VChannel(tg_channel)
         return v_channel
 
-    def make_forum(self, tg_channel: TgChannel):
+    def make_forum(self, tg_channel: TgForum):
         v_forum = VForum(tg_channel)
         v_forum.set_elements([self.make_topic(t) for t in tg_channel.tg_topics])
         return v_forum
