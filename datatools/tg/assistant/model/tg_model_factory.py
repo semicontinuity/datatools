@@ -42,15 +42,18 @@ class TgModelFactory:
     async def make_tg_channel(self, dialog: Dialog):
         channel_id: int = dialog.id
 
+        forum = dialog.entity.forum
         tg_channel = TgChannel(
             id=channel_id,
+            forum=forum,
             name=dialog.name,
             tg_topics=[],
             channel_message_service=await self.make_channel_message_service(channel_id),
         )
 
-        forum_topics = await self.channel_topic_repository.get_forum_topics(channel_id)
-        tg_channel.tg_topics = [self.make_tg_topic(forum_topic, tg_channel) for forum_topic in forum_topics]
+        if forum:
+            forum_topics = await self.channel_topic_repository.get_forum_topics(channel_id)
+            tg_channel.tg_topics = [self.make_tg_topic(forum_topic, tg_channel) for forum_topic in forum_topics]
 
         return tg_channel
 

@@ -85,7 +85,7 @@ class ChannelMessageService:
         for candidate in candidates:
             parent_id = candidate.ext.is_inferred_reply_to
             if parent_id:
-                parent = tg_messages[parent_id]
+                parent = tg_messages.get(parent_id)
                 if parent:
                     parent.replies[candidate.id] = candidate
 

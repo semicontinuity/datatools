@@ -6,6 +6,7 @@ from datatools.tg.assistant.service.channel_message_service import ChannelMessag
 @dataclass
 class TgChannel:
     id: int
+    forum: bool
     name: str
     tg_topics: list['TgTopic']
     channel_message_service: ChannelMessageService
