@@ -5,8 +5,9 @@ from telethon import TelegramClient
 from telethon.tl.custom import Dialog
 from yndx.st.lib.llm.gradio import Gradio
 
-from datatools.tg.assistant.model.tg_forum import TgForum
+from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
+from datatools.tg.assistant.model.tg_forum import TgForum
 from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
 from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
@@ -34,28 +35,37 @@ class TgModelFactory:
     async def make_tg_data(self) -> TgData:
         dialogs = await self.channel_repository.get_dialogs()
         return TgData(
-            [
-                await self.make_tg_channel(dialog) for dialog in dialogs
-            ]
+            tg_forums = [await self.make_tg_forum(dialog) for dialog in dialogs if dialog.entity.forum],
+            tg_channels = [await self.make_tg_channel(dialog) for dialog in dialogs if not dialog.entity.forum],
         )
 
-    async def make_tg_channel(self, dialog: Dialog):
+    async def make_tg_channel(self, dialog: Dialog) -> TgChannel:
         channel_id: int = dialog.id
 
-        forum = dialog.entity.forum
-        tg_channel = TgForum(
+        tg_channel = TgChannel(
             id=channel_id,
-            forum=forum,
+            name=dialog.name,
+            channel_message_service=await self.make_channel_message_service(channel_id),
+        )
+
+        messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_raw_messages(self.since)
+
+        return tg_channel
+
+    async def make_tg_forum(self, dialog: Dialog) -> TgForum:
+        channel_id: int = dialog.id
+
+        tg_forum = TgForum(
+            id=channel_id,
             name=dialog.name,
             tg_topics=[],
             channel_message_service=await self.make_channel_message_service(channel_id),
         )
 
-        if forum:
-            forum_topics = await self.channel_topic_repository.get_forum_topics(channel_id)
-            tg_channel.tg_topics = [self.make_tg_topic(forum_topic, tg_channel) for forum_topic in forum_topics]
+        forum_topics = await self.channel_topic_repository.get_forum_topics(channel_id)
+        tg_forum.tg_topics = [self.make_tg_topic(forum_topic, tg_forum) for forum_topic in forum_topics]
 
-        return tg_channel
+        return tg_forum
 
     def make_tg_topic(self, forum_topic, tg_channel: TgForum):
         messages = tg_channel.channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(forum_topic.id, self.since)

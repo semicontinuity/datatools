@@ -18,15 +18,11 @@ class TgViewFactory:
 
     def make_root(self, tg_data: TgData) -> VElement:
         root = VRoot("telegram")
-        root.set_elements([self.make_forum_or_channel(ch) for ch in tg_data.tg_forums])
+        root.set_elements(
+            [self.make_forum(f) for f in tg_data.tg_forums] + [self.make_channel(f) for f in tg_data.tg_channels]
+        )
         root.indent_recursive()
         return root
-
-    def make_forum_or_channel(self, tg_channel: TgForum):
-        if tg_channel.forum:
-            return self.make_forum(tg_channel)
-        else:
-            return self.make_channel(tg_channel)
 
     def make_channel(self, tg_channel: TgForum):
         v_channel = VChannel(tg_channel)
