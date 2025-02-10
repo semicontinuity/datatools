@@ -24,3 +24,7 @@ class TgDocument(TreeDocument):
     def visit(self, line: int):
         element = self.rows[line]
         element.visit()
+
+    def count_unread_children(self):
+        if self.root:
+            self.root.count_unread_children()

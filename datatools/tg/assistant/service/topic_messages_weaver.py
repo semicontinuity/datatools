@@ -17,7 +17,10 @@ class TopicMessagesWeaver:
         self.executor.shutdown(wait=False, cancel_futures=True)
 
     def _weave(self, flat_discussion: list[TgMessage]):
-        self.classifier.classify_flat_discussions(flat_discussion)
+        try:
+            self.classifier.classify_flat_discussions(flat_discussion)
+        except:
+            pass
 
     def submit(self, flat_discussion: list[TgMessage]):
         self.executor.submit(self._weave, flat_discussion)

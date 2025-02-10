@@ -19,6 +19,14 @@ class VMessage(VFolder):
         self.show_message_ids = os.environ.get('MSG_IDS')
         super().__init__(None)
 
+    def count_unread_children(self):
+        super().count_unread_children()
+        if not self.is_read():
+            parent = self.parent
+            while parent:
+                parent.unread_children += 1
+                parent = parent.parent
+
     def rich_text(self) -> list[tuple[AnyStr, Style]]:
         is_read = self.is_read()
         boldness = 0 if is_read else MASK_BOLD

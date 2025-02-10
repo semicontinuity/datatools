@@ -25,6 +25,9 @@ class VElement(TreeNode):
     def indent_recursive(self, indent: int):
         self.indent = indent
 
+    def count_unread_children(self):
+        pass
+
     # abstract
     def visit(self):
         pass

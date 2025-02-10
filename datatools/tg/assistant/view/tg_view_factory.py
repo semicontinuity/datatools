@@ -1,5 +1,6 @@
 from typing import List
 
+from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_forum import TgForum
 from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_message import TgMessage
@@ -24,8 +25,9 @@ class TgViewFactory:
         root.indent_recursive()
         return root
 
-    def make_channel(self, tg_channel: TgForum):
+    def make_channel(self, tg_channel: TgChannel):
         v_channel = VChannel(tg_channel)
+        v_channel.set_elements(self.make_messages(tg_channel))
         return v_channel
 
     def make_forum(self, tg_channel: TgForum):
@@ -38,8 +40,8 @@ class TgViewFactory:
         v_topic.set_elements(self.make_messages(tg_topic))
         return v_topic
 
-    def make_messages(self, tg_topic: TgTopic) -> List[VMessage]:
-        return self.make_messages_list(tg_topic.latest_discussions)
+    def make_messages(self, discussions_container: TgTopic | TgChannel) -> List[VMessage]:
+        return self.make_messages_list(discussions_container.latest_discussions)
 
     def make_messages_list(self, discussions) -> list[VMessage]:
         return [self.make_message(t) for t in discussions]

@@ -9,4 +9,5 @@ class TgDocumentFactory:
         doc = TgDocument(root)
         doc.footer = footer
         doc.layout()
+        doc.count_unread_children()
         return doc
