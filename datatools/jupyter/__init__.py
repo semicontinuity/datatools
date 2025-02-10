@@ -2,8 +2,16 @@ import uuid
 
 from IPython.display import HTML
 
-from datatools.jt2h.app import page_node_auto
+from datatools.jt2h.app import page_node_auto, page_node_basic_auto
 from datatools.jt2h.app_json_page import page_node
+
+
+def YAML(data):
+    return HTML(str(page_node(data, include_page_css=False)))
+
+
+def JSON_TABLE(data):
+    return HTML(str(page_node_basic_auto(data)))
 
 
 def JSON_TAB(data, title: str = None, tab_name: str = None):

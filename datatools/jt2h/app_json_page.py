@@ -10,11 +10,17 @@ from util.html.elements import html, body, head, style, title as _title
 from util.html.md_html_node import MdHtmlNode
 from util.html.page_node import PageNode
 
-PAGE_CSS = '''
+PAGE_CSS_X_LARGE = '''
 body {
     font-size: x-large; background-color: #e0e0e0;
 }
 '''
+
+PAGE_CSS_X_SMALL = '''
+span {
+}
+'''
+
 SPAN_CSS = '''
 span {
     font-family: monospace;
@@ -29,13 +35,13 @@ def data():
     return j
 
 
-def page_node(data, title_string: str = None):
+def page_node(data, title_string: str = None, include_page_css: bool = True):
     return PageNode(
         html(
             head(
                 _title(title_string),
                 style(
-                    PAGE_CSS,
+                    PAGE_CSS_X_LARGE if include_page_css else PAGE_CSS_X_SMALL,
                     SPAN_CSS,
                     JSON_NODE_HELPER_CSS,
                     JSON_NODE_DELEGATE_YAML_CSS,
