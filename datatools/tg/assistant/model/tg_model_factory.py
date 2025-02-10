@@ -60,6 +60,8 @@ class TgModelFactory:
         flat_discussions = flat_discussion_forest(discussion_forest)
         inference_done = all(flat_discussion.ext.inference_done() for flat_discussion in flat_discussions)
         print(f'inference already done: {inference_done}, channel_id: {tg_channel.id}, topic_id: {forum_topic.id}', file=sys.stderr)
+        if not inference_done:
+            self.topic_messages_weaver.submit(flat_discussions)
 
         return TgTopic(
             id=forum_topic.id,

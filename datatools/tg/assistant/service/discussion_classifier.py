@@ -1,3 +1,4 @@
+import logging
 import re
 import sys
 
@@ -142,14 +143,14 @@ Provide no explanations. Maintain original language/formatting.
 
     def classify_flat_discussions(self, flat_discussions) -> list[TgMessage]:
         query = self.classify_discussions_query_data(flat_discussions)
-        print(f'Classifying discussions', file=sys.stderr)
-        print(f'', file=sys.stderr)
-        print(f'', file=sys.stderr)
-        print(query, file=sys.stderr)
-        print(f'', file=sys.stderr)
-        print(f'', file=sys.stderr)
+        logging.debug(f'Classifying discussions')
+        logging.debug(f'')
+        logging.debug(f'')
+        logging.debug(query)
+        logging.debug(f'')
+        logging.debug(f'')
         response_text = self.llm.invoke(DiscussionClassifier.PROMPT3, query)
-        print(response_text, file=sys.stderr)
+        logging.debug(response_text)
         starters = self.parse_starters_llm_response(response_text)
         return self.weave_discussions(flat_discussions, starters)
 
@@ -158,7 +159,7 @@ Provide no explanations. Maintain original language/formatting.
         """
         :param flat_discussions: list of raw discussions (every item is top-level TgMessage, not a reply)
         """
-        print('weave_discussions: ', len(flat_discussions), file=sys.stderr)
+        logging.debug('weave_discussions: ', len(flat_discussions))
         discussions: dict[int, TgMessage] = {d.id: d for d in flat_discussions}
 
         for d in flat_discussions:
@@ -168,13 +169,13 @@ Provide no explanations. Maintain original language/formatting.
 
         # Use 'starters' to weave together discussions
         for d_id, starter_id in starters.items():
-            print(f'NEED LINK {d_id} to {starter_id}', file=sys.stderr)
+            logging.debug(f'NEED LINK {d_id} to {starter_id}')
             if d_id == starter_id:
-                print('WRONG', file=sys.stderr)
+                logging.debug('WRONG')
                 continue
 
             if d_id < starter_id:
-                print('WRONG', file=sys.stderr)
+                logging.debug('WRONG')
                 # UGLY workaround! should not happen!
                 d_id, starter_id = starter_id, d_id
             super_discussion: TgMessage = discussions.get(starter_id)
@@ -185,7 +186,7 @@ Provide no explanations. Maintain original language/formatting.
                 continue
 
             if discussion.id in super_discussion.replies:
-                print(f'ALREADY IN REPLIES: {d_id} in replies of {starter_id}', file=sys.stderr)
+                logging.debug(f'ALREADY IN REPLIES: {d_id} in replies of {starter_id}')
                 continue
 
             super_discussion.ext.inferred_replies.append(d_id)
@@ -193,7 +194,7 @@ Provide no explanations. Maintain original language/formatting.
             discussion.ext.is_inferred_reply_to = starter_id
 
             # super_discussion.replies[d_id] = discussion
-            print(f'ADDED {d_id} as REPLY to {starter_id}', file=sys.stderr)
+            logging.debug(f'ADDED {d_id} as REPLY to {starter_id}')
             # discussion.ext.is_attached = True
 
         # return [d for d in discussions.values() if not d.ext.is_attached and not d.ext.is_reply_to]

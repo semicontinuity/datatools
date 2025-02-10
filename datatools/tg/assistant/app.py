@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import logging
 import os
 import sys
 import threading
@@ -26,6 +27,9 @@ from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview.grid import GridContext, grid
 from datatools.tui.treeview.treedocument import TreeDocument
 from datatools.util.object_exporter import init_object_exporter, ObjectExporter
+
+
+logging.basicConfig(level=logging.WARN, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def make_tg_tree_applet(document: TgDocument, screen_size, popup: bool = False):
