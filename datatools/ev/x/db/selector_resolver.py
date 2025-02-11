@@ -7,7 +7,7 @@ def resolve_selector_from_paths(base_path: str, rest: str) -> DbTableRowsSelecto
     return DbTableRowsSelector(table=table, where=[DbSelectorClause(*w) for w in clauses])
 
 
-def resolve_table_and_clauses(base_path, rest):
+def resolve_table_and_clauses(base_path: str, rest: str):
     i = rest.find('/')
     if i == -1:
         raise ValueError()
