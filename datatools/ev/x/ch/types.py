@@ -7,3 +7,8 @@ from datatools.ev.x.pg.types import DbTableRowsSelector
 @dataclass(kw_only=True)
 class ClickhouseRowEntity(EntityReference):
     selector: DbTableRowsSelector
+
+
+@dataclass(kw_only=True)
+class ClickhouseRowsEntity(EntityReference):
+    selector: DbTableRowsSelector

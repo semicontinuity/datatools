@@ -6,11 +6,10 @@ from typing import Dict, List, Callable, Any
 from datatools.ev.app_support import run_app
 from datatools.ev.app_types import Realm
 from datatools.ev.app_types import EntityReference
-from datatools.ev.x.db.selector_resolver import resolve_selector_from_paths
+from datatools.ev.x.ch.entity_resolver import resolve_ch_entity
 from datatools.ev.x.pg.entity_resolver import resolve_pg_entity
 from datatools.ev.x.pg.realm_pg import RealmPg
 from datatools.ev.x.ch.realm_clickhouse import RealmClickhouse
-from datatools.ev.x.ch.types import ClickhouseRowEntity
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 
 
@@ -47,13 +46,6 @@ class Realms:
 
     def as_dict(self) -> Dict[str, Realm]:
         return {v.name: v for k, v in self.mounts.items()}
-
-
-def resolve_ch_entity(realm: Realm, base_path: str, rest: str):
-    return ClickhouseRowEntity(
-        realm_name=realm.name,
-        selector=resolve_selector_from_paths(base_path, rest)
-    )
 
 
 def realm_pg(name, path: str) -> RealmPg:
