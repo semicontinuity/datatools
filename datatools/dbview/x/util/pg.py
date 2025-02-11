@@ -4,16 +4,15 @@ from os.path import isdir, join
 
 
 def get_where_clauses() -> List[Tuple[str, str, str]]:
-    ctx_dir = os.environ.get('CTX_DIR')
-    ctx_base = os.environ.get('CTX_BASE')
+    return get_where_clauses_from_props(os.environ)
+
+
+def get_where_clauses_from_props(p) -> List[Tuple[str, str, str]]:
+    ctx_dir = p.get('CTX_DIR')
+    ctx_base = p.get('CTX_BASE')
     ctx_base_parts = [] if ctx_base is None else ctx_base.split('/')
 
-    rest = os.environ.get('__REST') or ''
-    # selector1 = os.environ.get('SELECTOR1') or ''
-    # parts = rest.split('/') if rest != '' else []
-    # if selector1 != '':
-    #     parts.insert(0, selector1)
-    #     ctx_base_parts = ctx_base_parts[:-1]
+    rest = p.get('__REST') or ''
 
     return get_where_clauses0(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
 
@@ -75,10 +74,3 @@ def get_where_clauses0(table_path: str, rest: str) -> List[Tuple[str, str, str]]
             clauses.append((key.removeprefix('-'), 'is', 'null'))
 
     return clauses
-
-
-def get_env(key):
-    value = os.getenv(key)
-    if value is None:
-        raise Exception(f'Must set {key}')
-    return value
