@@ -3,6 +3,26 @@ from typing import List, Tuple
 from os.path import isdir, join
 
 
+def get_sql() -> str:
+    table = get_env('TABLE')
+    where = get_where_clause()
+    sql = f'SELECT * from {table}'
+    if where:
+        sql += f' where {where}'
+    return sql
+
+
+def get_env(key):
+    value = os.getenv(key)
+    if value is None:
+        raise Exception(f'Must set {key}')
+    return value
+
+
+def get_where_clause():
+    return '\n and \n'.join(f'{a} {op} {b}' for a, op, b in get_where_clauses())
+
+
 def get_where_clauses() -> List[Tuple[str, str, str]]:
     return get_where_clauses_from_props(os.environ)
 

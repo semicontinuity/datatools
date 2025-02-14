@@ -3,7 +3,7 @@ from os.path import isdir, join
 from typing import List, Tuple
 
 
-def get_where_clauses() -> List[Tuple[str, str, str]]:
+def __deprecate__get_where_clauses() -> List[Tuple[str, str, str]]:
     ctx_dir = os.environ.get('CTX_DIR')
     ctx_base = os.environ.get('CTX_BASE')
     ctx_base_parts = [] if ctx_base is None else ctx_base.split('/')
@@ -73,7 +73,7 @@ def get_where_clauses() -> List[Tuple[str, str, str]]:
     return clauses
 
 
-def get_where_clause():
+def __deprecate__get_where_clause():
     # pwd = os.environ.get('PWD')
     # if not pwd:
     #     error('Set PWD')
