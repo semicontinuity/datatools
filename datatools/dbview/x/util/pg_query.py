@@ -40,4 +40,7 @@ def selector_to_string(selector: dict, table: str) -> str:
 
 
 def filter_to_string(clause: dict) -> str:
-    return f"{clause['field']} {clause['op']} '{clause['value']}'"
+    value = clause['value']
+    value_str = '(' + ','.join(repr(v) for v in value) + ')' if type(value) is list else repr(value)
+
+    return f"{clause['field']} {clause['op']} {value_str}"

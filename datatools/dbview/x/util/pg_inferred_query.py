@@ -1,50 +1,28 @@
 import os
 from os.path import isdir, join
-from typing import List, Tuple
-
-import yaml
-
-from datatools.dbview.x.util.helper import get_env
-from datatools.dbview.x.util.pg_inferred_query import inferred_query
-from datatools.dbview.x.util.pg_query import query_to_string
 
 
-def get_sql() -> str:
-    table = get_env('TABLE')
-    if query := os.getenv('QUERY'):
-        return query_to_string(yaml.safe_load(query), table)
-    else:
-        # return __inferred_select_sql(table)
-        return query_to_string(inferred_query(table), table)
-
-
-def __inferred_select_sql(table):
-    where = get_where_clause()
-    sql = f'SELECT * from {table}'
-    if where:
-        sql += f' where {where}'
-    return sql
-
-
-def get_where_clause():
-    return '\n and \n'.join(f'{a} {op} {b}' for a, op, b in get_where_clauses())
-
-
-def get_where_clauses() -> List[Tuple[str, str, str]]:
-    return get_where_clauses_from_props(os.environ)
-
-
-def get_where_clauses_from_props(p) -> List[Tuple[str, str, str]]:
-    ctx_dir = p.get('CTX_DIR')
-    ctx_base = p.get('CTX_BASE')
+def inferred_query(table):
+    ctx_dir = os.environ.get('CTX_DIR')
+    ctx_base = os.environ.get('CTX_BASE')
     ctx_base_parts = [] if ctx_base is None else ctx_base.split('/')
+    rest = os.environ.get('__REST') or ''
 
-    rest = p.get('__REST') or ''
+    clauses = get_where_clauses0(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
 
-    return get_where_clauses0(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
+    return {
+        'table': table,
+        'filter': [
+            {
+                'field': field,
+                'op': op,
+                'value': value
+            } for field, op, value in clauses
+        ]
+    }
 
 
-def get_where_clauses0(table_path: str, rest: str) -> List[Tuple[str, str, str]]:
+def get_where_clauses0(table_path: str, rest: str) -> list[tuple[str, str, str]]:
     parts = rest.split('/') if rest != '' else []
 
     i = 0
@@ -79,10 +57,10 @@ def get_where_clauses0(table_path: str, rest: str) -> List[Tuple[str, str, str]]
                     values = f.read().split('\n')
                 values = [v for v in values if v != '']
 
-                clauses.append((field, 'in', ('(\n' + ',\n'.join(map(repr, values)) + '\n)')))
+                clauses.append((field, 'in', values))
             else:
                 # FS structure like :field_name/field_value
-                clauses.append((field, '=', repr(value)))
+                clauses.append((field, '=', value))
 
         elif key.startswith('='):
             if i >= len(parts):
@@ -90,7 +68,7 @@ def get_where_clauses0(table_path: str, rest: str) -> List[Tuple[str, str, str]]
             value = parts[i]
             path.append(value)
             i += 1
-            clauses.append((key.removeprefix('='), '=', repr(value)))
+            clauses.append((key.removeprefix('='), '=', value))
         elif key.startswith('+'):
             clauses.append((key.removeprefix('+'), 'is not', 'null'))
         elif key.startswith('-'):
