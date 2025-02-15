@@ -4,15 +4,14 @@ Intents HTTP server.
 Decouples intents, triggered in datatools apps, from their effects.
 
 HTTP server accepts entity as the body of HTTP POST request,
-and passes it to STDIN of launched "y explore" command.
-Environment variables for the launched process are specified in "x-env" HTTP header
-as JSON with the format {"var":"value"..}.
-For working directory of the process, the value of the variable PWD is used.
+and reacts, depending on Content-Type
 """
-import json
+
+import json, os
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
+from datatools.jt2h.app import page_node_basic_auto
 from datatools.util.subprocess import exe
 
 
@@ -28,33 +27,50 @@ class Server(BaseHTTPRequestHandler):
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
 
-        env_str = self.headers['x-env']
-        if env_str is None:
-            self.respond(400, 'application/json', b'{"error":"x-env header missing"}')
-            return
+        match self.headers.get('Content-Type'):
+            case 'text/uri-list':
+                self.browse(post_body)
+            case 'application/json-lines':
+                lines = self.json_lines(post_body)
+                html = str(page_node_basic_auto(lines))
+                self.browse(
+                    self.write_temp_file(
+                        html.encode('utf-8'),
+                        '.html'
+                    )
+                )
 
-        env = json.loads(env_str)
-        cwd = env['CWD']
-        if cwd is None:
-            self.respond(400, 'application/json', b'{"error":"CWD variable in x-env header missing"}')
-            return
-        del env['CWD']
-
-        if 'PWD' in env:
-            del env['PWD']
-        if 'WD' in env:
-            del env['WD']
-        if 'CTX' in env:
-            del env['CTX']
-
-        out = exe(
-            cwd,
-            ['y', 'explore'],
-            {'WD': cwd},
-            post_body
-        )
-        print(out)
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
+
+    def json_lines(self, data):
+        decode = data.decode('utf-8')
+        split = decode.split('\n')
+        return [json.loads(s) for s in split if s]
+
+    def write_temp_file(self, contents, suffix):
+        import tempfile
+        import os
+        fd, path = tempfile.mkstemp(suffix=suffix, prefix="temp", dir=os.environ['HOME'] + '/boards', text=True)
+        with os.fdopen(fd, 'w+b') as tmp:
+            tmp.write(contents)
+        return path
+
+    def browse_new_tab(self, url):
+        exe(
+            os.environ['HOME'],
+            ['firefox', url],
+            {},
+        )
+
+    def browse(self, url):
+        if type(url) is str:
+            url = url.encode('utf-8')
+        exe(
+            os.environ['HOME'],
+            ['browse_url'],
+            {},
+            url
+        )
 
     def respond(self, status, content_type, content):
         self.send_response(status)
@@ -63,7 +79,7 @@ class Server(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
 
-httpd = HTTPServer(("localhost", 8888), Server)
+httpd = HTTPServer(("localhost", 7777), Server)
 try:
     httpd.serve_forever()
 except KeyboardInterrupt:
