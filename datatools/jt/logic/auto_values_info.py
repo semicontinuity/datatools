@@ -4,6 +4,7 @@ from typing import Dict
 from datatools.json.util import is_primitive
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.values_info import ColumnsValuesInfo, ValuesInfo
+from datatools.util.logging import debug
 
 
 def compute_column_values_info(data, metadata: Metadata) -> ColumnsValuesInfo:
@@ -13,21 +14,26 @@ def compute_column_values_info(data, metadata: Metadata) -> ColumnsValuesInfo:
 
 
 def compute_values_info(data, info_map: Dict[str, ValuesInfo], metadata: Metadata):
+    debug('compute_values_info', info_map=info_map)
     for record in data:
         for key, value in record.items():
+
             column_metadata = metadata.columns[key]
             value_f = single_key_of_dict if column_metadata.has_one_dict_key else primitive_value
 
             info = info_map[key]
-            if info.count is None:
-                info.count = 0
-            info.count += 1
-
             value = value_f(value)
-            if value is ...:
-                del info_map[key]
+
+            # debug('compute_values_info', key=key, value=value, count=info.count)
+            # if value is ...:
+            #     del info_map[key]
 
             value_as_string = str(value)
+
+            if info.count is None:
+                info.count = 0
+            if value is not ...:
+                info.count += 1
 
             dict_index = info.dictionary.get(value_as_string)
             if dict_index is None:

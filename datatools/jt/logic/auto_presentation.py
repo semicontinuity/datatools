@@ -17,7 +17,7 @@ POPULATED_RATIO = 0.66
 
 
 def enrich_presentation(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation: Presentation) -> Presentation:
-    debug('enrich_presentation')
+    debug('enrich_presentation', values_info_columns=list(values_info.columns))
     row_count = len(data)
     discover_columns: bool = len(presentation.columns) == 0 or should_discover_columns(presentation)
     discover_max_content_width: bool = any(r.max_content_width is None for c in presentation.columns.values() for r in c.renderers)
@@ -41,7 +41,7 @@ def enrich_presentation(data, values_info: ColumnsValuesInfo, metadata: Metadata
 
 
 def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presentation, row_count):
-    debug('do_discover_columns')
+    debug('do_discover_columns', values_info_columns=list(values_info.columns))
     for key, column_metadata in metadata.columns.items():
         if key in presentation.columns:
             continue
@@ -64,39 +64,59 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
             else:
                 renderer_main = ColumnRendererIndicator(thick=True)
             column_presentation.add_renderer(renderer_main)
-        elif (column_metadata.complex and not column_metadata.has_one_dict_key) or column_metadata.multiline or (
-                column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count):
-            column_presentation.add_renderer(ColumnRendererIndicator(thick=True))
         else:
-            coloring = infer_column_coloring(column_values_info, len(data))
-            if coloring == COLORING_NONE or key == metadata.timestamp_field:
-                renderer_main = ColumnRendererColoredPlain()
-                renderer_main.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
-                                                                          offset=160)
-                column_presentation.add_renderer(renderer_main)
-
-                renderer_indicator = ColumnRendererIndicator()
-                renderer_indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
-                                                                              offset=64)
-                column_presentation.add_renderer(renderer_indicator)
+            complex = column_metadata.complex and not column_metadata.has_one_dict_key
+            multiline = column_metadata.multiline
+            # sparse = column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count
+            # if complex or multiline or sparse:
+            if complex or multiline:
+                debug('do_discover_columns', complex=complex, multiline=multiline, sparse=sparse)
+                column_presentation.add_renderer(ColumnRendererIndicator(thick=True))
             else:
-                renderer_main = ColumnRendererColoredHash()
-                if coloring == COLORING_HASH_FREQUENT:
-                    renderer_main.onlyFrequent = True
-                    renderer_main.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=160)
-                else:
-                    renderer_main.color = coloring
+                coloring = infer_column_coloring(column_values_info, column_values_info.count)
+                debug('do_discover_columns', coloring=coloring)
+                if coloring == COLORING_NONE or key == metadata.timestamp_field:
+                    renderer_main = ColumnRendererColoredPlain()
+                    renderer_main.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
+                                                                              offset=160)
+                    # column_presentation.add_renderer(renderer_main)
 
-                renderer_indicator = ColumnRendererIndicator()
-                renderer_indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=64)
-                if column_values_info.contains_single_value():
-                    column_presentation.add_renderer(renderer_indicator)
-                    column_presentation.add_renderer(renderer_main)
-                else:
-                    column_presentation.add_renderer(renderer_main)
-                    column_presentation.add_renderer(renderer_indicator)
+                    renderer_indicator = ColumnRendererIndicator()
+                    renderer_indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title),
+                                                                                  offset=64)
+                    # column_presentation.add_renderer(renderer_indicator)
 
-            renderer_main.use_single_dict_key = column_metadata.has_one_dict_key
+                    sparse = column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count
+                    debug('do_discover_columns', key=key, sparse=sparse, count=column_values_info.count, rows=row_count)
+
+                    if column_values_info.contains_single_value() or sparse:
+                        column_presentation.add_renderer(renderer_indicator)
+                        column_presentation.add_renderer(renderer_main)
+                    else:
+                        column_presentation.add_renderer(renderer_main)
+                        column_presentation.add_renderer(renderer_indicator)
+                else:
+                    renderer_main = ColumnRendererColoredHash()
+                    if coloring == COLORING_HASH_FREQUENT:
+                        renderer_main.onlyFrequent = True
+                        renderer_main.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=160)
+                    else:
+                        renderer_main.color = coloring
+
+                    renderer_indicator = ColumnRendererIndicator()
+                    renderer_indicator.color = '#' + "%02X%02X%02X" % hash_to_rgb(hash_code(column_presentation.title), offset=64)
+
+                    sparse = column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count
+                    debug('do_discover_columns', key=key, sparse=sparse, count=column_values_info.count, rows=row_count)
+
+                    if column_values_info.contains_single_value() or sparse:
+                        column_presentation.add_renderer(renderer_indicator)
+                        column_presentation.add_renderer(renderer_main)
+                    else:
+                        column_presentation.add_renderer(renderer_main)
+                        column_presentation.add_renderer(renderer_indicator)
+
+                renderer_main.use_single_dict_key = column_metadata.has_one_dict_key
 
 
 def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation):
@@ -115,9 +135,10 @@ def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, 
                 if type(column_renderer) is ColumnRendererStripesTimeSeries:
                     sub_presentation = column_presentation.contents
                     if sub_presentation is None:
+                        debug('enhance_column_presentation_renderers', values_info_columns=list(values_info.columns))
                         column_presentation.contents = enrich_presentation(
                             value,
-                            ColumnsValuesInfo(),
+                            values_info,
                             column_metadata.metadata,
                             Presentation()
                         )
@@ -170,7 +191,7 @@ def should_discover_columns(presentation: Presentation):
 
 
 def infer_column_coloring(column_metadata: ValuesInfo, records_count: int) -> str:
-    threshold = 2 * sqrt(records_count)
+    threshold = 2.5 * sqrt(records_count)
     debug('infer_column_coloring', records_count=records_count, threshold=threshold, unique_values=len(column_metadata.unique_values), non_unique_value_counts=len(column_metadata.non_unique_value_counts))
     # if len(column_attr.non_unique_value_counts) == 0 or (len(column_attr.unique_values) == 0 and len(column_attr.non_unique_value_counts) == 1):
     if len(column_metadata.unique_values) == records_count:

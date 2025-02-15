@@ -5,7 +5,7 @@ from typing import Dict, Set
 
 @dataclass
 class ValuesInfo:
-    count: int = None
+    count: int = 0
     dictionary: Dict[str, int] = field(default_factory=dict)
     unique_values: Set[str] = field(default_factory=set)
     non_unique_value_counts: Dict[str, int] = field(default_factory=dict)

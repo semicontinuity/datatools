@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 
+from datatools.json.util import to_jsonisable
 from datatools.json2ansi.app import make_json2ansi_applet
 from datatools.json2ansi_toolkit.default_style import default_style
 from datatools.jt.app.app_kit import Applet, app_kit_main, default_state, init_from_state
@@ -107,6 +108,10 @@ def app_router(applet, exit_code):
         elif exit_code == EXIT_CODE_F12 + EXIT_CODE_ALT + EXIT_CODE_SHIFT:
             # Alt+Shift+F12: Exit and dump cell contents as HTML for markdown
             print(md_node(applet.data_bundle.state[STATE_CUR_CELL_VALUE]))
+            return None
+
+        elif exit_code == EXIT_CODE_F10 + EXIT_CODE_CTRL:
+            print(json.dumps(to_jsonisable(applet.data_bundle.presentation)))
             return None
 
         elif exit_code <= EXIT_CODE_MAX_REGULAR:
