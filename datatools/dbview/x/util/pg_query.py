@@ -1,16 +1,14 @@
 import yaml
 
-from datatools.dbview.x.util.pg import get_env
+from datatools.dbview.x.util.helper import get_env
 
 
 def get_sql() -> str:
-    query = yaml.safe_load(get_env('QUERY'))
-    # return str(query)
-    return query_to_string(query)
+    return query_to_string(yaml.safe_load(get_env('QUERY')))
 
 
-def query_to_string(query: dict) -> str:
-    table = query['table']
+def query_to_string(query: dict, table: str = None) -> str:
+    table = table or query['table']
 
     selectors = query.get('selectors')
     selectors_str = ',\n'.join(selector_to_string(s, table) for s in selectors) if selectors else '*'

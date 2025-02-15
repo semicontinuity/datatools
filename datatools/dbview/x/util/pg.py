@@ -1,22 +1,27 @@
 import os
-from typing import List, Tuple
 from os.path import isdir, join
+from typing import List, Tuple
+
+import yaml
+
+from datatools.dbview.x.util.helper import get_env
+from datatools.dbview.x.util.pg_query import query_to_string
 
 
 def get_sql() -> str:
     table = get_env('TABLE')
+    if query := os.getenv('QUERY'):
+        return query_to_string(yaml.safe_load(query), table)
+    else:
+        return __inferred_select_sql(table)
+
+
+def __inferred_select_sql(table):
     where = get_where_clause()
     sql = f'SELECT * from {table}'
     if where:
         sql += f' where {where}'
     return sql
-
-
-def get_env(key):
-    value = os.getenv(key)
-    if value is None:
-        raise Exception(f'Must set {key}')
-    return value
 
 
 def get_where_clause():
