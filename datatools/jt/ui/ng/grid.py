@@ -1,6 +1,6 @@
 from typing import Optional, Dict, List
 
-from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_F4
 
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
 from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_COLUMN_INDEX, STATE_CUR_CELL_VALUE, \
@@ -177,7 +177,14 @@ class WGrid(WGridBase):
                 )
 
     def handle_edit_key(self, key):
-        if key == KEY_F5 or key == KEY_ALT_F5:
+        def sort_value(row):
+            value = row.get(self.column_keys[self.cursor_column])
+            return '' if value is None else str(value)
+
+        if key == KEY_F4:
+            self.data_bundle.orig_data.sort(key=sort_value)
+            self.redraw()
+        elif key == KEY_F5 or key == KEY_ALT_F5:
             ObjectExporter.INSTANCE.export(
                 self.data_bundle.orig_data[self.cur_line],
                 {},
