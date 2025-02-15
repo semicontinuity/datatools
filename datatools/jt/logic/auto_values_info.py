@@ -1,3 +1,4 @@
+import datetime
 from collections import defaultdict
 from typing import Dict
 
@@ -19,12 +20,11 @@ def compute_values_info(data, info_map: Dict[str, ValuesInfo], metadata: Metadat
         for key, value in record.items():
 
             column_metadata = metadata.columns[key]
-            value_f = single_key_of_dict if column_metadata.has_one_dict_key else primitive_value
+            value_f = single_key_of_dict if column_metadata.has_one_dict_key else quasi_primitive_value
 
             info = info_map[key]
             value = value_f(value)
 
-            # debug('compute_values_info', key=key, value=value, count=info.count)
             # if value is ...:
             #     del info_map[key]
 
@@ -32,7 +32,7 @@ def compute_values_info(data, info_map: Dict[str, ValuesInfo], metadata: Metadat
 
             if info.count is None:
                 info.count = 0
-            if value is not ...:
+            if value is not None:
                 info.count += 1
 
             dict_index = info.dictionary.get(value_as_string)
@@ -51,11 +51,12 @@ def compute_values_info(data, info_map: Dict[str, ValuesInfo], metadata: Metadat
                 info.non_unique_value_counts[value_as_string] = non_unique_value_count + 1
 
 
-def primitive_value(value):
-    if value is ... or value is None or not is_primitive(value):
-        return ...
-    else:
+def quasi_primitive_value(value):
+    if value is None:
+        return None
+    if is_primitive(value) or type(value) is datetime.datetime:
         return value
+    return ...
 
 
 def single_key_of_dict(value):

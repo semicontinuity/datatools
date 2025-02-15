@@ -5,16 +5,16 @@ import sys
 from datatools.json.util import to_jsonisable
 from datatools.util.fd import fd_exists
 
-FD_DEBUG = 101
-FD_TRACE = 102
+FD_DEBUG = int(os.environ.get('FD_DEBUG') or '101')
+FD_TRACE = int(os.environ.get('FD_TRACE') or '102')
 
 DEBUG_FD_OPEN = fd_exists(FD_DEBUG)
 DEBUG = os.getenv('DEBUG') or DEBUG_FD_OPEN
-DEBUG_FILE = os.fdopen(FD_DEBUG, 'w') if DEBUG_FD_OPEN else sys.stderr
+DEBUG_FILE = os.fdopen(FD_DEBUG, 'w') if DEBUG_FD_OPEN else (sys.stdout if FD_DEBUG == 1 else sys.stderr)
 
 TRACE_FD_OPEN = fd_exists(FD_TRACE)
 TRACE = os.getenv('TRACE') or TRACE_FD_OPEN
-TRACE_FILE = os.fdopen(FD_TRACE, 'w') if TRACE_FD_OPEN else sys.stderr
+TRACE_FILE = os.fdopen(FD_TRACE, 'w') if TRACE_FD_OPEN else (sys.stdout if FD_TRACE == 1 else sys.stderr)
 
 
 def stderr_print(*args, **kwargs):
