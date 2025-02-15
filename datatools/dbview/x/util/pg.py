@@ -64,10 +64,6 @@ def get_where_clauses0(table_path: str, rest: str) -> List[Tuple[str, str, str]]
             i += 1
 
             if value == '@':
-                pack_name = parts[i]
-                path.append(pack_name)
-                i += 1
-
                 #print('path', path, file=sys.stderr)
                 # FS structure like :field_name/@/name_of_pack/@: @ contains a list of values
                 #values = os.environ['IN']
