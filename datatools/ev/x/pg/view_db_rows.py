@@ -26,8 +26,8 @@ class ViewDbRows(View):
     def build(self):
         with self.realm.connect_to_db() as conn:
             self.table_pks = get_table_pks(conn, self.selector.table)
-            self.rows = self.get_entity_rows(conn, self.selector.table, self.selector.where)
-            self.table_pks = get_table_pks(conn, self.selector.table)
+            sql = self.select_sql(self.selector.table, self.selector.where)
+            self.rows = self.realm.execute_query(conn, sql)
 
         bundle = load_data_bundle(
             CmdLineParams(),
@@ -35,6 +35,7 @@ class ViewDbRows(View):
         )
 
         grid: ViewDbRowsGrid = do_make_grid(bundle, ViewDbRowsGrid)
+        grid.sql = sql
 
         self.g = with_alternate_screen(
             lambda: init_grid(
@@ -57,12 +58,12 @@ class ViewDbRows(View):
                 )
             )
 
-    def get_entity_rows(self, conn, table: str, where: List[DbSelectorClause]):
+    def select_sql(self, table, where):
         where_string = self.make_where_string(where)
         sql = f"SELECT * from {table}"
         if where_string:
             sql += f" where {where_string}"
-        return self.realm.execute_query(conn, sql)
+        return sql
 
     @staticmethod
     def make_where_string(clauses: List[DbSelectorClause]):
