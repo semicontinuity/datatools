@@ -1,10 +1,10 @@
 from picotui.defs import KEY_RIGHT
 
-from datatools.tui.treeview.grid import WGrid
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_grid import TreeGrid
+from datatools.tui.treeview.tree_document import TreeDocument
 
 
-class TgGrid(WGrid):
+class TgGrid(TreeGrid):
 
     def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):
         super().__init__(x, y, width, height, document, interactive)

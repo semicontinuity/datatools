@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from datatools.fstree.fs_tree_model import FsInvisibleRoot, FsFolder
-from datatools.tui.treeview.grid import WGrid
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_grid import TreeGrid
+from datatools.tui.treeview.tree_document import TreeDocument
 
 
 NAME_PATTERN = re.compile(os.getenv("NAME_PATTERN", "^.+$"))
@@ -27,7 +27,7 @@ else:
 
 class FsTreeDocument(TreeDocument):
 
-    listener: WGrid
+    listener: TreeGrid
 
     def __init__(self, root_folder: str) -> None:
         root_path = Path(root_folder)

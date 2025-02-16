@@ -1,9 +1,9 @@
 from datatools.tui.picotui_keys import KEY_INSERT
-from datatools.tui.treeview.grid import WGrid
+from datatools.tui.treeview.tree_grid import TreeGrid
 from datatools.util.object_exporter import ObjectExporter
 
 
-class JGrid(WGrid):
+class ExpensesGrid(TreeGrid):
 
     def handle_edit_key(self, key):
         if key == KEY_INSERT:

@@ -1,7 +1,7 @@
 from typing import AnyStr
 
 from datatools.tui.treeview.rich_text import Style
-from datatools.tui.treeview.treenode import TreeNode
+from datatools.tui.treeview.tree_node import TreeNode
 
 
 class VElement(TreeNode):

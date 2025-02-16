@@ -9,7 +9,8 @@ from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, EXIT_CODE_ESCAPE, EXIT_
 from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.picotui_patch import cursor_position
 from datatools.tui.picotui_util import *
-from datatools.tui.treeview.grid import grid, GridContext
+from datatools.tui.treeview.tree_grid_context import TreeGridContext
+from datatools.tui.treeview.tree_grid_factory import tree_grid
 
 
 def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
@@ -22,8 +23,8 @@ def run_grid(document: FsTreeDocument) -> Tuple[int, Optional[str]]:
         cursor_y, cursor_x = cursor_position()
 
         document.layout_for_height(screen_height)
-        grid_context = GridContext(0, cursor_y, screen_width, screen_height)
-        g = grid(document, grid_context, FsTreeGrid)
+        grid_context = TreeGridContext(0, cursor_y, screen_width, screen_height)
+        g = tree_grid(document, grid_context, FsTreeGrid)
         document.listener = g
 
         res = g.loop()

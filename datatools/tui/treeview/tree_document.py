@@ -4,7 +4,7 @@ from datatools.tui.ansi_str import ANSI_CMD_DEFAULT_BG
 from datatools.tui.terminal import ansi_background_escape_code
 from datatools.tui.treeview.render_state import RenderState
 from datatools.tui.treeview.rich_text import render_spans_substr
-from datatools.tui.treeview.treenode import TreeNode
+from datatools.tui.treeview.tree_node import TreeNode
 
 
 class TreeDocument:

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class GridContext:
+class TreeGridContext:
     x: int
     y: int
     width: int

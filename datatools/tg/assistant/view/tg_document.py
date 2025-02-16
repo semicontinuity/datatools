@@ -1,4 +1,4 @@
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_document import TreeDocument
 
 
 class TgDocument(TreeDocument):

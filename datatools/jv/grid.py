@@ -1,12 +1,12 @@
 from typing import Optional
 
 from datatools.tui.picotui_keys import KEY_INSERT
-from datatools.tui.treeview.grid import WGrid
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_grid import TreeGrid
+from datatools.tui.treeview.tree_document import TreeDocument
 from datatools.util.object_exporter import ObjectExporter
 
 
-class JGrid(WGrid):
+class JGrid(TreeGrid):
     search_str: str
 
     def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):

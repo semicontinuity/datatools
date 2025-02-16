@@ -7,7 +7,6 @@ from threading import Thread, Event
 from picotui.defs import KEYMAP as _KEYMAP, KEY_SHIFT_TAB
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP, KEY_TAB
 
-from datatools.json2ansi.app import GridContext
 from datatools.jt.model.exit_codes_mapping_v2 import KEYS_TO_EXIT_CODES
 from datatools.tui.ansi import ANSI_ATTR_OVERLINE
 from datatools.tui.grid_base import WGridBase
@@ -16,13 +15,13 @@ from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END
 from datatools.tui.terminal import ansi_attr_bytes
 from datatools.tui.treeview.dynamic_editor_support import DynamicEditorSupport
 from datatools.tui.treeview.render_state import RenderState
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_document import TreeDocument
 from datatools.util.logging import debug
 
 HORIZONTAL_PAGE_SIZE = 8
 
 
-class WGrid(WGridBase, Thread):
+class TreeGrid(WGridBase, Thread):
     dynamic_helper: DynamicEditorSupport
     x_shift: int  # horizontal view shift size
 
@@ -37,7 +36,7 @@ class WGrid(WGridBase, Thread):
         self.total_lines = self.document.height
         self.cur_line = min(self.cur_line, self.document.height - 1)
         self.dynamic_helper.request_height(self.total_lines + self.y_top_offset + self.y_bottom_offset)
-        debug('WGrid.layout', total_lines=self.total_lines, height=self.height)
+        debug('TreeGrid.layout', total_lines=self.total_lines, height=self.height)
 
     def ensure_visible(self, line: int):
         if line is not None:
@@ -293,18 +292,3 @@ class InputEventReader(Thread):
             return [col, row]
 
         return key
-
-
-def grid(document: TreeDocument, grid_context: GridContext, grid_class=WGrid) -> WGrid:
-    height = grid_context.height if grid_context.interactive else min(grid_context.height, document.height)
-    g = grid_class(
-        grid_context.x,
-        grid_context.y,
-        grid_context.width,
-        height,
-        document,
-        grid_context.interactive
-    )
-    g.dynamic_helper = DynamicEditorSupport(grid_context.height, g)
-    g.layout()
-    return g

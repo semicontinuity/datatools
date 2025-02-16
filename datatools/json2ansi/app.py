@@ -2,10 +2,10 @@
 
 import json
 import sys
-from dataclasses import dataclass
 
 from datatools.json.structure_discovery import Discovery
 from datatools.json2ansi.grid import WGrid
+from datatools.tui.treeview.tree_grid_context import TreeGridContext
 from datatools.json2ansi_toolkit.ansi_toolkit import AnsiToolkit
 from datatools.json2ansi_toolkit.default_style import default_style
 from datatools.json2ansi_toolkit.style import Style
@@ -21,15 +21,6 @@ from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.tui_fd import infer_fd_tui
 
 
-@dataclass
-class GridContext:
-    x: int
-    y: int
-    width: int
-    height: int
-    interactive: bool = True
-
-
 def auto_position(screen_buffer, state):
     screen_width, screen_height = screen_size_or_default()
     if "anchor" in state:
@@ -42,11 +33,11 @@ def auto_position(screen_buffer, state):
     else:
         y = 0
         x = 0
-    grid_context = GridContext(x, y, screen_width, screen_height)
+    grid_context = TreeGridContext(x, y, screen_width, screen_height)
     return grid_context
 
 
-def grid(screen_buffer: Buffer, grid_context: GridContext) -> WGrid:
+def grid(screen_buffer: Buffer, grid_context: TreeGridContext) -> WGrid:
 
     def cell_value(line, column):
         return "-"

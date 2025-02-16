@@ -3,11 +3,11 @@ from typing import Optional
 from picotui.defs import KEY_ESC, KEY_DELETE, KEY_BACKSPACE
 
 from datatools.tui.picotui_keys import KEY_ALT_INSERT, KEY_ALT_DELETE
-from datatools.tui.treeview.grid import WGrid
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_grid import TreeGrid
+from datatools.tui.treeview.tree_document import TreeDocument
 
 
-class FsTreeGrid(WGrid):
+class FsTreeGrid(TreeGrid):
     search_str: Optional[str]
 
     def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):

@@ -4,7 +4,7 @@ from datatools.misc.expenses import format_float
 from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting
 from datatools.tui.box_drawing_chars import FULL_BLOCK
 from datatools.tui.treeview.rich_text import Style
-from datatools.tui.treeview.treenode import TreeNode
+from datatools.tui.treeview.tree_node import TreeNode
 
 
 class JElement(TreeNode):

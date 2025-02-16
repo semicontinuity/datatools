@@ -24,8 +24,9 @@ from datatools.tg.assistant.view.tg_view_factory import TgViewFactory
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
-from datatools.tui.treeview.grid import GridContext, grid
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_grid import GridContext
+from datatools.tui.treeview.tree_grid_factory import tree_grid
+from datatools.tui.treeview.tree_document import TreeDocument
 from datatools.util.object_exporter import init_object_exporter, ObjectExporter
 
 
@@ -44,7 +45,7 @@ def make_tg_tree_applet(document: TgDocument, screen_size, popup: bool = False):
 def do_make_tg_tree_applet(grid_context: GridContext, popup, document: TreeDocument):
     return Applet(
         'jv',
-        grid(document, grid_context, grid_class=TgGrid),
+        tree_grid(document, grid_context, grid_class=TgGrid),
         DataBundle(None, None, None, None, None),
         popup
     )

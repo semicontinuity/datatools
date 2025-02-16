@@ -4,7 +4,7 @@ from datatools.misc.expenses.app import ExpensesNode
 from datatools.misc.expenses.viewer.model.JFolder import JFolder
 from datatools.misc.expenses.viewer.model.JLeaf import JLeaf
 from datatools.misc.expenses.viewer.model.JValueElement import JValueElement
-from datatools.tui.treeview.treenode_context import TreeNodeContext
+from datatools.tui.treeview.tree_node_context import TreeNodeContext
 
 INDENT = 2
 

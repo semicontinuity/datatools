@@ -1,7 +1,7 @@
-from datatools.tui.treeview.treedocument import TreeDocument
+from datatools.tui.treeview.tree_document import TreeDocument
 
 
-class JDocument(TreeDocument):
+class ExpensesDocument(TreeDocument):
 
     def selected_value(self, line):
         return self.rows[line].get_value()
