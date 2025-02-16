@@ -7,7 +7,7 @@ from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
 from datatools.ev.x.pg.view_db_rows_grid import ViewDbRowsGrid
 from datatools.jt.app.app_kit import load_data_bundle, CmdLineParams
-from datatools.jt.app.ng.grid_factory import grid, do_make_grid
+from datatools.jt.app.ng.jt_ng_grid_factory import init_grid, do_make_grid
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 
@@ -34,9 +34,11 @@ class ViewDbRows(View):
             self.rows,
         )
 
+        grid: ViewDbRowsGrid = do_make_grid(bundle, ViewDbRowsGrid)
+
         self.g = with_alternate_screen(
-            lambda: grid(
-                do_make_grid(bundle, ViewDbRowsGrid),
+            lambda: init_grid(
+                grid,
                 screen_size_or_default(),
                 bundle
             )

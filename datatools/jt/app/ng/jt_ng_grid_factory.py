@@ -1,15 +1,13 @@
 from datatools.jt.app.state import init_from_state
 from datatools.jt.logic.auto_renderers import make_renderers
 from datatools.jt.model.data_bundle import DataBundle
-from datatools.jt.ui.ng.grid import JtNgGridBase
+from datatools.jt.ui.ng.jt_ng_grid_base import JtNgGridBase
 
 
-def grid(g: JtNgGridBase, screen_size, data_bundle: DataBundle) -> JtNgGridBase:
-    # g = do_make_grid(data_bundle, grid_f)
+def init_grid(g: JtNgGridBase, screen_size, data_bundle: DataBundle) -> JtNgGridBase:
     g.init_geometry(screen_size[0], screen_size[1])
     g.layout()
     g.total_lines = len(data_bundle.orig_data)
-
     init_from_state(g, data_bundle.state)
     return g
 
@@ -34,7 +32,7 @@ def do_make_grid(data_bundle, grid_f):
             attrs |= row_renderer(data_bundle.orig_data[line].get(column_key))
         return attrs
 
-    g: JtNgGridBase = grid_f(
+    return grid_f(
         0, 0,
         len(cell_renderers),
         lambda i: cell_renderers[i],
@@ -43,4 +41,3 @@ def do_make_grid(data_bundle, grid_f):
         data_bundle,
         column_keys
     )
-    return g

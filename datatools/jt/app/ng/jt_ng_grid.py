@@ -4,7 +4,7 @@ from picotui.defs import KEY_F4
 
 from datatools.json.util import to_jsonisable
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.jt.ui.ng.grid import JtNgGridBase
+from datatools.jt.ui.ng.jt_ng_grid_base import JtNgGridBase
 from datatools.tui.picotui_keys import *
 from datatools.util.object_exporter import ObjectExporter
 

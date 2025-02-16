@@ -8,7 +8,7 @@ from typing import List, Callable, Optional, Any
 from picotui.screen import Screen
 
 from datatools.json.util import to_jsonisable
-from datatools.jt.app.ng.grid_factory import do_make_grid
+from datatools.jt.app.ng.jt_ng_grid_factory import do_make_grid
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.jt.app.state import default_state
 from datatools.jt.logic.auto_metadata import enrich_metadata

@@ -6,7 +6,7 @@ from datatools.json2ansi.app import make_json2ansi_applet
 from datatools.json2ansi_toolkit.default_style import default_style
 from datatools.jt.app.app_kit import Applet, app_kit_main
 from datatools.jt.app.state import default_state
-from datatools.jt.app.ng.grid_factory import grid, do_make_grid
+from datatools.jt.app.ng.jt_ng_grid_factory import init_grid, do_make_grid
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
@@ -116,7 +116,7 @@ def nested_table_applet(cell_j, column_contents_metadata: Metadata,
 
     data_bundle = DataBundle(cell_j, values_info, metadata, presentation, default_state())
     screen_size = with_raw_terminal(read_screen_size)
-    return Applet('jtng', grid(do_make_grid(data_bundle, JtNgGrid), screen_size, data_bundle), data_bundle)
+    return Applet('jtng', init_grid(do_make_grid(data_bundle, JtNgGrid), screen_size, data_bundle), data_bundle)
 
 
 if __name__ == "__main__":
@@ -131,4 +131,4 @@ if __name__ == "__main__":
     #         print(line.removesuffix('\n'))
 
     init_object_exporter()
-    app_kit_main('jtng', Applet, grid, app_router)
+    app_kit_main('jtng', Applet, init_grid, app_router)

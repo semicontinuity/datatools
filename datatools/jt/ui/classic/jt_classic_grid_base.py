@@ -12,7 +12,7 @@ from datatools.tui.terminal import ansi_foreground_escape_code, \
     set_colors_cmd_bytes, append_utf8str_fixed_width
 
 
-class WGrid(WGridBase):
+class JtClassicGridBase(WGridBase):
     search_str: str = ""
 
     def __init__(self, width, height, column_widths, column_keys, column_cell_renderer, cell_value_f, title,
@@ -38,6 +38,10 @@ class WGrid(WGridBase):
         self.separator = V_SINGLE
         self.column_cell_renderer = column_cell_renderer
         self.cell_value_f = cell_value_f
+
+    def init_geometry(self, width: int, height: int):
+        self.width = width
+        self.set_height(height)
 
     def show_line(self, line_content, line):
         raise AssertionError
