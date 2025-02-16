@@ -21,7 +21,8 @@
 import json
 from typing import List
 
-from datatools.jt.app.app_kit import Applet, app_kit_main, init_from_state
+from datatools.jt.app.app_kit import Applet, app_kit_main
+from datatools.jt.app.state import init_from_state
 from datatools.jt.app.classic.pack_columns import pick_displayed_columns
 from datatools.jt.logic.auto_column_renderers import column_renderers
 from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE

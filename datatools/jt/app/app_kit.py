@@ -8,11 +8,13 @@ from typing import List, Callable, Optional, Any
 from picotui.screen import Screen
 
 from datatools.json.util import to_jsonisable
+from datatools.jt.app.ng.grid_factory import do_make_grid
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
+from datatools.jt.app.state import default_state
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_values_info import compute_column_values_info
-from datatools.jt.model.data_bundle import DataBundle, STATE_TOP_LINE, STATE_CUR_LINE
+from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.model.exit_codes import EXIT_CODE_ESCAPE
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
@@ -95,7 +97,10 @@ def do_main(app_id, applet_f: Callable[[Any, Any, Any], Applet], grid_f, router,
             if params.print or params.pretty_print:
                 if params.pretty_print: print()
 
-                the_grid = grid_f(JtNgGrid, (screen_width, len(data_bundle.orig_data) + 1), data_bundle)
+                the_grid = grid_f(
+                    do_make_grid(data_bundle, JtNgGrid),
+                    (screen_width, len(data_bundle.orig_data) + 1), data_bundle
+                )
                 the_grid.width = min(the_grid.width, screen_width)
                 the_grid.cur_line = -1
                 the_grid.interactive = False
@@ -104,7 +109,12 @@ def do_main(app_id, applet_f: Callable[[Any, Any, Any], Applet], grid_f, router,
                 if params.pretty_print: print()
                 break
             else:
-                exit_code = with_raw_term(alt_screen=True, f=lambda: app_loop(applet_f, app_id, data_bundle, grid_f, router, screen_size))
+                exit_code = with_raw_term(
+                    alt_screen=True,
+                    f=lambda: app_loop(
+                        applet_f, app_id, data_bundle, grid_f, router, screen_size
+                    )
+                )
 
         return exit_code, data_bundle
 
@@ -118,8 +128,8 @@ def app_kit_main(applet_id, applet_f: Callable[[], Applet], grid_f, router: Call
     sys.exit(do_main(applet_id, applet_f, grid_f, router, screen_size))
 
 
-def app_loop(applet_f: Callable[[Any, Any, Any], Applet], applet_id, data_bundle, g, router, screen_size) -> int:
-    the_grid = g(JtNgGrid, screen_size, data_bundle)
+def app_loop(applet_f: Callable[[Any, Any, Any], Applet], applet_id, data_bundle, grid_f, router, screen_size) -> int:
+    the_grid = grid_f(do_make_grid(data_bundle, JtNgGrid), screen_size, data_bundle)
     a = applet_f(applet_id, the_grid, data_bundle)
     applet_stack = [a]
     prev_applet = None
@@ -197,19 +207,6 @@ def store_data_bundle(data_bundle: DataBundle):
     write_state_or_pass(data_bundle.state)
     write_presentation_or_pass(to_jsonisable(data_bundle.presentation))
     write_metadata_or_pass(to_jsonisable(data_bundle.metadata))
-
-
-def default_state():
-    return {STATE_TOP_LINE: 0, STATE_CUR_LINE: 0}
-
-
-def init_from_state(g, state):
-    top_line = state.get(STATE_TOP_LINE) or 0
-    if 0 <= top_line < g.total_lines:
-        g.top_line = top_line
-    cur_line = state.get(STATE_CUR_LINE) or 0
-    if top_line <= cur_line < g.total_lines:
-        g.cur_line = cur_line
 
 
 def load_data(params: CmdLineParams):
