@@ -34,7 +34,7 @@ class Server(BaseHTTPRequestHandler):
                 self.browse(post_body)
             case 'application/sql':
                 self.browse(
-                    self.write_temp_file(post_body, '.sql')
+                    self.write_temp_file(post_body, '.sql.txt')
                 )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)

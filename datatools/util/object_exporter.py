@@ -4,8 +4,6 @@ import os
 import subprocess
 import sys
 
-from datatools.json.util import to_jsonisable
-
 
 def init_object_exporter():
     ObjectExporter.INSTANCE = ObjectDispatcher()
@@ -16,16 +14,17 @@ def init_object_exporter():
 class ObjectExporter:
     INSTANCE: 'ObjectExporter' = None
 
-    def export(self, obj, metadata, channel):
+    def export(self, obj: str, metadata, channel):
         pass
 
 
-class ObjectDispatcher:
+class ObjectDispatcher(ObjectExporter):
     def __init__(self) -> None:
         self.exporter0 = HttpIntentObjectExporter()
         self.exporter1 = RunProcessObjectExporter()
 
-    def export(self, obj, metadata, channel):
+    # @override
+    def export(self, obj: str, metadata: dict[str, str], channel):
         if channel:
             self.exporter1.export(obj, metadata, channel)
         else:
@@ -33,35 +32,39 @@ class ObjectDispatcher:
 
 
 class HttpObjectExporter(ObjectExporter):
-    def export(self, obj, metadata, channel):
+    # @override
+    def export(self, obj: str, metadata, channel):
         headers = {"x-env": json.dumps(os.environ)}
         conn = http.client.HTTPConnection("localhost", 8888)
-        conn.request("POST", "", json.dumps(obj), headers)
+        conn.request("POST", "", obj, headers)
         conn.getresponse()
         conn.close()
 
 
 class HttpIntentObjectExporter(ObjectExporter):
-    def export(self, obj, metadata, channel):
-        headers = {"Content-Type": "application/json"}
+    # @override
+    def export(self, obj: str, metadata: dict[str, str], channel):
+        headers = {"Content-Type": metadata.get('Content-Type') or "application/json"}
         conn = http.client.HTTPConnection("localhost", 7777)
-        conn.request("POST", "", json.dumps(to_jsonisable(obj)), headers)
+        conn.request("POST", "", obj, headers)
         conn.getresponse()
         conn.close()
 
 
 class PlainObjectExporter(ObjectExporter):
-    def export(self, obj, metadata, channel):
-        print(json.dumps(obj))
+    # @override
+    def export(self, obj: str, metadata, channel):
+        print(obj)
         sys.stdout.flush()
 
 
 class AnnotatedObjectExporter(ObjectExporter):
-    def export(self, obj, metadata, channel):
+    # @override
+    def export(self, obj: str, metadata, channel):
         # and not sys.stdout.isatty()
         print()
         print(json.dumps(metadata))
-        print(json.dumps(obj))
+        print(obj)
         sys.stdout.flush()
 
 
@@ -70,6 +73,7 @@ class QtClipboardObjectExporter(ObjectExporter):
         from PyQt5 import QtWidgets
         self.app = QtWidgets.QApplication(sys.argv)
 
+    # @override
     def export(self, obj, metadata, channel):
         from PyQt5.QtCore import QMimeData
         from PyQt5.QtGui import QGuiApplication
