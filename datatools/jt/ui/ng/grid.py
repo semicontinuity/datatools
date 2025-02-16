@@ -1,11 +1,10 @@
 from typing import Optional, Dict, List
 
-from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_F4
+from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END
 
 from datatools.jt.model.attributes import MASK_ROW_CURSOR, MASK_OVERLINE
 from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_COLUMN_INDEX, STATE_CUR_CELL_VALUE, \
     STATE_CUR_COLUMN_KEY
-from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.cell_renderer import WColumnRenderer
 from datatools.jt.ui.themes import FOOTER_BG
 from datatools.tui.ansi import ANSI_ATTR_OVERLINE, OVERLINE_BYTES, NOT_INVERTED_BYTES
@@ -13,7 +12,6 @@ from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import *
 from datatools.tui.terminal import append_spaces, ansi_attr_bytes, set_colors_cmd_bytes2
 from datatools.util.logging import debug
-from datatools.util.object_exporter import ObjectExporter
 
 HORIZONTAL_PAGE_SIZE = 8
 
@@ -177,34 +175,7 @@ class WGrid(WGridBase):
                 )
 
     def handle_edit_key(self, key):
-        def sort_value(row):
-            value = row.get(self.column_keys[self.cursor_column])
-            return '' if value is None else str(value)
-
-        if key == KEY_F4:
-            self.data_bundle.orig_data.sort(key=sort_value)
-            self.redraw()
-        elif key == KEY_F5 or key == KEY_ALT_F5:
-            ObjectExporter.INSTANCE.export(
-                self.data_bundle.orig_data[self.cur_line],
-                {},
-                key == KEY_ALT_F5
-            )
-        elif key == KEY_INSERT or key == KEY_ALT_INSERT:
-            ObjectExporter.INSTANCE.export(
-                self.cell_value_f(self.cur_line, self.cursor_column),
-                {},
-                key == KEY_ALT_INSERT
-            )
-        elif key == KEY_DELETE or key == KEY_ALT_DELETE:
-            ObjectExporter.INSTANCE.export(
-                {self.column_keys[self.cursor_column]: self.cell_value_f(self.cur_line, self.cursor_column)},
-                {},
-                key == KEY_ALT_DELETE
-            )
-        elif key in KEYS_TO_EXIT_CODES:
-            return key
-        elif type(key) is bytes:
+        if type(key) is bytes:
             if key == KEY_ALT_1:
                 self.toggle(0)
             elif key == KEY_ALT_2:
