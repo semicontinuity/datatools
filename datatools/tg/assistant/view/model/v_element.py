@@ -31,3 +31,7 @@ class VElement(TreeNode):
     # abstract
     def visit(self):
         pass
+
+    # abstract
+    def visit_recursive(self):
+        pass

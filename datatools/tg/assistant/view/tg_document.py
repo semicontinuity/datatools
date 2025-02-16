@@ -21,6 +21,10 @@ class TgDocument(TreeDocument):
             element.collapsed = True
             return element.line
 
+    def visit_recursive(self, line: int):
+        element = self.rows[line]
+        element.visit_recursive()
+
     def visit(self, line: int):
         element = self.rows[line]
         element.visit()

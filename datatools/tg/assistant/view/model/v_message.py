@@ -66,6 +66,13 @@ class VMessage(VFolder):
     def is_read(self):
         return self.tg_message.ext.viewed
 
+    # @override
+    def visit_recursive(self):
+        self.tg_message.ext.viewed = True
+        for element in self.elements:
+            element.visit_recursive()
+
+    # @override
     def visit(self):
         if len(self.message_lines) <= 1 or not self.collapsed:
             self.tg_message.ext.viewed = True

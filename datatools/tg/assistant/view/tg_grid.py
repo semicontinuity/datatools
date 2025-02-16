@@ -1,7 +1,7 @@
-from picotui.defs import KEY_RIGHT
+from picotui.defs import KEY_RIGHT, KEY_DELETE
 
-from datatools.tui.treeview.tree_grid import TreeGrid
 from datatools.tui.treeview.tree_document import TreeDocument
+from datatools.tui.treeview.tree_grid import TreeGrid
 
 
 class TgGrid(TreeGrid):
@@ -10,6 +10,11 @@ class TgGrid(TreeGrid):
         super().__init__(x, y, width, height, document, interactive)
 
     def handle_cursor_keys(self, key):
-        if key == KEY_RIGHT:
+        if key == KEY_DELETE:
+            self.document.visit_recursive(self.cur_line)
+            self.redraw()
+            return True
+        elif key == KEY_RIGHT:
             self.document.visit(self.cur_line)
+
         return super().handle_cursor_keys(key)
