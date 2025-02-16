@@ -37,6 +37,7 @@ class ViewDbRows(View):
                 )
             )
 
+    # @override
     def run(self) -> Optional[EntityReference]:
         loop_result, cur_line = with_alternate_screen(lambda: self.do_loop(self.g))
         if loop_result == KEY_ENTER:

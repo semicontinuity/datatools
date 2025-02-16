@@ -22,6 +22,7 @@ class ViewDbRow(View):
         self.realm = realm
         self.selector = selector
 
+    # @override
     def build(self):
         with self.realm.connect_to_db() as conn:
             self.references = self.realm.make_references(conn, self.selector.table)
@@ -35,10 +36,11 @@ class ViewDbRow(View):
                     self.realm.links.get(self.selector.table) or {},
                     self.realm,
                 ),
-                self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
+                footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
             )
             self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
+    # @override
     def run(self) -> Optional[EntityReference]:
         loop_result, cur_line = with_alternate_screen(lambda: do_loop(self.g))
         return self.handle_loop_result(self.doc, loop_result, cur_line)

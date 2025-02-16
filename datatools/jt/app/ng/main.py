@@ -115,7 +115,7 @@ def app_router(applet, exit_code):
             return None
 
         elif exit_code <= EXIT_CODE_MAX_REGULAR:
-            # Any other key: Dump document as JSON
+            # Any other key with Shift?: Dump document as JSON
             if exit_code_key_has_modifier(exit_code, EXIT_CODE_SHIFT):
                 print(json.dumps(applet.data_bundle.orig_data))
                 return None
