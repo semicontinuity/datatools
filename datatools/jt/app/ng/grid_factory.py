@@ -24,8 +24,8 @@ def grid(grid_f, screen_size, data_bundle: DataBundle) -> JtNgGridBase:
             attrs |= row_renderer(data_bundle.orig_data[line].get(column_key))
         return attrs
 
-    g = grid_f(
-        screen_size[0], screen_size[1],
+    g: JtNgGridBase = grid_f(
+        0, 0,
         len(cell_renderers),
         lambda i: cell_renderers[i],
         lambda line, index: None if index is None else named_cell_value(line, column_keys[index]),
@@ -33,8 +33,9 @@ def grid(grid_f, screen_size, data_bundle: DataBundle) -> JtNgGridBase:
         data_bundle,
         column_keys
     )
-    # g.data_bundle = data_bundle
-
+    g.init_geometry(screen_size[0], screen_size[1])
+    g.layout()
     g.total_lines = len(data_bundle.orig_data)
+
     init_from_state(g, data_bundle.state)
     return g

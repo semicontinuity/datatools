@@ -31,7 +31,11 @@ class JtNgGridBase(WGridBase):
         self.cursor_column = 0
         self.column_ends = None
         self.data_bundle = data_bundle
-        self.layout()
+        # self.layout()
+
+    def init_geometry(self, width: int, height: int):
+        self.width = width
+        self.set_height(height)
 
     def show_line(self, line_content, line):
         raise AssertionError
