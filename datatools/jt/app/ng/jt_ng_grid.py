@@ -23,6 +23,13 @@ class JtNgGrid(JtNgGridBase):
             j = self.data_bundle.orig_data[self.cur_line]
             channel = key == KEY_ALT_F5
             self.export_json(channel, j)
+        elif key == KEY_SHIFT_F5:
+            j = self.data_bundle.orig_data
+            ObjectExporter.INSTANCE.export(
+                ''.join(json.dumps(to_jsonisable(row), ensure_ascii=False) + '\n' for row in j),
+                {'Content-Type': 'application/json-lines'},
+                0
+            )
         elif key == KEY_INSERT or key == KEY_ALT_INSERT:
             j = self.cell_value_f(self.cur_line, self.cursor_column)
             channel = key == KEY_ALT_INSERT
@@ -36,9 +43,9 @@ class JtNgGrid(JtNgGridBase):
         else:
             return super().handle_edit_key(key)
 
-    def export_json(self, channel, j):
+    def export_json(self, channel, j, content_type='application/json'):
         ObjectExporter.INSTANCE.export(
-            json.dumps(to_jsonisable(j)),
-            {},
+            json.dumps(to_jsonisable(j), ensure_ascii=False),
+            {'Content-Type': content_type},
             channel
         )

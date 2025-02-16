@@ -12,7 +12,7 @@ import os
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
-from datatools.jt2h.app import page_node_basic_auto
+from datatools.jt2h.app import page_node_basic_auto, page_node_auto
 from datatools.jt2h.app_json_page import page_node
 from datatools.util.subprocess import exe
 
@@ -38,7 +38,8 @@ class Server(BaseHTTPRequestHandler):
                 )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)
-                html = str(page_node_basic_auto(lines))
+                # html = str(page_node_basic_auto(lines))
+                html = str(page_node_auto(lines))
                 self.browse_new_tab(
                     self.write_temp_file(
                         html.encode('utf-8'),

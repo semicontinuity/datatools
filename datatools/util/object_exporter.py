@@ -46,7 +46,7 @@ class HttpIntentObjectExporter(ObjectExporter):
     def export(self, obj: str, metadata: dict[str, str], channel):
         headers = {"Content-Type": metadata.get('Content-Type') or "application/json"}
         conn = http.client.HTTPConnection("localhost", 7777)
-        conn.request("POST", "", obj, headers)
+        conn.request("POST", "", obj.encode('utf-8'), headers)
         conn.getresponse()
         conn.close()
 
