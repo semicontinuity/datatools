@@ -32,6 +32,10 @@ class Server(BaseHTTPRequestHandler):
         match self.headers.get('Content-Type'):
             case 'text/uri-list':
                 self.browse(post_body)
+            case 'application/sql':
+                self.browse(
+                    self.write_temp_file(post_body, '.sql')
+                )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)
                 html = str(page_node_basic_auto(lines))

@@ -43,7 +43,7 @@ class HttpObjectExporter(ObjectExporter):
 
 class HttpIntentObjectExporter(ObjectExporter):
     def export(self, obj, metadata, channel):
-        headers = {"Content-Type": "application/json" }
+        headers = {"Content-Type": "application/json"}
         conn = http.client.HTTPConnection("localhost", 7777)
         conn.request("POST", "", json.dumps(to_jsonisable(obj)), headers)
         conn.getresponse()

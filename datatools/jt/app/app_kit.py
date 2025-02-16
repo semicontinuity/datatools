@@ -153,7 +153,7 @@ def app_loop(applet_f: Callable[[Any, Any, Any], Applet], applet_id, data_bundle
     return exit_code
 
 
-def load_data_bundle(params: CmdLineParams, orig_data: List):
+def load_data_bundle(params: CmdLineParams, orig_data: List) -> DataBundle:
     raw_metadata = metadata_or_default(default={})
     raw_presentation = presentation_or_default(default={})
     state = state_or_default(default=default_state())

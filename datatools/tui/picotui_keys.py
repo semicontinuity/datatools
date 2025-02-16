@@ -29,6 +29,8 @@ KEY_F5 = b'\x1b[15~'
 KEY_SHIFT_F5 = b'\x1b[15;2~'
 KEY_ALT_F5 = b'\x1b[15;3~'
 KEY_CTRL_F5 = b'\x1b[15;5~'
+KEY_CTRL_SHIFT_F5 = b'\x1b[15;6~'
+KEY_CTRL_ALT_SHIFT_F5 = b'\x1b[15;8~'
 
 KEY_SHIFT_F6 = b'\x1b[17;2~'
 KEY_ALT_F6 = b'\x1b[17;3~'
