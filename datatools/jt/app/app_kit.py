@@ -8,6 +8,7 @@ from typing import List, Callable, Optional, Any
 from picotui.screen import Screen
 
 from datatools.json.util import to_jsonisable
+from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_values_info import compute_column_values_info
@@ -94,7 +95,7 @@ def do_main(app_id, applet_f: Callable[[Any, Any, Any], Applet], grid_f, router,
             if params.print or params.pretty_print:
                 if params.pretty_print: print()
 
-                the_grid = grid_f((screen_width, len(data_bundle.orig_data) + 1), data_bundle)
+                the_grid = grid_f(JtNgGrid, (screen_width, len(data_bundle.orig_data) + 1), data_bundle)
                 the_grid.width = min(the_grid.width, screen_width)
                 the_grid.cur_line = -1
                 the_grid.interactive = False
@@ -118,7 +119,7 @@ def app_kit_main(applet_id, applet_f: Callable[[], Applet], grid_f, router: Call
 
 
 def app_loop(applet_f: Callable[[Any, Any, Any], Applet], applet_id, data_bundle, g, router, screen_size) -> int:
-    the_grid = g(screen_size, data_bundle)
+    the_grid = g(JtNgGrid, screen_size, data_bundle)
     a = applet_f(applet_id, the_grid, data_bundle)
     applet_stack = [a]
     prev_applet = None

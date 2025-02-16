@@ -1,11 +1,10 @@
 from datatools.jt.app.app_kit import init_from_state
-from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.jt.logic.auto_renderers import make_renderers
 from datatools.jt.model.data_bundle import DataBundle
 from datatools.jt.ui.ng.grid import WGrid
 
 
-def grid(screen_size, data_bundle: DataBundle) -> WGrid:
+def grid(grid_f, screen_size, data_bundle: DataBundle) -> WGrid:
     def named_cell_value(line, column_key):
         if column_key is None:
             return None
@@ -25,7 +24,7 @@ def grid(screen_size, data_bundle: DataBundle) -> WGrid:
             attrs |= row_renderer(data_bundle.orig_data[line].get(column_key))
         return attrs
 
-    g = JtNgGrid(
+    g = grid_f(
         screen_size[0], screen_size[1],
         len(cell_renderers),
         lambda i: cell_renderers[i],
