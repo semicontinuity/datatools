@@ -4,12 +4,12 @@ from picotui.defs import KEY_F4
 
 from datatools.json.util import to_jsonisable
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
-from datatools.jt.ui.ng.grid import WGrid
+from datatools.jt.ui.ng.grid import JtNgGridBase
 from datatools.tui.picotui_keys import *
 from datatools.util.object_exporter import ObjectExporter
 
 
-class JtNgGrid(WGrid):
+class JtNgGrid(JtNgGridBase):
 
     def handle_edit_key(self, key):
         def sort_value(row):

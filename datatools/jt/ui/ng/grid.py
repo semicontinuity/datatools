@@ -16,12 +16,12 @@ from datatools.util.logging import debug
 HORIZONTAL_PAGE_SIZE = 8
 
 
-class WGrid(WGridBase):
+class JtNgGridBase(WGridBase):
     search_str: str = ""
 
     def __init__(self, width, height, column_count, column_cell_renderer_f, cell_value_f, row_attrs_f, data_bundle: DataBundle, column_keys: List[str], interactive=True):
         # last line not painted because of sixels (and footer)
-        super().__init__(0, 0, width, height, 0, 1, interactive=interactive)
+        super().__init__(0, 0, width, height, y_top_offset=0, y_bottom_offset=1, interactive=interactive)
         self.column_keys = column_keys
         self.column_count = column_count
         self.column_cell_renderer_f = column_cell_renderer_f

@@ -1,10 +1,10 @@
 from datatools.jt.app.app_kit import init_from_state
 from datatools.jt.logic.auto_renderers import make_renderers
 from datatools.jt.model.data_bundle import DataBundle
-from datatools.jt.ui.ng.grid import WGrid
+from datatools.jt.ui.ng.grid import JtNgGridBase
 
 
-def grid(grid_f, screen_size, data_bundle: DataBundle) -> WGrid:
+def grid(grid_f, screen_size, data_bundle: DataBundle) -> JtNgGridBase:
     def named_cell_value(line, column_key):
         if column_key is None:
             return None

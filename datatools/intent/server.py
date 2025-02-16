@@ -31,15 +31,15 @@ class Server(BaseHTTPRequestHandler):
 
         match self.headers.get('Content-Type'):
             case 'text/uri-list':
-                self.browse(post_body)
+                self.browse_new_tab(post_body)
             case 'application/sql':
-                self.browse(
+                self.browse_new_tab(
                     self.write_temp_file(post_body, '.sql.txt')
                 )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)
                 html = str(page_node_basic_auto(lines))
-                self.browse(
+                self.browse_new_tab(
                     self.write_temp_file(
                         html.encode('utf-8'),
                         '.html'
@@ -77,6 +77,7 @@ class Server(BaseHTTPRequestHandler):
             {},
         )
 
+    # browse_url is buggy/hacky
     def browse(self, url):
         if type(url) is str:
             url = url.encode('utf-8')
