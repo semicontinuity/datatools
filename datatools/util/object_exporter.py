@@ -4,6 +4,8 @@ import os
 import subprocess
 import sys
 
+from datatools.json.util import to_jsonisable
+
 
 def init_object_exporter():
     ObjectExporter.INSTANCE = ObjectDispatcher()
@@ -20,14 +22,14 @@ class ObjectExporter:
 
 class ObjectDispatcher:
     def __init__(self) -> None:
-        self.exporter_clipboard = XClipObjectExporter()
-        self.exporter_process = RunProcessObjectExporter()
+        self.exporter0 = HttpIntentObjectExporter()
+        self.exporter1 = RunProcessObjectExporter()
 
     def export(self, obj, metadata, channel):
         if channel:
-            self.exporter_process.export(obj, metadata, channel)
+            self.exporter1.export(obj, metadata, channel)
         else:
-            self.exporter_clipboard.export(obj, metadata, channel)
+            self.exporter0.export(obj, metadata, channel)
 
 
 class HttpObjectExporter(ObjectExporter):
@@ -35,6 +37,15 @@ class HttpObjectExporter(ObjectExporter):
         headers = {"x-env": json.dumps(os.environ)}
         conn = http.client.HTTPConnection("localhost", 8888)
         conn.request("POST", "", json.dumps(obj), headers)
+        conn.getresponse()
+        conn.close()
+
+
+class HttpIntentObjectExporter(ObjectExporter):
+    def export(self, obj, metadata, channel):
+        headers = {"Content-Type": "application/json" }
+        conn = http.client.HTTPConnection("localhost", 7777)
+        conn.request("POST", "", json.dumps(to_jsonisable(obj)), headers)
         conn.getresponse()
         conn.close()
 

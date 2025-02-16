@@ -7,11 +7,13 @@ HTTP server accepts entity as the body of HTTP POST request,
 and reacts, depending on Content-Type
 """
 
-import json, os
+import json
+import os
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
 from datatools.jt2h.app import page_node_basic_auto
+from datatools.jt2h.app_json_page import page_node
 from datatools.util.subprocess import exe
 
 
@@ -34,6 +36,15 @@ class Server(BaseHTTPRequestHandler):
                 lines = self.json_lines(post_body)
                 html = str(page_node_basic_auto(lines))
                 self.browse(
+                    self.write_temp_file(
+                        html.encode('utf-8'),
+                        '.html'
+                    )
+                )
+            case 'application/json':
+                data = json.loads(post_body.decode('utf-8'))
+                html = str(page_node(data))
+                self.browse_new_tab(
                     self.write_temp_file(
                         html.encode('utf-8'),
                         '.html'

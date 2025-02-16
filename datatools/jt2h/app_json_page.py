@@ -12,7 +12,10 @@ from util.html.page_node import PageNode
 
 PAGE_CSS_X_LARGE = '''
 body {
-    font-size: x-large; background-color: #e0e0e0;
+    background-color: #e0e0e0;
+}
+span {
+    font-size: x-large;
 }
 '''
 
