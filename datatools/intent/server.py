@@ -12,6 +12,7 @@ import os
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
+from datatools.intent.popup_selector import choose
 from datatools.jt2h.app import page_node_basic_auto, page_node_auto
 from datatools.jt2h.app_json_page import page_node
 from datatools.util.subprocess import exe
@@ -38,25 +39,25 @@ class Server(BaseHTTPRequestHandler):
                 )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)
-                # html = str(page_node_basic_auto(lines))
-                html = str(page_node_auto(lines))
-                self.browse_new_tab(
-                    self.write_temp_file(
-                        html.encode('utf-8'),
-                        '.html'
-                    )
-                )
+                match choose(["Send HTML (dynamic) to Browser", "Send HTML (basic) to Browser"], 'table'):
+                    case 0:
+                        self.html_to_browser(str(page_node_auto(lines)))
+                    case 1:
+                        self.html_to_browser(str(page_node_basic_auto(lines)))
             case 'application/json':
                 data = json.loads(post_body.decode('utf-8'))
                 html = str(page_node(data))
-                self.browse_new_tab(
-                    self.write_temp_file(
-                        html.encode('utf-8'),
-                        '.html'
-                    )
-                )
+                self.html_to_browser(html)
 
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
+
+    def html_to_browser(self, html):
+        self.browse_new_tab(
+            self.write_temp_file(
+                html.encode('utf-8'),
+                '.html'
+            )
+        )
 
     def json_lines(self, data):
         decode = data.decode('utf-8')
