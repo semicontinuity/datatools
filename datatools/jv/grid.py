@@ -1,8 +1,10 @@
+import json
 from typing import Optional
 
-from datatools.tui.picotui_keys import KEY_INSERT
-from datatools.tui.treeview.tree_grid import TreeGrid
+from datatools.json.util import to_jsonisable
+from datatools.tui.picotui_keys import KEY_INSERT, KEY_SHIFT_F5
 from datatools.tui.treeview.tree_document import TreeDocument
+from datatools.tui.treeview.tree_grid import TreeGrid
 from datatools.util.object_exporter import ObjectExporter
 
 
@@ -21,9 +23,30 @@ class JGrid(TreeGrid):
 
     def handle_edit_key(self, key):
         if key == KEY_INSERT:
+            value = self.document.selected_value(self.cur_line)
+            if type(value) is str:
+                ObjectExporter.INSTANCE.export(
+                    value,
+                    {
+                        "title": self.document.selected_path(self.cur_line),
+                        "Content-Type": 'text/plain',
+                    },
+                    0
+                )
+            else:
+                ObjectExporter.INSTANCE.export(
+                    json.dumps(to_jsonisable(value), ensure_ascii=False),
+                    {
+                        "title": self.document.selected_path(self.cur_line),
+                        "Content-Type": 'application/json',
+                    },
+                    0
+                )
+
+        elif key == KEY_SHIFT_F5:
             ObjectExporter.INSTANCE.export(
-                self.document.selected_value(self.cur_line),
-                {"title": self.document.selected_path(self.cur_line)},
+                json.dumps(to_jsonisable(self.document.value), ensure_ascii=False),
+                {},
                 0
             )
         else:

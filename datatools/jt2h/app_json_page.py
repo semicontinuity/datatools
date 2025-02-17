@@ -26,7 +26,7 @@ span {
 
 SPAN_CSS = '''
 span {
-    font-family: monospace;
+    font-family: monospace; color: black;
 }
 '''
 

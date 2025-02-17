@@ -1,9 +1,10 @@
-from typing import Hashable, List, Optional
+from typing import Hashable, List, Optional, Any
 
 from datatools.tui.treeview.tree_document import TreeDocument
 
 
 class JDocument(TreeDocument):
+    value: Any
 
     def collapse(self, line) -> int:
         parent = self.rows[line].parent

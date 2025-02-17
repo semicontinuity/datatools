@@ -49,7 +49,7 @@ class JElement(TreeNode):
         path = []
         node = self
         while True:
-            if node.parent is None:
+            if node is None or node.parent is None:
                 path.reverse()
                 return path
 

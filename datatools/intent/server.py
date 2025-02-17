@@ -9,12 +9,13 @@ and reacts, depending on Content-Type
 
 import json
 import os
+import subprocess
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
 from datatools.intent.popup_selector import choose
-from datatools.jt2h.app import page_node_basic_auto, page_node_auto
-from datatools.jt2h.app_json_page import page_node
+from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_node
+from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.util.subprocess import exe
 
 
@@ -33,23 +34,74 @@ class Server(BaseHTTPRequestHandler):
         match self.headers.get('Content-Type'):
             case 'text/uri-list':
                 self.browse_new_tab(post_body)
+            case 'text/plain':
+                match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
+                    case 0:
+                        self.to_clipboard(post_body)
+                    case 1:
+                        self.browse_new_tab(
+                            self.write_temp_file(post_body, '.txt')
+                        )
             case 'application/sql':
-                self.browse_new_tab(
-                    self.write_temp_file(post_body, '.sql.txt')
-                )
+                match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
+                    case 0:
+                        self.to_clipboard(post_body)
+                    case 1:
+                        self.browse_new_tab(
+                            self.write_temp_file(post_body, '.sql.txt')
+                        )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)
-                match choose(["Send HTML (dynamic) to Browser", "Send HTML (basic) to Browser"], 'table'):
+                match choose(
+                    [
+                        "Copy to Clipboard (json lines)",
+                        "Convert to HTML (dynamic) and Open in Browser",
+                        "Convert to HTML (dynamic) and Copy to Clipboard",
+                        "Convert to HTML (static) and Open in Browser",
+                        "Convert to HTML (static) and Copy to Clipboard",
+                        "Convert to MD HTML and Copy to Clipboard",
+                    ],
+                    'table'
+                ):
                     case 0:
-                        self.html_to_browser(str(page_node_auto(lines)))
+                        self.to_clipboard(post_body)
                     case 1:
+                        self.html_to_browser(str(page_node_auto(lines)))
+                    case 2:
+                        self.to_clipboard(str(page_node_auto(lines)))
+                    case 3:
                         self.html_to_browser(str(page_node_basic_auto(lines)))
+                    case 4:
+                        self.to_clipboard(str(page_node_basic_auto(lines)))
+                    case 5:
+                        self.to_clipboard(str(md_table_node(lines)))
+
             case 'application/json':
-                data = json.loads(post_body.decode('utf-8'))
-                html = str(page_node(data))
-                self.html_to_browser(html)
+                s = post_body.decode('utf-8')
+                data = json.loads(s)
+                match choose([
+                    "Copy to Clipboard",
+                    "Open in Browser",
+                    "Convert to HTML and Open in Browser",
+                    "Convert to MD HTML and Copy to Clipboard",
+                ], 'JSON'):
+                    case 0:
+                        self.to_clipboard(post_body)
+                    case 1:
+                        self.browse_new_tab(
+                            self.write_temp_file(post_body, '.json')
+                        )
+                    case 2:
+                        self.html_to_browser(str(page_node(data)))
+                    case 3:
+                        self.to_clipboard(str(md_node(data)))
 
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
+
+    def to_clipboard(self, s):
+        if type(s) is str:
+            s = s.encode('utf-8')
+        subprocess.run(['xclip', '-selection', 'clipboard'], input=s, stdout=subprocess.DEVNULL)
 
     def html_to_browser(self, html):
         self.browse_new_tab(
