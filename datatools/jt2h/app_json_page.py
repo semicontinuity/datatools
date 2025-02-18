@@ -21,6 +21,7 @@ span {
 
 PAGE_CSS_X_SMALL = '''
 span {
+    font-size: x-small;
 }
 '''
 

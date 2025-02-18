@@ -10,6 +10,7 @@ from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
 from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
+from datatools.tg.assistant.service import should_summarize
 from datatools.tg.assistant.service.message_summarizer_service import MessageSummarizerService
 
 
@@ -113,7 +114,7 @@ class ChannelMessageService:
             replies=SortedDict()
         )
 
-        if not tg_message.ext.summary and ('\n' in tg_message.message or len(tg_message.message) > 120):
+        if not tg_message.ext.summary and should_summarize(tg_message.message):
             self.message_summarizer_service.submit(tg_message)
 
         if raw_message.from_id and raw_message.from_id.is_user():
