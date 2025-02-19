@@ -7,6 +7,7 @@ import yaml
 from datatools.dbview.x.util.helper import get_env
 from datatools.dbview.x.util.pg_inferred_query import inferred_query
 from datatools.dbview.x.util.pg_query import query_to_string
+from datatools.util.logging import debug
 
 
 def get_sql() -> str:
@@ -15,7 +16,9 @@ def get_sql() -> str:
         return query_to_string(yaml.safe_load(query), table)
     else:
         # return __inferred_select_sql(table)
-        return query_to_string(inferred_query(table), table)
+        q = inferred_query(table)
+        debug('get_sql', query=q)
+        return query_to_string(q, table)
 
 
 def __inferred_select_sql(table):

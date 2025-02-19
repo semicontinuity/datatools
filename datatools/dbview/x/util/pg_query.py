@@ -1,3 +1,6 @@
+from types import NoneType
+from typing import Any
+
 import yaml
 
 from datatools.dbview.x.util.helper import get_env
@@ -40,7 +43,13 @@ def selector_to_string(selector: dict, table: str) -> str:
 
 
 def filter_to_string(clause: dict) -> str:
-    value = clause['value']
-    value_str = '(' + ','.join(repr(v) for v in value) + ')' if type(value) is list else repr(value)
+    return f"{clause['field']} {clause['op']} {value_to_string(clause['value'])}"
 
-    return f"{clause['field']} {clause['op']} {value_str}"
+
+def value_to_string(value: Any) -> str:
+    if type(value) is NoneType:
+        return 'null'
+    elif type(value) is list:
+        return '(' + ','.join(value_to_string(v) for v in value) + ')'
+    else:
+        return repr(value)

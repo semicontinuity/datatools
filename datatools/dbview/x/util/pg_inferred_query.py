@@ -70,8 +70,8 @@ def get_where_clauses0(table_path: str, rest: str) -> list[tuple[str, str, str]]
             i += 1
             clauses.append((key.removeprefix('='), '=', value))
         elif key.startswith('+'):
-            clauses.append((key.removeprefix('+'), 'is not', 'null'))
+            clauses.append((key.removeprefix('+'), 'is not', None))
         elif key.startswith('-'):
-            clauses.append((key.removeprefix('-'), 'is', 'null'))
+            clauses.append((key.removeprefix('-'), 'is', None))
 
     return clauses
