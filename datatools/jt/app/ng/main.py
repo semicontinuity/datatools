@@ -5,9 +5,10 @@ from datatools.json.util import to_jsonisable
 from datatools.json2ansi.app import make_json2ansi_applet
 from datatools.json2ansi_toolkit.default_style import default_style
 from datatools.jt.app.app_kit import Applet, app_kit_main
-from datatools.jt.app.state import default_state
-from datatools.jt.app.ng.jt_ng_grid_factory import init_grid, do_make_grid
+from datatools.jt.app.ng import collapsed_columns, filter_non_collapsed
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
+from datatools.jt.app.ng.jt_ng_grid_factory import init_grid, do_make_grid
+from datatools.jt.app.state import default_state
 from datatools.jt.logic.auto_metadata import enrich_metadata
 from datatools.jt.logic.auto_presentation import enrich_presentation
 from datatools.jt.logic.auto_values_info import compute_column_values_info
@@ -16,17 +17,12 @@ from datatools.jt.model.data_bundle import DataBundle, STATE_CUR_LINE, STATE_CUR
 from datatools.jt.model.exit_codes import *
 from datatools.jt.model.metadata import Metadata, STEREOTYPE_TIME_SERIES
 from datatools.jt.model.presentation import Presentation
-from datatools.jt.ui.ng.cell_renderer_indicator import WIndicatorCellRenderer
 from datatools.jt2h.app import page_node_auto, page_node_basic_auto, md_table_node
 from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.tui.terminal import with_raw_terminal, read_screen_size
 from datatools.util.object_exporter import init_object_exporter
 
 LEAF_CONTENTS_APPLET_STYLE = default_style([48, 40, 24])
-
-
-def filter_non_collapsed(r: dict, collapsed: dict[str, bool]):
-    return {k: v for k, v in r.items() if not collapsed.get(k)}
 
 
 def app_router(applet, exit_code):
@@ -54,7 +50,7 @@ def app_router(applet, exit_code):
 
         elif exit_code == EXIT_CODE_F12:
             # F12: Exit and dump table contents as basic HTML
-            collapsed = collapsed_columns(applet)
+            collapsed = collapsed_columns(applet.g.column_count, applet.g.column_cell_renderer_f)
             j = applet.data_bundle.orig_data
             print(page_node_basic_auto([filter_non_collapsed(r, collapsed) for r in j]))
             return None
@@ -92,14 +88,6 @@ def app_router(applet, exit_code):
             print(json.dumps(applet.data_bundle.orig_data[applet.data_bundle.state[STATE_CUR_LINE]]))
 
     return None
-
-
-def collapsed_columns(applet):
-    collapsed = {}
-    for i in range(applet.g.column_count):
-        r = applet.g.column_cell_renderer_f(i).delegate()
-        collapsed[r.render_data.column_key] = type(r) == WIndicatorCellRenderer
-    return collapsed
 
 
 def time_series_column(data_bundle: DataBundle):
