@@ -85,10 +85,9 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
         return [
             span(
                 self.key_repr(key),
-                '&nbsp;' * (max_key_size - len(key)),
                 clazz='key',
             ),
-            span(' :'),
+            span('&nbsp;' * (max_key_size - len(key)) + ' :'),
         ]
 
     def key_repr(self, key):

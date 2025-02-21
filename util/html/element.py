@@ -27,9 +27,25 @@ class Element:
         attrs_str = self.attrs_str()
         open_tag = f'<{self.tag}{" " + attrs_str if attrs_str else ""}>'
         close_tag = f'</{self.tag}>'
-        body = separator.join(str(element) for element in self.contents if element is not None)
+        body = self.__contents_str()
 
         return open_tag + separator + body + separator + close_tag
+
+    def __contents_str(self):
+        items = [element for element in self.contents if element is not None]
+        if len(items) == 0:
+            return ''
+
+        s = ''
+        for i in range(len(items) - 1):
+            item_i = items[i]
+            item_j = items[i + 1]
+            s += str(item_i)
+            if not self.is_simple(item_j) or not self.is_simple(item_j):
+                s += '\n'
+
+        s += str(items[len(items) - 1])
+        return s
 
     def __repr__(self) -> str:
         return f'<{self.tag}>'
