@@ -17,12 +17,12 @@ def get_sql() -> str:
     if query := os.getenv('QUERY'):
         query_d = yaml.safe_load(query)
         q = dataclass_from_dict(DbQuery, query_d)
-        return query_to_string(q, table)
     else:
         # return __inferred_select_sql(table)
         q = inferred_query(table)
-        debug('get_sql', query=q)
-        return query_to_string(q, table)
+
+    debug('get_sql', query=q)
+    return query_to_string(q, table)
 
 
 def __inferred_select_sql(table):

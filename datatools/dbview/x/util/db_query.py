@@ -12,15 +12,15 @@ class DbQueryFilterClause:
 @dataclass
 class DbQuerySelectorResolve:
     table: str
-    column: str|None
-    alias: str|None
     select: str
+    column: str = None
+    alias: str = None
 
 
 @dataclass
 class DbQuerySelector:
     column: str
-    resolve: DbQuerySelectorResolve|None
+    resolve: DbQuerySelectorResolve = None
 
 
 @dataclass
