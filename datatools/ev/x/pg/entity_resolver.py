@@ -35,7 +35,8 @@ def initial_entity_ref_for(realm_name: str, table: str, where_clauses, data_sour
             selector=DbTableRowsSelector(
                 table=table,
                 where=clauses
-            )
+            ),
+            query=None
         )
 
 

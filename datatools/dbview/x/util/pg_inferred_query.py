@@ -4,16 +4,16 @@ from os.path import isdir, join
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
 
 
-def inferred_query(table) -> DbQuery:
-    ctx_dir = os.environ.get('CTX_DIR')
-    ctx_base = os.environ.get('CTX_BASE')
+def inferred_query(props) -> DbQuery:
+    ctx_dir = props.get('CTX_DIR')
+    ctx_base = props.get('CTX_BASE')
     ctx_base_parts = [] if ctx_base is None else ctx_base.split('/')
-    rest = os.environ.get('__REST') or ''
+    rest = props.get('__REST') or ''
 
     clauses = get_where_clauses0(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
 
     return DbQuery(
-        table=table,
+        table=None,
         filter=[
             DbQueryFilterClause(
                 column=column,
@@ -22,16 +22,6 @@ def inferred_query(table) -> DbQuery:
             ) for column, op, value in clauses
         ]
     )
-    # return {
-    #     'table': table,
-    #     'filter': [
-    #         {
-    #             'field': field,
-    #             'op': op,
-    #             'value': value
-    #         } for field, op, value in clauses
-    #     ]
-    # }
 
 
 def get_where_clauses0(table_path: str, rest: str) -> list[tuple[str, str, str]]:

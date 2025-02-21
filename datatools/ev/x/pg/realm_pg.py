@@ -36,7 +36,7 @@ class RealmPg(Realm):
     def create_view(self, e_ref: EntityReference) -> View:
         debug('create_view', e_ref=e_ref)
         if isinstance(e_ref, DbRowsReference):
-            return ViewDbRows(self, e_ref.selector)
+            return ViewDbRows(self, e_ref.selector, e_ref.query)
         elif isinstance(e_ref, DbRowReference):
             return ViewDbRow(self, e_ref.selector)
         elif isinstance(e_ref, DbReferrers):

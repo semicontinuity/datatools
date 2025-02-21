@@ -5,7 +5,7 @@ from typing import List, Tuple
 import yaml
 
 from datatools.dbview.x.util.db_query import DbQuery
-from datatools.dbview.x.util.helper import get_env
+from datatools.dbview.x.util.helper import get_required_prop
 from datatools.dbview.x.util.pg_inferred_query import inferred_query
 from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.util.dataclasses import dataclass_from_dict
@@ -13,16 +13,20 @@ from datatools.util.logging import debug
 
 
 def get_sql() -> str:
-    table = get_env('TABLE')
-    if query := os.getenv('QUERY'):
+    q = infer_query(os.environ)
+    debug('get_sql', query=q)
+    return query_to_string(q)
+
+
+def infer_query(props):
+    if query := props.get('QUERY'):
         query_d = yaml.safe_load(query)
         q = dataclass_from_dict(DbQuery, query_d)
     else:
-        # return __inferred_select_sql(table)
-        q = inferred_query(table)
-
-    debug('get_sql', query=q)
-    return query_to_string(q, table)
+        q = inferred_query(props)
+    if not q.table:
+        q.table = get_required_prop('TABLE', props)
+    return q
 
 
 def __inferred_select_sql(table):

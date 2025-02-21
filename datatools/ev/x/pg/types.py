@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
+from datatools.dbview.x.util.db_query import DbQuery
 from datatools.ev.app_types import EntityReference
 
 
@@ -26,6 +27,7 @@ class DbTableColumn:
 @dataclass(kw_only=True)
 class DbRowsReference(EntityReference):
     selector: DbTableRowsSelector
+    query: DbQuery = None
 
 
 @dataclass(kw_only=True)

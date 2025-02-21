@@ -3,6 +3,7 @@ from typing import List, Optional, Dict
 from picotui.defs import KEY_ENTER
 
 from datatools.dbview.util.pg import get_table_pks
+from datatools.dbview.x.util.db_query import DbQuery
 from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
 from datatools.ev.x.pg.view_db_rows_grid import ViewDbRowsGrid
@@ -15,12 +16,14 @@ from datatools.tui.terminal import screen_size_or_default
 class ViewDbRows(View):
     realm: 'RealmPg'
     selector: DbTableRowsSelector
+    query: DbQuery
     rows: List[Dict]
     g: ViewDbRowsGrid
 
-    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector) -> None:
+    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector, query: DbQuery = None) -> None:
         self.realm = realm
         self.selector = selector
+        self.query = query
 
     # @override
     def build(self):
