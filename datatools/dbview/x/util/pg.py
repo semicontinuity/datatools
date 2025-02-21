@@ -4,16 +4,20 @@ from typing import List, Tuple
 
 import yaml
 
+from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.helper import get_env
 from datatools.dbview.x.util.pg_inferred_query import inferred_query
 from datatools.dbview.x.util.pg_query import query_to_string
+from datatools.util.dataclasses import dataclass_from_dict
 from datatools.util.logging import debug
 
 
 def get_sql() -> str:
     table = get_env('TABLE')
     if query := os.getenv('QUERY'):
-        return query_to_string(yaml.safe_load(query), table)
+        query_d = yaml.safe_load(query)
+        q = dataclass_from_dict(DbQuery, query_d)
+        return query_to_string(q, table)
     else:
         # return __inferred_select_sql(table)
         q = inferred_query(table)

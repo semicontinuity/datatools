@@ -1,8 +1,10 @@
 import os
 from os.path import isdir, join
 
+from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
 
-def inferred_query(table):
+
+def inferred_query(table) -> DbQuery:
     ctx_dir = os.environ.get('CTX_DIR')
     ctx_base = os.environ.get('CTX_BASE')
     ctx_base_parts = [] if ctx_base is None else ctx_base.split('/')
@@ -10,16 +12,26 @@ def inferred_query(table):
 
     clauses = get_where_clauses0(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
 
-    return {
-        'table': table,
-        'filter': [
-            {
-                'field': field,
-                'op': op,
-                'value': value
-            } for field, op, value in clauses
+    return DbQuery(
+        table=table,
+        filter=[
+            DbQueryFilterClause(
+                column=column,
+                op=op,
+                value=value,
+            ) for column, op, value in clauses
         ]
-    }
+    )
+    # return {
+    #     'table': table,
+    #     'filter': [
+    #         {
+    #             'field': field,
+    #             'op': op,
+    #             'value': value
+    #         } for field, op, value in clauses
+    #     ]
+    # }
 
 
 def get_where_clauses0(table_path: str, rest: str) -> list[tuple[str, str, str]]:
@@ -41,7 +53,7 @@ def get_where_clauses0(table_path: str, rest: str) -> list[tuple[str, str, str]]
             if i >= len(parts):
                 folder = table_path + '/' + '/'.join(path)
                 sub_folders = [f for f in os.listdir(folder) if isdir(join(folder, f))]
-                clauses.append((field, 'in', ('(\n' + ',\n'.join(map(repr, sub_folders)) + '\n)')))
+                clauses.append((field, 'in', sub_folders))
                 break
 
             value = parts[i]

@@ -24,9 +24,10 @@ class ViewDbRows(View):
 
     # @override
     def build(self):
+        sql = self.select_sql(self.selector.table, self.selector.where)
+
         with self.realm.connect_to_db() as conn:
             self.table_pks = get_table_pks(conn, self.selector.table)
-            sql = self.select_sql(self.selector.table, self.selector.where)
             self.rows = self.realm.execute_query(conn, sql)
 
         bundle = load_data_bundle(

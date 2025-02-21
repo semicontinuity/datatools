@@ -1,7 +1,5 @@
 import json
 
-from picotui.defs import KEY_F4
-
 from datatools.json.util import to_jsonisable
 from datatools.jt.app.ng import collapsed_columns, filter_non_collapsed
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
@@ -17,7 +15,7 @@ class JtNgGrid(JtNgGridBase):
             value = row.get(self.column_keys[self.cursor_column])
             return '' if value is None else str(value)
 
-        if key == KEY_F4:
+        if key == KEY_CTRL_S:
             self.data_bundle.orig_data.sort(key=sort_value)
             self.redraw()
         elif key == KEY_F5 or key == KEY_ALT_F5:
