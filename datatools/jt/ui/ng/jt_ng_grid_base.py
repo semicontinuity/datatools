@@ -180,7 +180,9 @@ class JtNgGridBase(WGridBase):
 
     def handle_edit_key(self, key):
         if type(key) is bytes:
-            if key == KEY_ALT_1:
+            if key == KEY_CTRL_T:
+                self.toggle(self.cursor_column)
+            elif key == KEY_ALT_1:
                 self.toggle(0)
             elif key == KEY_ALT_2:
                 self.toggle(1)

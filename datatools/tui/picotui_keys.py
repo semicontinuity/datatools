@@ -94,3 +94,7 @@ KEY_ALT_SHIFT_LEFT = b'\x1b[1;4D'
 KEY_ALT_SHIFT_RIGHT = b'\x1b[1;4C'
 KEY_ALT_SHIFT_UP = b'\x1b[1;4A'
 KEY_ALT_SHIFT_DOWN = b'\x1b[1;4B'
+
+KEY_CTRL_R = b'\x12'
+KEY_CTRL_S = b'\x13'
+KEY_CTRL_T = b'\x14'
