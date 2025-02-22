@@ -3,7 +3,7 @@ from typing import List, Optional, Dict
 from picotui.defs import KEY_ENTER
 
 from datatools.dbview.util.pg import get_table_pks
-from datatools.dbview.x.util.db_query import DbQuery
+from datatools.dbview.x.util.db_query import DbQueryFilterClause
 from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
@@ -18,9 +18,6 @@ from datatools.tui.terminal import screen_size_or_default
 class ViewDbRows(ViewDb):
     rows: List[Dict]
     g: ViewDbRowsGrid
-
-    def __init__(self, realm: 'RealmPg', query: DbQuery) -> None:
-        super().__init__(realm, query)
 
     # @override
     def build(self):
@@ -57,7 +54,8 @@ class ViewDbRows(ViewDb):
                 selector=DbTableRowsSelector(
                     table=self.query.table,
                     where=[DbSelectorClause(pk, '=', "'" + sel_entity[pk] + "'") for pk in self.table_pks]
-                )
+                ),
+                query=self.query.with_filter_clauses([DbQueryFilterClause(pk, '=', sel_entity[pk]) for pk in self.table_pks])
             )
         else:
             raise Exception(loop_result)

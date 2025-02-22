@@ -48,8 +48,7 @@ def data():
 
 
 def make_document(j, footer: str = None) -> JDocument:
-    factory = JElementFactory()
-    model = factory.build_root_model(j)
+    model = JElementFactory().build_root_model(j)
     return make_document_for_model(model, j, footer)
 
 

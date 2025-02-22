@@ -3,23 +3,24 @@ from typing import List, Optional
 from picotui.defs import KEY_F1
 
 from datatools.dbview.util.pg import get_table_pks
-from datatools.ev.app_types import View, EntityReference
+from datatools.dbview.x.util.db_query import DbQuery
+from datatools.ev.app_types import EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbReferrers, \
     DbTableRowsSelector
-from datatools.jv.app import make_document, make_grid, do_loop
+from datatools.ev.x.pg.view_db import ViewDb
+from datatools.jv.app import make_grid, do_loop, make_document_for_model
 from datatools.jv.jdocument import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
 
 
-class ViewDbRow(View):
-    realm: 'RealmPg'
+class ViewDbRow(ViewDb):
     selector: DbTableRowsSelector
     doc: JDocument
 
-    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector) -> None:
-        self.realm = realm
+    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector, query: DbQuery) -> None:
+        super().__init__(realm, query)
         self.selector = selector
 
     # @override
@@ -28,16 +29,14 @@ class ViewDbRow(View):
             self.references = self.realm.make_references(conn, self.selector.table)
             self.table_pks = get_table_pks(conn, self.selector.table)
 
-            self.doc = make_document(
-                DbElementFactory().build_row_view(
-                    self.get_entity_row(conn, self.selector.table, self.selector.where),
-                    self.references,
-                    self.table_pks,
-                    self.realm.links.get(self.selector.table) or {},
-                    self.realm,
-                ),
-                footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
-            )
+            factory = DbElementFactory()
+            j_object = factory.build_row_view(
+                self.get_entity_row(conn, self.selector.table, self.selector.where), self.references, self.table_pks,
+                self.realm.links.get(self.selector.table) or {}, self.realm, )
+            footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
+            model = factory.build_root_model(j_object)
+
+            self.doc = make_document_for_model(model, j_object, footer)
             self.g = with_alternate_screen(lambda: make_grid(self.doc))
 
     # @override

@@ -52,7 +52,8 @@ def initial_entity_ref_for(
         selector=DbTableRowsSelector(
             table=table,
             where=clauses
-        )
+        ),
+        query=query
     ) if has_clause_with_pk(data_source, table, where_clauses) else \
         DbRowsReference(
             realm_name=realm_name,

@@ -33,6 +33,7 @@ class DbRowsReference(EntityReference):
 @dataclass(kw_only=True)
 class DbRowReference(EntityReference):
     selector: DbTableRowsSelector
+    query: DbQuery = None
 
 
 @dataclass(kw_only=True)

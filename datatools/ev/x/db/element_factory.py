@@ -12,7 +12,6 @@ from datatools.tui.treeview.rich_text import Style
 
 
 class DbElementFactory(JElementFactory):
-
     class JDateTime(JString):
         def value_style(self):
             return Style(0, (0, 120, 240))
@@ -38,7 +37,7 @@ class DbElementFactory(JElementFactory):
                     selector=DbTableRowsSelector(
                         table=self.foreign_table_name,
                         where=[DbSelectorClause(self.foreign_table_pk, '=', f"'{self.value}'")]
-                    )
+                    ),
                 )
 
     def foreign_key(self, v, k):
@@ -56,7 +55,14 @@ class DbElementFactory(JElementFactory):
         e.options = self.options
         return e
 
-    def build_row_view(self, model: Dict, references: Dict[str, Dict], table_pks: List[str], links: Dict[str, Dict], realm: 'RealmPg') -> JObject:
+    def build_row_view(
+            self,
+            model: dict,
+            references: dict[str, dict],
+            table_pks: list[str],
+            links: dict[str, dict],
+            realm: 'RealmPg'
+    ) -> JObject:
         """
         references is dict: column_name -> { "concept":"...", "concept-pk":"..." }
         aux_references is dict: column_name -> { "concept":"...", "concept-pk":"..." }

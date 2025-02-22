@@ -38,7 +38,7 @@ class RealmPg(Realm):
         if isinstance(e_ref, DbRowsReference):
             return ViewDbRows(self, e_ref.query)
         elif isinstance(e_ref, DbRowReference):
-            return ViewDbRow(self, e_ref.selector)
+            return ViewDbRow(self, e_ref.selector, e_ref.query)
         elif isinstance(e_ref, DbReferrers):
             return ViewDbReferrers(self, e_ref.selector)
 
