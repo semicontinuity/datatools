@@ -30,9 +30,12 @@ class DbQuery:
     filter: List[DbQueryFilterClause]
     selectors: List[DbQuerySelector] = None
 
+    def with_more_filter_clauses(self, filter_clauses: list[DbQueryFilterClause]):
+        return self.with_filter_clauses(self.filter + filter_clauses)
+
     def with_filter_clauses(self, filter_clauses: list[DbQueryFilterClause]):
         return DbQuery(
             table=self.table,
-            filter=self.filter + filter_clauses,
+            filter=filter_clauses,
             selectors=self.selectors,
         )

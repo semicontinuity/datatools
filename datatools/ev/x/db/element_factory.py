@@ -3,6 +3,7 @@ from typing import List, Dict
 
 from picotui.defs import KEY_ENTER
 
+from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
 from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
@@ -37,6 +38,10 @@ class DbElementFactory(JElementFactory):
                     selector=DbTableRowsSelector(
                         table=self.foreign_table_name,
                         where=[DbSelectorClause(self.foreign_table_pk, '=', f"'{self.value}'")]
+                    ),
+                    query=DbQuery(
+                        table=self.foreign_table_name,
+                        filter=[DbQueryFilterClause(self.foreign_table_pk, '=', self.value)]
                     ),
                 )
 

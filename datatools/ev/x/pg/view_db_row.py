@@ -21,6 +21,7 @@ from datatools.util.logging import debug
 class ViewDbRow(ViewDb):
     selector: DbTableRowsSelector
     references: dict[str, Any]
+    table_pks: list[str]
     doc: JDocument
     g: JGrid
 
@@ -33,21 +34,22 @@ class ViewDbRow(ViewDb):
         with self.realm.connect_to_db() as conn:
             self.references = self.realm.make_references(conn, self.selector.table)
             self.table_pks = get_table_pks(conn, self.selector.table)
-
             j = self.get_entity_row(conn, self.selector.table, self.selector.where)
 
-            factory = DbElementFactory()
-            j_object = factory.build_row_view(
-                j,
-                self.references,
-                self.table_pks,
-                self.realm.links.get(self.selector.table) or {},
-                self.realm,
-            )
-            footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
+        factory = DbElementFactory()
+        j_object = factory.build_row_view(
+            j,
+            self.references,
+            self.table_pks,
+            self.realm.links.get(self.selector.table) or {},
+            self.realm,
+        )
 
-            self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
-            self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
+        footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
+        self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
+        self.doc.query = self.query
+        self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
+
 
     # @override
     def run(self) -> Optional[EntityReference]:

@@ -21,7 +21,7 @@ INFORMATION_SCHEMA.COLUMNS
 where table_name = '{table}';'''
 
 
-def get_table_pks(conn, table: str):
+def get_table_pks(conn, table: str) -> list[str]:
     return [row['column_name'] for row in execute_sql(conn, get_table_pks_sql(table))]
 
 
