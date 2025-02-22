@@ -1,6 +1,5 @@
 from picotui.defs import KEY_RIGHT, KEY_LEFT, KEY_HOME, KEY_END, KEY_DOWN, KEY_UP, KEY_PGDN, KEY_PGUP
 
-from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END, KEY_CTRL_HOME
@@ -8,12 +7,13 @@ from datatools.tui.picotui_keys import KEY_ALT_RIGHT, KEY_ALT_LEFT, KEY_CTRL_END
 HORIZONTAL_PAGE_SIZE = 8
 
 
-class WGrid(WGridBase):
-    def __init__(self, x: int, y: int, width, height, buffer: Buffer, cell_value_f, interactive=True):
+class BufferGrid(WGridBase):
+    def __init__(self, x: int, y: int, width, height, buffer: Buffer, cell_value_f, exit_keys: dict, interactive=True):
         super().__init__(x, y, width, height, 0, 0, interactive)
         self.buffer = buffer
         self.cell_value_f = cell_value_f
         self.x_shift = 0
+        self.exit_keys = exit_keys
 
     def show_line(self, line_content, line):
         raise AssertionError
@@ -35,7 +35,7 @@ class WGrid(WGridBase):
             row += 1
 
     def handle_edit_key(self, key):
-        if key in KEYS_TO_EXIT_CODES:
+        if key in self.exit_keys:
             return key
 
     def handle_cursor_keys(self, key):

@@ -4,13 +4,13 @@ import json
 import sys
 
 from datatools.json.structure_discovery import Discovery
-from datatools.json2ansi.grid import WGrid
-from datatools.tui.treeview.tree_grid_context import TreeGridContext
+from datatools.json2ansi.buffer_grid import BufferGrid
 from datatools.json2ansi_toolkit.ansi_toolkit import AnsiToolkit
 from datatools.json2ansi_toolkit.default_style import default_style
 from datatools.json2ansi_toolkit.style import Style
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
+from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.model.metadata import Metadata
 from datatools.jt.model.presentation import Presentation
 from datatools.jt.model.values_info import ColumnsValuesInfo
@@ -18,6 +18,7 @@ from datatools.tui.buffer.json2ansi_buffer import Buffer
 from datatools.tui.picotui_patch import patch_picotui
 from datatools.tui.picotui_util import *
 from datatools.tui.terminal import screen_size_or_default
+from datatools.tui.treeview.tree_grid_context import TreeGridContext
 from datatools.tui.tui_fd import infer_fd_tui
 
 
@@ -37,12 +38,21 @@ def auto_position(screen_buffer, state):
     return grid_context
 
 
-def grid(screen_buffer: Buffer, grid_context: TreeGridContext) -> WGrid:
+def grid(screen_buffer: Buffer, grid_context: TreeGridContext) -> BufferGrid:
 
     def cell_value(line, column):
         return "-"
 
-    g = WGrid(grid_context.x, grid_context.y, grid_context.width, grid_context.height, screen_buffer, cell_value, grid_context.interactive)
+    g = BufferGrid(
+        grid_context.x,
+        grid_context.y,
+        grid_context.width,
+        grid_context.height,
+        screen_buffer,
+        cell_value,
+        KEYS_TO_EXIT_CODES,
+        grid_context.interactive
+    )
     g.total_lines = screen_buffer.height
     return g
 
