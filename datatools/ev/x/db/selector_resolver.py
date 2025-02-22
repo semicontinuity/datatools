@@ -10,9 +10,15 @@ def resolve_selector_from_paths(base_path: str, rest: str) -> DbTableRowsSelecto
 
 
 def resolve_table_and_clauses(base_path: str, rest: str) -> Tuple[str, List[Tuple[str, str, str]]]:
+    table, the_rest = table_and_the_rest(rest)
+    clauses = get_where_clauses0(base_path + '/' + table, the_rest)
+    return table, clauses
+
+
+def table_and_the_rest(rest):
     i = rest.find('/')
     if i == -1:
         raise ValueError()
     table = rest[:i]
-    clauses = get_where_clauses0(base_path + '/' + table, rest[(i + 1):])
-    return table, clauses
+    the_rest = rest[(i + 1):]
+    return table, the_rest

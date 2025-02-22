@@ -2,6 +2,7 @@ import os
 from os.path import isdir, join
 
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
+from datatools.dbview.x.util.helper import get_required_prop
 
 
 def inferred_query(props) -> DbQuery:
@@ -10,10 +11,10 @@ def inferred_query(props) -> DbQuery:
     ctx_base_parts = [] if ctx_base is None else ctx_base.split('/')
     rest = props.get('__REST') or ''
 
-    clauses = get_where_clauses0(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
+    clauses = get_where_clauses1(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
 
     return DbQuery(
-        table=None,
+        table=get_required_prop('TABLE', props),
         filter=[
             DbQueryFilterClause(
                 column=column,
@@ -24,7 +25,7 @@ def inferred_query(props) -> DbQuery:
     )
 
 
-def get_where_clauses0(table_path: str, rest: str) -> list[tuple[str, str, str]]:
+def get_where_clauses1(table_path: str, rest: str) -> list[tuple[str, str, str]]:
     parts = rest.split('/') if rest != '' else []
 
     i = 0

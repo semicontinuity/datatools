@@ -1,16 +1,17 @@
 #!/usr/bin/python3
-import os
 import json
+import os
 import subprocess
 from typing import Dict, List, Callable, Any
+
 from datatools.ev.app_support import run_app
-from datatools.ev.app_types import Realm
 from datatools.ev.app_types import EntityReference
+from datatools.ev.app_types import Realm
 from datatools.ev.x.ch.entity_resolver import resolve_ch_entity
-from datatools.ev.x.pg.entity_resolver import resolve_pg_entity
-from datatools.ev.x.pg.realm_pg import RealmPg
 from datatools.ev.x.ch.realm_clickhouse import RealmClickhouse
+from datatools.ev.x.pg.entity_resolver import resolve_pg_entity
 from datatools.ev.x.pg.pg_data_source import PgDataSource
+from datatools.ev.x.pg.realm_pg import RealmPg
 
 
 def exe(cwd: str, args: List[str], env: Dict[str, str], stdin: bytes = None):
@@ -20,11 +21,11 @@ def exe(cwd: str, args: List[str], env: Dict[str, str], stdin: bytes = None):
         env=env,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        # stderr=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
     out, err = proc.communicate(stdin)
     if proc.returncode != 0:
-        raise Exception((proc.returncode, err))
+        raise Exception((proc.returncode, err.decode()))
     return out.decode()
 
 
@@ -129,6 +130,12 @@ def realm_ch(name, path: str) -> RealmClickhouse:
 
 def infer_mounts(e):
     match e:
+        case 'te-testing':
+            return {
+                'deploy/infra/pg/yacalls/notification_service_test/tables': ('db_notification_service', realm_pg),
+                'deploy/infra/pg/yacalls/calls_test/tables': ('db_calls', realm_pg),
+                'deploy/infra/ch/yacalls-cdr-test/cdr/tables': ('ch_cdr', realm_ch)
+            }
         case 'te-preprod':
             return {
                 'deploy/infra/pg/yacalls/notification_service_preprod/tables': ('db_notification_service', realm_pg),

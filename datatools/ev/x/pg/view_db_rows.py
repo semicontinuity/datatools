@@ -4,8 +4,10 @@ from picotui.defs import KEY_ENTER
 
 from datatools.dbview.util.pg import get_table_pks
 from datatools.dbview.x.util.db_query import DbQuery
-from datatools.ev.app_types import View, EntityReference
+from datatools.dbview.x.util.pg_query import query_to_string
+from datatools.ev.app_types import EntityReference
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
+from datatools.ev.x.pg.view_db import ViewDb
 from datatools.ev.x.pg.view_db_rows_grid import ViewDbRowsGrid
 from datatools.jt.app.app_kit import load_data_bundle, CmdLineParams
 from datatools.jt.app.ng.jt_ng_grid_factory import init_grid, do_make_grid
@@ -13,24 +15,19 @@ from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 
 
-class ViewDbRows(View):
-    realm: 'RealmPg'
-    selector: DbTableRowsSelector
-    query: DbQuery
+class ViewDbRows(ViewDb):
     rows: List[Dict]
     g: ViewDbRowsGrid
 
-    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector, query: DbQuery = None) -> None:
-        self.realm = realm
-        self.selector = selector
-        self.query = query
+    def __init__(self, realm: 'RealmPg', query: DbQuery) -> None:
+        super().__init__(realm, query)
 
     # @override
     def build(self):
-        sql = self.select_sql(self.selector.table, self.selector.where)
+        sql = query_to_string(self.query)
 
         with self.realm.connect_to_db() as conn:
-            self.table_pks = get_table_pks(conn, self.selector.table)
+            self.table_pks = get_table_pks(conn, self.query.table)
             self.rows = self.realm.execute_query(conn, sql)
 
         bundle = load_data_bundle(
@@ -39,6 +36,7 @@ class ViewDbRows(View):
         )
 
         grid: ViewDbRowsGrid = do_make_grid(bundle, ViewDbRowsGrid)
+        grid.query = self.query
         grid.sql = sql
 
         self.g = with_alternate_screen(
@@ -57,10 +55,12 @@ class ViewDbRows(View):
             return DbRowReference(
                 realm_name=self.realm.name,
                 selector=DbTableRowsSelector(
-                    table=self.selector.table,
+                    table=self.query.table,
                     where=[DbSelectorClause(pk, '=', "'" + sel_entity[pk] + "'") for pk in self.table_pks]
                 )
             )
+        else:
+            raise Exception(loop_result)
 
     def select_sql(self, table, where):
         where_string = self.make_where_string(where)
