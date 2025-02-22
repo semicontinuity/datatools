@@ -3,16 +3,16 @@ JSON_NODE_HELPER_CSS = """
     color: darkblue;
 }
 .string {
-    color: navy; font-weight: bold;
+    color: teal; font-weight: bold;
 }
 .number {
     color: darkred; font-weight: bold
 }
 .true {
-    color: green; font-weight: bold; 
+    color: #00A000; font-weight: bold; 
 }
 .false {
-    color: brown; font-weight: bold; 
+    color: slateblue; font-weight: bold; 
 }
 .null {
     color: black; font-weight: bold; 

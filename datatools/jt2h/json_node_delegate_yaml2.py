@@ -50,7 +50,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
                 start,
                 div(
                     span('&nbsp;'),
-                    span(*contents, clazz='j-value'),
+                    span(*contents, clazz='j-value') if contents else '[]',
                     clazz='j-value-node',
                 ),
             )

@@ -16,7 +16,7 @@ body {
     display: inline-block;
 }
 span {
-    font-size: x-large;
+    font-size: xx-large;
 }
 '''
 

@@ -7,6 +7,7 @@ HTTP server accepts entity as the body of HTTP POST request,
 and reacts, depending on Content-Type
 """
 
+import http.client
 import json
 import os
 import re
@@ -87,6 +88,7 @@ class Server(BaseHTTPRequestHandler):
                 match choose([
                     "Copy to Clipboard",
                     "Open in Browser",
+                    "Open in IDEA",
                     "Convert to YAML HTML and Open in Browser",
                     "Convert to JSON HTML and Open in Browser",
                     "Convert to BLOCK HTML and Open in Browser",
@@ -99,21 +101,25 @@ class Server(BaseHTTPRequestHandler):
                             self.write_temp_file(post_body, '.json', the_title)
                         )
                     case 2:
+                        self.open_in_idea(
+                            self.write_temp_file(post_body, '.json', the_title)
+                        )
+                    case 3:
                         self.html_to_browser(
                             str(page_node(data, title_string=the_title)),
                             the_title
                         )
-                    case 3:
+                    case 4:
                         self.html_to_browser(
                             str(page_node(data, title_string=the_title, delegate=JsonNodeDelegateJson)),
                             the_title
                         )
-                    case 4:
+                    case 5:
                         self.html_to_browser(
                             str(to_blocks_html(data, page_title=the_title)),
                             the_title
                         )
-                    case 5:
+                    case 6:
                         self.to_clipboard(str(md_node(data)))
 
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
@@ -160,12 +166,21 @@ class Server(BaseHTTPRequestHandler):
                 tmp.write(contents)
             return path
 
-    def browse_new_tab(self, url):
+    def browse_new_tab(self, url: str):
         exe(
             os.environ['HOME'],
             ['firefox', url],
             {},
         )
+
+    def open_in_idea(self, path: str):
+        conn = http.client.HTTPConnection("localhost", 63342)
+        conn.request(
+            method="GET",
+            url=f"/api/file/{path}",
+        )
+        conn.getresponse()
+        conn.close()
 
     # browse_url is buggy/hacky
     def browse(self, url):
