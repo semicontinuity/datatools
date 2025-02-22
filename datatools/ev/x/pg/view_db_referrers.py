@@ -5,7 +5,7 @@ from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_p
 from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
-from datatools.jv.app import make_document, make_grid, do_loop
+from datatools.jv.app import make_document, make_json_tree_applet_grid, do_loop
 from datatools.jv.jdocument import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
@@ -28,7 +28,7 @@ class ViewDbReferrers(View):
                 self.make_inbound_references_models(conn),
                 'referrers of ' + self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
             )
-            self.g = with_alternate_screen(lambda: make_grid(self.doc))
+            self.g = with_alternate_screen(lambda: make_json_tree_applet_grid(self.doc))
 
     # @override
     def run(self) -> Optional[EntityReference]:

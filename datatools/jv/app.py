@@ -8,34 +8,34 @@ from picotui.defs import KEY_ENTER, KEY_F3, KEY_F4
 
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
-from datatools.jv.jdocument import JDocument
-from datatools.jv.jgrid import JGrid
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
+from datatools.jv.jdocument import JDocument
+from datatools.jv.jgrid import JGrid
 from datatools.jv.model.factory import JElementFactory
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
 from datatools.tui.picotui_keys import KEY_ALT_ENTER
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
+from datatools.tui.treeview.tree_grid import TreeGrid
 from datatools.tui.treeview.tree_grid_context import TreeGridContext
 from datatools.tui.treeview.tree_grid_factory import tree_grid
-from datatools.tui.treeview.tree_document import TreeDocument
 from datatools.util.object_exporter import init_object_exporter, ObjectExporter
 
 
-def make_json_tree_applet(document: JDocument, screen_size, popup: bool = False):
+def make_tree_grid(document, screen_size, grid_class=JGrid):
     screen_width, screen_height = screen_size
     grid_context = TreeGridContext(0, 0, screen_width, screen_height)
     document.layout()
     document.optimize_layout(screen_height)
     document.layout()
-    return do_make_json_tree_applet(grid_context, popup, document)
+    return tree_grid(document, grid_context, grid_class)
 
 
-def do_make_json_tree_applet(grid_context: TreeGridContext, popup, document: TreeDocument):
+def do_make_json_tree_applet(popup, grid: TreeGrid):
     return Applet(
         'jv',
-        tree_grid(document, grid_context, grid_class=JGrid),
+        grid,
         DataBundle(None, None, None, None, None),
         popup
     )
@@ -62,11 +62,13 @@ def make_document_for_model(model, j, footer):
 
 
 def loop(document: JDocument):
-    return do_loop(make_grid(document))
+    return do_loop(make_json_tree_applet_grid(document))
 
 
-def make_grid(document: JDocument):
-    return make_json_tree_applet(document, screen_size_or_default()).g
+def make_json_tree_applet_grid(document: JDocument):
+    size = screen_size_or_default()
+    grid = make_tree_grid(document, size)
+    return do_make_json_tree_applet(False, grid).g
 
 
 def do_loop(g):
@@ -99,7 +101,9 @@ if __name__ == "__main__":
 
     if '-p' in sys.argv:
         screen_width, screen_height = screen_size_or_default()
-        g = make_json_tree_applet(doc, (screen_width, 10000)).g
+        size = (screen_width, 10000)
+        grid = make_tree_grid(doc, size)
+        g = do_make_json_tree_applet(False, grid).g
         g.interactive = False
         g.redraw()
     else:

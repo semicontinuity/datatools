@@ -3,7 +3,7 @@ from typing import List, Optional
 from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
-from datatools.jv.app import make_document, make_grid, do_loop
+from datatools.jv.app import make_document, make_json_tree_applet_grid, do_loop
 from datatools.jv.jdocument import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.util.logging import debug
@@ -33,7 +33,7 @@ class ViewChRow(View):
                 ),
                 self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
             )
-            self.g = with_alternate_screen(lambda: make_grid(self.doc))
+            self.g = with_alternate_screen(lambda: make_json_tree_applet_grid(self.doc))
 
     def run(self) -> Optional[EntityReference]:
         loop_result, cur_line = with_alternate_screen(lambda: do_loop(self.g))
