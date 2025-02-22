@@ -39,19 +39,25 @@ class JtNgGrid(JtNgGridBase):
         else:
             return super().handle_edit_key(key)
 
-    def export_json_lines(self, channel, j):
+    def export_json_lines(self, channel, j, title: str|None = None):
         collapsed = collapsed_columns(self.column_count, self.column_cell_renderer_f)
         j = [filter_non_collapsed(r, collapsed) for r in j]
+        s = ''.join(json.dumps(to_jsonisable(row), ensure_ascii=False) + '\n' for row in j)
+        self.export(channel, s, title)
 
-        ObjectExporter.INSTANCE.export(
-            ''.join(json.dumps(to_jsonisable(row), ensure_ascii=False) + '\n' for row in j),
-            {'Content-Type': 'application/json-lines'},
-            channel
+    def export_json(self, channel, j, title: str|None = None):
+        self.export(
+            channel,
+            json.dumps(to_jsonisable(j), ensure_ascii=False),
+            title,
         )
 
-    def export_json(self, channel, j):
+    def export(self, channel, s: str, title: str|None = None):
         ObjectExporter.INSTANCE.export(
-            json.dumps(to_jsonisable(j), ensure_ascii=False),
-            {'Content-Type': 'application/json'},
+            s,
+            {
+                'Content-Type': 'application/json-lines',
+                'X-Title': title,
+            },
             channel
         )

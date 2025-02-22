@@ -9,7 +9,9 @@ and reacts, depending on Content-Type
 
 import json
 import os
+import re
 import subprocess
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
@@ -29,6 +31,7 @@ class Server(BaseHTTPRequestHandler):
 
     def do_POST(self):
         content_len = int(self.headers.get('Content-Length'))
+        title = self.headers.get('X-Title')
         post_body = self.rfile.read(content_len)
 
         match self.headers.get('Content-Type'):
@@ -40,7 +43,7 @@ class Server(BaseHTTPRequestHandler):
                         self.to_clipboard(post_body)
                     case 1:
                         self.browse_new_tab(
-                            self.write_temp_file(post_body, '.txt')
+                            self.write_temp_file(post_body, '.txt', title)
                         )
             case 'application/sql':
                 match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
@@ -48,7 +51,7 @@ class Server(BaseHTTPRequestHandler):
                         self.to_clipboard(post_body)
                     case 1:
                         self.browse_new_tab(
-                            self.write_temp_file(post_body, '.sql.txt')
+                            self.write_temp_file(post_body, '.sql.txt',title)
                         )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)
@@ -66,19 +69,19 @@ class Server(BaseHTTPRequestHandler):
                     case 0:
                         self.to_clipboard(post_body)
                     case 1:
-                        self.html_to_browser(str(page_node_auto(lines)))
+                        self.html_to_browser(str(page_node_auto(lines)), title)
                     case 2:
                         self.to_clipboard(str(page_node_auto(lines)))
                     case 3:
-                        self.html_to_browser(str(page_node_basic_auto(lines)))
+                        self.html_to_browser(str(page_node_basic_auto(lines)), title)
                     case 4:
                         self.to_clipboard(str(page_node_basic_auto(lines)))
                     case 5:
                         self.to_clipboard(str(md_table_node(lines)))
 
             case 'application/json':
-                s = post_body.decode('utf-8')
-                data = json.loads(s)
+                data = json.loads(post_body.decode('utf-8'))
+
                 match choose([
                     "Copy to Clipboard",
                     "Open in Browser",
@@ -89,10 +92,10 @@ class Server(BaseHTTPRequestHandler):
                         self.to_clipboard(post_body)
                     case 1:
                         self.browse_new_tab(
-                            self.write_temp_file(post_body, '.json')
+                            self.write_temp_file(post_body, '.json', title)
                         )
                     case 2:
-                        self.html_to_browser(str(page_node(data)))
+                        self.html_to_browser(str(page_node(data)), title)
                     case 3:
                         self.to_clipboard(str(md_node(data)))
 
@@ -103,11 +106,12 @@ class Server(BaseHTTPRequestHandler):
             s = s.encode('utf-8')
         subprocess.run(['xclip', '-selection', 'clipboard'], input=s, stdout=subprocess.DEVNULL)
 
-    def html_to_browser(self, html):
+    def html_to_browser(self, html: str, title: str|None = None):
         self.browse_new_tab(
             self.write_temp_file(
                 html.encode('utf-8'),
-                '.html'
+                '.html',
+                title,
             )
         )
 
@@ -116,13 +120,28 @@ class Server(BaseHTTPRequestHandler):
         split = decode.split('\n')
         return [json.loads(s) for s in split if s]
 
-    def write_temp_file(self, contents, suffix):
-        import tempfile
+    def write_temp_file(self, contents: bytes, suffix: str, name_base: str | None = None):
         import os
-        fd, path = tempfile.mkstemp(suffix=suffix, prefix="temp", dir=os.environ['HOME'] + '/boards', text=True)
-        with os.fdopen(fd, 'w+b') as tmp:
-            tmp.write(contents)
-        return path
+        folder = os.environ['HOME'] + '/boards'
+
+        path = None
+        if name_base:
+            name_base = self.convert_to_filename(name_base)
+        if name_base:
+            path = folder + '/' + datetime.now().strftime('%y%m%d_%H%M%S__') + name_base + suffix
+            if os.path.exists(path):
+                path = None
+
+        if path:
+            with open(path, 'wb') as file:
+                file.write(contents)
+            return path
+        else:
+            import tempfile
+            fd, path = tempfile.mkstemp(suffix=suffix, prefix="temp", dir=folder, text=True)
+            with os.fdopen(fd, 'w+b') as tmp:
+                tmp.write(contents)
+            return path
 
     def browse_new_tab(self, url):
         exe(
@@ -147,6 +166,15 @@ class Server(BaseHTTPRequestHandler):
         self.send_header('Content-Type', content_type)
         self.end_headers()
         self.wfile.write(content)
+
+    def convert_to_filename(self, input_string):
+        sanitized = input_string.replace(' ', '_')
+        sanitized = sanitized.replace('=', '_')
+        sanitized = sanitized.replace(':', '_')
+        sanitized = sanitized.replace(';', '_')
+        sanitized = re.sub(r'[^\w\-]', '', sanitized)  # Retains letters, digits, underscores, and hyphens
+        sanitized = sanitized.strip('_.')
+        return sanitized
 
 
 httpd = HTTPServer(("localhost", 7777), Server)

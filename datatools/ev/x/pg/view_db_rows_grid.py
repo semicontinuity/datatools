@@ -12,7 +12,9 @@ class ViewDbRowsGrid(JtNgGrid):
     query: DbQuery
 
     def handle_edit_key(self, key):
-        if key == KEY_CTRL_ALT_SHIFT_F5:
+        if key == KEY_SHIFT_F5:
+            self.export_json_lines(0, self.data_bundle.orig_data, f'data from {self.query.table}')
+        elif key == KEY_CTRL_ALT_SHIFT_F5:
             ObjectExporter.INSTANCE.export(
                 self.sql,
                 {"Content-Type": "application/sql"},
