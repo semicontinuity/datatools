@@ -22,6 +22,8 @@ class ViewDbRowsGrid(JtNgGrid):
                 {"Content-Type": "application/json"},
                 0
             )
+        elif key == KEY_CTRL_R:
+            return
 
         else:
             return super().handle_edit_key(key)

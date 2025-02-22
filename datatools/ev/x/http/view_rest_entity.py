@@ -4,7 +4,7 @@ from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.http.element_factory import MyElementFactory
 from datatools.ev.x.http.types import RestEntity
 from datatools.jv.app import make_grid, do_loop, make_document_for_model
-from datatools.jv.document import JDocument
+from datatools.jv.jdocument import JDocument
 from datatools.tui.screen_helper import with_alternate_screen
 
 

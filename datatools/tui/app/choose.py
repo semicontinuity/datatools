@@ -1,3 +1,8 @@
+#!/usr/nib/env python3
+#########################################
+# Chooses between lines, read from STDIN.
+# Does not support auto screen scrolling.
+#########################################
 import sys
 from typing import Callable, Any, List
 
@@ -6,10 +11,9 @@ from picotui.defs import KEY_ESC
 from datatools.fstree.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.tui.grid_base import WGridBase
 from datatools.tui.picotui_patch import patch_picotui, cursor_position
+from datatools.tui.picotui_util import *
 
 patch_picotui()
-
-from datatools.tui.picotui_util import *
 
 
 class ChooseItemGrid(WGridBase):
@@ -66,6 +70,13 @@ def run_dialog(dialog_supplier: Callable[[int, int, int, int], Any]):
         Screen.deinit_tty()
 
 
+def choose_item(data):
+    max_line_length = max((len(s) for s in data))
+    res = run_dialog(
+        lambda h, w, y, x: ChooseItemGrid(data, x, y, min(max_line_length, w - x), min(h - y, len(data)), 0, 0))
+    return res
+
+
 def main():
     data = [line.rstrip() for line in sys.stdin]
     if len(data) < 1:
@@ -76,13 +87,6 @@ def main():
         sys.exit(1)
     else:
         print(choice)
-
-
-def choose_item(data):
-    max_line_length = max((len(s) for s in data))
-    res = run_dialog(
-        lambda h, w, y, x: ChooseItemGrid(data, x, y, min(max_line_length, w - x), min(h - y, len(data)), 0, 0))
-    return res
 
 
 if __name__ == "__main__":

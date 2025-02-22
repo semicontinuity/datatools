@@ -8,8 +8,8 @@ from picotui.defs import KEY_ENTER, KEY_F3, KEY_F4
 
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
-from datatools.jv.document import JDocument
-from datatools.jv.grid import JGrid
+from datatools.jv.jdocument import JDocument
+from datatools.jv.jgrid import JGrid
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.jv.model.factory import JElementFactory
