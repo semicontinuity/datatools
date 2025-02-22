@@ -28,7 +28,7 @@ class JGrid(TreeGrid):
                 ObjectExporter.INSTANCE.export(
                     value,
                     {
-                        "title": self.document.selected_path(self.cur_line),
+                        "X-Title": self.document.selected_path(self.cur_line),
                         "Content-Type": 'text/plain',
                     },
                     0
@@ -37,7 +37,7 @@ class JGrid(TreeGrid):
                 ObjectExporter.INSTANCE.export(
                     json.dumps(to_jsonisable(value), ensure_ascii=False),
                     {
-                        "title": self.document.selected_path(self.cur_line),
+                        "X-Title": self.document.selected_path(self.cur_line),
                         "Content-Type": 'application/json',
                     },
                     0
@@ -45,8 +45,11 @@ class JGrid(TreeGrid):
 
         elif key == KEY_SHIFT_F5:
             ObjectExporter.INSTANCE.export(
-                json.dumps(to_jsonisable(self.document.value), ensure_ascii=False),
-                {},
+                json.dumps(self.document.value, ensure_ascii=False),
+                {
+                    "X-Title": 'json',
+                    "Content-Type": 'application/json',
+                },
                 0
             )
         else:

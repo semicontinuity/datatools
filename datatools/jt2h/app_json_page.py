@@ -39,7 +39,7 @@ def data():
     return j
 
 
-def page_node(data, title_string: str = None, include_page_css: bool = True):
+def page_node(data, title_string: str = None, include_page_css: bool = True, delegate=JsonNodeDelegateYaml2):
     return PageNode(
         html(
             head(
@@ -52,7 +52,7 @@ def page_node(data, title_string: str = None, include_page_css: bool = True):
                 )
             ),
             body(
-                JsonNode(data, JsonNodeDelegateYaml2())
+                JsonNode(data, delegate())
             )
         )
     )

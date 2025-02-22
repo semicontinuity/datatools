@@ -18,6 +18,7 @@ from http.server import HTTPServer
 from datatools.intent.popup_selector import choose
 from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_node
 from datatools.jt2h.app_json_page import page_node, md_node
+from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
 from datatools.util.subprocess import exe
 
 
@@ -31,7 +32,7 @@ class Server(BaseHTTPRequestHandler):
 
     def do_POST(self):
         content_len = int(self.headers.get('Content-Length'))
-        title = self.headers.get('X-Title')
+        the_title = self.headers.get('X-Title')
         post_body = self.rfile.read(content_len)
 
         match self.headers.get('Content-Type'):
@@ -43,7 +44,7 @@ class Server(BaseHTTPRequestHandler):
                         self.to_clipboard(post_body)
                     case 1:
                         self.browse_new_tab(
-                            self.write_temp_file(post_body, '.txt', title)
+                            self.write_temp_file(post_body, '.txt', the_title)
                         )
             case 'application/sql':
                 match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
@@ -51,7 +52,7 @@ class Server(BaseHTTPRequestHandler):
                         self.to_clipboard(post_body)
                     case 1:
                         self.browse_new_tab(
-                            self.write_temp_file(post_body, '.sql.txt',title)
+                            self.write_temp_file(post_body, '.sql.txt', the_title)
                         )
             case 'application/json-lines':
                 lines = self.json_lines(post_body)
@@ -69,13 +70,13 @@ class Server(BaseHTTPRequestHandler):
                     case 0:
                         self.to_clipboard(post_body)
                     case 1:
-                        self.html_to_browser(str(page_node_auto(lines)), title)
+                        self.html_to_browser(str(page_node_auto(lines, title_str=the_title)), the_title)
                     case 2:
-                        self.to_clipboard(str(page_node_auto(lines)))
+                        self.to_clipboard(str(page_node_auto(lines, title_str=the_title)))
                     case 3:
-                        self.html_to_browser(str(page_node_basic_auto(lines)), title)
+                        self.html_to_browser(str(page_node_basic_auto(lines, title_str=the_title)), the_title)
                     case 4:
-                        self.to_clipboard(str(page_node_basic_auto(lines)))
+                        self.to_clipboard(str(page_node_basic_auto(lines, title_str=the_title)))
                     case 5:
                         self.to_clipboard(str(md_table_node(lines)))
 
@@ -85,18 +86,27 @@ class Server(BaseHTTPRequestHandler):
                 match choose([
                     "Copy to Clipboard",
                     "Open in Browser",
-                    "Convert to HTML and Open in Browser",
+                    "Convert to YAML HTML and Open in Browser",
+                    "Convert to JSON HTML and Open in Browser",
                     "Convert to MD HTML and Copy to Clipboard",
                 ], 'JSON'):
                     case 0:
                         self.to_clipboard(post_body)
                     case 1:
                         self.browse_new_tab(
-                            self.write_temp_file(post_body, '.json', title)
+                            self.write_temp_file(post_body, '.json', the_title)
                         )
                     case 2:
-                        self.html_to_browser(str(page_node(data)), title)
+                        self.html_to_browser(
+                            str(page_node(data, title_string=the_title)),
+                            the_title
+                        )
                     case 3:
+                        self.html_to_browser(
+                            str(page_node(data, title_string=the_title, delegate=JsonNodeDelegateJson)),
+                            the_title
+                        )
+                    case 4:
                         self.to_clipboard(str(md_node(data)))
 
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))

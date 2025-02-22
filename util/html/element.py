@@ -52,7 +52,7 @@ class Element:
 
     @staticmethod
     def is_simple(s):
-        return (s is None) or (type(s) is str) or (type(s) is Element and s.tag == 'span')
+        return (s is None) or (type(s) is str) or (type(s) is int) or (type(s) is float) or (type(s) is bool) or (type(s) is Element and s.tag == 'span')
 
     def attrs_str(self) -> str:
         """
