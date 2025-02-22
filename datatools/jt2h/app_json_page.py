@@ -13,6 +13,7 @@ from util.html.page_node import PageNode
 PAGE_CSS_X_LARGE = '''
 body {
     background-color: #e0e0e0;
+    display: inline-block;
 }
 span {
     font-size: x-large;

@@ -17,6 +17,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
             self.key(key, max_key_size),
             ' ',
             primitive_node(v),
+            '&nbsp;'
         )
 
     # ------------------------------------------------------------------------------------------------------------------

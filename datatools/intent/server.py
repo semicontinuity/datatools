@@ -16,6 +16,7 @@ from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
 from datatools.intent.popup_selector import choose
+from datatools.json.json2html import to_blocks_html
 from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_node
 from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
@@ -88,6 +89,7 @@ class Server(BaseHTTPRequestHandler):
                     "Open in Browser",
                     "Convert to YAML HTML and Open in Browser",
                     "Convert to JSON HTML and Open in Browser",
+                    "Convert to BLOCK HTML and Open in Browser",
                     "Convert to MD HTML and Copy to Clipboard",
                 ], 'JSON'):
                     case 0:
@@ -107,6 +109,11 @@ class Server(BaseHTTPRequestHandler):
                             the_title
                         )
                     case 4:
+                        self.html_to_browser(
+                            str(to_blocks_html(data, page_title=the_title)),
+                            the_title
+                        )
+                    case 5:
                         self.to_clipboard(str(md_node(data)))
 
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))

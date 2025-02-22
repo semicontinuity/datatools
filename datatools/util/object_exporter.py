@@ -45,7 +45,11 @@ class HttpIntentObjectExporter(ObjectExporter):
     # @override
     def export(self, obj: str, metadata: dict[str, str], channel):
         conn = http.client.HTTPConnection("localhost", 7777)
-        conn.request("POST", "", obj.encode('utf-8'), {k: v for k, v in metadata.items() if v})
+        conn.request(
+            method="POST",
+            url="",
+            body=obj.encode('utf-8'),
+            headers={k: v for k, v in metadata.items() if v})
         conn.getresponse()
         conn.close()
 

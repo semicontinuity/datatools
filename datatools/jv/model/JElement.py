@@ -54,7 +54,8 @@ class JElement(TreeNode):
                 return path
 
             node = node.get_value_element()
-            path.append(node.key)
+            if node.key is not None:
+                path.append(node.key)
             node = node.parent
 
     def __contains__(self, item):

@@ -24,11 +24,12 @@ class JGrid(TreeGrid):
     def handle_edit_key(self, key):
         if key == KEY_INSERT:
             value = self.document.selected_value(self.cur_line)
+            selected_path = ''.join(self.document.selected_path(self.cur_line))
             if type(value) is str:
                 ObjectExporter.INSTANCE.export(
                     value,
                     {
-                        "X-Title": self.document.selected_path(self.cur_line),
+                        "X-Title": selected_path,
                         "Content-Type": 'text/plain',
                     },
                     0
@@ -37,7 +38,7 @@ class JGrid(TreeGrid):
                 ObjectExporter.INSTANCE.export(
                     json.dumps(to_jsonisable(value), ensure_ascii=False),
                     {
-                        "X-Title": self.document.selected_path(self.cur_line),
+                        "X-Title": selected_path,
                         "Content-Type": 'application/json',
                     },
                     0
