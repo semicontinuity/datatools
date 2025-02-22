@@ -62,13 +62,7 @@ def make_document_for_model(model, j, footer):
 
 
 def loop(document: JDocument):
-    return do_loop(make_json_tree_applet_grid(document))
-
-
-def make_json_tree_applet_grid(document: JDocument):
-    size = screen_size_or_default()
-    grid = make_tree_grid(document, size)
-    return do_make_json_tree_applet(False, grid).g
+    return do_loop(make_tree_grid(document, screen_size_or_default(), JGrid))
 
 
 def do_loop(g):
@@ -101,8 +95,7 @@ if __name__ == "__main__":
 
     if '-p' in sys.argv:
         screen_width, screen_height = screen_size_or_default()
-        size = (screen_width, 10000)
-        grid = make_tree_grid(doc, size)
+        grid = make_tree_grid(doc, (screen_width, 10000))
         g = do_make_json_tree_applet(False, grid).g
         g.interactive = False
         g.redraw()

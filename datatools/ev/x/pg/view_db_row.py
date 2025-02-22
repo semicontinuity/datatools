@@ -9,9 +9,11 @@ from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbReferrers, \
     DbTableRowsSelector
 from datatools.ev.x.pg.view_db import ViewDb
-from datatools.jv.app import make_json_tree_applet_grid, do_loop, make_document_for_model
+from datatools.jv.app import do_loop, make_document_for_model, make_tree_grid
 from datatools.jv.jdocument import JDocument
+from datatools.jv.jgrid import JGrid
 from datatools.tui.screen_helper import with_alternate_screen
+from datatools.tui.terminal import screen_size_or_default
 from datatools.util.logging import debug
 
 
@@ -42,7 +44,7 @@ class ViewDbRow(ViewDb):
             footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
 
             self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
-            self.g = with_alternate_screen(lambda: make_json_tree_applet_grid(self.doc))
+            self.g = with_alternate_screen(lambda: make_tree_grid(self.doc, screen_size_or_default(), JGrid))
 
     # @override
     def run(self) -> Optional[EntityReference]:
