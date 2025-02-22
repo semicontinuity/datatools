@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from picotui.defs import KEY_F1
 
@@ -9,6 +9,7 @@ from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbReferrers, \
     DbTableRowsSelector
 from datatools.ev.x.pg.view_db import ViewDb
+from datatools.ev.x.pg.view_db_row_grid import ViewDbRowGrid
 from datatools.jv.app import do_loop, make_document_for_model, make_tree_grid
 from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
@@ -19,7 +20,9 @@ from datatools.util.logging import debug
 
 class ViewDbRow(ViewDb):
     selector: DbTableRowsSelector
+    references: dict[str, Any]
     doc: JDocument
+    g: JGrid
 
     def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector, query: DbQuery) -> None:
         super().__init__(realm, query)
@@ -44,7 +47,7 @@ class ViewDbRow(ViewDb):
             footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
 
             self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
-            self.g = with_alternate_screen(lambda: make_tree_grid(self.doc, screen_size_or_default(), JGrid))
+            self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
 
     # @override
     def run(self) -> Optional[EntityReference]:
