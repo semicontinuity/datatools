@@ -50,10 +50,16 @@ def ext_jsonisable(func):
 
 
 def escape(c: str):
+    c = basic_escape(c)
+    if c == '"':
+        return '\\"'
+    return c
+
+
+def basic_escape(c: str):
     if c == '\b': return "\\b"
     if c == '\t': return "\\t"
     if c == '\n': return "\\n"
     if c == '\r': return "\\r"
     if c == '\\': return "\\\\"
-    if c == '"': return "\\\""
     return c

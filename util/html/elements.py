@@ -25,6 +25,10 @@ def body(*contents, **attrs):
     return Element('body', *contents, **attrs)
 
 
+def article(*contents, **attrs):
+    return Element('article', *contents, **attrs)
+
+
 def table(*contents, **attrs):
     return Element('table', *contents, **attrs)
 

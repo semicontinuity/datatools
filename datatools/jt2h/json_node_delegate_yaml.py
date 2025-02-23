@@ -17,7 +17,7 @@ class JsonNodeDelegateYaml(JsonNodeDelegate):
         return div(
             self.indent_node(),
             self.key(key, max_key_size),
-            primitive_node(v),
+            primitive_node(v, for_json=False),
         )
 
     # ------------------------------------------------------------------------------------------------------------------

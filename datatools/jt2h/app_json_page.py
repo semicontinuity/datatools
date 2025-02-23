@@ -6,7 +6,7 @@ from datatools.jt2h.json_node import JsonNode
 from datatools.jt2h.json_node_delegate_yaml2 import JsonNodeDelegateYaml2
 from datatools.jt2h.json_node_delegate_yaml2_css import JSON_NODE_DELEGATE_YAML_CSS
 from datatools.jt2h.json_node_helper_css import JSON_NODE_HELPER_CSS
-from util.html.elements import html, body, head, style, title as _title
+from util.html.elements import html, body, head, style, title as _title, article
 from util.html.md_html_node import MdHtmlNode
 from util.html.page_node import PageNode
 
@@ -28,7 +28,16 @@ span {
 
 SPAN_CSS = '''
 span {
-    font-family: monospace; color: black;
+    font-family: monospace; 
+}
+'''
+
+MD_CSS = '''
+article {
+    font-size: large;
+    font-family: monospace;
+    color: black;
+    background-color: #F0F0F0;
 }
 '''
 
@@ -59,14 +68,17 @@ def page_node(data, title_string: str = None, include_page_css: bool = True, del
     )
 
 
-def md_node(data):
+def md_node(data, delegate=JsonNodeDelegateYaml2):
     return MdHtmlNode(
         style(
             SPAN_CSS,
+            MD_CSS,
             JSON_NODE_HELPER_CSS,
             JSON_NODE_DELEGATE_YAML_CSS,
         ),
-        JsonNode(data, JsonNodeDelegateYaml2())
+        article(
+            JsonNode(data, delegate())
+        )
     )
 
 

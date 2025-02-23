@@ -16,7 +16,7 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
         return self.node(
             self.key(key, max_key_size),
             ' ',
-            primitive_node(v),
+            primitive_node(v, for_json=False),
             '&nbsp;'
         )
 
@@ -50,10 +50,10 @@ class JsonNodeDelegateYaml2(JsonNodeDelegate):
                 start,
                 div(
                     span('&nbsp;'),
-                    span(*contents, clazz='j-value') if contents else '[]',
+                    span(*contents, clazz='j-value'),
                     clazz='j-value-node',
                 ),
-            )
+            ) if contents else self.node(start, span('&nbsp;'), span('[]', clazz='j-value'))
         else:
             return div(*contents)
 

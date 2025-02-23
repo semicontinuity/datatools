@@ -11,10 +11,12 @@ import http.client
 import json
 import os
 import re
+import socketserver
 import subprocess
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
+from typing import Tuple
 
 from datatools.intent.popup_selector import choose
 from datatools.json.json2html import to_blocks_html
@@ -24,13 +26,26 @@ from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
 from datatools.util.subprocess import exe
 
 
+folder = os.environ['HOME'] + '/boards'
+
+
 class Server(BaseHTTPRequestHandler):
+
+    def __init__(self, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer) -> None:
+        super().__init__(request, client_address, server)
 
     def log_message(self, fmt, *args):
         return
 
     def do_GET(self):
-        self.respond(200, 'application/json', b'{}')
+        self.respond(200, 'text/plain', folder.encode('utf-8'))
+
+    def do_PUT(self):
+        if os.path.exists(self.path):
+            fs_path = self.path
+            self.respond(200, 'text/plain', fs_path.encode('utf-8'))
+        else:
+            self.respond(404, 'text/plain', self.path.encode('utf-8'))
 
     def do_POST(self):
         content_len = int(self.headers.get('Content-Length'))
@@ -84,15 +99,15 @@ class Server(BaseHTTPRequestHandler):
 
             case 'application/json':
                 data = json.loads(post_body.decode('utf-8'))
-
                 match choose([
                     "Copy to Clipboard",
                     "Open in Browser",
                     "Open in IDEA",
                     "Convert to YAML HTML and Open in Browser",
                     "Convert to JSON HTML and Open in Browser",
+                    "Convert to YAML MD HTML and Copy to Clipboard",
+                    "Convert to JSON MD HTML and Copy to Clipboard",
                     "Convert to BLOCK HTML and Open in Browser",
-                    "Convert to MD HTML and Copy to Clipboard",
                 ], 'JSON'):
                     case 0:
                         self.to_clipboard(post_body)
@@ -115,12 +130,15 @@ class Server(BaseHTTPRequestHandler):
                             the_title
                         )
                     case 5:
+                        self.to_clipboard(str(md_node(data)))
+                    case 6:
+                        self.to_clipboard(str(md_node(data, delegate=JsonNodeDelegateJson)))
+                    case 7:
                         self.html_to_browser(
                             str(to_blocks_html(data, page_title=the_title)),
                             the_title
                         )
-                    case 6:
-                        self.to_clipboard(str(md_node(data)))
+
 
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
 
@@ -144,9 +162,6 @@ class Server(BaseHTTPRequestHandler):
         return [json.loads(s) for s in split if s]
 
     def write_temp_file(self, contents: bytes, suffix: str, name_base: str | None = None):
-        import os
-        folder = os.environ['HOME'] + '/boards'
-
         path = None
         if name_base:
             name_base = self.convert_to_filename(name_base)
