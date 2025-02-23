@@ -26,7 +26,11 @@ from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
 from datatools.util.subprocess import exe
 
 
-folder = os.environ['HOME'] + '/boards'
+def default_folder():
+    return os.environ['HOME'] + '/boards'
+
+
+folder = default_folder()
 
 
 class Server(BaseHTTPRequestHandler):
@@ -37,19 +41,31 @@ class Server(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         return
 
+    def respond_with_path(self, status, path):
+        self.respond(status, 'text/plain', (path + '\n').encode('utf-8'))
+
+    def do_DELETE(self):
+        global folder
+        folder = default_folder()
+        self.respond_with_path(200, folder)
+
     def do_GET(self):
-        self.respond(200, 'text/plain', folder.encode('utf-8'))
+        self.respond_with_path(200, folder)
 
     def do_PUT(self):
-        if os.path.exists(self.path):
-            fs_path = self.path
-            self.respond(200, 'text/plain', fs_path.encode('utf-8'))
+        global folder
+        content_len = int(self.headers.get('Content-Length'))
+        path = self.rfile.read(content_len).decode('utf-8')
+
+        if os.path.exists(path):
+            folder = path
+            self.respond_with_path(200, folder)
         else:
-            self.respond(404, 'text/plain', self.path.encode('utf-8'))
+            self.respond_with_path(404, path)
 
     def do_POST(self):
-        content_len = int(self.headers.get('Content-Length'))
         the_title = self.headers.get('X-Title')
+        content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
 
         match self.headers.get('Content-Type'):
