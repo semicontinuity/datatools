@@ -1,8 +1,11 @@
 import os
 from os.path import isdir, join
 
+import yaml
+
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
 from datatools.dbview.x.util.helper import get_required_prop
+from datatools.util.dataclasses import dataclass_from_dict
 
 
 def inferred_query(props) -> DbQuery:
@@ -11,8 +14,16 @@ def inferred_query(props) -> DbQuery:
     ctx_base_parts = [] if ctx_base is None else ctx_base.split('/')
     rest = props.get('__REST') or ''
 
-    clauses = get_where_clauses1(ctx_dir + '/' + '/'.join(ctx_base_parts), rest)
+    if query := props.get('QUERY'):
+        query_d = yaml.safe_load(query)
+        return dataclass_from_dict(DbQuery, query_d)
+    else:
+        base_path = ctx_dir + '/' + '/'.join(ctx_base_parts)
+        return inferred_query_from(props, base_path, rest)
 
+
+def inferred_query_from(props, base_path, rest):
+    clauses = get_where_clauses1(base_path, rest)
     return DbQuery(
         table=get_required_prop('TABLE', props),
         filter=[

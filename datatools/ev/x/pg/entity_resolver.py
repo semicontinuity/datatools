@@ -1,18 +1,31 @@
 import os
 
+import yaml
+
 from datatools.dbview.util.pg import get_table_pks
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
 from datatools.dbview.x.util.helper import get_required_prop
 from datatools.dbview.x.util.pg import get_where_clauses_from_props, get_where_clauses0
-from datatools.dbview.x.util.pg_inferred_query import inferred_query, get_where_clauses1
+from datatools.dbview.x.util.pg_inferred_query import inferred_query, get_where_clauses1, inferred_query_from
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.db.selector_resolver import table_and_the_rest
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.realm_pg import RealmPg
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowsReference, DbRowReference
+from datatools.util.dataclasses import dataclass_from_dict
 
 
 def resolve_pg_entity(realm: RealmPg, base_path: str, rest: str) -> EntityReference:
+    props = realm.data_source.props
+
+    qqq = props.get('QUERY')
+
+    if query := qqq:
+        query_d = yaml.safe_load(query)
+        q = dataclass_from_dict(DbQuery, query_d)
+    else:
+        q = inferred_query_from(props, base_path, rest)
+
     table, the_rest = table_and_the_rest(rest)
     where_clauses = get_where_clauses0(base_path + '/' + table, the_rest)
 
@@ -28,7 +41,7 @@ def resolve_pg_entity(realm: RealmPg, base_path: str, rest: str) -> EntityRefere
         ]
     )
 
-    return initial_entity_ref_for(realm.name, table, where_clauses, realm.data_source, query)
+    return initial_entity_ref_for(realm.name, table, where_clauses, realm.data_source, q)
 
 
 def initial_entity_ref(data_source: PgDataSource, realm_name=None) -> EntityReference:

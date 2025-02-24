@@ -53,7 +53,7 @@ class ViewDbRows(ViewDb):
                 realm_name=self.realm.name,
                 selector=DbTableRowsSelector(
                     table=self.query.table,
-                    where=[DbSelectorClause(pk, '=', "'" + sel_entity[pk] + "'") for pk in self.table_pks]
+                    where=[DbSelectorClause(pk, '=', "'" + str(sel_entity[pk]) + "'") for pk in self.table_pks]
                 ),
                 query=self.query.with_filter_clauses([DbQueryFilterClause(pk, '=', sel_entity[pk]) for pk in self.table_pks])
             )
