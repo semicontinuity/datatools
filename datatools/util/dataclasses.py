@@ -29,6 +29,8 @@ def dataclass_from_dict(klass, d, klass_map = None):
                 return r
             elif klass.__origin__ is list:
                 sub_data_class = klass.__args__[0]
+                if d is None:
+                    return None
                 r = []
                 for i in d:
                     r.append(dataclass_from_dict(sub_data_class, i, klass_map))
@@ -76,7 +78,7 @@ def dataclass_from_dict(klass, d, klass_map = None):
         return res
     except Exception:
 
-        # print(traceback.format_exc())
+        print(traceback.format_exc())
 
         # 'regular' case when d is not dataclass (code!)
         debug('dataclass_from_dict', regular=True, d=d)

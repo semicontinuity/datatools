@@ -25,7 +25,7 @@ def to_jsonisable(obj):
     elif isinstance(obj, dict) or isinstance(obj, FrozenDict):
         if all((is_primitive(key) for key in obj)):
             return {
-                key: to_jsonisable(value) for key, value in obj.items() if value is not None
+                key: to_jsonisable(value) for key, value in obj.items()
             }
         else:
             return [

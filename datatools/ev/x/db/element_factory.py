@@ -7,7 +7,7 @@ from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
 from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
-from datatools.jv.model.factory import JElementFactory, set_last_in_parent, set_padding
+from datatools.jv.model.j_element_factory import JElementFactory, set_last_in_parent, set_padding
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.treeview.rich_text import Style
 
@@ -78,7 +78,7 @@ class DbElementFactory(JElementFactory):
         # NB can be both in links and PKs! Print PKs first.
         views = []
         for k, v in model.items():
-            if isinstance(v, datetime.datetime):
+            if isinstance(v, datetime.datetime) or isinstance(v, datetime.time):
                 views.append(self.date_time(v, k))
             elif type(v) is str and k in links:
                 node = self.foreign_key(v, k)

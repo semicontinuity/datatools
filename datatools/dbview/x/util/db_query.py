@@ -27,7 +27,7 @@ class DbQuerySelector:
 @dataclass
 class DbQuery:
     table: str|None
-    filter: List[DbQueryFilterClause]
+    filter: List[DbQueryFilterClause] = None
     selectors: List[DbQuerySelector] = None
 
     def with_more_filter_clauses(self, filter_clauses: list[DbQueryFilterClause]):
