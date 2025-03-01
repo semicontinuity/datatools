@@ -6,3 +6,4 @@ from typing import Any
 class DbEntityData:
     rows: list[dict[str, Any]]
     pks: list[str]
+    references: dict[str, Any]

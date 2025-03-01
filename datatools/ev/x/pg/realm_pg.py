@@ -75,7 +75,7 @@ class RealmPg(Realm):
         return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [
             {k: to_jsonisable(v) for k, v in row.items() if k not in table_pks} for row in rows]
 
-    def make_references(self, conn, table) -> Dict[str, Any]:
+    def make_references(self, conn, table) -> dict[str, Any]:
         """ Returns dict: column_name -> { "concept":"...", "concept-pk":"..." } """
         outbound_relations = get_table_foreign_keys_outbound(conn, table)
         return {
@@ -93,4 +93,5 @@ class RealmPg(Realm):
         return DbEntityData(
             rows=execute_sql(conn, query_to_string(query)),
             pks=get_table_pks(conn, query.table),
+            references=self.make_references(conn, query.table),
         )

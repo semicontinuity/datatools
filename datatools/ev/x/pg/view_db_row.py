@@ -1,6 +1,5 @@
 from typing import Optional
 
-from datatools.dbview.util.pg import get_table_pks
 from datatools.dbview.x.util.db_query import DbQuery
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
@@ -37,14 +36,11 @@ class ViewDbRow(ViewDb):
         self.build_for_row(j)
 
     def build_for_row(self, j):
-        with self.realm.connect_to_db() as conn:
-            table_pks = get_table_pks(conn, self.selector.table)
-            references = self.realm.make_references(conn, self.selector.table)
         factory = DbElementFactory()
         j_object = factory.build_row_view(
             j,
-            references,
-            table_pks,
+            self.db_entity_data.references,
+            self.db_entity_data.pks,
             self.realm.links.get(self.selector.table) or {},
             self.realm,
         )
