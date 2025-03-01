@@ -30,8 +30,19 @@ class ViewDbRowGrid(JGrid):
             )
         elif key == KEY_CTRL_E:
             ObjectExporter.INSTANCE.export(
-                self.document.db_entity_data.realm_ctx,
-                {"Content-Type": "text/plain"},
+                str(
+                    json.dumps(
+                        to_jsonisable(
+                            self.document.query,
+                        )
+                    )
+                ),
+                {
+                    "Content-Type": "application/x-basic-entity",
+                    "X-Title": self.document.footer,
+                    "X-Realm-Ctx-Dir": self.document.db_entity_data.realm_ctx_dir,
+                    "X-Entity-Realm-Path": self.document.db_entity_data.entity_realm_path,
+                },
                 0
             )
         else:

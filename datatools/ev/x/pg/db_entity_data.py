@@ -11,3 +11,5 @@ class DbEntityData:
     pks: list[str]
     references: dict[str, Any]
     realm_ctx: str = None
+    realm_ctx_dir: str = None
+    entity_realm_path: str = None

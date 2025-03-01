@@ -95,4 +95,6 @@ class RealmPg(Realm):
             pks=get_table_pks(conn, query.table),
             references=self.make_references(conn, query.table),
             realm_ctx=self.data_source.get_realm_ctx(),
+            realm_ctx_dir=self.data_source.get_realm_ctx_dir(),
+            entity_realm_path=self.data_source.get_entity_realm_path(),
         )

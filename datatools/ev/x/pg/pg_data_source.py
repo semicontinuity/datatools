@@ -38,8 +38,20 @@ class PgDataSource:
             return self.get_env('LOCAL_PORT')
         return self.get_env('PORT')
 
+    def get_entity_realm_path(self):
+        return relpath(
+            os.environ['PWD'],
+            start=self.get_realm_ctx_dir()
+        )
+
     def get_realm_ctx(self):
-        return relpath(os.path.abspath(self.get_env('CTX_BASE') + '/..'), self.get_env('CTX_DIR'))
+        return relpath(
+            self.get_realm_ctx_dir(),
+            start=self.get_env('CTX_DIR')
+        )
+
+    def get_realm_ctx_dir(self):
+        return os.path.abspath(self.get_env('CTX_DIR') + '/' + self.get_env('CTX_BASE') + '/..')
 
     def get_env(self, key):
         value = self.props.get(key)

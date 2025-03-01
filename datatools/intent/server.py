@@ -79,6 +79,10 @@ class Server(BaseHTTPRequestHandler):
                         self.browse_new_tab(
                             self.write_temp_file(post_body, '.txt', the_title)
                         )
+            case 'application/x-basic-entity':
+                realm_ctx_dir = self.headers.get('X-Realm-Ctx-Dir')
+                self.send_enity(realm_ctx_dir, self.headers.get('X-Entity-Realm-Path'), post_body)
+
             case 'application/sql':
                 match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
                     case 0:
@@ -114,49 +118,55 @@ class Server(BaseHTTPRequestHandler):
                         self.to_clipboard(str(md_table_node(lines)))
 
             case 'application/json':
-                data = json.loads(post_body.decode('utf-8'))
-                match choose([
-                    "Copy to Clipboard",
-                    "Open in Browser",
-                    "Open in IDEA",
-                    "Convert to YAML HTML and Open in Browser",
-                    "Convert to JSON HTML and Open in Browser",
-                    "Convert to YAML MD HTML and Copy to Clipboard",
-                    "Convert to JSON MD HTML and Copy to Clipboard",
-                    "Convert to BLOCK HTML and Open in Browser",
-                ], 'JSON'):
-                    case 0:
-                        self.to_clipboard(post_body)
-                    case 1:
-                        self.browse_new_tab(
-                            self.write_temp_file(post_body, '.json', the_title)
-                        )
-                    case 2:
-                        self.open_in_idea(
-                            self.write_temp_file(post_body, '.json', the_title)
-                        )
-                    case 3:
-                        self.html_to_browser(
-                            str(page_node(data, title_string=the_title)),
-                            the_title
-                        )
-                    case 4:
-                        self.html_to_browser(
-                            str(page_node(data, title_string=the_title, delegate=JsonNodeDelegateJson)),
-                            the_title
-                        )
-                    case 5:
-                        self.to_clipboard(str(md_node(data)))
-                    case 6:
-                        self.to_clipboard(str(md_node(data, delegate=JsonNodeDelegateJson)))
-                    case 7:
-                        self.html_to_browser(
-                            str(to_blocks_html(data, page_title=the_title)),
-                            the_title
-                        )
-
+                self.process_json(post_body, the_title)
 
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
+
+    def process_json(self, post_body, the_title):
+        data = json.loads(post_body.decode('utf-8'))
+        match choose([
+            "Copy to Clipboard",
+            "Open in Browser",
+            "Open in IDEA",
+            "Convert to YAML HTML and Open in Browser",
+            "Convert to JSON HTML and Open in Browser",
+            "Convert to YAML MD HTML and Copy to Clipboard",
+            "Convert to JSON MD HTML and Copy to Clipboard",
+            "Convert to BLOCK HTML and Open in Browser",
+        ], 'JSON'):
+            case 0:
+                self.to_clipboard(post_body)
+            case 1:
+                self.browse_new_tab(
+                    self.write_temp_file(post_body, '.json', the_title)
+                )
+            case 2:
+                self.open_in_idea(
+                    self.write_temp_file(post_body, '.json', the_title)
+                )
+            case 3:
+                self.html_to_browser(
+                    str(page_node(data, title_string=the_title)),
+                    the_title
+                )
+            case 4:
+                self.html_to_browser(
+                    str(page_node(data, title_string=the_title, delegate=JsonNodeDelegateJson)),
+                    the_title
+                )
+            case 5:
+                self.to_clipboard(str(md_node(data)))
+            case 6:
+                self.to_clipboard(str(md_node(data, delegate=JsonNodeDelegateJson)))
+            case 7:
+                self.html_to_browser(
+                    str(to_blocks_html(data, page_title=the_title)),
+                    the_title
+                )
+
+    def send_enity(self, realm_ctx_dir: str, entity_realm_path: str, payload):
+        print(realm_ctx_dir)
+        print(entity_realm_path)
 
     def to_clipboard(self, s):
         if type(s) is str:
