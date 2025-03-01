@@ -16,6 +16,7 @@ import subprocess
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
+from pathlib import Path
 from typing import Tuple
 
 from datatools.intent.popup_selector import choose
@@ -80,8 +81,12 @@ class Server(BaseHTTPRequestHandler):
                             self.write_temp_file(post_body, '.txt', the_title)
                         )
             case 'application/x-basic-entity':
+                realm_ctx = self.headers.get('X-Realm-Ctx')
                 realm_ctx_dir = self.headers.get('X-Realm-Ctx-Dir')
-                self.send_enity(realm_ctx_dir, self.headers.get('X-Entity-Realm-Path'), post_body)
+                entity_realm_path = self.headers.get('X-Entity-Realm-Path')
+                self.send_enity(
+                    realm_ctx, realm_ctx_dir, entity_realm_path, post_body
+                )
 
             case 'application/sql':
                 match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
@@ -164,9 +169,35 @@ class Server(BaseHTTPRequestHandler):
                     the_title
                 )
 
-    def send_enity(self, realm_ctx_dir: str, entity_realm_path: str, payload):
+    def send_enity(self, realm_ctx: str, realm_ctx_dir: str, entity_realm_path: str, payload):
         print(realm_ctx_dir)
         print(entity_realm_path)
+
+        # Construct the target realm path
+        target_realm_path = f"{folder}/{realm_ctx}"
+
+        # Calculate the realm reference
+        print('target_realm_path', target_realm_path)
+        print('realm_ctx_dir', realm_ctx_dir)
+        realm_ref = os.path.relpath(
+            realm_ctx_dir,
+            target_realm_path
+        )
+        print('realm_ref', realm_ref)
+
+        # Check if the context pointer file exists, create a symlink if not
+        context_pointer = Path(f"{target_realm_path}/._")
+        if not context_pointer.exists():
+            os.symlink(realm_ref, context_pointer)
+
+        # Construct the entity path
+        entity_path = f"{target_realm_path}/{entity_realm_path}"
+        os.makedirs(entity_path, exist_ok=True)
+
+        # Process the query and save it to the `.query` file
+        query_file = Path(f"{entity_path}/.query")
+        with query_file.open('w+b') as f:
+            f.write(payload)
 
     def to_clipboard(self, s):
         if type(s) is str:

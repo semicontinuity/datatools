@@ -51,7 +51,7 @@ class PgDataSource:
         )
 
     def get_realm_ctx_dir(self):
-        return os.path.abspath(self.get_env('CTX_DIR') + '/' + self.get_env('CTX_BASE') + '/..')
+        return os.path.abspath(self.get_env('CTX_DIR') + '/' + (self.props.get('CTX_BASE') or self.get_env('CTX')) + '/..')
 
     def get_env(self, key):
         value = self.props.get(key)

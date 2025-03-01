@@ -40,6 +40,7 @@ class ViewDbRowGrid(JGrid):
                 {
                     "Content-Type": "application/x-basic-entity",
                     "X-Title": self.document.footer,
+                    "X-Realm-Ctx": self.document.db_entity_data.realm_ctx,
                     "X-Realm-Ctx-Dir": self.document.db_entity_data.realm_ctx_dir,
                     "X-Entity-Realm-Path": self.document.db_entity_data.entity_realm_path,
                 },
