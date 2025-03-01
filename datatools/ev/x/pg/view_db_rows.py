@@ -1,7 +1,6 @@
 from typing import List, Optional
 
 from datatools.dbview.x.util.db_query import DbQueryFilterClause
-from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
@@ -31,8 +30,7 @@ class ViewDbRows(ViewDb):
             self.db_entity_data.rows,
         )
         self.g: ViewDbRowsGrid = do_make_grid(bundle, ViewDbRowsGrid)
-        self.g.query = self.query
-        self.g.sql = query_to_string(self.query)
+        self.g.db_entity_data = self.db_entity_data
         init_grid(
             self.g,
             with_alternate_screen(lambda: screen_size_or_default()),

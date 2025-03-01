@@ -91,6 +91,7 @@ class RealmPg(Realm):
 
     def db_entity_data(self, conn, query: DbQuery) -> DbEntityData:
         return DbEntityData(
+            query=query,
             rows=execute_sql(conn, query_to_string(query)),
             pks=get_table_pks(conn, query.table),
             references=self.make_references(conn, query.table),

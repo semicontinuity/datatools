@@ -1,6 +1,7 @@
 import json
 
-from datatools.dbview.x.util.db_query import DbQuery
+from datatools.dbview.x.util.pg_query import query_to_string
+from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.json.util import to_jsonisable
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.tui.picotui_keys import *
@@ -8,21 +9,20 @@ from datatools.util.object_exporter import ObjectExporter
 
 
 class ViewDbRowsGrid(JtNgGrid):
-    sql: str
-    query: DbQuery
+    db_entity_data: DbEntityData
 
     def handle_edit_key(self, key):
         if key == KEY_SHIFT_F5:
-            self.export_json_lines(0, self.data_bundle.orig_data, f'data from {self.query.table}')
+            self.export_json_lines(0, self.data_bundle.orig_data, f'data from {self.db_entity_data.query.table}')
         elif key == KEY_CTRL_ALT_SHIFT_F5:
             ObjectExporter.INSTANCE.export(
-                self.sql,
+                query_to_string(self.db_entity_data.query),
                 {"Content-Type": "application/sql"},
                 0
             )
         elif key == KEY_CTRL_Q:
             ObjectExporter.INSTANCE.export(
-                json.dumps(to_jsonisable(self.query)),
+                json.dumps(to_jsonisable(self.db_entity_data.query)),
                 {"Content-Type": "application/json"},
                 0
             )
