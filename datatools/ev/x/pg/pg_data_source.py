@@ -1,3 +1,6 @@
+import os.path
+from os.path import relpath
+
 import psycopg2
 
 from datatools.util.logging import debug
@@ -34,6 +37,9 @@ class PgDataSource:
             # tunnel
             return self.get_env('LOCAL_PORT')
         return self.get_env('PORT')
+
+    def get_realm_ctx(self):
+        return relpath(os.path.abspath(self.get_env('CTX_BASE') + '/..'), self.get_env('CTX_DIR'))
 
     def get_env(self, key):
         value = self.props.get(key)

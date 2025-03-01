@@ -10,3 +10,4 @@ class DbEntityData:
     rows: list[dict[str, Any]]
     pks: list[str]
     references: dict[str, Any]
+    realm_ctx: str = None

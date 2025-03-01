@@ -94,4 +94,5 @@ class RealmPg(Realm):
             rows=execute_sql(conn, query_to_string(query)),
             pks=get_table_pks(conn, query.table),
             references=self.make_references(conn, query.table),
+            realm_ctx=self.data_source.get_realm_ctx(),
         )
