@@ -1,4 +1,4 @@
-from typing import List, Optional, Any
+from typing import List, Optional
 
 from picotui.defs import KEY_F1
 
@@ -20,8 +20,6 @@ from datatools.util.logging import debug
 
 class ViewDbRow(ViewDb):
     selector: DbTableRowsSelector
-    references: dict[str, Any]
-    table_pks: list[str]
     doc: JDocument
     g: JGrid
 
@@ -32,15 +30,15 @@ class ViewDbRow(ViewDb):
     # @override
     def build(self):
         with self.realm.connect_to_db() as conn:
-            self.references = self.realm.make_references(conn, self.selector.table)
-            self.table_pks = get_table_pks(conn, self.selector.table)
+            references = self.realm.make_references(conn, self.selector.table)
+            table_pks = get_table_pks(conn, self.selector.table)
             j = self.get_entity_row(conn, self.selector.table, self.selector.where)
 
         factory = DbElementFactory()
         j_object = factory.build_row_view(
             j,
-            self.references,
-            self.table_pks,
+            references,
+            table_pks,
             self.realm.links.get(self.selector.table) or {},
             self.realm,
         )

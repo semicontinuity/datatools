@@ -28,7 +28,7 @@ class DbElementFactory(JElementFactory):
         foreign_table_pk: str
 
         def value_style(self):
-            return Style(AbstractBufferWriter.MASK_ITALIC | AbstractBufferWriter.MASK_UNDERLINED, (64, 160, 192))
+            return Style(AbstractBufferWriter.MASK_UNDERLINED, (64, 160, 192))
 
         def handle_key(self, key: str):
             if key == KEY_ENTER:
