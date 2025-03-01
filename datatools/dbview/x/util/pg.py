@@ -2,13 +2,9 @@ import os
 from os.path import isdir, join
 from typing import List, Tuple
 
-import yaml
-
-from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.helper import get_required_prop
 from datatools.dbview.x.util.pg_inferred_query import inferred_query
-from datatools.dbview.x.util.pg_query import query_to_string
-from datatools.util.dataclasses import dataclass_from_dict
+from datatools.dbview.x.util.pg_query import query_to_string, query_from_yaml
 from datatools.util.logging import debug
 
 
@@ -20,8 +16,7 @@ def get_sql() -> str:
 
 def infer_query(props):
     if query := props.get('QUERY'):
-        query_d = yaml.safe_load(query)
-        q = dataclass_from_dict(DbQuery, query_d)
+        q = query_from_yaml(query)
     else:
         q = inferred_query(props)
     if not q.table:

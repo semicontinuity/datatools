@@ -19,10 +19,10 @@ class RealmPg(Realm):
     data_source: PgDataSource
     links: Dict[str, Dict]
 
-    def __init__(self, name: str, data_source: PgDataSource, links: Dict[str, Dict]):
+    def __init__(self, name: str, data_source: PgDataSource, links: Dict[str, Dict] = None):
         super().__init__(name)
         self.data_source = data_source
-        self.links = links
+        self.links = links or {}
 
     def connect_to_db(self):
         return self.data_source.connect_to_db()

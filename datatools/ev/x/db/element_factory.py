@@ -1,7 +1,4 @@
 import datetime
-from typing import List, Dict
-
-from picotui.defs import KEY_ENTER
 
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
 from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
@@ -10,6 +7,7 @@ from datatools.jv.model.JString import JString
 from datatools.jv.model.j_element_factory import JElementFactory, set_last_in_parent, set_padding
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.treeview.rich_text import Style
+from picotui.defs import KEY_ENTER
 
 
 class DbElementFactory(JElementFactory):

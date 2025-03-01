@@ -2,9 +2,9 @@ from types import NoneType
 from typing import Any
 
 import yaml
-
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause, DbQuerySelector
 from datatools.dbview.x.util.helper import get_env
+from datatools.util.dataclasses import dataclass_from_dict
 
 
 def get_sql() -> str:
@@ -63,3 +63,11 @@ def value_to_string(value: Any) -> str:
         return '(' + ','.join(value_to_string(v) for v in value) + ')'
     else:
         return repr(value)
+
+
+def query_from_yaml(query) -> DbQuery:
+    return query_from_raw(yaml.safe_load(query))
+
+
+def query_from_raw(row) -> DbQuery:
+    return dataclass_from_dict(DbQuery, row)
