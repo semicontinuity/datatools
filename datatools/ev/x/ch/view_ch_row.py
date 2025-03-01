@@ -56,7 +56,7 @@ class ViewChRow(View):
 
         sql = f"SELECT * from {table} where {where_column} {where_op} {where_value}"
         debug(sql)
-        rows = self.realm.execute_query(conn, sql)
+        rows = self.realm.execute_sql_query(conn, sql)
         if len(rows) != 1:
             raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
         return rows[0]

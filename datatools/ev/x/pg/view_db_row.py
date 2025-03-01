@@ -1,12 +1,11 @@
-from typing import List, Optional
-
-from picotui.defs import KEY_F1
+from typing import Optional
 
 from datatools.dbview.util.pg import get_table_pks
 from datatools.dbview.x.util.db_query import DbQuery
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
-from datatools.ev.x.pg.types import DbSelectorClause, DbReferrers, \
+from datatools.ev.x.pg.db_entity_data import DbEntityData
+from datatools.ev.x.pg.types import DbReferrers, \
     DbTableRowsSelector
 from datatools.ev.x.pg.view_db import ViewDb
 from datatools.ev.x.pg.view_db_row_grid import ViewDbRowGrid
@@ -15,10 +14,11 @@ from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
-from datatools.util.logging import debug
+from picotui.defs import KEY_F1
 
 
 class ViewDbRow(ViewDb):
+    db_entity_data: DbEntityData
     selector: DbTableRowsSelector
     doc: JDocument
     g: JGrid
@@ -30,10 +30,16 @@ class ViewDbRow(ViewDb):
     # @override
     def build(self):
         with self.realm.connect_to_db() as conn:
-            references = self.realm.make_references(conn, self.selector.table)
-            table_pks = get_table_pks(conn, self.selector.table)
-            j = self.get_entity_row(conn, self.selector.table, self.selector.where)
+            self.db_entity_data = self.realm.db_entity_data(conn, self.query)
+            if len(self.db_entity_data.rows) != 1:
+                raise Exception(f'illegal state: expected 1 row, but was {len(self.db_entity_data.rows)}')
+            j = self.db_entity_data.rows[0]
+        self.build_for_row(j)
 
+    def build_for_row(self, j):
+        with self.realm.connect_to_db() as conn:
+            table_pks = get_table_pks(conn, self.selector.table)
+            references = self.realm.make_references(conn, self.selector.table)
         factory = DbElementFactory()
         j_object = factory.build_row_view(
             j,
@@ -42,12 +48,10 @@ class ViewDbRow(ViewDb):
             self.realm.links.get(self.selector.table) or {},
             self.realm,
         )
-
         footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
         self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
         self.doc.query = self.query
         self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
-
 
     # @override
     def run(self) -> Optional[EntityReference]:
@@ -59,20 +63,3 @@ class ViewDbRow(ViewDb):
             return DbReferrers(realm_name=self.realm.name, selector=self.selector)
         else:
             return loop_result
-
-    def get_entity_row(self, conn, table: str, where: List[DbSelectorClause]):
-        if not where:
-            raise Exception('WHERE clause is required')
-        if len(where) != 1:
-            raise Exception('WHERE clauses must contain 1 clause')
-
-        where_column, where_op, where_value = where[0].column, where[0].op, where[0].value
-        if where_op != '=':
-            raise Exception('WHERE clause must be PK equality')
-
-        sql = f"SELECT * from {table} where {where_column} {where_op} {where_value}"
-        debug(sql)
-        rows = self.realm.execute_query(conn, sql)
-        if len(rows) != 1:
-            raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
-        return rows[0]

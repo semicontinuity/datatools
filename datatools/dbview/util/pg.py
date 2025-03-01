@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Any
 
 
 def describe_table(conn, table: str):
@@ -145,7 +145,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
         '''
 
 
-def execute_sql(conn, sql: str) -> List[Dict[str, Any]]:
+def execute_sql(conn, sql: str) -> list[dict[str, Any]]:
     q = conn.cursor()
     q.execute(sql)
 
