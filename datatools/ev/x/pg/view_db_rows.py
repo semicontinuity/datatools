@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from datatools.dbview.x.util.db_query import DbQueryFilterClause
 from datatools.ev.app_types import EntityReference
@@ -18,13 +18,9 @@ class ViewDbRows(ViewDb):
     g: ViewDbRowsGrid
 
     # @override
-    def build(self):
-        with self.realm.connect_to_db() as conn:
-            self.db_entity_data = self.realm.db_entity_data(conn, self.query)
+    def build_for_db_entity_data(self, db_entity_data: DbEntityData):
+        self.db_entity_data = db_entity_data
 
-        self.build_for_db_entity_data()
-
-    def build_for_db_entity_data(self):
         bundle = load_data_bundle(
             CmdLineParams(),
             self.db_entity_data.rows,
@@ -52,17 +48,6 @@ class ViewDbRows(ViewDb):
             )
         else:
             raise Exception(loop_result)
-
-    def select_sql(self, table, where):
-        where_string = self.make_where_string(where)
-        sql = f"SELECT * from {table}"
-        if where_string:
-            sql += f" where {where_string}"
-        return sql
-
-    @staticmethod
-    def make_where_string(clauses: List[DbSelectorClause]):
-        return '\n and \n'.join(f'{c.column} {c.op} {c.value}' for c in clauses)
 
     def do_loop(self, g):
         loop_result = g.loop()

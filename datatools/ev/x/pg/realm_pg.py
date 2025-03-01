@@ -10,8 +10,7 @@ from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.types import DbRowReference, DbRowsReference, DbReferrers
 from datatools.ev.x.pg.view_db_referrers import ViewDbReferrers
-from datatools.ev.x.pg.view_db_row import ViewDbRow
-from datatools.ev.x.pg.view_db_rows import ViewDbRows
+from datatools.ev.x.pg.view_db_rows_auto import ViewDbRowsAuto
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
 
@@ -39,9 +38,9 @@ class RealmPg(Realm):
     def create_view(self, e_ref: EntityReference) -> View:
         debug('create_view', e_ref=e_ref)
         if isinstance(e_ref, DbRowsReference):
-            return ViewDbRows(self, e_ref.query)
+            return ViewDbRowsAuto(self, e_ref.selector, e_ref.query)
         elif isinstance(e_ref, DbRowReference):
-            return ViewDbRow(self, e_ref.selector, e_ref.query)
+            return ViewDbRowsAuto(self, e_ref.selector, e_ref.query)
         elif isinstance(e_ref, DbReferrers):
             return ViewDbReferrers(self, e_ref.selector)
 
