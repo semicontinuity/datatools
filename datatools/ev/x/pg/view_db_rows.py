@@ -20,26 +20,23 @@ class ViewDbRows(ViewDb):
 
     # @override
     def build(self):
-        sql = query_to_string(self.query)
-
         with self.realm.connect_to_db() as conn:
             self.db_entity_data = self.realm.db_entity_data(conn, self.query)
 
+        self.build_for_db_entity_data()
+
+    def build_for_db_entity_data(self):
         bundle = load_data_bundle(
             CmdLineParams(),
             self.db_entity_data.rows,
         )
-
-        grid: ViewDbRowsGrid = do_make_grid(bundle, ViewDbRowsGrid)
-        grid.query = self.query
-        grid.sql = sql
-
-        self.g = with_alternate_screen(
-            lambda: init_grid(
-                grid,
-                screen_size_or_default(),
-                bundle
-            )
+        self.g: ViewDbRowsGrid = do_make_grid(bundle, ViewDbRowsGrid)
+        self.g.query = self.query
+        self.g.sql = query_to_string(self.query)
+        init_grid(
+            self.g,
+            with_alternate_screen(lambda: screen_size_or_default()),
+            bundle
         )
 
     # @override

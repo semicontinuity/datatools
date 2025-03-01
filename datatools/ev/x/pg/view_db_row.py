@@ -30,12 +30,14 @@ class ViewDbRow(ViewDb):
     def build(self):
         with self.realm.connect_to_db() as conn:
             self.db_entity_data = self.realm.db_entity_data(conn, self.query)
-            if len(self.db_entity_data.rows) != 1:
-                raise Exception(f'illegal state: expected 1 row, but was {len(self.db_entity_data.rows)}')
-            j = self.db_entity_data.rows[0]
-        self.build_for_row(j)
 
-    def build_for_row(self, j):
+        self.build_for_db_entity_data()
+
+    def build_for_db_entity_data(self):
+        if len(self.db_entity_data.rows) != 1:
+            raise Exception(f'illegal state: expected 1 row, but was {len(self.db_entity_data.rows)}')
+        j = self.db_entity_data.rows[0]
+
         factory = DbElementFactory()
         j_object = factory.build_row_view(
             j,
