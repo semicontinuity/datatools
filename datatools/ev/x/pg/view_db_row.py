@@ -44,9 +44,9 @@ class ViewDbRow(ViewDb):
         )
         footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
         self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
+        self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
         self.doc.query = self.query
         self.doc.db_entity_data = self.db_entity_data
-        self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
 
     # @override
     def run(self) -> Optional[EntityReference]:

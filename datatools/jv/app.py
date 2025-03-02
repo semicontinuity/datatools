@@ -45,8 +45,8 @@ def make_document(j, footer: str = None) -> JDocument:
     )
 
 
-def make_document_for_model(model: TreeNode, j, footer: str) -> JDocument:
-    document = JDocument(model)
+def make_document_for_model(model: TreeNode, j, footer: str, doc_class=JDocument) -> JDocument:
+    document = doc_class(model)
     document.value = j
     document.footer = footer
     return document

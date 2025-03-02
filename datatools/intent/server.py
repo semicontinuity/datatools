@@ -19,6 +19,7 @@ from http.server import HTTPServer
 from pathlib import Path
 from typing import Tuple
 
+from datatools.dbview.x.util.pg_query import query_from_yaml
 from datatools.intent.popup_selector import choose
 from datatools.json.json2html import to_blocks_html
 from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_node
@@ -171,10 +172,18 @@ class Server(BaseHTTPRequestHandler):
 
     def send_enity(self, realm_ctx: str, realm_ctx_dir: str, entity_realm_path: str, payload):
         print(realm_ctx_dir)
+
+        # Construct entity_realm_path from entity
+        query = query_from_yaml(payload.decode('utf-8'))
+        if len(query.filter) == 1 and query.filter[0].op == '=':
+            entity_realm_path = f'{query.table}/:{query.filter[0].column}/{query.filter[0].value}'
+        else:
+            entity_realm_path = f'{query.table}/{str(hash(query.filter))}'
         print(entity_realm_path)
 
         # Construct the target realm path
         target_realm_path = f"{folder}/{realm_ctx}"
+        os.makedirs(target_realm_path, exist_ok=True)
 
         # Calculate the realm reference
         print('target_realm_path', target_realm_path)
