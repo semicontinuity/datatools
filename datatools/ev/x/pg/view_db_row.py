@@ -17,7 +17,6 @@ from picotui.defs import KEY_F1
 
 
 class ViewDbRow(ViewDb):
-    db_entity_data: DbEntityData
     selector: DbTableRowsSelector
     doc: JDocument
     g: JGrid

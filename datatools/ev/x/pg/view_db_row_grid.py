@@ -35,23 +35,7 @@ class ViewDbRowGrid(JGrid):
                 0
             )
         elif key == KEY_CTRL_E:
-            ObjectExporter.INSTANCE.export(
-                str(
-                    json.dumps(
-                        to_jsonisable(
-                            self.document.query,
-                        )
-                    )
-                ),
-                {
-                    "Content-Type": "application/x-basic-entity",
-                    "X-Title": self.document.footer,
-                    "X-Realm-Ctx": self.document.db_entity_data.realm_ctx,
-                    "X-Realm-Ctx-Dir": self.document.db_entity_data.realm_ctx_dir,
-                    "X-Entity-Realm-Path": self.document.db_entity_data.entity_realm_path,
-                },
-                0
-            )
+            self.document.doc.export_entity()
         elif key == KEY_CTRL_R:
             path = self.document.selected_path(self.cur_line)
             if len(path) != 1:
@@ -59,4 +43,3 @@ class ViewDbRowGrid(JGrid):
             return self.document.doc.resolved_column_entity_ref(path[0])
         else:
             return super().handle_edit_key(key)
-

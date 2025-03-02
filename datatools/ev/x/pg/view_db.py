@@ -1,14 +1,19 @@
+import json
+
 from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.db_query import DbQuerySelector, DbQuerySelectorResolve
 from datatools.ev.app_types import View
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.types import DbRowReference
+from datatools.json.util import to_jsonisable
 from datatools.tui.popup_selector import choose
+from datatools.util.object_exporter import ObjectExporter
 
 
 class ViewDb(View):
     realm: 'RealmPg'
     query: DbQuery
+    db_entity_data: DbEntityData
 
     def __init__(self, realm: 'RealmPg', query: DbQuery) -> None:
         self.realm = realm
@@ -61,3 +66,21 @@ class ViewDb(View):
                 alias=f'{referred_table}_{referred_table_field}',
             )
         ) if s.column == column_key else s
+
+    def export_entity(self):
+        ObjectExporter.INSTANCE.export(
+            str(
+                json.dumps(
+                    to_jsonisable(
+                        self.query,
+                    )
+                )
+            ),
+            {
+                "Content-Type": "application/x-basic-entity",
+                "X-Realm-Ctx": self.db_entity_data.realm_ctx,
+                "X-Realm-Ctx-Dir": self.db_entity_data.realm_ctx_dir,
+                "X-Entity-Realm-Path": self.db_entity_data.entity_realm_path,
+            },
+            0
+        )

@@ -27,6 +27,8 @@ class ViewDbRowsGrid(JtNgGrid):
                 {"Content-Type": "application/json"},
                 0
             )
+        elif key == KEY_CTRL_E:
+            self.document.export_entity()
         elif key == KEY_CTRL_R:
             column_key = self.column_keys[self.cursor_column]
             return self.document.resolved_column_entity_ref(column_key)

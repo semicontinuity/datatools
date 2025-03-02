@@ -14,7 +14,6 @@ from picotui.defs import KEY_ENTER
 
 
 class ViewDbRows(ViewDb):
-    db_entity_data: DbEntityData
     g: ViewDbRowsGrid
 
     # @override
