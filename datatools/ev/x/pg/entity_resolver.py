@@ -81,6 +81,8 @@ def initial_entity_ref_for(
 def has_clause_with_pk(data_source: PgDataSource, table: str, where_clauses: list[tuple[str, str, str]]):
     with data_source.connect_to_db() as conn:
         pks = get_table_pks(conn, table)
+        if len(pks) == 0:
+            return False
 
         count = 0
         for pk in pks:

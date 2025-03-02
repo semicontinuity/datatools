@@ -32,38 +32,6 @@ class ViewDbRowsGrid(JtNgGrid):
             )
         elif key == KEY_CTRL_R:
             column_key = self.column_keys[self.cursor_column]
-
-            referred_table = self.document.referred_table(column_key)
-            if referred_table is None:
-                return
-
-            referred_table_fields = self.document.table_fields(referred_table)
-            referred_table_field_index = choose(referred_table_fields, f'Choose a field from {self.document.query.table}')
-            if referred_table_field_index is None:
-                return
-            referred_table_field = referred_table_fields[referred_table_field_index]
-
-            reference = DbRowReference(
-                realm_name=self.document.realm.name,
-                selector=None,
-                query=self.document.db_entity_data.query.with_selectors(
-                    [
-                        self.replace_selector_with_lookup(s, column_key, referred_table, referred_table_field)
-                        for s in self.document.table_selectors()
-                    ]
-                )
-            )
-            return reference
+            return self.document.resolved_column_entity_ref(column_key)
         else:
             return super().handle_edit_key(key)
-
-    def replace_selector_with_lookup(self, s: DbQuerySelector, column_key: str, referred_table: str, referred_table_field: str) -> DbQuerySelector:
-        return DbQuerySelector(
-            column=column_key,
-            resolve=DbQuerySelectorResolve(
-                table=referred_table,
-                select=referred_table_field,
-                column=column_key, # pass PK!
-                alias=referred_table,
-            )
-        ) if s.column == column_key else s
