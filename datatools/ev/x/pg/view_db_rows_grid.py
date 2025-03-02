@@ -1,7 +1,9 @@
 import json
 
+from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.ev.x.pg.db_entity_data import DbEntityData
+from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector
 from datatools.json.util import to_jsonisable
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.tui.picotui_keys import *
@@ -34,6 +36,17 @@ class ViewDbRowsGrid(JtNgGrid):
                 return
 
             field = choose(fields, f'Choose a field from {self.document.query.table}')
-            return
+            if field is None:
+                return
+
+            reference = DbRowReference(
+                realm_name=self.document.realm.name,
+                selector=None,
+                query=self.replace_field_with_lookup(self.document.db_entity_data.query)
+            )
+            return reference
         else:
             return super().handle_edit_key(key)
+
+    def replace_field_with_lookup(self, query: DbQuery) -> DbQuery:
+        return query.with_selectors(self.document.table_selectors())

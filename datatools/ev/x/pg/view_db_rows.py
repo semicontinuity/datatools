@@ -1,6 +1,6 @@
 from typing import Optional
 
-from datatools.dbview.x.util.db_query import DbQueryFilterClause
+from datatools.dbview.x.util.db_query import DbQueryFilterClause, DbQuerySelector
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
@@ -47,13 +47,16 @@ class ViewDbRows(ViewDb):
                 ),
                 query=self.query.with_filter_clauses([DbQueryFilterClause(pk, '=', sel_entity[pk]) for pk in self.db_entity_data.pks])
             )
-        else:
-            raise Exception(loop_result)
+        elif type(loop_result) is DbRowReference:
+            return loop_result
 
     def do_loop(self, g):
         loop_result = g.loop()
         cur_line = g.cur_line
         return loop_result, cur_line
+
+    def table_selectors(self) -> list[DbQuerySelector]:
+        return self.db_entity_data.query.selectors or [DbQuerySelector(column=c) for c in self.realm.table_fields(self.db_entity_data.query.table)]
 
     def referred_table_fields(self, field: str):
         c = self.db_entity_data.references.get(field)

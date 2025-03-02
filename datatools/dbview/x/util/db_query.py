@@ -39,3 +39,10 @@ class DbQuery:
             filter=filter_clauses,
             selectors=self.selectors,
         )
+
+    def with_selectors(self, selectors: List[DbQuerySelector]):
+        return DbQuery(
+            table=self.table,
+            filter=self.filter,
+            selectors=selectors,
+        )
