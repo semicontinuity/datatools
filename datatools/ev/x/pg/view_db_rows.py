@@ -27,6 +27,7 @@ class ViewDbRows(ViewDb):
         )
         self.g: ViewDbRowsGrid = do_make_grid(bundle, ViewDbRowsGrid)
         self.g.db_entity_data = self.db_entity_data
+        self.g.document = self
         init_grid(
             self.g,
             with_alternate_screen(lambda: screen_size_or_default()),
@@ -53,3 +54,10 @@ class ViewDbRows(ViewDb):
         loop_result = g.loop()
         cur_line = g.cur_line
         return loop_result, cur_line
+
+    def referred_table_fields(self, field: str):
+        c = self.db_entity_data.references.get(field)
+        if c is None:
+            return None
+        foreign_table = c['concept']
+        return self.realm.table_fields(foreign_table)

@@ -41,7 +41,7 @@ class Graph:
 
     # def add_table(self, table: Table) -> Dict[str, TableField]:
     def add_table(self, table_name: str, table_fields: Dict[str, TableField]) -> Dict[str, TableField]:
-        for field in table_fields.values():
+        for field in TreeGrid.values():
             self.add_table_field(table_name, field.name)
         return self.table_to_fields_dict[table_name]
 

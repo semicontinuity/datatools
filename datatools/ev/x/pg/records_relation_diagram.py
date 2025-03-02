@@ -19,7 +19,7 @@ def is_supported_type(v: Any):
     if type(v) is dict or type(v) is list:
         return False
     elif v is None or type(v) is bool or type(v) is int or type(v) is float:
-        return not os.environ.get('BRIEF')
+        return os.environ.get('V')
     else:
         return True
 

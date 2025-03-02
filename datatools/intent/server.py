@@ -177,7 +177,7 @@ class Server(BaseHTTPRequestHandler):
         if len(query.filter) == 1 and query.filter[0].op == '=':
             entity_realm_path = f'{query.table}/:{query.filter[0].column}/{query.filter[0].value}'
         else:
-            entity_realm_path = f'{query.table}/{str(hash(query.filter))}'
+            entity_realm_path = f'{query.table}/{str(hash(payload))}'
 
         # Construct the target realm path
         target_realm_path = f"{folder}/{realm_ctx}"

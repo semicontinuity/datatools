@@ -13,6 +13,7 @@ from datatools.ev.x.pg.view_db_referrers import ViewDbReferrers
 from datatools.ev.x.pg.view_db_rows_auto import ViewDbRowsAuto
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
+from x.util.pg import get_table_fields_sql
 
 
 class RealmPg(Realm):
@@ -84,6 +85,10 @@ class RealmPg(Realm):
             }
             for entry in outbound_relations
         }
+
+    def table_fields(self, table: str) -> list[dict[str, Any]]:
+        with self.connect_to_db() as conn:
+            return [row['column_name'] for row in self.execute_sql_query(conn, get_table_fields_sql(table))]
 
     def execute_sql_query(self, conn, sql: str) -> list[dict[str, Any]]:
         return execute_sql(conn, sql)

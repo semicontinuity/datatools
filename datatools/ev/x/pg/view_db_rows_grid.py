@@ -10,6 +10,7 @@ from datatools.util.object_exporter import ObjectExporter
 
 class ViewDbRowsGrid(JtNgGrid):
     db_entity_data: DbEntityData
+    document: 'ViewDbRows'
 
     def handle_edit_key(self, key):
         if key == KEY_SHIFT_F5:
@@ -27,7 +28,17 @@ class ViewDbRowsGrid(JtNgGrid):
                 0
             )
         elif key == KEY_CTRL_R:
-            # self.cursor_column
+            ObjectExporter.INSTANCE.export(
+                json.dumps(
+                    to_jsonisable(
+                        self.document.referred_table_fields(
+                            self.column_keys[self.cursor_column]
+                        )
+                    )
+                ),
+                {"Content-Type": "application/json"},
+                0
+            )
             return
         else:
             return super().handle_edit_key(key)
