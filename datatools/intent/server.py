@@ -171,7 +171,6 @@ class Server(BaseHTTPRequestHandler):
                 )
 
     def send_enity(self, realm_ctx: str, realm_ctx_dir: str, entity_realm_path: str, payload):
-        print(realm_ctx_dir)
 
         # Construct entity_realm_path from entity
         query = query_from_yaml(payload.decode('utf-8'))
@@ -179,20 +178,16 @@ class Server(BaseHTTPRequestHandler):
             entity_realm_path = f'{query.table}/:{query.filter[0].column}/{query.filter[0].value}'
         else:
             entity_realm_path = f'{query.table}/{str(hash(query.filter))}'
-        print(entity_realm_path)
 
         # Construct the target realm path
         target_realm_path = f"{folder}/{realm_ctx}"
         os.makedirs(target_realm_path, exist_ok=True)
 
         # Calculate the realm reference
-        print('target_realm_path', target_realm_path)
-        print('realm_ctx_dir', realm_ctx_dir)
         realm_ref = os.path.relpath(
             realm_ctx_dir,
             target_realm_path
         )
-        print('realm_ref', realm_ref)
 
         # Check if the context pointer file exists, create a symlink if not
         context_pointer = Path(f"{target_realm_path}/._")

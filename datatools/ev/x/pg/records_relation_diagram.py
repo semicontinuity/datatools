@@ -1,13 +1,25 @@
 import datetime
+import os
+import uuid
 from typing import Any
 
 from datatools.ev.x.pg.db_entity_data import DbEntityData
+from datatools.json.coloring_hash import color_string, hash_to_rgb_dark, hash_to_rgb
 from graphviz import Digraph
+
+import re
+
+
+def is_valid_uuid(value):
+    uuid_pattern = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+    return bool(uuid_pattern.match(value))
 
 
 def is_supported_type(v: Any):
     if type(v) is dict or type(v) is list:
         return False
+    elif v is None or type(v) is bool or type(v) is int or type(v) is float:
+        return not os.environ.get('BRIEF')
     else:
         return True
 
@@ -31,13 +43,30 @@ def render_value(v: Any):
         return f"<font color='#40A0C0'>{v}</font>"
 
 
-def render_table_cell(is_pk: bool, key: str, value: Any):
-    u1 = '<u>' if is_pk else ''
-    u2 = '</u>' if is_pk else ''
+def render_table_cell(is_pk_or_fk: bool, key: str, value: Any):
+    is_pk_or_fk = is_pk_or_fk or (type(value) is str and is_valid_uuid(value))
+
+    key_u1 = '<u>' if is_pk_or_fk else ''
+    key_u2 = '</u>' if is_pk_or_fk else ''
+
+    if value is None:
+        val_u1 = ''
+        val_u2 = ''
+    else:
+        val_u1 = key_u1
+        val_u2 = key_u2
+
+    if value is None:
+        bg = ''
+    elif os.environ.get('SVG'):
+        bg = f"bgcolor='{color_string(hash_to_rgb(hash(value)))}'" if is_pk_or_fk else ''
+    else:
+        bg = f"bgcolor='{color_string(hash_to_rgb_dark(hash(value)))}'" if is_pk_or_fk else ''
+
     return f'''
 <tr>
-<td valign='bottom' align='left' port="{key}.l" border="1">{u1}{key}{u2}</td>
-<td valign='bottom' align='left' port="{key}.r" border="1">{u1}{render_value(value)}{u2}</td>
+<td valign='bottom' align='left' port='{key}.l' border='1' sides='LR' {bg}>{key_u1}<b>{key}</b>{key_u2}</td>
+<td valign='bottom' align='left' port='{key}.r' border='1' sides='LR'  {bg}>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
 </tr>
 '''
 
@@ -47,15 +76,16 @@ def render_table_cells(d: DbEntityData, row: dict[str, Any], fks: set[str]):
 
 
 def render_table_record_as_label(d: DbEntityData, row: dict[str, Any], fks: set[str]):
-    return f'''<<table border='0' cellspacing='0' cellpadding='1'>
-    <tr><td align='left' colspan='2'><b>{d.query.table}</b></td></tr>
+    return f'''<<table cellspacing='0' cellpadding='1,0' border='1' sides='B' color='gray'>
+    <tr><td align='left' colspan='2' border='1' sides='B'><b>{d.query.table}</b></td></tr>
     {render_table_cells(d, row, fks)}
 </table>>'''
 
 
 def make_graph():
     dot = Digraph('DatabaseRecords', format='png')
-    dot.attr(rankdir='LR')  # Set layout direction to left-to-right
+    rankdir = os.environ.get('RANKDIR') or 'LR'
+    dot.attr(rankdir=rankdir)
     return dot
 
 
