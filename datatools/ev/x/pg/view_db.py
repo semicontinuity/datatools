@@ -58,6 +58,6 @@ class ViewDb(View):
                 table=referred_table,
                 select=referred_table_field,
                 column=column_key, # pass PK!
-                alias=referred_table,
+                alias=f'{referred_table}_{referred_table_field}',
             )
         ) if s.column == column_key else s

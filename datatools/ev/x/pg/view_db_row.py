@@ -39,14 +39,15 @@ class ViewDbRow(ViewDb):
             j,
             self.db_entity_data.references,
             self.db_entity_data.pks,
-            self.realm.links.get(self.selector.table) or {},
+            self.realm.links.get(self.query.table) or {},
             self.realm,
         )
-        footer = self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
+        footer = self.query.table + ' ' + ' '.join([f.column + f.op + f.value for f in self.query.filter])
         self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
         self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
         self.doc.query = self.query
         self.doc.db_entity_data = self.db_entity_data
+        self.doc.doc = self
 
     # @override
     def run(self) -> Optional[EntityReference]:
@@ -55,6 +56,7 @@ class ViewDbRow(ViewDb):
 
     def handle_loop_result(self, document, loop_result, cur_line: int) -> Optional[EntityReference]:
         if loop_result == KEY_F1:
+            # TODO
             return DbReferrers(realm_name=self.realm.name, selector=self.selector)
         else:
             return loop_result
