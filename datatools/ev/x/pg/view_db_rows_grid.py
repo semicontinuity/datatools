@@ -1,9 +1,9 @@
 import json
 
-from datatools.dbview.x.util.db_query import DbQuery
+from datatools.dbview.x.util.db_query import DbQuerySelector, DbQuerySelectorResolve
 from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.ev.x.pg.db_entity_data import DbEntityData
-from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector
+from datatools.ev.x.pg.types import DbRowReference
 from datatools.json.util import to_jsonisable
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.tui.picotui_keys import *
@@ -38,20 +38,32 @@ class ViewDbRowsGrid(JtNgGrid):
                 return
 
             referred_table_fields = self.document.table_fields(referred_table)
-            referred_table_field = choose(referred_table_fields, f'Choose a field from {self.document.query.table}')
-            if referred_table_field is None:
+            referred_table_field_index = choose(referred_table_fields, f'Choose a field from {self.document.query.table}')
+            if referred_table_field_index is None:
                 return
+            referred_table_field = referred_table_fields[referred_table_field_index]
 
             reference = DbRowReference(
                 realm_name=self.document.realm.name,
                 selector=None,
-                query=self.replace_field_with_lookup(self.document.db_entity_data.query, column_key, referred_table, referred_table_field)
+                query=self.document.db_entity_data.query.with_selectors(
+                    [
+                        self.replace_selector_with_lookup(s, column_key, referred_table, referred_table_field)
+                        for s in self.document.table_selectors()
+                    ]
+                )
             )
             return reference
         else:
             return super().handle_edit_key(key)
 
-    def replace_field_with_lookup(self, query: DbQuery, column_key: str, referred_table: str, referred_table_field: str) -> DbQuery:
-        return query.with_selectors(
-            [s for s in self.document.table_selectors()]
-        )
+    def replace_selector_with_lookup(self, s: DbQuerySelector, column_key: str, referred_table: str, referred_table_field: str) -> DbQuerySelector:
+        return DbQuerySelector(
+            column=column_key,
+            resolve=DbQuerySelectorResolve(
+                table=referred_table,
+                select=referred_table_field,
+                column=column_key, # pass PK!
+                alias=referred_table,
+            )
+        ) if s.column == column_key else s
