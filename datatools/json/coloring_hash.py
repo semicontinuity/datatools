@@ -51,7 +51,7 @@ def hash_to_rgb(h, offset=0xE0):
     return r6 * 16 + r5 * 8 + r3 + offset, g6 * 16 + g5 * 8 + g3 + offset, b6 * 16 + b5 * 8 + b3 + offset
 
 
-def hash_to_rgb_dark(h):
+def hash_to_rgb_dark(h, offset=0):
     if h is None:
         return 0, 0, 0
 
@@ -68,4 +68,8 @@ def hash_to_rgb_dark(h):
     h = (h - g3) // 32
     b3 = h % 32
 
-    return r6 * 32 + r3, g6 * 32 + g3, b6 * 32 + b3
+    return r6 * 32 + r3 + offset, g6 * 32 + g3 + offset, b6 * 32 + b3 + offset
+
+
+def hash_code_to_rgb(value, dark: bool, light_offset=0xE0, dark_offset=0):
+    return hash_to_rgb_dark(value, dark_offset) if dark else hash_to_rgb(value, light_offset)

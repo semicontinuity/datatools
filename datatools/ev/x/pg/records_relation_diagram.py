@@ -1,13 +1,13 @@
 import datetime
 import os
-import uuid
+import re
 from typing import Any
 
 from datatools.ev.x.pg.db_entity_data import DbEntityData
-from datatools.json.coloring_hash import color_string, hash_to_rgb_dark, hash_to_rgb
+from datatools.json.coloring_hash import color_string, hash_to_rgb_dark, hash_to_rgb, hash_code_to_rgb
 from graphviz import Digraph
 
-import re
+svg = bool(os.environ.get('SVG'))
 
 
 def is_valid_uuid(value):
@@ -56,12 +56,7 @@ def render_table_cell(is_pk_or_fk: bool, key: str, value: Any):
         val_u1 = key_u1
         val_u2 = key_u2
 
-    if value is None:
-        bg = ''
-    elif os.environ.get('SVG'):
-        bg = f"bgcolor='{color_string(hash_to_rgb(hash(value)))}'" if is_pk_or_fk else ''
-    else:
-        bg = f"bgcolor='{color_string(hash_to_rgb_dark(hash(value)))}'" if is_pk_or_fk else ''
+    bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value), dark=not svg))}'" if value is not None and is_pk_or_fk else ''
 
     return f'''
 <tr>
@@ -76,8 +71,11 @@ def render_table_cells(d: DbEntityData, row: dict[str, Any], fks: set[str]):
 
 
 def render_table_record_as_label(d: DbEntityData, row: dict[str, Any], fks: set[str]):
+    fg = 'black'
+    bg = color_string(hash_code_to_rgb(hash(d.query.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
+
     return f'''<<table cellspacing='0' cellpadding='1,0' border='1' sides='B' color='gray'>
-    <tr><td align='left' colspan='2' border='1' sides='B'><b>{d.query.table}</b></td></tr>
+    <tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{d.query.table}</font></b></td></tr>
     {render_table_cells(d, row, fks)}
 </table>>'''
 
