@@ -58,9 +58,11 @@ class ViewDbRows(ViewDb):
     def table_selectors(self) -> list[DbQuerySelector]:
         return self.db_entity_data.query.selectors or [DbQuerySelector(column=c) for c in self.realm.table_fields(self.db_entity_data.query.table)]
 
-    def referred_table_fields(self, field: str):
+    def referred_table(self, field: str):
         c = self.db_entity_data.references.get(field)
         if c is None:
             return None
-        foreign_table = c['concept']
-        return self.realm.table_fields(foreign_table)
+        return c['concept']
+
+    def table_fields(self, table: str):
+        return self.realm.table_fields(table)

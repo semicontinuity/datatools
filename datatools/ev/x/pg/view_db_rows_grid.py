@@ -31,22 +31,27 @@ class ViewDbRowsGrid(JtNgGrid):
                 0
             )
         elif key == KEY_CTRL_R:
-            fields = self.document.referred_table_fields(self.column_keys[self.cursor_column])
-            if fields is None:
+            column_key = self.column_keys[self.cursor_column]
+
+            referred_table = self.document.referred_table(column_key)
+            if referred_table is None:
                 return
 
-            field = choose(fields, f'Choose a field from {self.document.query.table}')
-            if field is None:
+            referred_table_fields = self.document.table_fields(referred_table)
+            referred_table_field = choose(referred_table_fields, f'Choose a field from {self.document.query.table}')
+            if referred_table_field is None:
                 return
 
             reference = DbRowReference(
                 realm_name=self.document.realm.name,
                 selector=None,
-                query=self.replace_field_with_lookup(self.document.db_entity_data.query)
+                query=self.replace_field_with_lookup(self.document.db_entity_data.query, column_key, referred_table, referred_table_field)
             )
             return reference
         else:
             return super().handle_edit_key(key)
 
-    def replace_field_with_lookup(self, query: DbQuery) -> DbQuery:
-        return query.with_selectors(self.document.table_selectors())
+    def replace_field_with_lookup(self, query: DbQuery, column_key: str, referred_table: str, referred_table_field: str) -> DbQuery:
+        return query.with_selectors(
+            [s for s in self.document.table_selectors()]
+        )
