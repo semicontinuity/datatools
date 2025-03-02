@@ -1,13 +1,10 @@
 import json
 
-from datatools.dbview.x.util.db_query import DbQuerySelector, DbQuerySelectorResolve
 from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.ev.x.pg.db_entity_data import DbEntityData
-from datatools.ev.x.pg.types import DbRowReference
 from datatools.json.util import to_jsonisable
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.tui.picotui_keys import *
-from datatools.tui.popup_selector import choose
 from datatools.util.object_exporter import ObjectExporter
 
 

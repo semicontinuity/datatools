@@ -1,6 +1,6 @@
 from typing import Optional
 
-from datatools.dbview.x.util.db_query import DbQueryFilterClause, DbQuerySelector, DbQuerySelectorResolve
+from datatools.dbview.x.util.db_query import DbQueryFilterClause
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowReference
@@ -8,7 +8,6 @@ from datatools.ev.x.pg.view_db import ViewDb
 from datatools.ev.x.pg.view_db_rows_grid import ViewDbRowsGrid
 from datatools.jt.app.app_kit import load_data_bundle, CmdLineParams
 from datatools.jt.app.ng.jt_ng_grid_factory import init_grid, do_make_grid
-from datatools.tui.popup_selector import choose
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 from picotui.defs import KEY_ENTER
@@ -55,47 +54,3 @@ class ViewDbRows(ViewDb):
         loop_result = g.loop()
         cur_line = g.cur_line
         return loop_result, cur_line
-
-    def table_selectors(self) -> list[DbQuerySelector]:
-        return self.db_entity_data.query.selectors or [DbQuerySelector(column=c) for c in self.realm.table_fields(self.db_entity_data.query.table)]
-
-    def referred_table(self, field: str):
-        c = self.db_entity_data.references.get(field)
-        if c is None:
-            return None
-        return c['concept']
-
-    def table_fields(self, table: str):
-        return self.realm.table_fields(table)
-
-    def resolved_column_entity_ref(self, column_key):
-        referred_table = self.referred_table(column_key)
-        if referred_table is None:
-            return
-        referred_table_fields = self.table_fields(referred_table)
-        referred_table_field_index = choose(referred_table_fields, f'Choose a field from {self.query.table}')
-        if referred_table_field_index is None:
-            return
-        referred_table_field = referred_table_fields[referred_table_field_index]
-
-        return DbRowReference(
-            realm_name=self.realm.name,
-            selector=None,
-            query=self.db_entity_data.query.with_selectors(
-                [
-                    self.replace_selector_with_lookup(s, column_key, referred_table, referred_table_field)
-                    for s in self.table_selectors()
-                ]
-            )
-        )
-
-    def replace_selector_with_lookup(self, s: DbQuerySelector, column_key: str, referred_table: str, referred_table_field: str) -> DbQuerySelector:
-        return DbQuerySelector(
-            column=column_key,
-            resolve=DbQuerySelectorResolve(
-                table=referred_table,
-                select=referred_table_field,
-                column=column_key, # pass PK!
-                alias=referred_table,
-            )
-        ) if s.column == column_key else s
