@@ -5,6 +5,7 @@ from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.json.util import to_jsonisable
 from datatools.jt.app.ng.jt_ng_grid import JtNgGrid
 from datatools.tui.picotui_keys import *
+from datatools.tui.popup_selector import choose
 from datatools.util.object_exporter import ObjectExporter
 
 
@@ -28,17 +29,11 @@ class ViewDbRowsGrid(JtNgGrid):
                 0
             )
         elif key == KEY_CTRL_R:
-            ObjectExporter.INSTANCE.export(
-                json.dumps(
-                    to_jsonisable(
-                        self.document.referred_table_fields(
-                            self.column_keys[self.cursor_column]
-                        )
-                    )
-                ),
-                {"Content-Type": "application/json"},
-                0
-            )
+            fields = self.document.referred_table_fields(self.column_keys[self.cursor_column])
+            if fields is None:
+                return
+
+            field = choose(fields, f'Choose a field from {self.document.query.table}')
             return
         else:
             return super().handle_edit_key(key)

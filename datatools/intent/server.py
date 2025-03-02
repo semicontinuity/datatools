@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Tuple
 
 from datatools.dbview.x.util.pg_query import query_from_yaml
-from datatools.intent.popup_selector import choose
+from datatools.tui.popup_selector import choose
 from datatools.json.json2html import to_blocks_html
 from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_node
 from datatools.jt2h.app_json_page import page_node, md_node
