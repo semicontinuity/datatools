@@ -4,7 +4,7 @@ import re
 from typing import Any
 
 from datatools.ev.x.pg.db_entity_data import DbEntityData
-from datatools.json.coloring_hash import color_string, hash_to_rgb_dark, hash_to_rgb, hash_code_to_rgb
+from datatools.json.coloring_hash import color_string, hash_code_to_rgb
 from graphviz import Digraph
 
 svg = bool(os.environ.get('SVG'))
@@ -43,7 +43,7 @@ def render_value(v: Any):
         return f"<font color='#40A0C0'>{v}</font>"
 
 
-def render_table_cell(is_pk_or_fk: bool, key: str, value: Any):
+def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: Any, table: str):
     is_pk_or_fk = is_pk_or_fk or (type(value) is str and is_valid_uuid(value))
 
     key_u1 = '<u>' if is_pk_or_fk else ''
@@ -56,18 +56,26 @@ def render_table_cell(is_pk_or_fk: bool, key: str, value: Any):
         val_u1 = key_u1
         val_u2 = key_u2
 
-    bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value), dark=not svg))}'" if value is not None and is_pk_or_fk else ''
+    # bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value), dark=not svg))}'" if value is not None and is_pk_or_fk else ''
+
+    key_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value if is_pk_or_fk else record_pk_value), dark=not svg))}'"
+    val_bg = key_bg if is_pk_or_fk else ("bgcolor='#F8F8F8'" if svg else "bgcolor='#101010'")
 
     return f'''
 <tr>
-<td valign='bottom' align='left' port='{key}.l' border='1' sides='LR' {bg}>{key_u1}<b>{key}</b>{key_u2}</td>
-<td valign='bottom' align='left' port='{key}.r' border='1' sides='LR'  {bg}>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
+<td valign='bottom' align='left' port='{key}.l' border='1' sides='LR' {key_bg}>{key_u1}<b>{key}</b>{key_u2}</td>
+<td valign='bottom' align='left' port='{key}.r' border='1' sides='LR' {val_bg}>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
 </tr>
 '''
 
 
 def render_table_cells(d: DbEntityData, row: dict[str, Any], fks: set[str]):
-    return "\n".join(render_table_cell(k in d.pks or k in fks, k, v) for k, v in row.items() if should_render(v))
+    record_pk_value = d.rows[0][d.pks[0]]
+    return "\n".join(
+        render_table_cell(k, v, is_pk_or_fk=(k in d.pks or k in fks), record_pk_value=record_pk_value, table=d.query.table)
+        for k, v in row.items()
+        if should_render(v)
+    )
 
 
 def render_table_record_as_label(d: DbEntityData, row: dict[str, Any], fks: set[str]):
