@@ -63,8 +63,8 @@ def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: 
 
     return f'''
 <tr>
-<td valign='bottom' align='left' port='{key}.l' border='1' sides='LR' {key_bg}>{key_u1}<b>{key}</b>{key_u2}</td>
-<td valign='bottom' align='left' port='{key}.r' border='1' sides='LR' {val_bg}>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
+<td valign='bottom' align='left' port='{key}.l' border='1' sides='R' {key_bg}>{key_u1}<b>{key}</b>{key_u2}</td>
+<td valign='bottom' align='left' port='{key}.r' border='0'           {val_bg}>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
 </tr>
 '''
 
@@ -82,7 +82,7 @@ def render_table_record_as_label(d: DbEntityData, row: dict[str, Any], fks: set[
     fg = 'black'
     bg = color_string(hash_code_to_rgb(hash(d.query.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
 
-    return f'''<<table cellspacing='0' cellpadding='1,0' border='1' sides='B' color='gray'>
+    return f'''<<table cellspacing='0' cellpadding='1,0' border='1' color='gray'>
     <tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{d.query.table}</font></b></td></tr>
     {render_table_cells(d, row, fks)}
 </table>>'''
