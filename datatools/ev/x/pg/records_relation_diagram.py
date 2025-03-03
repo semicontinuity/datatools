@@ -58,8 +58,13 @@ def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: 
 
     # bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value), dark=not svg))}'" if value is not None and is_pk_or_fk else ''
 
-    key_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value if is_pk_or_fk else record_pk_value), dark=not svg))}'"
-    val_bg = key_bg if is_pk_or_fk else ("bgcolor='#F8F8F8'" if svg else "bgcolor='#101010'")
+    # should highlight if there is an edge, starting from this cell.. or no? same colors help to correlate.
+    # highlight, if more than 1 occurrence?
+    highlight = is_pk_or_fk and value is not None
+    highlight_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value if highlight else record_pk_value), dark=not svg))}'"
+    # key_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value if highlight else record_pk_value), dark=not svg))}'"
+    key_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(record_pk_value), dark=not svg))}'"
+    val_bg = highlight_bg if highlight else ("bgcolor='#F8F8F8'" if svg else "bgcolor='#101010'")
 
     return f'''
 <tr>
