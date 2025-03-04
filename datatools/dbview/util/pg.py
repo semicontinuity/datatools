@@ -105,9 +105,11 @@ JOIN information_schema.key_column_usage AS kcu
     AND tc.table_schema = kcu.table_schema
 JOIN information_schema.constraint_column_usage AS ccu
     ON ccu.constraint_name = tc.constraint_name
+    
 WHERE tc.constraint_type = 'FOREIGN KEY'
+AND ccu.table_name='{table}'
 
-    AND ccu.table_name='{table}'
+ORDER BY tc.table_schema, tc.table_name
         '''
 
 
