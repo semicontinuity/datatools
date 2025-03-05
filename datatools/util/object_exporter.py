@@ -1,8 +1,11 @@
 import http.client
 import json
 import os
+import random
+import string
 import subprocess
 import sys
+from typing import Any
 
 
 def init_object_exporter():
@@ -43,15 +46,59 @@ class HttpObjectExporter(ObjectExporter):
 
 class HttpIntentObjectExporter(ObjectExporter):
     # @override
-    def export(self, obj: str, metadata: dict[str, str], channel):
+    def export(self, obj: Any, metadata: dict[str, str], channel):
         conn = http.client.HTTPConnection("localhost", 7777)
-        conn.request(
-            method="POST",
-            url="",
-            body=obj.encode('utf-8'),
-            headers={k: v for k, v in metadata.items() if v})
+        if metadata["Content-Type"] == "multipart/form-data" and type(obj) is dict:
+            boundary = self.generate_boundary()
+            conn.request(
+                method="POST",
+                url="",
+                body=self.create_multipart_body(obj, {}, boundary=boundary),
+                headers=({k: v for k, v in metadata.items() if v} | {
+                    'Content-Type': f'multipart/form-data; boundary={boundary}'})
+            )
+        else:
+            conn.request(
+                method="POST",
+                url="",
+                body=obj.encode('utf-8'),
+                headers={k: v for k, v in metadata.items() if v})
         conn.getresponse()
         conn.close()
+
+    def generate_boundary(self):
+        # Generate a random boundary string (25 characters)
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=25))
+
+    def create_multipart_body(self, fields, files, boundary):
+        body = []
+        CRLF = b'\r\n'
+
+        # Add form fields
+        for name, value in fields.items():
+            body.append(f'--{boundary}'.encode())
+            body.append(f'Content-Disposition: form-data; name="{name}"'.encode())
+            body.append(b'')
+            body.append(value.encode())
+
+        # Add files
+        for name, file_info in files.items():
+            filename, filepath = file_info
+            body.append(f'--{boundary}'.encode())
+            body.append(
+                f'Content-Disposition: form-data; name="{name}"; filename="{filename}"'.encode()
+            )
+            body.append(f'Content-Type: application/octet-stream'.encode())
+            body.append(b'')
+
+            with open(filepath, 'rb') as f:
+                body.append(f.read())
+
+        # Add closing boundary
+        body.append(f'--{boundary}--'.encode())
+        body.append(b'')
+
+        return CRLF.join(body)
 
 
 class PlainObjectExporter(ObjectExporter):

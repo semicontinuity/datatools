@@ -3,7 +3,8 @@ import json
 from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.json.util import to_jsonisable
 from datatools.jv.jgrid import JGrid
-from datatools.tui.picotui_keys import KEY_CTRL_ALT_SHIFT_F5, KEY_SHIFT_F5, KEY_CTRL_E, KEY_CTRL_R, KEY_CTRL_Q
+from datatools.tui.picotui_keys import KEY_CTRL_ALT_SHIFT_F5, KEY_SHIFT_F5, KEY_CTRL_E, KEY_CTRL_R, KEY_CTRL_Q, \
+    KEY_CTRL_X
 from datatools.util.object_exporter import ObjectExporter
 
 
@@ -36,6 +37,8 @@ class ViewDbRowGrid(JGrid):
             )
         elif key == KEY_CTRL_E:
             self.document.doc.export_entity()
+        elif key == KEY_CTRL_X:
+            self.document.doc.export_entity2()
         elif key == KEY_CTRL_R:
             path = self.document.selected_path(self.cur_line)
             if len(path) != 1:
