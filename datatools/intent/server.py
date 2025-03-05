@@ -6,7 +6,9 @@ Decouples intents, triggered in datatools apps, from their effects.
 HTTP server accepts entity as the body of HTTP POST request,
 and reacts, depending on Content-Type
 """
-
+import email.parser
+import email.policy
+import email.utils
 import http.client
 import json
 import os
@@ -20,11 +22,11 @@ from pathlib import Path
 from typing import Tuple
 
 from datatools.dbview.x.util.pg_query import query_from_yaml
-from datatools.tui.popup_selector import choose
 from datatools.json.json2html import to_blocks_html
 from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_node
 from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
+from datatools.tui.popup_selector import choose
 from datatools.util.subprocess import exe
 
 
@@ -52,7 +54,11 @@ class Server(BaseHTTPRequestHandler):
         self.respond_with_path(200, folder)
 
     def do_GET(self):
-        self.respond_with_path(200, folder)
+        if self.path == '/homepage':
+            with open(os.environ['WORK_PATH'] + '/homepage.html', 'rb') as file:
+                self.respond(200, 'text/html', file.read())
+        else:
+            self.respond_with_path(200, folder)
 
     def do_PUT(self):
         global folder
@@ -69,8 +75,13 @@ class Server(BaseHTTPRequestHandler):
         the_title = self.headers.get('X-Title')
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
+        content_type = self.headers.get('Content-Type')
+        mime_type = content_type.split(';')[0]
 
-        match self.headers.get('Content-Type'):
+        match mime_type:
+            case 'multipart/form-data':
+                parts = self.parse_multipart(post_body, content_type)
+                print(parts)
             case 'text/uri-list':
                 self.browse_new_tab(post_body)
             case 'text/plain':
@@ -169,6 +180,45 @@ class Server(BaseHTTPRequestHandler):
                     str(to_blocks_html(data, page_title=the_title)),
                     the_title
                 )
+
+    @staticmethod
+    def _parse_multipart(body: bytes, boundary: str) -> dict[str, bytes]:
+        parts = {}
+        boundary = boundary.encode('utf-8')
+        parts_data = body.split(b'--' + boundary)
+
+        for part in parts_data[1:-1]:  # Skip prologue and epilogue
+            part = part.strip(b'\r\n')
+            headers_end = part.find(b'\r\n\r\n')
+
+            if headers_end == -1:
+                continue  # Skip malformed parts
+
+            headers = part[:headers_end]
+            content = part[headers_end + 4:]
+
+            # Parse headers with email parser
+            header_parser = email.parser.BytesHeaderParser()
+            headers_dict = dict(header_parser.parsebytes(headers))
+
+            cd = headers_dict.get('Content-Disposition', '')
+            name_match = re.search(r'name="([^"]+)"', cd)
+
+            if not name_match:
+                continue  # Skip parts without name
+
+            name = name_match.group(1)
+            parts[name] = content
+
+        return parts
+
+    def parse_multipart(self, body: bytes, content_type: str):
+        match = re.search(r'boundary=([^;]+)', content_type)
+        if not match:
+            raise Exception('no boundary')
+        boundary = match.group(1).strip('"')
+        parts = self._parse_multipart(body, boundary)
+        return parts
 
     def send_enity(self, realm_ctx: str, realm_ctx_dir: str, entity_realm_path: str, payload):
 
