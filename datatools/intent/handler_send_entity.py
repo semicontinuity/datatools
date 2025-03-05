@@ -14,9 +14,12 @@ class HandlerSendEntity:
 
     def handle(self, post_body: bytes, content_type: str):
         parts = self.parse_multipart(post_body, content_type)
-        print(list(parts.keys()))
-        print(parts['realm-ctx'])
-        print(parts['realm-ctx-dir'])
+        self.send_entity(
+            realm_ctx=parts['realm-ctx'].decode('utf-8'),
+            realm_ctx_dir=parts['realm-ctx-dir'].decode('utf-8'),
+            query_str=parts['query'].decode('utf-8'),
+            snapshot=parts['snapshot'],
+        )
 
     @staticmethod
     def _parse_multipart(body: bytes, boundary: str) -> dict[str, bytes]:
@@ -57,14 +60,14 @@ class HandlerSendEntity:
         parts = self._parse_multipart(body, boundary)
         return parts
 
-    def send_enity(self, realm_ctx: str, realm_ctx_dir: str, payload):
+    def send_entity(self, realm_ctx: str, realm_ctx_dir: str, query_str: str, snapshot: bytes = None):
 
         # Construct entity_realm_path from entity
-        query = query_from_yaml(payload.decode('utf-8'))
+        query = query_from_yaml(query_str)
         if len(query.filter) == 1 and query.filter[0].op == '=':
             entity_realm_path = f'{query.table}/:{query.filter[0].column}/{query.filter[0].value}'
         else:
-            entity_realm_path = f'{query.table}/{str(hash(payload))}'
+            entity_realm_path = f'{query.table}/{str(hash(query_str))}'
 
         # Construct the target realm path
         target_realm_path = f"{self.folder}/{realm_ctx}"
@@ -86,6 +89,9 @@ class HandlerSendEntity:
         os.makedirs(entity_path, exist_ok=True)
 
         # Process the query and save it to the `.query` file
-        query_file = Path(f"{entity_path}/.query")
-        with query_file.open('w+b') as f:
-            f.write(payload)
+        with Path(f"{entity_path}/.query").open('w') as f:
+            f.write(query_str)
+
+        if snapshot is not None:
+            with Path(f"{entity_path}/snapshot.jsonl").open('w+b') as f:
+                f.write(snapshot)
