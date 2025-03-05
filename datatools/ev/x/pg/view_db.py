@@ -88,13 +88,13 @@ class ViewDb(View):
     def export_entity2(self):
         ObjectExporter.INSTANCE.export(
             {
-                'query': json.dumps(to_jsonisable(self.query))
+                "realm-ctx": self.db_entity_data.realm_ctx,
+                "realm-ctx-dir": self.db_entity_data.realm_ctx_dir,
+                'query': json.dumps(to_jsonisable(self.query)),
+                'data': '\n'.join(json.dumps(to_jsonisable(r)) for r in self.db_entity_data.rows)
             },
             {
                 "Content-Type": "multipart/form-data",
-                "X-Realm-Ctx": self.db_entity_data.realm_ctx,
-                "X-Realm-Ctx-Dir": self.db_entity_data.realm_ctx_dir,
-                "X-Entity-Realm-Path": self.db_entity_data.entity_realm_path,
             },
             0
         )
