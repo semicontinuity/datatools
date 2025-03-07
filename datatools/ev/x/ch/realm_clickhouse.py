@@ -48,8 +48,8 @@ class RealmClickhouse(Realm):
             database=self.database,
         )
 
-    def execute_query(self, conn: Client, query: str):
-        result = conn.query(query)
+    def execute_sql_query(self, conn: Client, sql_query: str):
+        result = conn.query(sql_query)
         return [
             {column_name: to_jsonisable(row[i]) for i, column_name in enumerate(result.column_names)}
             for row in result.result_rows

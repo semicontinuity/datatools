@@ -33,17 +33,19 @@ class Realms:
     mounts: Dict[str, Realm]
     entity_resolvers: Dict[Any, Callable[[Realm, str, str], EntityReference]]
 
-    def __init__(self, env_dir: str, mounts: Dict[str, Callable[[str], Realm]],
+    def __init__(self,
+                 ctx_dir: str,
+                 mounts: Dict[str, Callable[[str], Realm]],
                  entity_resolvers: Dict[Any, Callable[[Realm, str, str], EntityReference]]):
-        self.mounts = {env_dir + '/' + rel_path: f(name, env_dir + '/' + rel_path) for rel_path, (name, f) in
+        self.mounts = {rel_path: f(name, ctx_dir + '/' + rel_path) for rel_path, (name, f) in
                        mounts.items()}
         self.entity_resolvers = entity_resolvers
 
-    def resolve(self, path: str) -> EntityReference:
-        for base_path, realm in self.mounts.items():
-            if path.startswith(base_path + '/'):
-                rest = path.removeprefix(base_path + '/')
-                return self.entity_resolvers[type(realm)](realm, base_path, rest)
+    def resolve(self, ctx: str) -> EntityReference:
+        for base_ctx, realm in self.mounts.items():
+            if ctx.startswith(base_ctx + '/'):
+                rest = ctx.removeprefix(base_ctx + '/')
+                return self.entity_resolvers[type(realm)](realm, base_ctx, rest)
 
     def as_dict(self) -> Dict[str, Realm]:
         return {v.name: v for k, v in self.mounts.items()}
@@ -132,21 +134,21 @@ def infer_mounts(e):
     match e:
         case 'te-testing':
             return {
-                'deploy/infra/pg/yacalls/notification_service_test/tables': ('db_notification_service', realm_pg),
-                'deploy/infra/pg/yacalls/calls_test/tables': ('db_calls', realm_pg),
-                'deploy/infra/ch/yacalls-cdr-test/cdr/tables': ('ch_cdr', realm_ch)
+                'te-testing/deploy/infra/pg/yacalls/notification_service_test/tables': ('db_notification_service', realm_pg),
+                'te-testing/deploy/infra/pg/yacalls/calls_test/tables': ('db_calls', realm_pg),
+                'te-testing/deploy/infra/ch/yacalls-cdr-test/cdr/tables': ('ch_cdr', realm_ch)
             }
         case 'te-preprod':
             return {
-                'deploy/infra/pg/yacalls/notification_service_preprod/tables': ('db_notification_service', realm_pg),
-                'deploy/infra/pg/yacalls/calls_preprod/tables': ('db_calls', realm_pg),
-                'deploy/infra/ch/yacalls-cdr-preprod/cdr/tables': ('ch_cdr', realm_ch)
+                'te-preprod/deploy/infra/pg/yacalls/notification_service_preprod/tables': ('db_notification_service', realm_pg),
+                'te-preprod/deploy/infra/pg/yacalls/calls_preprod/tables': ('db_calls', realm_pg),
+                'te-preprod/deploy/infra/ch/yacalls-cdr-preprod/cdr/tables': ('ch_cdr', realm_ch)
             }
         case 'te-prod':
             return {
-                'deploy/infra/pg/yacalls/notification_service_prod/tables': ('db_notification_service', realm_pg),
-                'deploy/infra/pg/yacalls/calls_prod/tables': ('db_calls', realm_pg),
-                'deploy/infra/ch/yacalls-cdr-prod/cdr/tables': ('ch_cdr', realm_ch)
+                'te-prod/deploy/infra/pg/yacalls/notification_service_prod/tables': ('db_notification_service', realm_pg),
+                'te-prod/deploy/infra/pg/yacalls/calls_prod/tables': ('db_calls', realm_pg),
+                'te-prod/deploy/infra/ch/yacalls-cdr-prod/cdr/tables': ('ch_cdr', realm_ch)
             }
         case _:
             return {}
@@ -154,8 +156,10 @@ def infer_mounts(e):
 
 def main():
     e = os.environ['E']
+    ctx_dir = os.environ['CTX_DIR']
+
     realms = Realms(
-        os.environ['CTX_DIR'] + '/' + e,
+        ctx_dir,
         infer_mounts(e),
         {
             RealmPg: resolve_pg_entity,
@@ -164,7 +168,7 @@ def main():
     )
     run_app(
         realms.as_dict(),
-        realms.resolve(os.getcwd())
+        realms.resolve(os.environ['CTX'])
     )
 
 
