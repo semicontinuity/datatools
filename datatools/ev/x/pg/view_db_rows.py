@@ -1,5 +1,7 @@
 from typing import Optional
 
+from picotui.defs import KEY_ENTER
+
 from datatools.dbview.x.util.db_query import DbQueryFilterClause
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.pg.db_entity_data import DbEntityData
@@ -10,7 +12,6 @@ from datatools.jt.app.app_kit import load_data_bundle, CmdLineParams
 from datatools.jt.app.ng.jt_ng_grid_factory import init_grid, do_make_grid
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
-from picotui.defs import KEY_ENTER
 
 
 class ViewDbRows(ViewDb):

@@ -12,6 +12,7 @@ from datatools.ev.x.ch.realm_clickhouse import RealmClickhouse
 from datatools.ev.x.pg.entity_resolver import resolve_pg_entity
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.realm_pg import RealmPg
+from datatools.ev.x.realm_bootstrap import get_realm_ctx, get_realm_ctx_dir
 
 
 def exe(cwd: str, args: List[str], env: Dict[str, str], stdin: bytes = None):
@@ -83,11 +84,10 @@ def realm_pg(name, path: str) -> RealmPg:
         else:
             return {}
 
-    return RealmPg(
-        name,
-        PgDataSource(realm_env_vars),
-        links(),
-    )
+    realm_pg = RealmPg(name, PgDataSource(realm_env_vars), links(), )
+    realm_pg.realm_ctx = get_realm_ctx(realm_env_vars)
+    realm_pg.realm_ctx_dir = get_realm_ctx_dir(realm_env_vars)
+    return realm_pg
 
 
 def realm_ch(name, path: str) -> RealmClickhouse:

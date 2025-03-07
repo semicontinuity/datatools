@@ -61,6 +61,8 @@ class HandlerSendEntity:
         return parts
 
     def send_entity(self, realm_ctx: str, realm_ctx_dir: str, query_str: str, snapshot: bytes = None):
+        print(realm_ctx)
+        print(realm_ctx_dir)
 
         # Construct entity_realm_path from entity
         query = query_from_yaml(query_str)

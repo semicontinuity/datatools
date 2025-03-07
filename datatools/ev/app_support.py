@@ -13,6 +13,9 @@ def run_app(realms: Dict[str, Any], e_ref):
             if e_ref.realm_name not in realms:
                 raise ValueError('Unknown realm', e_ref.realm_name)
             view: Optional[View] = realms[e_ref.realm_name].create_view(e_ref)
+            # if e_ref.realm_name == 'db_calls':
+            #     view.build()
+            #     raise Exception(view.delegate.db_entity_data.realm_ctx)
         else:
             view = None
 
