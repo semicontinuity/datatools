@@ -2,6 +2,7 @@
 import json
 import os
 import subprocess
+from os.path import relpath
 from typing import Dict, List, Callable, Any
 
 from datatools.ev.app_support import run_app
@@ -84,10 +85,10 @@ def realm_pg(name, path: str) -> RealmPg:
         else:
             return {}
 
-    realm_pg = RealmPg(name, PgDataSource(realm_env_vars), links(), )
-    realm_pg.realm_ctx = get_realm_ctx(realm_env_vars)
-    realm_pg.realm_ctx_dir = get_realm_ctx_dir(realm_env_vars)
-    return realm_pg
+    realm = RealmPg(name, PgDataSource(realm_env_vars), links(), )
+    realm.realm_ctx = relpath(path, start=realm_env_vars.get('CTX_DIR'))
+    realm.realm_ctx_dir = path
+    return realm
 
 
 def realm_ch(name, path: str) -> RealmClickhouse:
@@ -120,14 +121,12 @@ def realm_ch(name, path: str) -> RealmClickhouse:
         else:
             return {}
 
-    return RealmClickhouse(
-        name=name,
-        hostname=realm_env_vars['YC_CH_HOST'],
-        database=realm_env_vars['YC_CH_DATABASE'],
-        user=realm_env_vars['YC_CH_USER'],
-        password=realm_env_vars['YC_CH_PASSWORD'],
-        links=links()
-    )
+    realm = RealmClickhouse(name=name, hostname=realm_env_vars['YC_CH_HOST'],
+                                 database=realm_env_vars['YC_CH_DATABASE'], user=realm_env_vars['YC_CH_USER'],
+                                 password=realm_env_vars['YC_CH_PASSWORD'], links=links())
+    realm.realm_ctx = relpath(path, start=realm_env_vars.get('CTX_DIR'))
+    realm.realm_ctx_dir = path
+    return realm
 
 
 def infer_mounts(e):
