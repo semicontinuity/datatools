@@ -14,10 +14,9 @@ from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from typing import Tuple
 
-from datatools.intent import handler_send_entity
 from datatools.intent.handler_json_lines import handle_json_lines
 from datatools.intent.handler_multipart import handle_multipart
-from datatools.intent.handler_send_entity import default_folder
+from datatools.intent.handler_send_entity import default_folder, handler_send_entity
 from datatools.intent.target_folder import set_target_folder, get_target_folder
 from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser
 from datatools.json.json2html import to_blocks_html

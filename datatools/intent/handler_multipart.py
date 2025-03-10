@@ -4,8 +4,8 @@ import email.utils
 import json
 import re
 
-from datatools.intent import handler_send_entity
 from datatools.intent.handler_json_lines import handle_json_lines
+from datatools.intent.handler_send_entity import handler_send_entity
 
 
 def handle_multipart(post_body: bytes, content_type: str):
@@ -18,7 +18,7 @@ def handle_multipart(post_body: bytes, content_type: str):
             realm_ctx=realm_ctx.decode('utf-8'),
             realm_ctx_dir=realm_ctx_dir.decode('utf-8'),
             query_str=parts['query'].decode('utf-8'),
-            snapshot=parts['snapshot'],
+            snapshot=parts['content'],
         )
     else:
         handle_json_lines(

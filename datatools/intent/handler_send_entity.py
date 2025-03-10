@@ -37,6 +37,7 @@ class HandlerSendEntity:
 
         # Construct the entity path
         entity_path = f"{target_realm_path}/{entity_realm_path}"
+        print(entity_path)
         os.makedirs(entity_path, exist_ok=True)
 
         # Process the query and save it to the `.query` file
@@ -44,7 +45,7 @@ class HandlerSendEntity:
             f.write(query_str)
 
         if snapshot is not None:
-            with Path(f"{entity_path}/snapshot.jsonl").open('w+b') as f:
+            with Path(f"{entity_path}/content.jsonl").open('w+b') as f:
                 f.write(snapshot)
 
 
