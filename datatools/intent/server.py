@@ -6,33 +6,24 @@ Decouples intents, triggered in datatools apps, from their effects.
 HTTP server accepts entity as the body of HTTP POST request,
 and reacts, depending on Content-Type
 """
-import http.client
+
 import json
 import os
-import re
 import socketserver
-import subprocess
-from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from typing import Tuple
 
-from datatools.intent.handler_send_entity import HandlerSendEntity
+from datatools.intent import handler_send_entity
+from datatools.intent.handler_json_lines import handle_json_lines
+from datatools.intent.handler_multipart import handle_multipart
+from datatools.intent.handler_send_entity import default_folder
+from datatools.intent.target_folder import set_target_folder, get_target_folder
+from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser
 from datatools.json.json2html import to_blocks_html
-from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_node
 from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
 from datatools.tui.popup_selector import choose
-from datatools.util.subprocess import exe
-
-
-def default_folder():
-    return os.environ['HOME'] + '/boards'
-
-
-folder = default_folder()
-handler_send_entity = HandlerSendEntity()
-handler_send_entity.folder = folder
 
 
 class Server(BaseHTTPRequestHandler):
@@ -47,27 +38,25 @@ class Server(BaseHTTPRequestHandler):
         self.respond(status, 'text/plain', (path + '\n').encode('utf-8'))
 
     def do_DELETE(self):
-        global folder
-        folder = default_folder()
-        handler_send_entity.folder = folder
-        self.respond_with_path(200, folder)
+        set_target_folder(default_folder())
+        handler_send_entity.folder = get_target_folder()
+        self.respond_with_path(200, get_target_folder())
 
     def do_GET(self):
         if self.path == '/homepage':
             with open(os.environ['WORK_PATH'] + '/homepage.html', 'rb') as file:
                 self.respond(200, 'text/html', file.read())
         else:
-            self.respond_with_path(200, folder)
+            self.respond_with_path(200, get_target_folder())
 
     def do_PUT(self):
-        global folder
         content_len = int(self.headers.get('Content-Length'))
         path = self.rfile.read(content_len).decode('utf-8')
 
         if os.path.exists(path):
-            folder = path
-            handler_send_entity.folder = folder
-            self.respond_with_path(200, folder)
+            set_target_folder(path)
+            handler_send_entity.folder = path
+            self.respond_with_path(200, path)
         else:
             self.respond_with_path(404, path)
 
@@ -80,16 +69,16 @@ class Server(BaseHTTPRequestHandler):
 
         match mime_type:
             case 'multipart/form-data':
-                handler_send_entity.handle(post_body, content_type)
+                handle_multipart(post_body, content_type)
             case 'text/uri-list':
-                self.browse_new_tab(post_body)
+                browse_new_tab(post_body.decode('utf-8'))
             case 'text/plain':
                 match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
                     case 0:
-                        self.to_clipboard(post_body)
+                        to_clipboard(post_body)
                     case 1:
-                        self.browse_new_tab(
-                            self.write_temp_file(post_body, '.txt', the_title)
+                        browse_new_tab(
+                            write_temp_file(post_body, '.txt', the_title)
                         )
             case 'application/x-basic-entity':
                 realm_ctx = self.headers.get('X-Realm-Ctx')
@@ -101,36 +90,13 @@ class Server(BaseHTTPRequestHandler):
             case 'application/sql':
                 match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
                     case 0:
-                        self.to_clipboard(post_body)
+                        to_clipboard(post_body)
                     case 1:
-                        self.browse_new_tab(
-                            self.write_temp_file(post_body, '.sql.txt', the_title)
+                        browse_new_tab(
+                            write_temp_file(post_body, '.sql.txt', the_title)
                         )
             case 'application/json-lines':
-                lines = self.json_lines(post_body)
-                match choose(
-                    [
-                        "Copy to Clipboard (json lines)",
-                        "Convert to HTML (dynamic) and Open in Browser",
-                        "Convert to HTML (dynamic) and Copy to Clipboard",
-                        "Convert to HTML (static) and Open in Browser",
-                        "Convert to HTML (static) and Copy to Clipboard",
-                        "Convert to MD HTML and Copy to Clipboard",
-                    ],
-                    'table'
-                ):
-                    case 0:
-                        self.to_clipboard(post_body)
-                    case 1:
-                        self.html_to_browser(str(page_node_auto(lines, title_str=the_title)), the_title)
-                    case 2:
-                        self.to_clipboard(str(page_node_auto(lines, title_str=the_title)))
-                    case 3:
-                        self.html_to_browser(str(page_node_basic_auto(lines, title_str=the_title)), the_title)
-                    case 4:
-                        self.to_clipboard(str(page_node_basic_auto(lines, title_str=the_title)))
-                    case 5:
-                        self.to_clipboard(str(md_table_node(lines)))
+                handle_json_lines(post_body, the_title)
 
             case 'application/json':
                 self.process_json(post_body, the_title)
@@ -150,115 +116,40 @@ class Server(BaseHTTPRequestHandler):
             "Convert to BLOCK HTML and Open in Browser",
         ], 'JSON'):
             case 0:
-                self.to_clipboard(post_body)
+                to_clipboard(post_body)
             case 1:
-                self.browse_new_tab(
-                    self.write_temp_file(post_body, '.json', the_title)
+                browse_new_tab(
+                    write_temp_file(post_body, '.json', the_title)
                 )
             case 2:
-                self.open_in_idea(
-                    self.write_temp_file(post_body, '.json', the_title)
+                open_in_idea(
+                    write_temp_file(post_body, '.json', the_title)
                 )
             case 3:
-                self.html_to_browser(
+                html_to_browser(
                     str(page_node(data, title_string=the_title)),
                     the_title
                 )
             case 4:
-                self.html_to_browser(
+                html_to_browser(
                     str(page_node(data, title_string=the_title, delegate=JsonNodeDelegateJson)),
                     the_title
                 )
             case 5:
-                self.to_clipboard(str(md_node(data)))
+                to_clipboard(str(md_node(data)))
             case 6:
-                self.to_clipboard(str(md_node(data, delegate=JsonNodeDelegateJson)))
+                to_clipboard(str(md_node(data, delegate=JsonNodeDelegateJson)))
             case 7:
-                self.html_to_browser(
+                html_to_browser(
                     str(to_blocks_html(data, page_title=the_title)),
                     the_title
                 )
-
-    def to_clipboard(self, s):
-        if type(s) is str:
-            s = s.encode('utf-8')
-        subprocess.run(['xclip', '-selection', 'clipboard'], input=s, stdout=subprocess.DEVNULL)
-
-    def html_to_browser(self, html: str, title: str|None = None):
-        self.browse_new_tab(
-            self.write_temp_file(
-                html.encode('utf-8'),
-                '.html',
-                title,
-            )
-        )
-
-    def json_lines(self, data):
-        decode = data.decode('utf-8')
-        split = decode.split('\n')
-        return [json.loads(s) for s in split if s]
-
-    def write_temp_file(self, contents: bytes, suffix: str, name_base: str | None = None):
-        path = None
-        if name_base:
-            name_base = self.convert_to_filename(name_base)
-        if name_base:
-            path = folder + '/' + datetime.now().strftime('%y%m%d_%H%M%S__') + name_base + suffix
-            if os.path.exists(path):
-                path = None
-
-        if path:
-            with open(path, 'wb') as file:
-                file.write(contents)
-            return path
-        else:
-            import tempfile
-            fd, path = tempfile.mkstemp(suffix=suffix, prefix="temp", dir=folder, text=True)
-            with os.fdopen(fd, 'w+b') as tmp:
-                tmp.write(contents)
-            return path
-
-    def browse_new_tab(self, url: str):
-        exe(
-            os.environ['HOME'],
-            ['firefox', url],
-            {},
-        )
-
-    def open_in_idea(self, path: str):
-        conn = http.client.HTTPConnection("localhost", 63342)
-        conn.request(
-            method="GET",
-            url=f"/api/file/{path}",
-        )
-        conn.getresponse()
-        conn.close()
-
-    # browse_url is buggy/hacky
-    def browse(self, url):
-        if type(url) is str:
-            url = url.encode('utf-8')
-        exe(
-            os.environ['HOME'],
-            ['browse_url'],
-            {},
-            url
-        )
 
     def respond(self, status, content_type, content):
         self.send_response(status)
         self.send_header('Content-Type', content_type)
         self.end_headers()
         self.wfile.write(content)
-
-    def convert_to_filename(self, input_string):
-        sanitized = input_string.replace(' ', '_')
-        sanitized = sanitized.replace('=', '_')
-        sanitized = sanitized.replace(':', '_')
-        sanitized = sanitized.replace(';', '_')
-        sanitized = re.sub(r'[^\w\-]', '', sanitized)  # Retains letters, digits, underscores, and hyphens
-        sanitized = sanitized.strip('_.')
-        return sanitized
 
 
 httpd = HTTPServer(("localhost", 7777), Server)

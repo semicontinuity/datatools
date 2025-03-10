@@ -86,15 +86,11 @@ class ViewDb(View):
         )
 
     def export_entity2(self):
-        ObjectExporter.INSTANCE.export(
+        ObjectExporter.INSTANCE.export_multipart(
             {
                 "realm-ctx": self.realm.realm_ctx,
                 "realm-ctx-dir": self.realm.realm_ctx_dir,
                 'query': json.dumps(to_jsonisable(self.query)),
-                'snapshot': '\n'.join(json.dumps(to_jsonisable(r)) for r in self.db_entity_data.rows)
-            },
-            {
-                "Content-Type": "multipart/form-data",
-            },
-            0
+                'content': '\n'.join(json.dumps(to_jsonisable(r)) for r in self.db_entity_data.rows)
+            }
         )

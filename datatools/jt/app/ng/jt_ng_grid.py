@@ -1,7 +1,8 @@
 import json
+from typing import Any
 
 from datatools.json.util import to_jsonisable
-from datatools.jt.app.ng import collapsed_columns, filter_non_collapsed
+from datatools.jt.app.ng import collapsed_columns
 from datatools.jt.model.exit_codes_mapping import KEYS_TO_EXIT_CODES
 from datatools.jt.ui.ng.jt_ng_grid_base import JtNgGridBase
 from datatools.tui.picotui_keys import *
@@ -25,7 +26,8 @@ class JtNgGrid(JtNgGridBase):
         elif key == KEY_SHIFT_F5:
             j = self.data_bundle.orig_data
             channel = 0
-            self.export_json_lines(channel, j)
+            # self.export_json_lines(channel, j)
+            self.export_json_lines2(content=j)
         elif key == KEY_INSERT or key == KEY_ALT_INSERT:
             j = self.cell_value_f(self.cur_line, self.cursor_column)
             channel = key == KEY_ALT_INSERT
@@ -40,20 +42,7 @@ class JtNgGrid(JtNgGridBase):
             return super().handle_edit_key(key)
 
     def export_json_lines(self, channel, j, title: str|None = None):
-        collapsed = collapsed_columns(self.column_count, self.column_cell_renderer_f)
-        # TODO: send list of collapsed fields
-        # j = [filter_non_collapsed(r, collapsed) for r in j]
         s = ''.join(json.dumps(to_jsonisable(row), ensure_ascii=False) + '\n' for row in j)
-        self.export(channel, s, title)
-
-    def export_json(self, channel, j, title: str|None = None):
-        self.export(
-            channel,
-            json.dumps(to_jsonisable(j), ensure_ascii=False),
-            title,
-        )
-
-    def export(self, channel, s: str, title: str|None = None):
         ObjectExporter.INSTANCE.export(
             s,
             {
@@ -61,4 +50,25 @@ class JtNgGrid(JtNgGridBase):
                 'X-Title': title,
             },
             channel
+        )
+
+    def export_json(self, channel, j, title: str|None = None):
+        s = json.dumps(to_jsonisable(j), ensure_ascii=False)
+        ObjectExporter.INSTANCE.export(
+            s,
+            {
+                'Content-Type': 'application/json',
+                'X-Title': title,
+            },
+            channel
+        )
+
+    def export_json_lines2(self, content: list[Any], title: str | None = None):
+        ObjectExporter.INSTANCE.export_multipart(
+            {
+                'X-Title': title,
+                'Content-Type': 'application/json-lines',
+                'Content': ''.join(json.dumps(to_jsonisable(row), ensure_ascii=False) + '\n' for row in content),
+                'Collapsed-Columns': json.dumps(collapsed_columns(self.column_count, self.column_cell_renderer_f))
+            }
         )

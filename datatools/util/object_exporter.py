@@ -20,6 +20,9 @@ class ObjectExporter:
     def export(self, obj: str, metadata, channel):
         pass
 
+    def export_multipart(self, data: dict[str, Any]):
+        ...
+
 
 class ObjectDispatcher(ObjectExporter):
     def __init__(self) -> None:
@@ -33,6 +36,9 @@ class ObjectDispatcher(ObjectExporter):
         else:
             self.exporter0.export(obj, metadata, channel)
 
+    def export_multipart(self, data: dict[str, Any]):
+        self.exporter0.export_multipart(data)
+
 
 class HttpObjectExporter(ObjectExporter):
     # @override
@@ -45,6 +51,16 @@ class HttpObjectExporter(ObjectExporter):
 
 
 class HttpIntentObjectExporter(ObjectExporter):
+
+    def export_multipart(self, data: dict[str, Any]):
+        self.export(
+            {k: v for k, v in data.items() if v is not None},
+            {
+                "Content-Type": "multipart/form-data",
+            },
+            0
+        )
+
     # @override
     def export(self, obj: Any, metadata: dict[str, str], channel):
         conn = http.client.HTTPConnection("localhost", 7777)

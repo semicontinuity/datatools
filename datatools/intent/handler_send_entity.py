@@ -1,64 +1,13 @@
-import email.parser
-import email.policy
-import email.utils
 import os
-import re
 from pathlib import Path
 
 from datatools.dbview.x.util.pg_query import query_from_yaml
+from datatools.intent.target_folder import default_folder
 
 
 class HandlerSendEntity:
     MIME_TYPE = 'multipart/form-data'
     folder: str
-
-    def handle(self, post_body: bytes, content_type: str):
-        parts = self.parse_multipart(post_body, content_type)
-        self.send_entity(
-            realm_ctx=parts['realm-ctx'].decode('utf-8'),
-            realm_ctx_dir=parts['realm-ctx-dir'].decode('utf-8'),
-            query_str=parts['query'].decode('utf-8'),
-            snapshot=parts['snapshot'],
-        )
-
-    @staticmethod
-    def _parse_multipart(body: bytes, boundary: str) -> dict[str, bytes]:
-        parts = {}
-        boundary = boundary.encode('utf-8')
-        parts_data = body.split(b'--' + boundary)
-
-        for part in parts_data[1:-1]:  # Skip prologue and epilogue
-            part = part.strip(b'\r\n')
-            headers_end = part.find(b'\r\n\r\n')
-
-            if headers_end == -1:
-                continue  # Skip malformed parts
-
-            headers = part[:headers_end]
-            content = part[headers_end + 4:]
-
-            # Parse headers with email parser
-            header_parser = email.parser.BytesHeaderParser()
-            headers_dict = dict(header_parser.parsebytes(headers))
-
-            cd = headers_dict.get('Content-Disposition', '')
-            name_match = re.search(r'name="([^"]+)"', cd)
-
-            if not name_match:
-                continue  # Skip parts without name
-
-            name = name_match.group(1)
-            parts[name] = content
-
-        return parts
-
-    def parse_multipart(self, body: bytes, content_type: str):
-        match = re.search(r'boundary=([^;]+)', content_type)
-        if not match:
-            raise Exception('no boundary')
-        boundary = match.group(1).strip('"')
-        parts = self._parse_multipart(body, boundary)
-        return parts
 
     def send_entity(self, realm_ctx: str, realm_ctx_dir: str, query_str: str, snapshot: bytes = None):
         print(realm_ctx)
@@ -97,3 +46,7 @@ class HandlerSendEntity:
         if snapshot is not None:
             with Path(f"{entity_path}/snapshot.jsonl").open('w+b') as f:
                 f.write(snapshot)
+
+
+handler_send_entity = HandlerSendEntity()
+handler_send_entity.folder = default_folder()
