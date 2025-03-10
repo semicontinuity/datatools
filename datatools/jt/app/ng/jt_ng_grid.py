@@ -41,7 +41,8 @@ class JtNgGrid(JtNgGridBase):
 
     def export_json_lines(self, channel, j, title: str|None = None):
         collapsed = collapsed_columns(self.column_count, self.column_cell_renderer_f)
-        j = [filter_non_collapsed(r, collapsed) for r in j]
+        # TODO: send list of collapsed fields
+        # j = [filter_non_collapsed(r, collapsed) for r in j]
         s = ''.join(json.dumps(to_jsonisable(row), ensure_ascii=False) + '\n' for row in j)
         self.export(channel, s, title)
 
