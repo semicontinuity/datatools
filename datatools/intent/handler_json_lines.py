@@ -6,7 +6,10 @@ from datatools.jt2h.app import page_node_basic_auto, page_node_auto, md_table_no
 from datatools.tui.popup_selector import choose
 
 
-def handle_json_lines(post_body: bytes, the_title: str):
+def handle_json_lines(post_body: bytes, the_title: str, collapsed_columns: dict[str, bool] = None):
+    if collapsed_columns is None:
+        collapsed_columns = {}
+
     s = post_body.decode('utf-8')
     lines = [json.loads(line) for line in s.split('\n') if line]
     match choose(
@@ -23,12 +26,16 @@ def handle_json_lines(post_body: bytes, the_title: str):
         case 0:
             to_clipboard(post_body)
         case 1:
-            html_to_browser(str(page_node_auto(lines, title_str=the_title)), the_title)
+            html_to_browser(str(page_node_auto(lines, title_str=the_title, collapsed_columns=collapsed_columns)), the_title)
         case 2:
             to_clipboard(str(page_node_auto(lines, title_str=the_title)))
         case 3:
-            html_to_browser(str(page_node_basic_auto(lines, title_str=the_title)), the_title)
+            html_to_browser(str(page_node_basic_auto([filter_non_collapsed(r, collapsed_columns) for r in lines], title_str=the_title)), the_title)
         case 4:
             to_clipboard(str(page_node_basic_auto(lines, title_str=the_title)))
         case 5:
             to_clipboard(str(md_table_node(lines)))
+
+
+def filter_non_collapsed(r: dict, collapsed: dict[str, bool]):
+    return {k: v for k, v in r.items() if not collapsed.get(k)}

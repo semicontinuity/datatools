@@ -1,6 +1,7 @@
 import email.parser
 import email.policy
 import email.utils
+import json
 import re
 
 from datatools.intent import handler_send_entity
@@ -23,6 +24,7 @@ def handle_multipart(post_body: bytes, content_type: str):
         handle_json_lines(
             parts['Content'],
             parts['X-Title'].decode('utf-8') if parts.get('X-Title') else None,
+            json.loads(parts.get('Collapsed-Columns')),
         )
 
 

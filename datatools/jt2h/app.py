@@ -55,11 +55,11 @@ def page_node_basic_auto(j, title_str: str = None):
     )
 
 
-def page_node_auto(j, script_text: str|None = LOG_NODE_JS, title_str: str = None):
-    return page_node(j, column_renderers_auto(j), script_text, title_str)
+def page_node_auto(j, script_text: str|None = LOG_NODE_JS, title_str: str = None, collapsed_columns: dict[str, bool] = None):
+    return page_node(j, column_renderers_auto(j), script_text, title_str, collapsed_columns)
 
 
-def page_node(j, renderers, script_text: str = LOG_NODE_JS, title_str: str = None):
+def page_node(j, renderers, script_text: str = LOG_NODE_JS, title_str: str = None, collapsed_columns: dict[str, bool] = None):
     return page_node_for(LogNode(j, renderers), script_text, title_str)
 
 
