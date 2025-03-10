@@ -68,10 +68,15 @@ class LogNode:
         )
 
     def css_hide_rules(self):
-        return '\n'.join(LogNode.hide_rules(n) for n in range(2, len(self.column_renderers) + 2))
+        return '\n'.join(LogNode.hide_rules(n) for n in range(0, len(self.column_renderers)))
+
+    @staticmethod
+    def hide_class(n):
+        return f'hide-c-{n + 2}'
 
     @staticmethod
     def hide_rules(n):
+        n = n + 2
         return f"""
     table.hide-c-{n}>tbody>tr>td:nth-child({n})>span {{display:none;}}
     table.hide-c-{n}>thead>tr>th:nth-child({n})>span {{display:none;}}

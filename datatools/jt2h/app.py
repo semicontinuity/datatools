@@ -60,6 +60,10 @@ def page_node_auto(j, script_text: str|None = LOG_NODE_JS, title_str: str = None
 
 
 def page_node(j, renderers, script_text: str = LOG_NODE_JS, title_str: str = None, collapsed_columns: dict[str, bool] = None):
+    for r in renderers:
+        if collapsed_columns.get(r.column):
+            r.collapsed = True
+
     return page_node_for(LogNode(j, renderers), script_text, title_str)
 
 
