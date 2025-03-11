@@ -1,5 +1,5 @@
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
-from datatools.ev.x.pg.rrd.model import ResultSetMetadata
+from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
 from datatools.util.dataclasses import dataclass_from_dict
 
 

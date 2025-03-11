@@ -2,9 +2,13 @@ import os
 from os.path import isdir, join
 from typing import List, Tuple
 
+from x.util.pg import get_table_pks, get_table_foreign_keys_all
+
+from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.helper import get_required_prop
 from datatools.dbview.x.util.pg_inferred_query import inferred_query
 from datatools.dbview.x.util.pg_query import query_to_string, query_from_yaml
+from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata, Relation, QualifiedName
 from datatools.util.logging import debug
 
 
@@ -14,7 +18,7 @@ def get_sql() -> str:
     return query_to_string(q)
 
 
-def infer_query(props):
+def infer_query(props) -> DbQuery:
     if query := props.get('QUERY'):
         q = query_from_yaml(query)
     else:
@@ -103,3 +107,20 @@ def get_where_clauses0(table_path: str, rest: str) -> List[Tuple[str, str, str]]
             clauses.append((key.removeprefix('-'), 'is', 'null'))
 
     return clauses
+
+
+def make_result_set_metadata(conn, query: DbQuery) -> ResultSetMetadata:
+    return ResultSetMetadata(
+        table=query.table,
+        primaryKeys=get_table_pks(conn, query.table),
+        relations=relations(conn, query.table),
+    )
+
+
+def relations(conn, table: str) -> list[Relation]:
+    return [
+        Relation(
+            src=QualifiedName(edge['table_name'], edge['column_name']),
+            dst=QualifiedName(edge['foreign_table_name'], edge['foreign_column_name']),
+        ) for edge in get_table_foreign_keys_all(conn, table)
+    ]

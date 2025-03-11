@@ -23,7 +23,8 @@ from datatools.dbview.x.util.pg_query import query_from_yaml
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.realm_pg import RealmPg
-from datatools.ev.x.pg.rrd.model import CardData, ResultSetMetadata
+from datatools.ev.x.pg.rrd.model import CardData
+from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
 from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph
 from datatools.util.dataclasses import dataclass_from_dict
 
