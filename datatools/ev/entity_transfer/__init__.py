@@ -34,22 +34,27 @@ def create_ctx_reference_chain(ctx: Path, referring_path: Path, referenced_path:
     return True
 
 
-def create_context_pointers_chain(created_context_dir, referenced_context_dir):
-    os.makedirs(created_context_dir, exist_ok=True)
-    # Calculate the realm reference
-    realm_ref = os.path.relpath(
-        referenced_context_dir,
-        start=created_context_dir
-    )
-    # Check if the context pointer file exists, create a symlink if not
-    context_pointer = Path(f"{created_context_dir}/._")
-    if not context_pointer.exists():
-        os.symlink(realm_ref, context_pointer)
-
-
-def write_entity_parts(entity_path, query_str, content):
+def write_entity_parts_b0(entity_path, query_str, content: bytes):
     with Path(f"{entity_path}/.query").open('w') as f:
         f.write(query_str)
     if content is not None:
         with Path(f"{entity_path}/content.jsonl").open('w+b') as f:
             f.write(content)
+
+
+def write_entity_parts_s(wd: Path, query_s: str, content: str, metadata_s: str):
+    write_entity_parts_b(wd, query_s.encode('utf-8'), content.encode('utf-8'), metadata_s.encode('utf-8'))
+
+
+def write_entity_parts_b(wd: Path, query_b: bytes, content_b: bytes, metadata_b: bytes):
+    if query_b:
+        write_file_b(wd / '.query', query_b)
+    if content_b:
+        write_file_b(wd / 'content.jsonl', content_b)
+    if metadata_b:
+        write_file_b(wd / 'rs-metadata.json', metadata_b)
+
+
+def write_file_b(name, b: bytes):
+    with open(name, 'w+b') as f:
+        f.write(b)

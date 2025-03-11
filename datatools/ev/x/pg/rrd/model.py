@@ -9,7 +9,7 @@ class CardData:
     rows: list[dict[str, Any]]
 
 
-@dataclass
+@dataclass(frozen=True)
 class QualifiedName:
     qualifier: str
     name: str

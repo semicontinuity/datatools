@@ -91,6 +91,7 @@ class ViewDb(View):
                 "realm-ctx": self.realm.realm_ctx,
                 "realm-ctx-dir": self.realm.realm_ctx_dir,
                 'query': json.dumps(to_jsonisable(self.query)),
-                'content': '\n'.join(json.dumps(to_jsonisable(r)) for r in self.db_entity_data.rows)
+                'content': '\n'.join(json.dumps(to_jsonisable(r)) for r in self.db_entity_data.rows),
+                'result-set-metadata': None,
             }
         )

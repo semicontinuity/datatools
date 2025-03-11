@@ -17,7 +17,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Hashable
 
-from x.util.pg import connect_to_db, get_table_foreign_keys_all_multi
+from x.util.pg import connect_to_db
 
 from datatools.dbview.x.util.pg_query import query_from_yaml
 from datatools.ev.x.pg.db_entity_data import DbEntityData
@@ -107,6 +107,9 @@ def main():
     with connect_to_db() as conn:
 
         folder = Path(os.environ['PWD'])
+
+        all_edges = set()
+
         for file in folder.rglob('.query'):
             folder = file.parent
 
@@ -124,16 +127,18 @@ def main():
 
             diagram_data.add(card_data)
 
+            for r in rs_metadata.relations:
+                all_edges.add((r.src, r.dst))
+
         if len(tables) == 0:
             return 1
 
-        # could optimize query
-        edges = get_table_foreign_keys_all_multi(conn, list(tables))
-        for edge in edges:
-            src_table = edge['table_name']
-            src_column = edge['column_name']
-            dst_table = edge['foreign_table_name']
-            dst_column = edge['foreign_column_name']
+        for src, dst in all_edges:
+            src_table = src.qualifier
+            src_column = src.name
+            dst_table = dst.qualifier
+            dst_column = dst.name
+
             diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
 
     dot = diagram_data.make_dot()

@@ -83,7 +83,7 @@ class Server(BaseHTTPRequestHandler):
                 realm_ctx = self.headers.get('X-Realm-Ctx')
                 realm_ctx_dir = self.headers.get('X-Realm-Ctx-Dir')
                 handler_send_entity.send_entity(
-                    realm_ctx, realm_ctx_dir, post_body.decode('utf-8')
+                    realm_ctx, realm_ctx_dir, post_body
                 )
 
             case 'application/sql':

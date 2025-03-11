@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from datatools.dbview.x.util.pg_query import query_from_yaml
-from datatools.ev.entity_transfer import write_entity_parts, create_ctx_reference_chain
+from datatools.ev.entity_transfer import create_ctx_reference_chain, write_entity_parts_b
 from datatools.intent.target_folder import default_folder
 from datatools.json.util import to_jsonisable
 
@@ -10,8 +10,8 @@ from datatools.json.util import to_jsonisable
 class HandlerSendEntity:
     folder: str
 
-    def send_entity(self, realm_ctx: str, realm_ctx_dir: str, query_str: str, content: bytes = None):
-        query = query_from_yaml(query_str)
+    def send_entity(self, realm_ctx: str, realm_ctx_dir: str, query_b: bytes, content: bytes = None, rs_metadata: bytes = None):
+        query = query_from_yaml(query_b.decode('utf-8'))
         entity_realm_path = make_entity_realm_path(query)
 
         ctx_dir = realm_ctx_dir.removesuffix('/' + realm_ctx)
@@ -27,7 +27,7 @@ class HandlerSendEntity:
 
         os.makedirs(entity_path, exist_ok=True)
 
-        write_entity_parts(entity_path, query_str, content)
+        write_entity_parts_b(Path(entity_path), query_b, content, rs_metadata)
 
 
 def make_entity_realm_path(query):
