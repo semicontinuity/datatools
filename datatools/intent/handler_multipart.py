@@ -17,7 +17,7 @@ def handle_multipart(post_body: bytes, content_type: str):
         handler_send_entity.send_entity(
             realm_ctx=realm_ctx.decode('utf-8'),
             realm_ctx_dir=realm_ctx_dir.decode('utf-8'),
-            query_str=parts['query'],
+            query=parts['query'],
             content=parts['content'],
             rs_metadata=parts['result-set-metadata'],
         )

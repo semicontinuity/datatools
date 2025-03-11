@@ -4,6 +4,7 @@ from typing import Tuple, List
 from datatools.dbview.util.pg import execute_sql, describe_table, get_table_pks
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 from datatools.dbview.x.util.db_query import DbQuery
+from datatools.dbview.x.util.pg import make_result_set_metadata
 from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.ev.app_types import EntityReference, View, Realm
 from datatools.ev.x.pg.db_entity_data import DbEntityData
@@ -102,4 +103,5 @@ class RealmPg(Realm):
             realm_ctx=self.data_source.get_realm_ctx(),
             realm_ctx_dir=self.data_source.get_realm_ctx_dir(),
             entity_realm_path=self.data_source.get_entity_realm_path(),
+            result_set_metadata=make_result_set_metadata(conn, query),
         )

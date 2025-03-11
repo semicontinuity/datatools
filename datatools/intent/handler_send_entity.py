@@ -10,9 +10,9 @@ from datatools.json.util import to_jsonisable
 class HandlerSendEntity:
     folder: str
 
-    def send_entity(self, realm_ctx: str, realm_ctx_dir: str, query_b: bytes, content: bytes = None, rs_metadata: bytes = None):
-        query = query_from_yaml(query_b.decode('utf-8'))
-        entity_realm_path = make_entity_realm_path(query)
+    def send_entity(self, realm_ctx: str, realm_ctx_dir: str, query: bytes, content: bytes = None, rs_metadata: bytes = None):
+        q = query_from_yaml(query.decode('utf-8'))
+        entity_realm_path = make_entity_realm_path(q)
 
         ctx_dir = realm_ctx_dir.removesuffix('/' + realm_ctx)
         created_realm_folder = f"{self.folder}/{realm_ctx}"
@@ -27,7 +27,7 @@ class HandlerSendEntity:
 
         os.makedirs(entity_path, exist_ok=True)
 
-        write_entity_parts_b(Path(entity_path), query_b, content, rs_metadata)
+        write_entity_parts_b(Path(entity_path), query, content, rs_metadata)
 
 
 def make_entity_realm_path(query):
