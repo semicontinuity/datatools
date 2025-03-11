@@ -10,7 +10,7 @@
 # V:       generate verbose diagram (with nulls, INT, BOOL fields)
 # RANKDIR: RANKDIR for graph, default LR
 ######################################################################
-
+import json
 import os
 import sys
 from collections import defaultdict
@@ -23,8 +23,9 @@ from datatools.dbview.x.util.pg_query import query_from_yaml
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.realm_pg import RealmPg
-from datatools.ev.x.pg.rrd.model import CardData
+from datatools.ev.x.pg.rrd.model import CardData, ResultSetMetadata
 from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph
+from datatools.util.dataclasses import dataclass_from_dict
 
 
 class DiagramData:
@@ -103,12 +104,19 @@ def main():
 
         folder = Path(os.environ['PWD'])
         for file in folder.rglob('.query'):
-            query = query_from_yaml(file.read_text(encoding='utf-8'))
+            folder = file.parent
+
+            query = query_from_yaml((folder / '.query').read_text(encoding='utf-8'))
+            rs_metadata = json.loads((folder / 'rs-metadata.json').read_text(encoding='utf-8'))
+
+            from_dict = dataclass_from_dict(ResultSetMetadata, rs_metadata)
+            print(from_dict)
+
             tables.add(query.table)
 
             entity_data = realm.db_entity_data(conn, query)
             card_data = CardData(entity_data.query.table, entity_data.pks, entity_data.rows)
-            # diagram_data.add(entity_data)
+
             diagram_data.add(card_data)
 
         if len(tables) == 0:
