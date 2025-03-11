@@ -3,9 +3,10 @@ import os
 import re
 from typing import Any
 
-from datatools.ev.x.pg.db_entity_data import DbEntityData
-from datatools.json.coloring_hash import color_string, hash_code_to_rgb
 from graphviz import Digraph
+
+from datatools.ev.x.pg.rrd.model import CardData
+from datatools.json.coloring_hash import color_string, hash_code_to_rgb
 
 svg = bool(os.environ.get('SVG'))
 
@@ -74,21 +75,21 @@ def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: 
 '''
 
 
-def render_table_cells(d: DbEntityData, row: dict[str, Any], fks: set[str]):
+def render_table_cells(d: CardData, row: dict[str, Any], fks: set[str]):
     record_pk_value = d.rows[0][d.pks[0]]
     return "\n".join(
-        render_table_cell(k, v, is_pk_or_fk=(k in d.pks or k in fks), record_pk_value=record_pk_value, table=d.query.table)
+        render_table_cell(k, v, is_pk_or_fk=(k in d.pks or k in fks), record_pk_value=record_pk_value, table=d.table)
         for k, v in row.items()
         if should_render(v)
     )
 
 
-def render_table_record_as_label(d: DbEntityData, row: dict[str, Any], fks: set[str]):
+def render_table_record_as_label1(d: CardData, row: dict[str, Any], fks: set[str]):
     fg = 'black'
-    bg = color_string(hash_code_to_rgb(hash(d.query.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
+    bg = color_string(hash_code_to_rgb(hash(d.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
 
     return f'''<<table cellspacing='0' cellpadding='1,0' border='1' color='gray'>
-    <tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{d.query.table}</font></b></td></tr>
+    <tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{d.table}</font></b></td></tr>
     {render_table_cells(d, row, fks)}
 </table>>'''
 
@@ -108,6 +109,6 @@ def make_subgraph(db_entity_data, subgraph_id: str, fks: set[str]):
         shape='none',
         fontname='Courier New',
         fontsize='10',
-        label=render_table_record_as_label(db_entity_data, db_entity_data.rows[0], fks)
+        label=render_table_record_as_label1(db_entity_data, db_entity_data.rows[0], fks)
     )
     return t

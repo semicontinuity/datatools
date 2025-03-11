@@ -17,12 +17,13 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Hashable
 
+from x.util.pg import connect_to_db, get_table_foreign_keys_all_multi
+
 from datatools.dbview.x.util.pg_query import query_from_yaml
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.realm_pg import RealmPg
-from x.util.pg import connect_to_db, get_table_foreign_keys_all_multi
-
+from datatools.ev.x.pg.rrd.model import CardData
 from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph
 
 
@@ -36,15 +37,15 @@ class DiagramData:
     def _record_id(self, table: str, key: Hashable):
         return f'{table}__{hash(key)}'
 
-    def add(self, db_entity_data: DbEntityData):
-        if len(db_entity_data.pks) != 1:
-            raise Exception('Expected 1 pk in ' + db_entity_data.query.table)
-        if len(db_entity_data.rows) != 1:
-            raise Exception('Expected 1 row in result set from ' + str(db_entity_data.query))
-        row = db_entity_data.rows[0]
-        pk = db_entity_data.pks[0]
+    def add(self, card_data: CardData):
+        if len(card_data.pks) != 1:
+            raise Exception('Expected 1 pk in ' + card_data.table)
+        if len(card_data.rows) != 1:
+            raise Exception('Expected 1 row in result set from ' + str(card_data.table))
+        row = card_data.rows[0]
+        pk = card_data.pks[0]
 
-        self.table_to_pk_to_data[db_entity_data.query.table][row[pk]] = db_entity_data
+        self.table_to_pk_to_data[card_data.table][row[pk]] = card_data
 
     def add_generic_edge(self, src_table: str, src_column: str, dst_table: str, dst_column: str):
         self.table_to_fks[src_table].add(src_column)
@@ -67,8 +68,8 @@ class DiagramData:
                 dot.subgraph(
                     make_subgraph(
                         db_entity_data,
-                        self._record_id(db_entity_data.query.table, record_pk),
-                        self.table_to_fks[db_entity_data.query.table],
+                        self._record_id(db_entity_data.table, record_pk),
+                        self.table_to_fks[db_entity_data.table],
                     )
                 )
 
@@ -104,7 +105,11 @@ def main():
         for file in folder.rglob('.query'):
             query = query_from_yaml(file.read_text(encoding='utf-8'))
             tables.add(query.table)
-            diagram_data.add(realm.db_entity_data(conn, query))
+
+            entity_data = realm.db_entity_data(conn, query)
+            card_data = CardData(entity_data.query.table, entity_data.pks, entity_data.rows)
+            # diagram_data.add(entity_data)
+            diagram_data.add(card_data)
 
         if len(tables) == 0:
             return 1
