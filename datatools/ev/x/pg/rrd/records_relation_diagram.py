@@ -93,6 +93,10 @@ class DiagramData:
         return dot
 
 
+def rows_from_jsonl(s: str):
+    return [json.loads(row) for row in s.split('\n') if row != '']
+
+
 def main():
     data_source = PgDataSource(os.environ)
     realm = RealmPg(None, data_source)
@@ -107,15 +111,16 @@ def main():
             folder = file.parent
 
             query = query_from_yaml((folder / '.query').read_text(encoding='utf-8'))
-            rs_metadata = json.loads((folder / 'rs-metadata.json').read_text(encoding='utf-8'))
-
-            from_dict = dataclass_from_dict(ResultSetMetadata, rs_metadata)
-            print(from_dict)
+            rs_metadata: ResultSetMetadata = dataclass_from_dict(ResultSetMetadata, json.loads((folder / 'rs-metadata.json').read_text(encoding='utf-8')))
+            content = rows_from_jsonl((folder / 'content.jsonl').read_text(encoding='utf-8'))
 
             tables.add(query.table)
 
-            entity_data = realm.db_entity_data(conn, query)
-            card_data = CardData(entity_data.query.table, entity_data.pks, entity_data.rows)
+            card_data = CardData(
+                query.table,
+                rs_metadata.primaryKeys,
+                content
+            )
 
             diagram_data.add(card_data)
 
