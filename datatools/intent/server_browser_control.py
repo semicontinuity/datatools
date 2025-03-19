@@ -42,7 +42,7 @@ class Server(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
 
-httpd = HTTPServer(("localhost", 7777), Server)
+httpd = HTTPServer(("0.0.0.0", 7777), Server)
 try:
     httpd.serve_forever()
 except KeyboardInterrupt:
