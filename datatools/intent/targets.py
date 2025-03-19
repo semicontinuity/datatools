@@ -9,7 +9,7 @@ from datatools.util.subprocess import exe
 
 
 # browse_url is buggy/hacky
-def browse(url):
+def browse(url: str):
     if type(url) is str:
         url = url.encode('utf-8')
     exe(
