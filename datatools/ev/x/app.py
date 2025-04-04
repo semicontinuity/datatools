@@ -2,6 +2,7 @@
 import json
 import os
 import subprocess
+import sys
 from os.path import relpath
 from typing import Dict, List, Callable, Any
 
@@ -13,7 +14,7 @@ from datatools.ev.x.ch.realm_clickhouse import RealmClickhouse
 from datatools.ev.x.pg.entity_resolver import resolve_pg_entity
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.realm_pg import RealmPg
-from datatools.ev.x.realm_bootstrap import get_realm_ctx, get_realm_ctx_dir
+from datatools.util.logging import debug
 
 
 def exe(cwd: str, args: List[str], env: Dict[str, str], stdin: bytes = None):
@@ -32,6 +33,7 @@ def exe(cwd: str, args: List[str], env: Dict[str, str], stdin: bytes = None):
 
 
 class Realms:
+    ctx_dir: str
     mounts: Dict[str, Realm]
     entity_resolvers: Dict[Any, Callable[[Realm, str, str], EntityReference]]
 
@@ -39,15 +41,21 @@ class Realms:
                  ctx_dir: str,
                  mounts: Dict[str, Callable[[str], Realm]],
                  entity_resolvers: Dict[Any, Callable[[Realm, str, str], EntityReference]]):
-        self.mounts = {rel_path: f(name, ctx_dir + '/' + rel_path) for rel_path, (name, f) in
-                       mounts.items()}
+
+        self.ctx_dir = ctx_dir
+        self.mounts = {
+            rel_path: f(name, ctx_dir + '/' + rel_path)
+            for rel_path, (name, f) in mounts.items()
+        }
         self.entity_resolvers = entity_resolvers
 
     def resolve(self, ctx: str) -> EntityReference:
         for base_ctx, realm in self.mounts.items():
+            debug(f'Matching against realm {realm.name} with base ctx {base_ctx}')
             if ctx.startswith(base_ctx + '/'):
+                debug(f'Matched realm {realm.name}')
                 rest = ctx.removeprefix(base_ctx + '/')
-                return self.entity_resolvers[type(realm)](realm, base_ctx, rest)
+                return self.entity_resolvers[type(realm)](realm, self.ctx_dir + '/' + base_ctx, rest)
 
     def as_dict(self) -> Dict[str, Realm]:
         return {v.name: v for k, v in self.mounts.items()}
@@ -165,10 +173,11 @@ def main():
             RealmClickhouse: resolve_ch_entity,
         }
     )
-    run_app(
-        realms.as_dict(),
-        realms.resolve(os.environ['CTX'])
-    )
+    e_ref = realms.resolve(os.environ['__RESOURCE'])
+    if e_ref is None:
+        print('Could not resolve realm', file=sys.stderr)
+    else:
+        run_app(realms.as_dict(), e_ref)
 
 
 if __name__ == "__main__":
