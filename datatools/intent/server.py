@@ -98,6 +98,8 @@ class Server(BaseHTTPRequestHandler):
                         browse_new_tab(
                             write_temp_file(post_body, '.txt', the_title)
                         )
+            case 'text/html':
+                html_to_browser(post_body, the_title)
             case 'application/x-basic-entity':
                 realm_ctx = self.headers.get('X-Realm-Ctx')
                 realm_ctx_dir = self.headers.get('X-Realm-Ctx-Dir')

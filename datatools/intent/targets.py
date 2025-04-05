@@ -2,9 +2,11 @@ import http.client
 import os
 import re
 import subprocess
+import sys
 from datetime import datetime
 
 import requests
+from requests import Response
 
 from datatools.intent import get_local_ip, SERVER_PORT
 from datatools.intent.target_folder import get_target_folder
@@ -75,7 +77,7 @@ def write_temp_file_to(folder: str, contents: bytes, suffix: str, name_base: str
         return os.path.basename(path)
 
 
-def kiosk_open_url(url):
+def kiosk_open_url(url) -> Response | None:
     kiosk_endpoint = os.environ.get('KIOSK_ENDPOINT')
     if kiosk_endpoint:
         try:
@@ -84,16 +86,17 @@ def kiosk_open_url(url):
                 '%s' % kiosk_endpoint,
                 headers={"Content-Type": "text/uri-list"},
                 data=url,
-                )
+            )
         except:
             print('kiosk connection refused', kiosk_endpoint)
             return None
 
 
 def browse_new_tab(url: str):
+    print(url, file=sys.stderr)
     kiosk_result = kiosk_open_url(url)
     if kiosk_result:
-        print(kiosk_result)
+        print(kiosk_result.status_code, file=sys.stderr)
     else:
         exe(
             os.environ['HOME'],
@@ -102,6 +105,7 @@ def browse_new_tab(url: str):
         )
 
 
-def html_to_browser(html: str, title: str | None = None):
-    file_name = write_temp_file_to(get_target_folder(), html.encode('utf-8'), '.html', title)
+def html_to_browser(html: str|bytes, title: str | None = None):
+    contents = html.encode('utf-8') if type(html) is str else html
+    file_name = write_temp_file_to(get_target_folder(), contents, '.html', title)
     browse_new_tab(f'http://{get_local_ip()}:{SERVER_PORT}/{file_name}')
