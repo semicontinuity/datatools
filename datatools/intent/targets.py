@@ -4,6 +4,9 @@ import re
 import subprocess
 from datetime import datetime
 
+import requests
+
+from datatools.intent import get_local_ip, SERVER_PORT
 from datatools.intent.target_folder import get_target_folder
 from datatools.util.subprocess import exe
 
@@ -48,6 +51,11 @@ def convert_to_filename(input_string):
 
 def write_temp_file(contents: bytes, suffix: str, name_base: str | None = None):
     folder = get_target_folder()
+    file_name = write_temp_file_to(folder, contents, suffix, name_base)
+    return folder + '/' + file_name
+
+
+def write_temp_file_to(folder: str, contents: bytes, suffix: str, name_base: str | None = None):
     path = None
     if name_base:
         name_base = convert_to_filename(name_base)
@@ -55,32 +63,45 @@ def write_temp_file(contents: bytes, suffix: str, name_base: str | None = None):
         path = folder + '/' + datetime.now().strftime('%y%m%d_%H%M%S__') + name_base + suffix
         if os.path.exists(path):
             path = None
-
     if path:
         with open(path, 'wb') as file:
             file.write(contents)
-        return path
+        return os.path.basename(path)
     else:
         import tempfile
         fd, path = tempfile.mkstemp(suffix=suffix, prefix="temp", dir=folder, text=True)
         with os.fdopen(fd, 'w+b') as tmp:
             tmp.write(contents)
-        return path
+        return os.path.basename(path)
+
+
+def kiosk_open_url(url):
+    kiosk_endpoint = os.environ.get('KIOSK_ENDPOINT')
+    if kiosk_endpoint:
+        try:
+            return requests.request(
+                'POST',
+                '%s' % kiosk_endpoint,
+                headers={"Content-Type": "text/uri-list"},
+                data=url,
+                )
+        except:
+            print('kiosk connection refused', kiosk_endpoint)
+            return None
 
 
 def browse_new_tab(url: str):
-    exe(
-        os.environ['HOME'],
-        ['firefox', url],
-        {},
-    )
+    kiosk_result = kiosk_open_url(url)
+    if kiosk_result:
+        print(kiosk_result)
+    else:
+        exe(
+            os.environ['HOME'],
+            ['firefox', url],
+            {},
+        )
 
 
 def html_to_browser(html: str, title: str | None = None):
-    browse_new_tab(
-        write_temp_file(
-            html.encode('utf-8'),
-            '.html',
-            title,
-        )
-    )
+    file_name = write_temp_file_to(get_target_folder(), html.encode('utf-8'), '.html', title)
+    browse_new_tab(f'http://{get_local_ip()}:{SERVER_PORT}/{file_name}')

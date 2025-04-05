@@ -12,8 +12,10 @@ import os
 import socketserver
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
+from socket import socket
 from typing import Tuple
 
+from datatools.intent import SERVER_PORT
 from datatools.intent.handler_json_lines import handle_json_lines
 from datatools.intent.handler_multipart import handle_multipart
 from datatools.intent.handler_send_entity import default_folder, handler_send_entity
@@ -42,11 +44,28 @@ class Server(BaseHTTPRequestHandler):
         self.respond_with_path(200, get_target_folder())
 
     def do_GET(self):
-        if self.path == '/homepage':
+        if self.path == '/':
+            self.respond_with_path(200, get_target_folder())
+        elif self.path == '/favicon.ico':
+            self.respond_with_path(404, '')
+        elif self.path == '/homepage':
             with open(os.environ['WORK_PATH'] + '/homepage.html', 'rb') as file:
                 self.respond(200, 'text/html', file.read())
         else:
-            self.respond_with_path(200, get_target_folder())
+            match self.path.split('.')[-1]:
+                case 'txt':
+                    mime_type = 'text/plain'
+                case 'html':
+                    mime_type = 'text/html'
+                case 'svg':
+                    mime_type = 'image/svg+xml'
+                case 'json':
+                    mime_type = 'application/json'
+                case _:
+                    mime_type = 'application/octet-stream'
+
+            with open(get_target_folder() + self.path, 'rb') as file:
+                self.respond(200, mime_type, file.read())
 
     def do_PUT(self):
         content_len = int(self.headers.get('Content-Length'))
@@ -151,7 +170,8 @@ class Server(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
 
-httpd = HTTPServer(("localhost", 7777), Server)
+httpd = HTTPServer(("0.0.0.0", SERVER_PORT), Server)
+
 try:
     httpd.serve_forever()
 except KeyboardInterrupt:
