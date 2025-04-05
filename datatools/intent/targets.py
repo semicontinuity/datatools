@@ -105,7 +105,11 @@ def browse_new_tab(url: str):
         )
 
 
-def html_to_browser(html: str|bytes, title: str | None = None):
-    contents = html.encode('utf-8') if type(html) is str else html
-    file_name = write_temp_file_to(get_target_folder(), contents, '.html', title)
+def html_to_browser(data: str | bytes, title: str | None = None):
+    open_in_browser(data, file_suffix='.html', title=title)
+
+
+def open_in_browser(data: str | bytes, file_suffix: str, title: str | None = None):
+    contents = data.encode('utf-8') if type(data) is str else data
+    file_name = write_temp_file_to(get_target_folder(), contents, file_suffix, title)
     browse_new_tab(f'http://{get_local_ip()}:{SERVER_PORT}/{file_name}')

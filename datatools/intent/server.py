@@ -10,9 +10,9 @@ and reacts, depending on Content-Type
 import json
 import os
 import socketserver
+import sys
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
-from socket import socket
 from typing import Tuple
 
 from datatools.intent import SERVER_PORT
@@ -20,7 +20,8 @@ from datatools.intent.handler_json_lines import handle_json_lines
 from datatools.intent.handler_multipart import handle_multipart
 from datatools.intent.handler_send_entity import default_folder, handler_send_entity
 from datatools.intent.target_folder import set_target_folder, get_target_folder
-from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser
+from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
+    open_in_browser
 from datatools.json.json2html import to_blocks_html
 from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
@@ -91,15 +92,25 @@ class Server(BaseHTTPRequestHandler):
             case 'text/uri-list':
                 browse_new_tab(post_body.decode('utf-8'))
             case 'text/plain':
-                match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
+                match choose(["Copy to Clipboard", "Open in Browser"], 'Choose'):
                     case 0:
                         to_clipboard(post_body)
                     case 1:
                         browse_new_tab(
                             write_temp_file(post_body, '.txt', the_title)
                         )
+            case 'text/markdown':
+                match choose(["Copy to Clipboard", "Open in IDEA"], 'Choose'):
+                    case 0:
+                        to_clipboard(post_body)
+                    case 1:
+                        open_in_idea(
+                            write_temp_file(post_body, '.md', the_title)
+                        )
             case 'text/html':
                 html_to_browser(post_body, the_title)
+            case 'image/svg+xml':
+                open_in_browser(post_body, file_suffix='.svg', title=the_title)
             case 'application/x-basic-entity':
                 realm_ctx = self.headers.get('X-Realm-Ctx')
                 realm_ctx_dir = self.headers.get('X-Realm-Ctx-Dir')
