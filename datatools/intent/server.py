@@ -10,7 +10,6 @@ and reacts, depending on Content-Type
 import json
 import os
 import socketserver
-import sys
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from typing import Tuple
@@ -55,13 +54,13 @@ class Server(BaseHTTPRequestHandler):
         else:
             match self.path.split('.')[-1]:
                 case 'txt':
-                    mime_type = 'text/plain'
+                    mime_type = 'text/plain; charset=utf-8'
                 case 'html':
-                    mime_type = 'text/html'
+                    mime_type = 'text/html; charset=utf-8'
                 case 'svg':
-                    mime_type = 'image/svg+xml'
+                    mime_type = 'image/svg+xml; charset=utf-8'
                 case 'json':
-                    mime_type = 'application/json'
+                    mime_type = 'application/json; charset=utf-8'
                 case _:
                     mime_type = 'application/octet-stream'
 
@@ -85,6 +84,7 @@ class Server(BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
         content_type = self.headers.get('Content-Type')
         mime_type = content_type.split(';')[0]
+        print(mime_type)
 
         match mime_type:
             case 'multipart/form-data':
