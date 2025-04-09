@@ -78,6 +78,9 @@ class LogNode:
     def hide_rules(n):
         n = n + 2
         return f"""
+    table>tbody>tr>td:nth-child({n})>span.tooltip {{display:none;}}
+    table.hide-c-{n}>tbody>tr>td:nth-child({n})>span.tooltip {{display:inline;}}
+    
     table.hide-c-{n}>tbody>tr>td:nth-child({n})>span {{display:none;}}
     table.hide-c-{n}>thead>tr>th:nth-child({n})>span {{display:none;}}
     table.hide-c-{n}>thead>tr>th:nth-child({n})>span.compact {{display:inherit;}}
@@ -90,9 +93,11 @@ table {border-collapse: collapse; padding: 0; white-space: nowrap;}
 table {background: white;}
 th {border-top: solid 1px darkgrey; border-bottom: solid 1px darkgrey; background: #DDD; padding-left: 0.5ex; padding-right: 0.5ex;}
 td {border-top: solid 1px #CCC; border-bottom: solid 1px #CCC; padding: 0;}
-td {border-left: solid 2px darkgrey;}
+td {border-left: solid 1px darkgrey;}
+td {border-right: solid 1px darkgrey;}
 td {padding-left: 0.5em; padding-right: 0.5em;}
-th {border-left: solid 2px darkgrey;}
+th {border-left: solid 1px darkgrey;}
+th {border-right: solid 1px darkgrey;}
 
 td:last-child { width: 100%; }
 

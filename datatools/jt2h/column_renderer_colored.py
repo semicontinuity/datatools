@@ -3,10 +3,36 @@ from typing import Dict, List
 from datatools.json.coloring import ColumnAttrs
 from datatools.json.coloring_hash import hash_to_rgb, hash_code, color_string
 from datatools.jt2h.column_renderer import ColumnRenderer
-from util.html.elements import td, span
+from util.html.elements import td, span, pre
 
 
 class ColumnRendererColored(ColumnRenderer):
+
+    CSS = '''  
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltip-over {
+  visibility: hidden;
+}
+
+.tooltip:hover .tooltip-over {
+  visibility: visible;
+}
+
+.tooltip .tooltip-over {
+  border: solid 2px black;
+  background-color: white;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+  position: absolute;
+  z-index: 1;
+  top: 0em;
+  left: -0.25em;
+}
+        '''
 
     def __init__(self, column: str, collapsed: bool, data: List[Dict]):
         super().__init__(column, collapsed)
@@ -26,12 +52,21 @@ class ColumnRendererColored(ColumnRenderer):
         value = row.get(self.column)
         return td(
             span(value) if value is not None else None,
+            span(
+                '&nbsp;',
+                pre(
+                    value,
+                    clazz='tooltip-over',
+                    style=self.cell_bg_color_style(value)
+                ),
+                clazz='tooltip'
+            ) if value is not None else None,
             style=self.cell_bg_color_style(value)
         )
 
     def cell_bg_color_style(self, value):
         if value is None or self.attrs is None:
-            return None
+            return 'background-color: #E0E0E0;'
 
         string_value = str(value)
         if not self.attrs.is_colored(string_value):
