@@ -64,8 +64,14 @@ class Server(BaseHTTPRequestHandler):
                 case _:
                     mime_type = 'application/octet-stream'
 
-            with open(get_target_folder() + self.path, 'rb') as file:
-                self.respond(200, mime_type, file.read())
+            path = get_target_folder() + self.path
+            print('Reading file ' + path)
+
+            with open(path, 'rb') as file:
+                data = file.read()
+
+            print('Read file ' + path + ", size " + str(len(data)))
+            self.respond(200, mime_type, data)
 
     def do_PUT(self):
         content_len = int(self.headers.get('Content-Length'))
@@ -84,7 +90,7 @@ class Server(BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
         content_type = self.headers.get('Content-Type')
         mime_type = content_type.split(';')[0]
-        print(mime_type)
+        print('Handling POST; mime_type ' + mime_type)
 
         match mime_type:
             case 'multipart/form-data':
@@ -132,7 +138,9 @@ class Server(BaseHTTPRequestHandler):
             case 'application/json':
                 self.process_json(post_body, the_title)
 
+        print('Handling POST; responding')
         self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
+        print('Handling POST; responded')
 
     def process_json(self, post_body, the_title):
         data = json.loads(post_body.decode('utf-8'))
