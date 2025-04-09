@@ -6,4 +6,5 @@ span {font-size: xx-large;}
 TABLE_NODE_CSS = '''
 table {font-family: monospace; }
 span {color: black; }
+pre {margin: 0; }
 '''

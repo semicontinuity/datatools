@@ -86,6 +86,7 @@ def kiosk_open_url(url) -> Response | None:
                 '%s' % kiosk_endpoint,
                 headers={"Content-Type": "text/uri-list"},
                 data=url,
+                timeout=2,
             )
         except:
             print('kiosk connection refused', kiosk_endpoint)

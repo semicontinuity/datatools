@@ -3,15 +3,24 @@ import html
 import mmh3
 
 from datatools.json.coloring_hash import color_string, hash_to_rgb
-from datatools.json.util import escape, basic_escape
-from util.html.elements import span
+from datatools.json.util import escape, basic_escape, simple_escape
+from util.html.elements import span, pre
 
 
 def primitive_node(v, for_json: bool):
     if v is None:
         return span('null', clazz='null')
     elif type(v) is str:
-        return span(str_repr(v, for_json), clazz='string')
+        if '\n' in v:
+            return span(
+                [
+                    pre(''.join([simple_escape(c) for c in html.escape(line, quote=False)]))
+                    for line in v.split('\n')
+                ],
+                clazz='string'
+            )
+        else:
+            return span(str_repr(v, for_json), clazz='string')
     elif v is True:
         return span('true', clazz='true')
     elif v is False:

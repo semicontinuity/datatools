@@ -70,7 +70,7 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
             # sparse = column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count
             # if complex or multiline or sparse:
             if complex or multiline:
-                debug('do_discover_columns', complex=complex, multiline=multiline, sparse=sparse)
+                debug('do_discover_columns', complex=complex, multiline=multiline)
                 column_presentation.add_renderer(ColumnRendererIndicator(thick=True))
             else:
                 coloring = infer_column_coloring(column_values_info, column_values_info.count)
