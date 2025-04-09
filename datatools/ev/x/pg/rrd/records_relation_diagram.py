@@ -29,7 +29,7 @@ class DiagramData:
     def __init__(self) -> None:
         self.table_to_pk_to_data: dict[dict[str, CardData]] = defaultdict(dict)
         self.table_to_fks = defaultdict(set)
-        self.generic_edges = []
+        self.generic_edges = set()
 
     def _record_id(self, table: str, key: Hashable):
         return f'{table}__{hash(key)}'
@@ -54,7 +54,7 @@ class DiagramData:
         if dst_table not in self.table_to_pk_to_data:
             return
 
-        self.generic_edges.append((src_table, src_column, dst_table, dst_column))
+        self.generic_edges.add((src_table, src_column, dst_table, dst_column))
 
     def make_dot(self):
         dot = make_graph()
@@ -89,34 +89,13 @@ class DiagramData:
         return dot
 
 
-def rows_from_jsonl(s: str):
-    return [json.loads(row) for row in s.split('\n') if row != '']
-
-
 def main():
     folder = Path(os.environ['PWD'])
     cards = read_cards(folder)
     if not cards:
         return 1
 
-    diagram_data = DiagramData()
-    tables = set()
-    all_edges = set()
-
-    for card in cards:
-        tables.add(card.metadata.table)
-        diagram_data.add(card)
-
-        for r in card.metadata.relations:
-            all_edges.add((r.src, r.dst))
-
-    for src, dst in all_edges:
-        src_table = src.qualifier
-        src_column = src.name
-        dst_table = dst.qualifier
-        dst_column = dst.name
-
-        diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
+    diagram_data = make_diagram_data(cards)
 
     dot = diagram_data.make_dot()
     if os.environ.get('SVG'):
@@ -125,9 +104,25 @@ def main():
         print(dot.source)
 
 
+def make_diagram_data(cards):
+    diagram_data = DiagramData()
+
+    for card in cards:
+        diagram_data.add(card)
+
+        for r in card.metadata.relations:
+            src_table = r.src.qualifier
+            src_column = r.src.name
+            dst_table = r.dst.qualifier
+            dst_column = r.dst.name
+            diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
+
+    return diagram_data
+
+
 def read_cards(folder):
     cards: list[CardData] = []
-    for file in folder.rglob('.query'):
+    for file in folder.rglob('rs-metadata.json'):
         folder = file.parent
 
         rs_metadata: ResultSetMetadata = dataclass_from_dict(ResultSetMetadata, json.loads(
@@ -141,6 +136,10 @@ def read_cards(folder):
             )
         )
     return cards
+
+
+def rows_from_jsonl(s: str):
+    return [json.loads(row) for row in s.split('\n') if row != '']
 
 
 if __name__ == '__main__':
