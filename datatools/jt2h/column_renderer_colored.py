@@ -29,7 +29,7 @@ class ColumnRendererColored(ColumnRenderer):
   padding-right: 0.2em;
   position: absolute;
   z-index: 1;
-  top: 0em;
+  top: -2px;
   left: -0.25em;
 }
         '''
@@ -66,7 +66,7 @@ class ColumnRendererColored(ColumnRenderer):
 
     def cell_bg_color_style(self, value):
         if value is None or self.attrs is None:
-            return 'background-color: #E0E0E0;'
+            return 'background-color: #C0C0C0;'
 
         string_value = str(value)
         if not self.attrs.is_colored(string_value):

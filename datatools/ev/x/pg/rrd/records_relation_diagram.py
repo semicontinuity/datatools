@@ -17,14 +17,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Hashable
 
-from x.util.pg import connect_to_db
-
 from datatools.dbview.x.util.pg_query import query_from_yaml
-from datatools.ev.x.pg.db_entity_data import DbEntityData
-from datatools.ev.x.pg.pg_data_source import PgDataSource
-from datatools.ev.x.pg.realm_pg import RealmPg
-from datatools.ev.x.pg.rrd.model import CardData
 from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
+from datatools.ev.x.pg.db_entity_data import DbEntityData
+from datatools.ev.x.pg.rrd.model import CardData
 from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph
 from datatools.util.dataclasses import dataclass_from_dict
 
@@ -99,48 +95,44 @@ def rows_from_jsonl(s: str):
 
 
 def main():
-    data_source = PgDataSource(os.environ)
-    realm = RealmPg(None, data_source)
-
     diagram_data = DiagramData()
     tables = set()
 
-    with connect_to_db() as conn:
+    folder = Path(os.environ['PWD'])
 
-        folder = Path(os.environ['PWD'])
+    all_edges = set()
 
-        all_edges = set()
+    for file in folder.rglob('.query'):
+        folder = file.parent
 
-        for file in folder.rglob('.query'):
-            folder = file.parent
+        query = query_from_yaml((folder / '.query').read_text(encoding='utf-8'))
+        rs_metadata: ResultSetMetadata = dataclass_from_dict(ResultSetMetadata, json.loads(
+            (folder / 'rs-metadata.json').read_text(encoding='utf-8')))
+        content = rows_from_jsonl((folder / 'content.jsonl').read_text(encoding='utf-8'))
 
-            query = query_from_yaml((folder / '.query').read_text(encoding='utf-8'))
-            rs_metadata: ResultSetMetadata = dataclass_from_dict(ResultSetMetadata, json.loads((folder / 'rs-metadata.json').read_text(encoding='utf-8')))
-            content = rows_from_jsonl((folder / 'content.jsonl').read_text(encoding='utf-8'))
+        tables.add(query.table)
 
-            tables.add(query.table)
+        card_data = CardData(
+            query.table,
+            rs_metadata.primaryKeys,
+            content
+        )
 
-            card_data = CardData(
-                query.table,
-                rs_metadata.primaryKeys,
-                content
-            )
+        diagram_data.add(card_data)
 
-            diagram_data.add(card_data)
+        for r in rs_metadata.relations:
+            all_edges.add((r.src, r.dst))
 
-            for r in rs_metadata.relations:
-                all_edges.add((r.src, r.dst))
+    if len(tables) == 0:
+        return 1
 
-        if len(tables) == 0:
-            return 1
+    for src, dst in all_edges:
+        src_table = src.qualifier
+        src_column = src.name
+        dst_table = dst.qualifier
+        dst_column = dst.name
 
-        for src, dst in all_edges:
-            src_table = src.qualifier
-            src_column = src.name
-            dst_table = dst.qualifier
-            dst_column = dst.name
-
-            diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
+        diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
 
     dot = diagram_data.make_dot()
     if os.environ.get('SVG'):
