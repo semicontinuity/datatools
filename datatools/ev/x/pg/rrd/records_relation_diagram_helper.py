@@ -76,9 +76,9 @@ def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: 
 
 
 def render_table_cells(d: CardData, row: dict[str, Any], fks: set[str]):
-    record_pk_value = d.rows[0][d.pks[0]]
+    record_pk_value = d.rows[0][d.metadata.primaryKeys[0]]
     return "\n".join(
-        render_table_cell(k, v, is_pk_or_fk=(k in d.pks or k in fks), record_pk_value=record_pk_value, table=d.table)
+        render_table_cell(k, v, is_pk_or_fk=(k in d.metadata.primaryKeys or k in fks), record_pk_value=record_pk_value, table=d.metadata.table)
         for k, v in row.items()
         if should_render(v)
     )
@@ -86,10 +86,10 @@ def render_table_cells(d: CardData, row: dict[str, Any], fks: set[str]):
 
 def render_table_record_as_label1(d: CardData, row: dict[str, Any], fks: set[str]):
     fg = 'black'
-    bg = color_string(hash_code_to_rgb(hash(d.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
+    bg = color_string(hash_code_to_rgb(hash(d.metadata.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
 
     return f'''<<table cellspacing='0' cellpadding='1,0' border='1' color='gray'>
-    <tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{d.table}</font></b></td></tr>
+    <tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{d.metadata.table}</font></b></td></tr>
     {render_table_cells(d, row, fks)}
 </table>>'''
 

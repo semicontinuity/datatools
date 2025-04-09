@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from typing import Any
 
+from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
+
 
 @dataclass
 class CardData:
-    table: str
-    pks: list[str]
     rows: list[dict[str, Any]]
+    metadata: ResultSetMetadata

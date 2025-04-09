@@ -17,7 +17,6 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Hashable
 
-from datatools.dbview.x.util.pg_query import query_from_yaml
 from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.rrd.model import CardData
@@ -28,7 +27,7 @@ from datatools.util.dataclasses import dataclass_from_dict
 class DiagramData:
 
     def __init__(self) -> None:
-        self.table_to_pk_to_data = defaultdict(dict)
+        self.table_to_pk_to_data: dict[dict[str, CardData]] = defaultdict(dict)
         self.table_to_fks = defaultdict(set)
         self.generic_edges = []
 
@@ -36,14 +35,14 @@ class DiagramData:
         return f'{table}__{hash(key)}'
 
     def add(self, card_data: CardData):
-        if len(card_data.pks) != 1:
-            raise Exception('Expected 1 pk in ' + card_data.table)
+        if len(card_data.metadata.primaryKeys) != 1:
+            raise Exception('Expected 1 pk in ' + card_data.metadata.table)
         if len(card_data.rows) != 1:
-            raise Exception('Expected 1 row in result set from ' + str(card_data.table))
+            raise Exception('Expected 1 row in result set from ' + str(card_data.metadata.table))
         row = card_data.rows[0]
-        pk = card_data.pks[0]
+        pk = card_data.metadata.primaryKeys[0]
 
-        self.table_to_pk_to_data[card_data.table][row[pk]] = card_data
+        self.table_to_pk_to_data[card_data.metadata.table][row[pk]] = card_data
 
     def add_generic_edge(self, src_table: str, src_column: str, dst_table: str, dst_column: str):
         self.table_to_fks[src_table].add(src_column)
@@ -62,12 +61,12 @@ class DiagramData:
 
         for table, pk_to_data in self.table_to_pk_to_data.items():
             for pk, db_entity_data in pk_to_data.items():
-                record_pk = db_entity_data.rows[0][db_entity_data.pks[0]]
+                record_pk = db_entity_data.rows[0][db_entity_data.metadata.primaryKeys[0]]
                 dot.subgraph(
                     make_subgraph(
                         db_entity_data,
-                        self._record_id(db_entity_data.table, record_pk),
-                        self.table_to_fks[db_entity_data.table],
+                        self._record_id(db_entity_data.metadata.table, record_pk),
+                        self.table_to_fks[db_entity_data.metadata.table],
                     )
                 )
 
@@ -95,36 +94,21 @@ def rows_from_jsonl(s: str):
 
 
 def main():
+    folder = Path(os.environ['PWD'])
+    cards = read_cards(folder)
+    if not cards:
+        return 1
+
     diagram_data = DiagramData()
     tables = set()
-
-    folder = Path(os.environ['PWD'])
-
     all_edges = set()
 
-    for file in folder.rglob('.query'):
-        folder = file.parent
+    for card in cards:
+        tables.add(card.metadata.table)
+        diagram_data.add(card)
 
-        query = query_from_yaml((folder / '.query').read_text(encoding='utf-8'))
-        rs_metadata: ResultSetMetadata = dataclass_from_dict(ResultSetMetadata, json.loads(
-            (folder / 'rs-metadata.json').read_text(encoding='utf-8')))
-        content = rows_from_jsonl((folder / 'content.jsonl').read_text(encoding='utf-8'))
-
-        tables.add(query.table)
-
-        card_data = CardData(
-            query.table,
-            rs_metadata.primaryKeys,
-            content
-        )
-
-        diagram_data.add(card_data)
-
-        for r in rs_metadata.relations:
+        for r in card.metadata.relations:
             all_edges.add((r.src, r.dst))
-
-    if len(tables) == 0:
-        return 1
 
     for src, dst in all_edges:
         src_table = src.qualifier
@@ -139,6 +123,24 @@ def main():
         sys.stdout.buffer.write(dot.pipe(format='svg'))
     else:
         print(dot.source)
+
+
+def read_cards(folder):
+    cards: list[CardData] = []
+    for file in folder.rglob('.query'):
+        folder = file.parent
+
+        rs_metadata: ResultSetMetadata = dataclass_from_dict(ResultSetMetadata, json.loads(
+            (folder / 'rs-metadata.json').read_text(encoding='utf-8')))
+        content = rows_from_jsonl((folder / 'content.jsonl').read_text(encoding='utf-8'))
+
+        cards.append(
+            CardData(
+                content,
+                rs_metadata
+            )
+        )
+    return cards
 
 
 if __name__ == '__main__':
