@@ -5,7 +5,7 @@ from typing import Any
 
 from graphviz import Digraph
 
-from datatools.ev.x.pg.rrd.model import CardData
+from datatools.ev.x.pg.rrd.card_data import CardData
 from datatools.json.coloring_hash import color_string, hash_code_to_rgb
 
 svg = bool(os.environ.get('SVG'))

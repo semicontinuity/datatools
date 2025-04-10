@@ -78,7 +78,7 @@ def dataclass_from_dict(klass, d, klass_map = None):
         return res
     except Exception:
 
-        print(traceback.format_exc())
+        # print(traceback.format_exc())
 
         # 'regular' case when d is not dataclass (code!)
         debug('dataclass_from_dict', regular=True, d=d)

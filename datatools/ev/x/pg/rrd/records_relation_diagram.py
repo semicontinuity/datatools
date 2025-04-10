@@ -2,7 +2,7 @@
 
 ######################################################################
 # Paints Record Relation Diagram.
-# Should be launched in 'tables' folder
+# Reads Cards spec in JSON format from STDIN.
 #
 # Environment vars:
 #
@@ -14,12 +14,10 @@ import json
 import os
 import sys
 from collections import defaultdict
-from pathlib import Path
 from typing import Hashable
 
-from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
 from datatools.ev.x.pg.db_entity_data import DbEntityData
-from datatools.ev.x.pg.rrd.model import CardData
+from datatools.ev.x.pg.rrd.card_data import CardData
 from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph
 from datatools.util.dataclasses import dataclass_from_dict
 
@@ -90,10 +88,7 @@ class DiagramData:
 
 
 def main():
-    folder = Path(os.environ['PWD'])
-    cards = read_cards(folder)
-    if not cards:
-        return 1
+    cards = [dataclass_from_dict(CardData, c) for c in json.load(sys.stdin)]
 
     diagram_data = make_diagram_data(cards)
 
@@ -118,28 +113,6 @@ def make_diagram_data(cards):
             diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
 
     return diagram_data
-
-
-def read_cards(folder):
-    cards: list[CardData] = []
-    for file in folder.rglob('rs-metadata.json'):
-        folder = file.parent
-
-        rs_metadata: ResultSetMetadata = dataclass_from_dict(ResultSetMetadata, json.loads(
-            (folder / 'rs-metadata.json').read_text(encoding='utf-8')))
-        content = rows_from_jsonl((folder / 'content.jsonl').read_text(encoding='utf-8'))
-
-        cards.append(
-            CardData(
-                content,
-                rs_metadata
-            )
-        )
-    return cards
-
-
-def rows_from_jsonl(s: str):
-    return [json.loads(row) for row in s.split('\n') if row != '']
 
 
 if __name__ == '__main__':
