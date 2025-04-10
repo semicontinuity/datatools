@@ -3,7 +3,7 @@ import sys
 
 from telethon import TelegramClient
 from telethon.tl.custom import Dialog
-from yndx.st.lib.llm.gradio import Gradio
+from yndx.llm import Gradio
 
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData

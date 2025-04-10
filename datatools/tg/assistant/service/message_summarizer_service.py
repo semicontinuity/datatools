@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
-from yndx.st.lib.llm.zeliboba import Zeliboba
+from yndx.llm.zeliboba import Zeliboba
 
 from datatools.tg.assistant.model.tg_message import TgMessage
 

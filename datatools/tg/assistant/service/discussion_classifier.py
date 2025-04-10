@@ -1,8 +1,7 @@
 import logging
 import re
-import sys
 
-from yndx.st.lib.llm import LargeLanguageModel
+from yndx.llm.api import LargeLanguageModel
 
 from datatools.tg.assistant.model.tg_message import TgMessage
 from datatools.tg.assistant.service.discussion_forest_flattener import flat_discussion_forest
