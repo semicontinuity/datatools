@@ -52,12 +52,9 @@ def make_diagram_data(cards):
 class DiagramData:
 
     def __init__(self) -> None:
-        self.table_to_pk_to_data: dict[dict[str, CardData]] = defaultdict(dict)
-        self.table_to_fks = defaultdict(set)
+        self.table_to_pk_value_to_card: dict[dict[str, CardData]] = defaultdict(dict)
+        self.table_fk_names = defaultdict(set)
         self.generic_edges = set()
-
-    def _record_id(self, table: str, key: Hashable):
-        return f'{table}__{hash(key)}'
 
     def add(self, card_data: CardData):
         if len(card_data.metadata.primaryKeys) != 1:
@@ -67,16 +64,16 @@ class DiagramData:
         row = card_data.rows[0]
         pk = card_data.metadata.primaryKeys[0]
 
-        self.table_to_pk_to_data[card_data.metadata.table][row[pk]] = card_data
+        self.table_to_pk_value_to_card[card_data.metadata.table][row[pk]] = card_data
 
     def add_generic_edge(self, src_table: str, src_column: str, dst_table: str, dst_column: str):
-        self.table_to_fks[src_table].add(src_column)
+        self.table_fk_names[src_table].add(src_column)
 
         if src_table == dst_table:
             return
-        if src_table not in self.table_to_pk_to_data:
+        if src_table not in self.table_to_pk_value_to_card:
             return
-        if dst_table not in self.table_to_pk_to_data:
+        if dst_table not in self.table_to_pk_value_to_card:
             return
 
         self.generic_edges.add((src_table, src_column, dst_table, dst_column))
@@ -84,20 +81,20 @@ class DiagramData:
     def make_dot(self):
         dot = make_graph()
 
-        for table, pk_to_data in self.table_to_pk_to_data.items():
-            for pk, card_data in pk_to_data.items():
-                record_pk = card_data.rows[0][card_data.metadata.primaryKeys[0]]
+        for table, pk_value_to_card in self.table_to_pk_value_to_card.items():
+            for pk_value, card_data in pk_value_to_card.items():
                 dot.subgraph(
                     make_subgraph(
+                        self._record_id(card_data.metadata.table, pk_value),
                         card_data,
-                        self._record_id(card_data.metadata.table, record_pk),
-                        self.table_to_fks[card_data.metadata.table],
+                        self.table_fk_names[card_data.metadata.table]
                     )
                 )
 
+        # match generic edges against cards
         for src_table, src_column, dst_table, dst_column in self.generic_edges:
-            src_table_records: dict[str, CardData] = self.table_to_pk_to_data[src_table]
-            dst_table_records: dict[str, CardData] = self.table_to_pk_to_data[dst_table]
+            src_table_records: dict[str, CardData] = self.table_to_pk_value_to_card[src_table]
+            dst_table_records: dict[str, CardData] = self.table_to_pk_value_to_card[dst_table]
 
             for src_key, card_data in src_table_records.items():
                 dst_key = card_data.rows[0][src_column]
@@ -109,6 +106,9 @@ class DiagramData:
                     dot.edge(f'{src_id}:{src_column}.{src_suffix}', f'{dst_id}')
 
         return dot
+
+    def _record_id(self, table: str, key: Hashable):
+        return f'{table}__{hash(key)}'
 
 
 if __name__ == '__main__':

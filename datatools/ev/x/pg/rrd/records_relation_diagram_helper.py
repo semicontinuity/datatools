@@ -18,7 +18,7 @@ def make_graph():
     return dot
 
 
-def make_subgraph(db_entity_data, subgraph_id: str, fks: set[str]):
+def make_subgraph(subgraph_id: str, d: CardData, fks: set[str]):
     t = Digraph(name=f'cluster_{subgraph_id}')
     t.attr(style='invis')
     t.node(
@@ -26,12 +26,12 @@ def make_subgraph(db_entity_data, subgraph_id: str, fks: set[str]):
         shape='none',
         fontname='Courier New',
         fontsize='10',
-        label=render_table_record_as_label1(db_entity_data, db_entity_data.rows[0], fks)
+        label=render_table_record_as_label(d, d.rows[0], fks)
     )
     return t
 
 
-def render_table_record_as_label1(d: CardData, row: dict[str, Any], fks: set[str]):
+def render_table_record_as_label(d: CardData, row: dict[str, Any], fks: set[str]):
     fg = 'black'
     bg = color_string(hash_code_to_rgb(hash(d.metadata.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
 
@@ -44,7 +44,13 @@ def render_table_record_as_label1(d: CardData, row: dict[str, Any], fks: set[str
 def render_table_cells(d: CardData, row: dict[str, Any], fks: set[str]):
     record_pk_value = d.rows[0][d.metadata.primaryKeys[0]]
     return "\n".join(
-        render_table_cell(k, v, is_pk_or_fk=(k in d.metadata.primaryKeys or k in fks), record_pk_value=record_pk_value, table=d.metadata.table)
+        render_table_cell(
+            k,
+            v,
+            is_pk_or_fk=(k in d.metadata.primaryKeys or k in fks),
+            record_pk_value=record_pk_value,
+            table=d.metadata.table
+        )
         for k, v in row.items()
         if should_render(v)
     )
