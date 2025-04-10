@@ -17,7 +17,8 @@ from collections import defaultdict
 from typing import Hashable
 
 from datatools.ev.x.pg.rrd.card_data import CardData
-from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph
+from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph, \
+    render_table_record_as_label
 from datatools.util.dataclasses import dataclass_from_dict
 
 
@@ -86,9 +87,12 @@ class DiagramData:
                 dot.subgraph(
                     make_subgraph(
                         self._record_id(card_data.metadata.table, pk_value),
-                        card_data.rows[0],
-                        card_data.metadata,
-                        self.table_fk_names[card_data.metadata.table]
+                        label=render_table_record_as_label(
+                            card_data.rows[0],
+                            table_name=card_data.metadata.table,
+                            pk_names=card_data.metadata.primaryKeys,
+                            fk_names=self.table_fk_names[card_data.metadata.table]
+                        )
                     )
                 )
 
@@ -97,12 +101,12 @@ class DiagramData:
             src_table_records: dict[str, CardData] = self.table_to_pk_value_to_card[src_table]
             dst_table_records: dict[str, CardData] = self.table_to_pk_value_to_card[dst_table]
 
-            for src_key, card_data in src_table_records.items():
-                dst_key = card_data.rows[0][src_column]
-                # dst_key must be PK of dst_table
-                if dst_key in dst_table_records and dst_table_records[dst_key].rows[0][dst_column] == dst_key:
-                    src_id = self._record_id(src_table, src_key)
-                    dst_id = self._record_id(dst_table, dst_key)
+            for src_fk_value, card_data in src_table_records.items():
+                dst_pk_value = card_data.rows[0][src_column]
+                # dst_pk_value must be PK of dst_table
+                if dst_pk_value in dst_table_records and dst_table_records[dst_pk_value].rows[0][dst_column] == dst_pk_value:
+                    src_id = self._record_id(src_table, src_fk_value)
+                    dst_id = self._record_id(dst_table, dst_pk_value)
                     src_suffix = 'l:w' if os.environ.get('RANKDIR') == 'RL' else 'r:e'
                     dot.edge(f'{src_id}:{src_column}.{src_suffix}', f'{dst_id}')
 

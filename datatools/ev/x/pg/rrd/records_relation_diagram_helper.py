@@ -17,7 +17,7 @@ def make_graph():
     return dot
 
 
-def make_subgraph(subgraph_id: str, row, metadata, fk_names: set[str]):
+def make_subgraph(subgraph_id: str, label: str):
     t = Digraph(name=f'cluster_{subgraph_id}')
     t.attr(style='invis')
     t.node(
@@ -25,26 +25,19 @@ def make_subgraph(subgraph_id: str, row, metadata, fk_names: set[str]):
         shape='none',
         fontname='Courier New',
         fontsize='10',
-        label=render_table_record_as_label(
-            row,
-            metadata=metadata,
-            fk_names=fk_names,
-            record_pk_value=row[metadata.primaryKeys[0]],
-        )
+        label=label
     )
     return t
 
 
-def render_table_record_as_label(
-        row: dict[str, Any], metadata: ResultSetMetadata, fk_names: set[str], record_pk_value,
-):
+def render_table_record_as_label(row: dict[str, Any], table_name: str, pk_names: list[str], fk_names: set[str]):
     return f'''<<table cellspacing='0' cellpadding='1,0' border='1' color='gray'>
 {render_table_header(
-        metadata.table,
+        table_name,
         fg='black',
         bg=color_string(
             hash_code_to_rgb(
-                hash(metadata.table),
+                hash(table_name),
                 dark=not svg,
                 light_offset=0xC0,
                 dark_offset=0x40
@@ -53,9 +46,9 @@ def render_table_record_as_label(
     )}
 {render_table_cells(
         row,
-        metadata.primaryKeys,
+        pk_names,
         fk_names,
-        keys_bg=string_color(record_pk_value)
+        keys_bg=string_color(row[pk_names[0]])
     )}
 </table>>'''
 
