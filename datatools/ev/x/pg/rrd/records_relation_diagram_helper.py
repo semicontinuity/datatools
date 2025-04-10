@@ -49,8 +49,14 @@ def render_table_record_as_label(
                 light_offset=0xC0,
                 dark_offset=0x40
             )
-        ))}
-{render_table_cells(row, metadata.primaryKeys, fk_names, record_pk_value)}
+        )
+    )}
+{render_table_cells(
+        row,
+        metadata.primaryKeys,
+        fk_names,
+        keys_bg=string_color(record_pk_value)
+    )}
 </table>>'''
 
 
@@ -58,20 +64,20 @@ def render_table_header(table: str, fg: str, bg: str):
     return f'''<tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{table}</font></b></td></tr>'''
 
 
-def render_table_cells(row: dict[str, Any], pk_names: list[str], fk_names: set[str], record_pk_value):
+def render_table_cells(row: dict[str, Any], pk_names: list[str], fk_names: set[str], keys_bg: str):
     return "\n".join(
         render_table_cell(
             k,
             v,
             is_pk_or_fk=(k in pk_names or k in fk_names),
-            record_pk_value=record_pk_value
+            keys_bg=keys_bg,
         )
         for k, v in row.items()
         if should_render(v)
     )
 
 
-def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: Any):
+def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, keys_bg: str):
     is_pk_or_fk = is_pk_or_fk or (type(value) is str and is_valid_uuid(value))
 
     key_u1 = '<u>' if is_pk_or_fk else ''
@@ -87,16 +93,19 @@ def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: 
     # should highlight if there is an edge, starting from this cell.. or no? same colors help to correlate.
     # highlight, if more than 1 occurrence?
     highlight = is_pk_or_fk and value is not None
-    highlight_bg = f"{color_string(hash_code_to_rgb(hash(value if highlight else record_pk_value), dark=not svg))}"
-    key_bg = f"{color_string(hash_code_to_rgb(hash(record_pk_value), dark=not svg))}"
-    val_bg = highlight_bg if highlight else ("#F8F8F8" if svg else "#101010")
+    values_bg = string_color(value)
+    val_bg = values_bg if highlight else ("#F8F8F8" if svg else "#101010")
 
     return f'''
 <tr>
-<td valign='bottom' align='left' port='{key}.l' border='1' sides='R' bgcolor='{key_bg}'>{key_u1}<b>{key}</b>{key_u2}</td>
+<td valign='bottom' align='left' port='{key}.l' border='1' sides='R' bgcolor='{keys_bg}'>{key_u1}<b>{key}</b>{key_u2}</td>
 <td valign='bottom' align='left' port='{key}.r' border='0'           bgcolor='{val_bg}'>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
 </tr>
 '''
+
+
+def string_color(value):
+    return color_string(hash_code_to_rgb(hash(value), dark=not svg))
 
 
 def render_value(v: Any):
