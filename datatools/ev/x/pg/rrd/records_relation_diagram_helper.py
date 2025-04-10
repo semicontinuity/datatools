@@ -5,7 +5,7 @@ from typing import Any
 
 from graphviz import Digraph
 
-from datatools.ev.x.pg.rrd.card_data import CardData
+from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
 from datatools.json.coloring_hash import color_string, hash_code_to_rgb
 
 svg = bool(os.environ.get('SVG'))
@@ -13,12 +13,11 @@ svg = bool(os.environ.get('SVG'))
 
 def make_graph():
     dot = Digraph('DatabaseRecords', format='png')
-    rankdir = os.environ.get('RANKDIR') or 'LR'
-    dot.attr(rankdir=rankdir)
+    dot.attr(rankdir=(os.environ.get('RANKDIR') or 'LR'))
     return dot
 
 
-def make_subgraph(subgraph_id: str, d: CardData, fks: set[str]):
+def make_subgraph(subgraph_id: str, row, metadata, fk_names: set[str]):
     t = Digraph(name=f'cluster_{subgraph_id}')
     t.attr(style='invis')
     t.node(
@@ -26,37 +25,50 @@ def make_subgraph(subgraph_id: str, d: CardData, fks: set[str]):
         shape='none',
         fontname='Courier New',
         fontsize='10',
-        label=render_table_record_as_label(d, d.rows[0], fks)
+        label=render_table_record_as_label(
+            row,
+            metadata=metadata,
+            fk_names=fk_names,
+            record_pk_value=row[metadata.primaryKeys[0]],
+            bg=color_string(
+                hash_code_to_rgb(
+                    hash(metadata.table),
+                    dark=not svg,
+                    light_offset=0xC0,
+                    dark_offset=0x40
+                )
+            )
+        )
     )
     return t
 
 
-def render_table_record_as_label(d: CardData, row: dict[str, Any], fks: set[str]):
+def render_table_record_as_label(
+        row: dict[str, Any], metadata: ResultSetMetadata, fk_names: set[str], record_pk_value, bg: str
+):
+
     fg = 'black'
-    bg = color_string(hash_code_to_rgb(hash(d.metadata.table), dark=not svg, light_offset=0xC0, dark_offset=0x40))
 
     return f'''<<table cellspacing='0' cellpadding='1,0' border='1' color='gray'>
-    <tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{d.metadata.table}</font></b></td></tr>
-    {render_table_cells(d, row, fks)}
+<tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{metadata.table}</font></b></td></tr>
+{render_table_cells(row, metadata.primaryKeys, fk_names, record_pk_value)}
 </table>>'''
 
 
-def render_table_cells(d: CardData, row: dict[str, Any], fks: set[str]):
-    record_pk_value = d.rows[0][d.metadata.primaryKeys[0]]
+def render_table_cells(row: dict[str, Any], pk_names: list[str], fk_names: set[str], record_pk_value):
     return "\n".join(
         render_table_cell(
             k,
             v,
-            is_pk_or_fk=(k in d.metadata.primaryKeys or k in fks),
-            record_pk_value=record_pk_value,
-            table=d.metadata.table
+            is_pk_or_fk=(k in pk_names or k in fk_names),
+            record_pk_value=record_pk_value
         )
         for k, v in row.items()
         if should_render(v)
     )
 
 
-def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: Any, table: str):
+def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: Any):
     is_pk_or_fk = is_pk_or_fk or (type(value) is str and is_valid_uuid(value))
 
     key_u1 = '<u>' if is_pk_or_fk else ''

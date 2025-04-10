@@ -86,7 +86,8 @@ class DiagramData:
                 dot.subgraph(
                     make_subgraph(
                         self._record_id(card_data.metadata.table, pk_value),
-                        card_data,
+                        card_data.rows[0],
+                        card_data.metadata,
                         self.table_fk_names[card_data.metadata.table]
                     )
                 )
