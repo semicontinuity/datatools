@@ -61,11 +61,11 @@ def add_ok_cancel_buttons(d):
     off1 = (hw + 1) // 2 - 4
     off2 = (d.w - hw) + hw // 2 - 4
     b = WButton(8, "OK")
-    d.add(off1, d.h - 1, b)
+    d.add_card(off1, d.h - 1, b)
     b.finish_dialog = ACTION_OK
 
     b = WButton(8, "Cancel")
-    d.add(off2, d.h - 1, b)
+    d.add_card(off2, d.h - 1, b)
     b.finish_dialog = ACTION_CANCEL
 
 

@@ -1,19 +1,46 @@
 import datetime
 import os
 import re
+from dataclasses import astuple
 from typing import Any
 
 from graphviz import Digraph
 
-from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
+from datatools.ev.x.pg.rrd.graph_data import GraphData
 from datatools.json.coloring_hash import color_string, hash_code_to_rgb
 
 svg = bool(os.environ.get('SVG'))
+RANKDIR = os.environ.get('RANKDIR')
+
+
+def make_dot(g: GraphData):
+    dot = make_graph()
+
+    for node_id, card_data in g.nodes.items():
+        dot.subgraph(
+            make_subgraph_with_node(
+                node_id,
+                node_label=render_table_record_as_label(
+                    row=card_data.rows[0],
+                    table_name=card_data.metadata.table,
+                    pk_names=card_data.metadata.primaryKeys,
+                    fk_names=card_data.metadata.fk_names(),
+                )
+            )
+        )
+
+    for src, dst in g.edges:
+        src_id, src_column = astuple(src)
+        dst_id, dst_column = astuple(dst)
+        src_suffix = 'l:w' if RANKDIR == 'RL' else 'r:e'
+        dot.edge(f'{src_id}:{src_column}.{src_suffix}', f'{dst_id}')
+
+    return dot
 
 
 def make_graph():
     dot = Digraph('DatabaseRecords', format='png')
-    dot.attr(rankdir=(os.environ.get('RANKDIR') or 'LR'))
+    dot.attr(rankdir=(RANKDIR or 'LR'))
     return dot
 
 
