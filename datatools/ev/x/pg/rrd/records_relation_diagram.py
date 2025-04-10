@@ -16,10 +16,37 @@ import sys
 from collections import defaultdict
 from typing import Hashable
 
-from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.rrd.card_data import CardData
 from datatools.ev.x.pg.rrd.records_relation_diagram_helper import make_graph, make_subgraph
 from datatools.util.dataclasses import dataclass_from_dict
+
+
+def main():
+    cards = [dataclass_from_dict(CardData, c) for c in json.load(sys.stdin)]
+
+    diagram_data = make_diagram_data(cards)
+
+    dot = diagram_data.make_dot()
+    if os.environ.get('SVG'):
+        sys.stdout.buffer.write(dot.pipe(format='svg'))
+    else:
+        print(dot.source)
+
+
+def make_diagram_data(cards):
+    diagram_data = DiagramData()
+
+    for card in cards:
+        diagram_data.add(card)
+
+        for r in card.metadata.relations:
+            src_table = r.src.qualifier
+            src_column = r.src.name
+            dst_table = r.dst.qualifier
+            dst_column = r.dst.name
+            diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
+
+    return diagram_data
 
 
 class DiagramData:
@@ -58,61 +85,30 @@ class DiagramData:
         dot = make_graph()
 
         for table, pk_to_data in self.table_to_pk_to_data.items():
-            for pk, db_entity_data in pk_to_data.items():
-                record_pk = db_entity_data.rows[0][db_entity_data.metadata.primaryKeys[0]]
+            for pk, card_data in pk_to_data.items():
+                record_pk = card_data.rows[0][card_data.metadata.primaryKeys[0]]
                 dot.subgraph(
                     make_subgraph(
-                        db_entity_data,
-                        self._record_id(db_entity_data.metadata.table, record_pk),
-                        self.table_to_fks[db_entity_data.metadata.table],
+                        card_data,
+                        self._record_id(card_data.metadata.table, record_pk),
+                        self.table_to_fks[card_data.metadata.table],
                     )
                 )
 
         for src_table, src_column, dst_table, dst_column in self.generic_edges:
-            src_table_records: dict[str, DbEntityData] = self.table_to_pk_to_data[src_table]
-            dst_table_records: dict[str, DbEntityData] = self.table_to_pk_to_data[dst_table]
+            src_table_records: dict[str, CardData] = self.table_to_pk_to_data[src_table]
+            dst_table_records: dict[str, CardData] = self.table_to_pk_to_data[dst_table]
 
-            for src_key, db_entity_data in src_table_records.items():
-                dst_key = db_entity_data.rows[0][src_column]
+            for src_key, card_data in src_table_records.items():
+                dst_key = card_data.rows[0][src_column]
                 # dst_key must be PK of dst_table
                 if dst_key in dst_table_records and dst_table_records[dst_key].rows[0][dst_column] == dst_key:
                     src_id = self._record_id(src_table, src_key)
                     dst_id = self._record_id(dst_table, dst_key)
-
-                    if os.environ.get('RANKDIR') == 'RL':
-                        dot.edge(f'{src_id}:{src_column}.l:w', f'{dst_id}')
-                    else:
-                        dot.edge(f'{src_id}:{src_column}.r:e', f'{dst_id}')
+                    src_suffix = 'l:w' if os.environ.get('RANKDIR') == 'RL' else 'r:e'
+                    dot.edge(f'{src_id}:{src_column}.{src_suffix}', f'{dst_id}')
 
         return dot
-
-
-def main():
-    cards = [dataclass_from_dict(CardData, c) for c in json.load(sys.stdin)]
-
-    diagram_data = make_diagram_data(cards)
-
-    dot = diagram_data.make_dot()
-    if os.environ.get('SVG'):
-        sys.stdout.buffer.write(dot.pipe(format='svg'))
-    else:
-        print(dot.source)
-
-
-def make_diagram_data(cards):
-    diagram_data = DiagramData()
-
-    for card in cards:
-        diagram_data.add(card)
-
-        for r in card.metadata.relations:
-            src_table = r.src.qualifier
-            src_column = r.src.name
-            dst_table = r.dst.qualifier
-            dst_column = r.dst.name
-            diagram_data.add_generic_edge(src_table, src_column, dst_table, dst_column)
-
-    return diagram_data
 
 
 if __name__ == '__main__':
