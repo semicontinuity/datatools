@@ -8,7 +8,9 @@ from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.helper import get_required_prop
 from datatools.dbview.x.util.pg_inferred_query import inferred_query
 from datatools.dbview.x.util.pg_query import query_to_string, query_from_yaml
-from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata, Relation, QualifiedName
+from datatools.dbview.x.util.result_set_metadata import ResultSetMetadata
+from datatools.dbview.x.util.relation import Relation
+from datatools.dbview.x.util.qualified_name import QualifiedName
 from datatools.util.logging import debug
 
 

@@ -1,17 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-
-@dataclass(frozen=True)
-class QualifiedName:
-    qualifier: str
-    name: str
-
-
-@dataclass
-class Relation:
-    src: QualifiedName
-    dst: QualifiedName
+from datatools.dbview.x.util.relation import Relation
 
 
 @dataclass

@@ -17,7 +17,7 @@ def make_graph():
     return dot
 
 
-def make_subgraph(subgraph_id: str, label: str):
+def make_subgraph_with_node(subgraph_id: str, node_label: str):
     t = Digraph(name=f'cluster_{subgraph_id}')
     t.attr(style='invis')
     t.node(
@@ -25,7 +25,7 @@ def make_subgraph(subgraph_id: str, label: str):
         shape='none',
         fontname='Courier New',
         fontsize='10',
-        label=label
+        label=node_label
     )
     return t
 
