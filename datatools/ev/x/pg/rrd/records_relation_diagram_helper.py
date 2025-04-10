@@ -30,29 +30,32 @@ def make_subgraph(subgraph_id: str, row, metadata, fk_names: set[str]):
             metadata=metadata,
             fk_names=fk_names,
             record_pk_value=row[metadata.primaryKeys[0]],
-            bg=color_string(
-                hash_code_to_rgb(
-                    hash(metadata.table),
-                    dark=not svg,
-                    light_offset=0xC0,
-                    dark_offset=0x40
-                )
-            )
         )
     )
     return t
 
 
 def render_table_record_as_label(
-        row: dict[str, Any], metadata: ResultSetMetadata, fk_names: set[str], record_pk_value, bg: str
+        row: dict[str, Any], metadata: ResultSetMetadata, fk_names: set[str], record_pk_value,
 ):
-
-    fg = 'black'
-
     return f'''<<table cellspacing='0' cellpadding='1,0' border='1' color='gray'>
-<tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{metadata.table}</font></b></td></tr>
+{render_table_header(
+        metadata.table,
+        fg='black',
+        bg=color_string(
+            hash_code_to_rgb(
+                hash(metadata.table),
+                dark=not svg,
+                light_offset=0xC0,
+                dark_offset=0x40
+            )
+        ))}
 {render_table_cells(row, metadata.primaryKeys, fk_names, record_pk_value)}
 </table>>'''
+
+
+def render_table_header(table: str, fg: str, bg: str):
+    return f'''<tr><td align='left' colspan='2' border='1' sides='B' bgcolor='{bg}'><b><font color='{fg}'>{table}</font></b></td></tr>'''
 
 
 def render_table_cells(row: dict[str, Any], pk_names: list[str], fk_names: set[str], record_pk_value):
@@ -81,20 +84,17 @@ def render_table_cell(key: str, value: Any, is_pk_or_fk: bool, record_pk_value: 
         val_u1 = key_u1
         val_u2 = key_u2
 
-    # bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value), dark=not svg))}'" if value is not None and is_pk_or_fk else ''
-
     # should highlight if there is an edge, starting from this cell.. or no? same colors help to correlate.
     # highlight, if more than 1 occurrence?
     highlight = is_pk_or_fk and value is not None
-    highlight_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value if highlight else record_pk_value), dark=not svg))}'"
-    # key_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(value if highlight else record_pk_value), dark=not svg))}'"
-    key_bg = f"bgcolor='{color_string(hash_code_to_rgb(hash(record_pk_value), dark=not svg))}'"
-    val_bg = highlight_bg if highlight else ("bgcolor='#F8F8F8'" if svg else "bgcolor='#101010'")
+    highlight_bg = f"{color_string(hash_code_to_rgb(hash(value if highlight else record_pk_value), dark=not svg))}"
+    key_bg = f"{color_string(hash_code_to_rgb(hash(record_pk_value), dark=not svg))}"
+    val_bg = highlight_bg if highlight else ("#F8F8F8" if svg else "#101010")
 
     return f'''
 <tr>
-<td valign='bottom' align='left' port='{key}.l' border='1' sides='R' {key_bg}>{key_u1}<b>{key}</b>{key_u2}</td>
-<td valign='bottom' align='left' port='{key}.r' border='0'           {val_bg}>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
+<td valign='bottom' align='left' port='{key}.l' border='1' sides='R' bgcolor='{key_bg}'>{key_u1}<b>{key}</b>{key_u2}</td>
+<td valign='bottom' align='left' port='{key}.r' border='0'           bgcolor='{val_bg}'>{val_u1}<b>{render_value(value)}</b>{val_u2}</td>
 </tr>
 '''
 
