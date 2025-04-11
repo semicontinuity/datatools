@@ -25,7 +25,7 @@ def main():
 
     diagram_data = make_diagram_data(cards)
 
-    dot = make_dot(diagram_data.to_graph_data())
+    dot = make_dot(diagram_data.to_graph_data().with_reduced_edges())
     if os.environ.get('SVG'):
         sys.stdout.buffer.write(dot.pipe(format='svg'))
     else:
