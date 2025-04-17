@@ -1,6 +1,8 @@
 from typing import Dict, Any
 from typing import Tuple, List
 
+from x.util.pg import get_table_fields_sql
+
 from datatools.dbview.util.pg import execute_sql, describe_table, get_table_pks
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 from datatools.dbview.x.util.db_query import DbQuery
@@ -9,12 +11,12 @@ from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.ev.app_types import EntityReference, View, Realm
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.pg_data_source import PgDataSource
-from datatools.ev.x.pg.types import DbRowReference, DbRowsReference, DbReferrers
+from datatools.ev.x.pg.types import DbRowReference, DbRowsReference, DbReferrers, DbReferringTables
 from datatools.ev.x.pg.view_db_referrers import ViewDbReferrers
+from datatools.ev.x.pg.view_db_referring_tables import ViewDbReferringTables
 from datatools.ev.x.pg.view_db_rows_auto import ViewDbRowsAuto
 from datatools.json.util import to_jsonisable
 from datatools.util.logging import debug
-from x.util.pg import get_table_fields_sql
 
 
 class RealmPg(Realm):
@@ -44,7 +46,9 @@ class RealmPg(Realm):
         elif isinstance(e_ref, DbRowReference):
             return ViewDbRowsAuto(self, e_ref.selector, e_ref.query)
         elif isinstance(e_ref, DbReferrers):
-            return ViewDbReferrers(self, e_ref.selector)
+            return ViewDbReferrers(self, e_ref.selector, e_ref.query)
+        elif isinstance(e_ref, DbReferringTables):
+            return ViewDbReferringTables(self, e_ref.selector, e_ref.query)
 
     def get_selector_value(self, conn, inbound_relation, table, where):
         this_column = inbound_relation['foreign_column_name']

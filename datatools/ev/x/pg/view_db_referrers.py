@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import List, Optional, Dict
 
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
+from datatools.dbview.x.util.db_query import DbQuery
 from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
@@ -15,17 +16,17 @@ from datatools.util.logging import debug
 
 class ViewDbReferrers(View):
     selector: DbTableRowsSelector
+    query: DbQuery
     doc: JDocument
 
-    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector):
+    def __init__(self, realm: 'RealmPg', selector: DbTableRowsSelector, query: DbQuery):
         self.realm = realm
         self.selector = selector
+        self.query = query
 
     # @override
     def build(self):
         with self.realm.connect_to_db() as conn:
-            self.references = self.realm.make_references(conn, self.selector.table)
-            self.table_pks = get_table_pks(conn, self.selector.table)
             self.doc = make_document(
                 self.make_inbound_references_models(conn),
                 'referrers of ' + self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])

@@ -5,7 +5,7 @@ from datatools.ev.app_types import EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.types import DbReferrers, \
-    DbTableRowsSelector
+    DbTableRowsSelector, DbReferringTables
 from datatools.ev.x.pg.view_db import ViewDb
 from datatools.ev.x.pg.view_db_row_grid import ViewDbRowGrid
 from datatools.jv.app import do_loop, make_document_for_model, make_tree_grid
@@ -13,7 +13,7 @@ from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
-from picotui.defs import KEY_F1
+from picotui.defs import KEY_F1, KEY_F2
 
 
 class ViewDbRow(ViewDb):
@@ -56,6 +56,9 @@ class ViewDbRow(ViewDb):
     def handle_loop_result(self, document, loop_result, cur_line: int) -> Optional[EntityReference]:
         if loop_result == KEY_F1:
             # TODO
-            return DbReferrers(realm_name=self.realm.name, selector=self.selector)
+            return DbReferrers(realm_name=self.realm.name, selector=self.selector, query=self.query)
+        elif loop_result == KEY_F2:
+            # TODO
+            return DbReferringTables(realm_name=self.realm.name, selector=self.selector, query=self.query)
         else:
             return loop_result

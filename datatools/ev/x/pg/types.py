@@ -39,9 +39,10 @@ class DbRowReference(EntityReference):
 @dataclass(kw_only=True)
 class DbReferrers(EntityReference):
     selector: DbTableRowsSelector
+    query: DbQuery = None
 
 
 @dataclass(kw_only=True)
-class DbReferringRows(EntityReference):
-    source: DbTableColumn
-    target: DbTableRowsSelector
+class DbReferringTables(EntityReference):
+    selector: DbTableRowsSelector
+    query: DbQuery = None
