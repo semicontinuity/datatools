@@ -57,7 +57,7 @@ def get_where_clauses_from_props(p) -> List[Tuple[str, str, str]]:
 
 
 def get_where_clauses0(table_path: str, rest: str) -> List[Tuple[str, str, str]]:
-    parts = rest.split('/') if rest != '' else []
+    parts = rest.split('/') if rest else []
 
     i = 0
     clauses = []

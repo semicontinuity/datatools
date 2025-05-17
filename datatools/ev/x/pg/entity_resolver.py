@@ -8,7 +8,7 @@ from datatools.dbview.x.util.helper import get_required_prop
 from datatools.dbview.x.util.pg import get_where_clauses_from_props, get_where_clauses0
 from datatools.dbview.x.util.pg_inferred_query import inferred_query, get_where_clauses1, inferred_query_from
 from datatools.ev.app_types import EntityReference
-from datatools.ev.x.db.selector_resolver import table_and_the_rest
+from datatools.ev.x.db.selector_resolver import split_to_two_parts
 from datatools.ev.x.pg.pg_data_source import PgDataSource
 from datatools.ev.x.pg.realm_pg import RealmPg
 from datatools.ev.x.pg.types import DbTableRowsSelector, DbSelectorClause, DbRowsReference, DbRowReference
@@ -26,7 +26,7 @@ def resolve_pg_entity(realm: RealmPg, base_path: str, rest: str) -> EntityRefere
     else:
         q = inferred_query_from(props, base_path, rest)
 
-    table, the_rest = table_and_the_rest(rest)
+    table, the_rest = split_to_two_parts(rest, '/')
     where_clauses = get_where_clauses0(base_path + '/' + table, the_rest)
 
     clauses = get_where_clauses1(base_path, rest)

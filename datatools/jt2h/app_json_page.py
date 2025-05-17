@@ -30,6 +30,9 @@ SPAN_CSS = '''
 span {
     font-family: monospace; 
 }
+pre {
+    margin: 0;
+}
 '''
 
 MD_CSS = '''

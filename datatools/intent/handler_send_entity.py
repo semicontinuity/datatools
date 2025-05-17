@@ -15,16 +15,14 @@ class HandlerSendEntity:
         entity_realm_path = make_entity_realm_path(q)
 
         ctx_dir = realm_ctx_dir.removesuffix('/' + realm_ctx)
-        created_realm_folder = f"{self.folder}/{realm_ctx}"
-
-        entity_path = f"{created_realm_folder}/{entity_realm_path}"
-        chain = Path(realm_ctx) / entity_realm_path
+        target_ctx = f"{realm_ctx}/{entity_realm_path}"
 
         # create as much as possible...
         create_ctx_reference_chain(
-            ctx=chain, referring_path=Path(self.folder), referenced_path=Path(ctx_dir)
+            ctx=Path(target_ctx), referring_path=Path(self.folder), referenced_path=Path(ctx_dir)
         )
 
+        entity_path = f"{self.folder}/{target_ctx}"
         os.makedirs(entity_path, exist_ok=True)
 
         write_entity_parts_b(Path(entity_path), query, content, rs_metadata)
