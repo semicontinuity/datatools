@@ -3,7 +3,7 @@ from typing import Dict, List
 from datatools.json.coloring import ColumnAttrs
 from datatools.json.coloring_hash import hash_to_rgb, hash_code, color_string
 from datatools.jt2h.column_renderer import ColumnRenderer
-from util.html.elements import td, span, pre
+from datatools.util.html.elements import td, span, pre
 
 
 class ColumnRendererColored(ColumnRenderer):

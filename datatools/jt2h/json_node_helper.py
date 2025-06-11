@@ -4,7 +4,7 @@ import mmh3
 
 from datatools.json.coloring_hash import color_string, hash_to_rgb
 from datatools.json.util import escape, basic_escape, simple_escape
-from util.html.elements import span, pre
+from datatools.util.html.elements import span, pre
 
 
 def primitive_node(v, for_json: bool):

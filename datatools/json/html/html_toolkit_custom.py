@@ -4,7 +4,6 @@ from string import ascii_lowercase, digits
 from typing import Optional, Dict, Any
 
 from datatools.json.util import is_primitive
-from util.html.elements import *
 
 
 class CustomHtmlToolkit:

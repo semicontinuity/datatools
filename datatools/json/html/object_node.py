@@ -1,6 +1,3 @@
-from util.html.elements import *
-
-
 class ObjectNode:
     def __init__(self, j, descriptor, vertical, tk):
         self.tk = tk

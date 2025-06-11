@@ -3,7 +3,7 @@ from typing import Hashable, Optional
 from datatools.jt2h.json_node_delegate import JsonNodeDelegate
 
 from datatools.jt2h.json_node_helper import style_for_indent, primitive_node
-from util.html.elements import span, div
+from datatools.util.html.elements import span, div
 
 
 class JsonNodeDelegateJson(JsonNodeDelegate):

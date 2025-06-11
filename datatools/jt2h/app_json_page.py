@@ -6,9 +6,9 @@ from datatools.jt2h.json_node import JsonNode
 from datatools.jt2h.json_node_delegate_yaml2 import JsonNodeDelegateYaml2
 from datatools.jt2h.json_node_delegate_yaml2_css import JSON_NODE_DELEGATE_YAML_CSS
 from datatools.jt2h.json_node_helper_css import JSON_NODE_HELPER_CSS
-from util.html.elements import html, body, head, style, title as _title, article
-from util.html.md_html_node import MdHtmlNode
-from util.html.page_node import PageNode
+from datatools.util.html.elements import html, body, head, style, title as _title, article
+from datatools.util.html.md_html_node import MdHtmlNode
+from datatools.util.html.page_node import PageNode
 
 PAGE_CSS_X_LARGE = '''
 body {

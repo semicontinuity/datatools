@@ -1,6 +1,3 @@
-from util.html.elements import *
-
-
 class ObjectNode:
     def __init__(self, j, vertical, parent, in_array_of_nestable_obj: bool, old_tk, tk):
         self.tk = tk

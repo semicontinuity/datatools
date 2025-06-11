@@ -2,7 +2,7 @@ from typing import Hashable, Optional
 
 from datatools.jt2h.json_node_delegate import JsonNodeDelegate
 from datatools.jt2h.json_node_helper import style_for_indent, primitive_node
-from util.html.elements import div, span
+from datatools.util.html.elements import div, span
 
 
 class JsonNodeDelegateYaml2(JsonNodeDelegate):

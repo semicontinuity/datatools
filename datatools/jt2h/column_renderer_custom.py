@@ -1,7 +1,7 @@
 from typing import Dict, Callable
 
 from datatools.jt2h.column_renderer import ColumnRenderer
-from util.html.elements import td
+from datatools.util.html.elements import td
 
 
 class ColumnRendererCustom(ColumnRenderer):

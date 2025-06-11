@@ -1,7 +1,6 @@
 from typing import Optional, Any
 
 from datatools.json.util import is_primitive
-from util.html.elements import *
 
 
 class ListNode:

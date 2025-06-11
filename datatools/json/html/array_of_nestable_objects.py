@@ -8,7 +8,6 @@ from datatools.json.coloring_hash import hash_to_rgb, hash_code
 from datatools.json.html.object_node_old import ObjectNode
 from datatools.json.structure_analyzer import *
 from datatools.util.logging import debug
-from util.html.elements import *
 
 verbose = False
 

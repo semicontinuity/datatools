@@ -1,4 +1,4 @@
-from util.html.element import Element
+from datatools.util.html.element import Element
 
 
 def html(*contents, **attrs):

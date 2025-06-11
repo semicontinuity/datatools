@@ -3,7 +3,7 @@ from typing import Dict, List
 from datatools.jt2h.column_renderer import ColumnRenderer
 from datatools.jt2h.json_node import JsonNode
 from datatools.jt2h.json_node_delegate_yaml2 import JsonNodeDelegateYaml2
-from util.html.elements import table, td, tr, thead, tbody, th, span
+from datatools.util.html.elements import table, td, tr, thead, tbody, th, span
 
 
 class LogNode:

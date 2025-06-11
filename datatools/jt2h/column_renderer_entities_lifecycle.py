@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Callable, Tuple
 
 from datatools.jt2h.column_renderer import ColumnRenderer
-from util.html.elements import td, span
+from datatools.util.html.elements import td, span
 
 
 class ColumnRendererEntitiesLifecycle(ColumnRenderer):

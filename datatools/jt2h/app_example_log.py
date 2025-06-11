@@ -6,7 +6,7 @@ from datatools.jt2h.ats_channels import channel_deleted, channel_created, channe
 from datatools.jt2h.column_renderer_colored import ColumnRendererColored
 from datatools.jt2h.column_renderer_custom import ColumnRendererCustom
 from datatools.jt2h.column_renderer_entities_lifecycle import ColumnRendererEntitiesLifecycle
-from util.html.elements import span
+from datatools.util.html.elements import span
 
 
 def main():
