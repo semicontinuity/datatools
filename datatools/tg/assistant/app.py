@@ -117,7 +117,7 @@ async def main():
     telethon_session_slug = os.environ['TELETHON_SESSION_SLUG']
     folder = to_cache_folder(telethon_session_slug)
 
-    since = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
+    since = (datetime.today() - timedelta(days=7)).strftime('%Y-%m-%d')
     print(f'Will load discussions since {since}', file=sys.stderr)
 
     async with await new_telegram_client(telethon_session_slug) as client:

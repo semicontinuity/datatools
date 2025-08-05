@@ -143,19 +143,24 @@ def infer_mounts(e):
             return {
                 'te-testing/deploy/infra/pg/yacalls/notification_service_test/tables': ('db_notification_service', realm_pg),
                 'te-testing/deploy/infra/pg/yacalls/calls_test/tables': ('db_calls', realm_pg),
-                'te-testing/deploy/infra/ch/yacalls-cdr-test/cdr/tables': ('ch_cdr', realm_ch)
+                'te-testing/deploy/infra/ch/yacalls-cdr-test/cdr/tables': ('ch_cdr', realm_ch),
+                'te-testing/deploy/infra/pg/telephony-platform/telephony_platform/tables': ('db_tp', realm_pg),
             }
         case 'te-preprod':
             return {
                 'te-preprod/deploy/infra/pg/yacalls/notification_service_preprod/tables': ('db_notification_service', realm_pg),
                 'te-preprod/deploy/infra/pg/yacalls/calls_preprod/tables': ('db_calls', realm_pg),
-                'te-preprod/deploy/infra/ch/yacalls-cdr-preprod/cdr/tables': ('ch_cdr', realm_ch)
+                'te-preprod/deploy/infra/ch/yacalls-cdr-preprod/cdr/tables': ('ch_cdr', realm_ch),
+                'te-preprod/deploy/infra/pg/telephony-platform/telephony_platform/tables': ('db_tp', realm_pg),
+                'te-preprod/deploy/infra/ch/platform-cdr-preprod/cdr-platform-preprod/tables': ('ch_tp_cdr', realm_ch)
             }
         case 'te-prod':
             return {
                 'te-prod/deploy/infra/pg/yacalls/notification_service_prod/tables': ('db_notification_service', realm_pg),
                 'te-prod/deploy/infra/pg/yacalls/calls_prod/tables': ('db_calls', realm_pg),
-                'te-prod/deploy/infra/ch/yacalls-cdr-prod/cdr/tables': ('ch_cdr', realm_ch)
+                'te-prod/deploy/infra/ch/yacalls-cdr-prod/cdr/tables': ('ch_cdr', realm_ch),
+                'te-prod/deploy/infra/pg/telephony-platform/telephony_platform/tables': ('db_tp', realm_pg),
+                'te-prod/deploy/infra/ch/platform-cdr-prod/cdr/tables': ('ch_tp_cdr', realm_ch)
             }
         case _:
             return {}

@@ -10,28 +10,26 @@ def create_ctx_reference_chain(ctx: Path, referring_path: Path, referenced_path:
 
         referring_path = referring_path / part
 
-        # print('mkdir', referring_path)
-        os.makedirs(referring_path, exist_ok=True)
-        st_mode = os.stat(str(referenced_path)).st_mode
-        # print('st_mode', st_mode)
-        os.chmod(str(referring_path), st_mode)
-
-        ref = os.path.relpath(
-            path=str(referenced_path),
-            start=str(referring_path),
-        )
-
-        context_pointer = referring_path / '._'
-        # print('context_pointer', context_pointer)
-        if not context_pointer.exists():
-            # print('symlink', ref, context_pointer)
-            os.symlink(ref, context_pointer)
-        # else:
-            # print('exists')
-
-        # print()
+        create_ctx_reference(referring_path, referenced_path)
 
     return True
+
+
+def create_ctx_reference(referring_path: Path, referenced_path: Path):
+    # print('mkdir', referring_path)
+    os.makedirs(referring_path, exist_ok=True)
+    st_mode = os.stat(str(referenced_path)).st_mode
+    # print('st_mode', st_mode)
+    os.chmod(str(referring_path), st_mode)
+    ref = os.path.relpath(
+        path=str(referenced_path),
+        start=str(referring_path),
+    )
+    context_pointer = referring_path / '._'
+    # print('context_pointer', context_pointer)
+    if not context_pointer.exists():
+        # print('symlink', ref, context_pointer)
+        os.symlink(ref, context_pointer)
 
 
 def write_entity_parts_b0(entity_path, query_str, content: bytes):
