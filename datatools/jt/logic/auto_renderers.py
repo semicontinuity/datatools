@@ -82,7 +82,7 @@ def make_renderers(
         if not column_presentation.renderers:
             raise ValueError(f'No renderers for {column_key}: {column_presentation}')
 
-        column_state = ColumnState(False)
+        column_state = ColumnState(collapsed=False)
         render_data = RenderData(
             column_values_info, column_metadata, column_presentation, column_state, column_key, size, named_cell_value_f,
             value=lambda row: named_cell_value_f(row, column_key)

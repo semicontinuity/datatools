@@ -144,7 +144,7 @@ def infer_mounts(e):
                 'te-testing/deploy/infra/pg/yacalls/notification_service_test/tables': ('db_notification_service', realm_pg),
                 'te-testing/deploy/infra/pg/yacalls/calls_test/tables': ('db_calls', realm_pg),
                 'te-testing/deploy/infra/ch/yacalls-cdr-test/cdr/tables': ('ch_cdr', realm_ch),
-                'te-testing/deploy/infra/pg/telephony-platform/telephony_platform/tables': ('db_tp', realm_pg),
+                'te-testing/deploy/infra/pg/telephony-platform/platform_test/tables': ('db_tp', realm_pg),
             }
         case 'te-preprod':
             return {

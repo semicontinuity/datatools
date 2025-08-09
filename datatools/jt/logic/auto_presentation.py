@@ -1,3 +1,4 @@
+import os
 from math import sqrt
 
 from datatools.jt.logic.auto_values_info import single_key_of_dict
@@ -89,12 +90,7 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
                     sparse = column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count
                     debug('do_discover_columns', key=key, sparse=sparse, count=column_values_info.count, rows=row_count)
 
-                    if column_values_info.contains_single_value() or sparse:
-                        column_presentation.add_renderer(renderer_indicator)
-                        column_presentation.add_renderer(renderer_main)
-                    else:
-                        column_presentation.add_renderer(renderer_main)
-                        column_presentation.add_renderer(renderer_indicator)
+                    add_renderers(renderer_main, renderer_indicator, column_presentation, column_values_info, sparse)
                 else:
                     renderer_main = ColumnRendererColoredHash()
                     if coloring == COLORING_HASH_FREQUENT:
@@ -109,14 +105,18 @@ def do_discover_columns(data, values_info: ColumnsValuesInfo, metadata, presenta
                     sparse = column_values_info.count is not None and column_values_info.count < POPULATED_RATIO * row_count
                     debug('do_discover_columns', key=key, sparse=sparse, count=column_values_info.count, rows=row_count)
 
-                    if column_values_info.contains_single_value() or sparse:
-                        column_presentation.add_renderer(renderer_indicator)
-                        column_presentation.add_renderer(renderer_main)
-                    else:
-                        column_presentation.add_renderer(renderer_main)
-                        column_presentation.add_renderer(renderer_indicator)
+                    add_renderers(renderer_main, renderer_indicator, column_presentation, column_values_info, sparse)
 
                 renderer_main.use_single_dict_key = column_metadata.has_one_dict_key
+
+
+def add_renderers(renderer_main, renderer_indicator, column_presentation, column_values_info, sparse):
+    if (column_values_info.contains_single_value() or sparse) and os.environ.get('EXPANDED') is None:
+        column_presentation.add_renderer(renderer_indicator)
+        column_presentation.add_renderer(renderer_main)
+    else:
+        column_presentation.add_renderer(renderer_main)
+        column_presentation.add_renderer(renderer_indicator)
 
 
 def enhance_column_presentation_renderers(data, values_info: ColumnsValuesInfo, metadata: Metadata, presentation):
