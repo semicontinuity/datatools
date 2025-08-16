@@ -7,6 +7,7 @@ from datatools.json.coloring_cross_column import compute_cross_column_attrs
 from datatools.json.coloring_hash import hash_to_rgb, hash_code
 from datatools.json.html.object_node_old import ObjectNode
 from datatools.json.structure_analyzer import *
+from datatools.util.html.elements import *
 from datatools.util.logging import debug
 
 verbose = False
@@ -104,7 +105,7 @@ class ArrayOfNestableObjectsNode:
         )
 
         table_classes = [
-            f"hide-c-{i + 2}" if self.column_id_to_attrs[(name,)].coloring == COLORING_SINGLE else None
+            f"hide-c-{i + 2}" if self.coloring(name) == COLORING_SINGLE else None
             for i, (name, value) in enumerate(items_at_level(self.descriptor, 1))
         ]
 
@@ -112,6 +113,12 @@ class ArrayOfNestableObjectsNode:
             *table_contents,
             clazz=["aohwno"] + table_classes
         ).__str__()
+
+    def coloring(self, name):
+        o = self.column_id_to_attrs.get((name,))
+        if o is None:
+            return None
+        return o.coloring
 
     def bg(self, name: str):
         return hash_to_rgb(hash_code(name))

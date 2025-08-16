@@ -1,3 +1,5 @@
+from datatools.util.html.elements import *
+
 class MatrixNode:
     def __init__(self, j, parent, width, tk):
         self.data = j
