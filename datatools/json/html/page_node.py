@@ -66,7 +66,6 @@ $style
 
 .overlay-content {
     background: #FFFFF0;
-    white-space: pre;
     position: relative;
     width: 100%;
 }
