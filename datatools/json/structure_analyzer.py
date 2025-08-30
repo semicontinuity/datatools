@@ -1,3 +1,4 @@
+# "Simple" structure discovery.
 from collections import defaultdict
 from typing import Dict, Optional, List, Any, Tuple
 from datatools.json.util import is_primitive
@@ -29,7 +30,7 @@ def values_descriptor_and_path_counts(values):
     """ Returns None if some child value is not dict """
     path_of_leaf_to_count = defaultdict(int)
 
-    def update_descriptor(d, obj, p):
+    def update_descriptor(d: dict, obj, p):
         if type(obj) is not dict:
             path_of_leaf_to_count[tuple(p)] += 1
             return None

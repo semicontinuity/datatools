@@ -10,10 +10,12 @@ from json import JSONDecodeError
 from datatools.json.html.html_toolkit_custom import *
 from datatools.json.html.html_toolkit_old import OldToolkit
 from datatools.json.html.page_node import PageNode
+from datatools.json.structure_discovery import Discovery
+from datatools.json.util import to_jsonisable
 from datatools.jt2h.app_json_page import md_node, page_node
 from datatools.util.logging import stderr_print
 from datatools.util.meta_io import presentation_or_default
-from datatools.json.util import to_jsonisable
+
 
 def to_blocks_html(j, page_title: str = None):
     if os.environ.get("PIPE_HEADERS_IN"):
@@ -41,11 +43,14 @@ def main():
     markdown = '-m' in argv
     descriptor = '-d' in argv
     path_counts = '-c' in argv
+    new_descriptor = '-D' in argv
 
     if yaml:
         print(page_node(j, page_title))
     elif markdown:
         print(md_node(j))
+    elif new_descriptor:
+        json.dump(to_jsonisable(Discovery(merge_array_items=True).object_descriptor(j)), sys.stdout)
     elif descriptor:
         r = OldToolkit(CustomHtmlToolkit()).descriptor_and_path_counts(j)
         print(json.dumps(to_jsonisable(r[0])))

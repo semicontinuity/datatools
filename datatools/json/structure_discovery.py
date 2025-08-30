@@ -210,6 +210,10 @@ class MappingDescriptor(Descriptor):
 
 class Discovery:
 
+    def __init__(self, merge_array_items: bool = False) -> None:
+        self.merge_array_items = merge_array_items
+        super().__init__()
+
     def object_descriptor(self, j):
         if j is None:
             return PrimitiveDescriptor('null')
@@ -227,8 +231,18 @@ class Discovery:
                 return MappingDescriptor({}, 'list', False, None)
             merged = Descriptor.merge(list(item_descriptors.values()))
             is_uniform = not merged.is_any()
-            descriptor = MappingDescriptor({i: merged for i, d in item_descriptors.items()}, 'list', is_uniform,
-                                           len(item_descriptors) if is_uniform else None)
+
+            if self.merge_array_items:
+                if is_uniform:
+                    # "" means "all/any of" items
+                    descriptor = MappingDescriptor({0: merged}, 'list', True, len(item_descriptors))
+                else:
+                    descriptor = MappingDescriptor({i: merged for i, d in item_descriptors.items()}, 'list', is_uniform,
+                                                   len(item_descriptors) if is_uniform else None)
+            else:
+                descriptor = MappingDescriptor({i: merged for i, d in item_descriptors.items()}, 'list', is_uniform,
+                                               len(item_descriptors) if is_uniform else None)
+
             debug("object_descriptor", descriptor=descriptor)
             return descriptor
             # return self.array_or_list_descriptor(j)
