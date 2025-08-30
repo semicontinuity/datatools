@@ -16,6 +16,14 @@ class OldToolkit:
         result.records = records
         return result
 
+    def descriptor_and_path_counts(self, j) -> Tuple[Optional[Dict[str, Any]], Dict[Tuple[str, ...], int]]:
+        if type(j) is dict:
+            return obj_descriptor_and_path_counts(j)
+        elif type(j) is list:
+            return array_descriptor_and_path_counts(j)
+        else:
+            return None, {}
+
     def node(self, j, parent, in_array_of_nestable_obj: bool):
         # replace with path_in_array_of_nestable_obj: when exhausted, allow again
         if type(j) is dict:

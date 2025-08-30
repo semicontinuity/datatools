@@ -13,7 +13,7 @@ from datatools.json.html.page_node import PageNode
 from datatools.jt2h.app_json_page import md_node, page_node
 from datatools.util.logging import stderr_print
 from datatools.util.meta_io import presentation_or_default
-
+from datatools.json.util import to_jsonisable
 
 def to_blocks_html(j, page_title: str = None):
     if os.environ.get("PIPE_HEADERS_IN"):
@@ -39,11 +39,19 @@ def main():
     page_title = argv[argv.index('-t') + 1] if '-t' in argv else None
     yaml = '-y' in argv
     markdown = '-m' in argv
+    descriptor = '-d' in argv
+    path_counts = '-c' in argv
 
     if yaml:
         print(page_node(j, page_title))
     elif markdown:
         print(md_node(j))
+    elif descriptor:
+        r = OldToolkit(CustomHtmlToolkit()).descriptor_and_path_counts(j)
+        print(json.dumps(to_jsonisable(r[0])))
+    elif path_counts:
+        r = OldToolkit(CustomHtmlToolkit()).descriptor_and_path_counts(j)
+        print(json.dumps(to_jsonisable(r[1])))
     else:
         print(to_blocks_html(j, page_title))
 

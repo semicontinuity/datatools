@@ -1,13 +1,8 @@
-import json
-
 import yaml
 
 from datatools.dbview.x.util.db_query import DbQueryFilterClause, DbQuery
 from datatools.json.util import to_jsonisable
-from datatools.tui.buffer.blocks.hbox import HBox
-from datatools.tui.buffer.blocks.vbox import VBox
 from datatools.util.dataclasses import dataclass_from_dict
-from tests.datatools.util.auto_block import AutoBlock
 
 
 def test__1():
