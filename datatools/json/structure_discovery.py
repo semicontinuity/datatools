@@ -210,7 +210,7 @@ class MappingDescriptor(Descriptor):
 
 class Discovery:
 
-    def __init__(self, merge_array_items: bool = False) -> None:
+    def __init__(self, merge_array_items: bool = True) -> None:
         self.merge_array_items = merge_array_items
         super().__init__()
 
@@ -229,13 +229,36 @@ class Discovery:
             item_descriptors = {i: self.object_descriptor(v) for i, v in enumerate(j)}
             if len(item_descriptors) == 0:
                 return MappingDescriptor({}, 'list', False, None)
-            merged = Descriptor.merge(list(item_descriptors.values()))
+            item_descriptors_list = list(item_descriptors.values())
+            merged = Descriptor.merge(item_descriptors_list)
             is_uniform = not merged.is_any()
 
             if self.merge_array_items:
                 if is_uniform:
                     # "" means "all/any of" items
-                    descriptor = MappingDescriptor({0: merged}, 'list', True, len(item_descriptors))
+                    descriptor = MappingDescriptor(
+                        entries={
+                            # 0: merged
+                            0: MappingDescriptor(
+                                entries=merged.entries,
+                                kind=merged.kind,
+                                uniform=item_descriptors_list[0].uniform,
+                                length=merged.length,
+                            )
+                        },
+                        kind='list',
+                        uniform=True,
+                        length=len(item_descriptors)
+                    )
+
+                    # import sys
+                    # print('=================================================================', file=sys.stderr)
+                    # for item, desc in item_descriptors.items():
+                    #     print(item, desc, file=sys.stderr)
+                    # print('-----------------------------------------------------------------', file=sys.stderr)
+                    # print(descriptor, file=sys.stderr)
+                    # print('=================================================================', file=sys.stderr)
+
                 else:
                     descriptor = MappingDescriptor({i: merged for i, d in item_descriptors.items()}, 'list', is_uniform,
                                                    len(item_descriptors) if is_uniform else None)
@@ -252,6 +275,15 @@ class Discovery:
                 return MappingDescriptor({}, 'dict', False, None)
             descriptors = list(item_descriptors.values())
             merged = Descriptor.merge(descriptors)
+
+            # import sys
+            # print('=================================================================', file=sys.stderr)
+            # for item in descriptors:
+            #     print(item, file=sys.stderr)
+            # print('-----------------------------------------------------------------', file=sys.stderr)
+            # print(merged, file=sys.stderr)
+            # print('=================================================================', file=sys.stderr)
+
             is_uniform = not merged.is_any()
             # is_uniform = merged.is_uniform()
             if is_uniform:

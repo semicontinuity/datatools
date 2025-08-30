@@ -1,4 +1,5 @@
 # "Simple" structure discovery.
+import sys
 from collections import defaultdict
 from typing import Dict, Optional, List, Any, Tuple
 from datatools.json.util import is_primitive

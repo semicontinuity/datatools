@@ -1,3 +1,5 @@
+import sys
+
 from datatools.json.html.array_of_nestable_objects import ArrayOfNestableObjectsNode
 from datatools.json.html.list_node import ListNode
 from datatools.json.html.matrix_node import MatrixNode
@@ -34,6 +36,7 @@ class OldToolkit:
             return j
 
     def _dict_node(self, j, parent, in_array_of_nestable_obj: bool):
+        # print('_dict_node', j, file=sys.stderr)
         pruned = []
 
         descriptor, path_of_leaf_to_count = obj_descriptor_and_path_counts(j)
@@ -55,12 +58,14 @@ class OldToolkit:
             return dict_node
 
     def _list_node(self, j, parent, in_array_of_nestable_obj: bool):
+        # print('_list_node', in_array_of_nestable_obj, j, file=sys.stderr)
         pruned = []
 
         descriptor, path_of_leaf_to_count = array_descriptor_and_path_counts(j)
         if descriptor is not None and not in_array_of_nestable_obj:
             descriptor, pruned = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
-        if descriptor is not None and not in_array_of_nestable_obj and len(j) > 1:
+        # if descriptor is not None and not in_array_of_nestable_obj and len(j) > 1:
+        if descriptor is not None and len(j) > 1:
             array_node = ArrayOfNestableObjectsNode(parent, j, descriptor, self.tk, self, pruned)
             array_node.record_nodes = []
             for i, sub_j in enumerate(j):

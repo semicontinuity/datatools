@@ -77,6 +77,7 @@ class AnsiToolkit(UiFactory):
                     return self.object_node(j.items(), descriptor.entry)
                 elif len(j) > 1:
                     return self.array(j, descriptor)
+
         if descriptor.is_dict():
             debug("node", descriptor={"is_dict": True})
             return self.object_node(j.items(), lambda key: descriptor.items()[key]) if j else self.empty()
