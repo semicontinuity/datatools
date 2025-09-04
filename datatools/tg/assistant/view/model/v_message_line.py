@@ -1,7 +1,7 @@
 from datatools.jt.model.attributes import MASK_BOLD
 from datatools.tg.assistant.view.model import V_MESSAGE_LINE_BG, V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG
 from datatools.tg.assistant.view.model.v_element import VElement
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class VMessageLine(VElement):

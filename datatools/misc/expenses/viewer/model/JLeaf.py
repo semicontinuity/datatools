@@ -1,6 +1,6 @@
 from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting
 from datatools.misc.expenses.viewer.model.JPrimitiveElement import JPrimitiveElement
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class JLeaf(JPrimitiveElement[str]):

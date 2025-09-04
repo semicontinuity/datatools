@@ -4,7 +4,7 @@ from datatools.jv.highlighting.holder import get_current_highlighting
 from datatools.jv.model.JComplexElement import JComplexElement
 from datatools.jv.model.JObjectEnd import JObjectEnd
 from datatools.jv.model.JObjectStart import JObjectStart
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class JObject(JComplexElement[dict]):

@@ -1,7 +1,7 @@
 from typing import AnyStr, Tuple, List, Optional
 
 from datatools.tui.treeview.render_state import RenderState
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 from datatools.tui.treeview.tree_node_context import TreeNodeContext
 
 

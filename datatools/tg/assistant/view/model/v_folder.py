@@ -2,7 +2,7 @@ from typing import AnyStr
 
 from datatools.tg.assistant.view.model import V_PLUS_MINUS_NO_UNREAD_CHILDREN, V_PLUS_MINUS_UNREAD_CHILDREN
 from datatools.tg.assistant.view.model.v_element import VElement
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 # abstract

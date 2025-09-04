@@ -2,7 +2,7 @@ import mmh3
 
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.coloring import hash_to_rgb
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class Highlighting:

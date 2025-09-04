@@ -50,7 +50,10 @@ $style
 .bool  {color: darkgreen; padding-left: 0.25em; padding-right: 0.25em;}
 
 .collapsed {display: none;}
-.button {background: wheat; border: solid 1px gray;}
+.button {
+    // background: wheat;
+    border: solid 1px gray;
+}
 
 .overlay {
     height: 100%;

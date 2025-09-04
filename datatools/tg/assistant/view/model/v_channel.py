@@ -1,7 +1,7 @@
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.view.model import V_CHANNEL_FG
 from datatools.tg.assistant.view.model.v_folder import VFolder
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class VChannel(VFolder):

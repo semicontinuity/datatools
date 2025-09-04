@@ -1,7 +1,7 @@
 from datatools.tg.assistant.model.tg_forum import TgForum
 from datatools.tg.assistant.view.model import V_FORUM_FG
 from datatools.tg.assistant.view.model.v_folder import VFolder
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class VForum(VFolder):

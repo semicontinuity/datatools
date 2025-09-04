@@ -7,7 +7,7 @@ from datatools.tg.assistant.service import message_is_short
 from datatools.tg.assistant.view.model import V_READ_MESSAGE_FG, V_UNREAD_MESSAGE_FG, V_TIME
 from datatools.tg.assistant.view.model.v_folder import VFolder
 from datatools.tui.coloring import hash_code, hash_to_rgb
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class VMessage(VFolder):

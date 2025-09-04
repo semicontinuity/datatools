@@ -18,7 +18,7 @@ class Style:
         return self
 
 
-def render_spans_substr(spans: List[Tuple[AnyStr, Style]], start: int, end: int) -> AnyStr:
+def render_substr(spans: List[Tuple[AnyStr, Style]], start: int, end: int) -> AnyStr:
     result = ''
     span_start = 0
 

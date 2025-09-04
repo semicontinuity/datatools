@@ -1,7 +1,7 @@
 from typing import Hashable, List
 
 from datatools.jv.model import JString
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class Highlighting:

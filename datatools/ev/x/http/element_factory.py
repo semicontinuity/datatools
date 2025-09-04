@@ -9,7 +9,7 @@ from datatools.jv.model.JString import JString
 from datatools.jv.model.JValueElement import JValueElement
 from datatools.jv.model.j_element_factory import JElementFactory
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class MyElementFactory(JElementFactory):

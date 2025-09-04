@@ -3,6 +3,7 @@ from html import escape
 from string import ascii_lowercase, digits
 from typing import Optional, Dict, Any
 
+from datatools.json.coloring_hash import hash_to_rgb, hash_code
 from datatools.json.util import is_primitive
 from datatools.util.html.elements import *
 
@@ -33,7 +34,15 @@ class CustomHtmlToolkit:
         if len(contents) == 1 and type(contents[0]) is str and len(contents[0]) > 100:
             text_id = self.random_id(8)
             self.long_texts[text_id] = contents[0]
-            return span('...', data_text=str(contents[0]), onclick=f'openOverlay("{text_id}")', clazz='button')
+
+            bg = hash_to_rgb(hash_code(contents[0]), offset=0xC0)
+            return span(
+                '...',
+                data_text=str(contents[0]),
+                onclick=f'openOverlay("{text_id}")',
+                style=f"background: #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x};",
+                clazz='button',
+            )
         else:
             return span(*contents, **attrs)
 

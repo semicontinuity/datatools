@@ -4,7 +4,7 @@ from datatools.jv.highlighting.highlighting import Highlighting
 from datatools.jv.model import JString
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.coloring import hash_to_rgb
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class ConsoleHighlighting(Highlighting):

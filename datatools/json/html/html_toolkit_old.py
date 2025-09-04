@@ -65,7 +65,7 @@ class OldToolkit:
         if descriptor is not None and not in_array_of_nestable_obj:
             descriptor, pruned = prune_sparse_leaves(descriptor, path_of_leaf_to_count, len(j))
         # if descriptor is not None and not in_array_of_nestable_obj and len(j) > 1:
-        if descriptor is not None and len(j) > 1:
+        if descriptor is not None:
             array_node = ArrayOfNestableObjectsNode(parent, j, descriptor, self.tk, self, pruned)
             array_node.record_nodes = []
             for i, sub_j in enumerate(j):

@@ -4,7 +4,7 @@ from datatools.jv.highlighting.holder import get_current_highlighting
 from datatools.jv.model.JArrayEnd import JArrayEnd
 from datatools.jv.model.JArrayStart import JArrayStart
 from datatools.jv.model.JComplexElement import JComplexElement
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 
 
 class JArray(JComplexElement):

@@ -1,10 +1,10 @@
 from pathlib import Path
 from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH
-from typing import AnyStr, Tuple, List, Callable, TypeVar
+from typing import AnyStr, Tuple, List, Callable
 
 from datatools.fstree.palette import PALETTE_ALT
 from datatools.tui.treeview.render_state import RenderState
-from datatools.tui.treeview.rich_text import Style
+from datatools.tui.rich_text import Style
 from datatools.tui.treeview.tree_node import TreeNode
 
 
