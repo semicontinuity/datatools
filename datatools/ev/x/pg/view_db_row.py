@@ -1,6 +1,7 @@
 from typing import Optional
 
 from datatools.dbview.x.util.db_query import DbQuery
+from datatools.dbview.x.util.pg_query import value_to_string
 from datatools.ev.app_types import EntityReference
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.db_entity_data import DbEntityData
@@ -41,7 +42,7 @@ class ViewDbRow(ViewDb):
             self.realm.links.get(self.query.table) or {},
             self.realm,
         )
-        footer = self.query.table + ' ' + ' '.join([f.column + f.op + f.value for f in self.query.filter])
+        footer = self.query.table + ' ' + ' '.join([f.column + f.op + value_to_string(f.value) for f in self.query.filter])
         self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)
         self.g = make_tree_grid(self.doc, with_alternate_screen(lambda: screen_size_or_default()), ViewDbRowGrid)
         self.doc.query = self.query

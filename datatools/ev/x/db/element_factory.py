@@ -9,6 +9,8 @@ from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.rich_text import Style
 from picotui.defs import KEY_ENTER
 
+from datatools.util.logging import debug
+
 
 class DbElementFactory(JElementFactory):
     class JDateTime(JString):
@@ -76,7 +78,8 @@ class DbElementFactory(JElementFactory):
         # NB can be both in links and PKs! Print PKs first.
         views = []
         for k, v in model.items():
-            if isinstance(v, datetime.datetime) or isinstance(v, datetime.time):
+            if isinstance(v, datetime.datetime) or isinstance(v, datetime.time) or isinstance(v, datetime.date):
+                debug('build_row_view', k=k, v=v)
                 views.append(self.date_time(v, k))
             elif type(v) is str and k in links:
                 node = self.foreign_key(v, k)

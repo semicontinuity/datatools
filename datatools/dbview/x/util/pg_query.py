@@ -1,3 +1,4 @@
+import datetime
 from types import NoneType
 from typing import Any
 
@@ -61,6 +62,8 @@ def value_to_string(value: Any) -> str:
         return 'null'
     elif type(value) is list:
         return '(' + ','.join(value_to_string(v) for v in value) + ')'
+    elif type(value) is datetime.date or type(value) is datetime.time or type(value) is datetime.datetime:
+        return repr(value.isoformat())
     else:
         return repr(value)
 
