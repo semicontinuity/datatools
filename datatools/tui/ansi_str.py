@@ -18,6 +18,9 @@ ANSI_CMD_ATTR_RESET = '\x1b[0;22m'
 ANSI_CMD_ATTR_INVERTED = '\x1b[7m'
 ANSI_CMD_ATTR_NOT_INVERTED = '\x1b[27m'
 
+ANSI_CMD_ATTR_CROSSED_OUT = '\x1b[9m'
+ANSI_CMD_ATTR_NOT_CROSSED_OUT = '\x1b[29m'
+
 
 def ansi_cmd_set_fg(fg: int) -> str:
     if fg > 8:

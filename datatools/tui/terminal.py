@@ -98,12 +98,45 @@ def ansi_attr_bytes(*codes):
     return b'\x1b[' + b';'.join(codes) + b'm'
 
 
+def ansi_foreground_escape_code_auto(fg):
+    if type(fg) is int:
+        # if fg > 8:
+            # return "\x1b[" + '1;%d' % (fg + 30 - 8) + 'm'
+        # else:
+        #     return "\x1b[" + '%d' % (fg + 30) + 'm'
+
+        # Just use 256-color mode
+        return "\x1b[38;5;%dm" % (fg)
+    else:
+        return ansi_foreground_escape_code(*fg)
+
+
 def ansi_foreground_escape_code(r, g, b) -> str:
     return "\x1b[38;2;" + str(r) + ';' + str(g) + ';' + str(b) + 'm'
 
 
+def ansi_background_escape_code_auto(bg):
+    if type(bg) is int:
+        # return "\x1b[" + '%d' % (bg + 40) + 'm'
+
+        # Just use 256-color mode
+        return "\x1b[48;5;%dm" % (bg)
+    else:
+        return ansi_background_escape_code(*bg)
+
+
 def ansi_background_escape_code(r, g, b) -> str:
     return "\x1b[48;2;" + str(r) + ';' + str(g) + ';' + str(b) + 'm'
+
+
+def ansi_fg_color_cmd_bytes_auto(fg):
+    if type(fg) is int:
+        if fg > 8:
+            return b'1;%d' % (fg + 30 - 8)
+        else:
+            return b'%d' % (fg + 30)
+    else:
+        return ansi_fg_color_cmd_bytes0(*fg)
 
 
 def ansi_fg_color_cmd_bytes(r, g, b):
@@ -112,6 +145,13 @@ def ansi_fg_color_cmd_bytes(r, g, b):
 
 def ansi_fg_color_cmd_bytes0(r, g, b):
     return b"38;2;%d;%d;%d" % (r, g, b)
+
+
+def ansi_bg_color_cmd_bytes_auto(bg):
+    if type(bg) is int:
+        return b'%d' % (bg + 40)
+    else:
+        return ansi_bg_color_cmd_bytes0(*bg)
 
 
 def ansi_bg_color_cmd_bytes(r, g, b):
@@ -138,22 +178,12 @@ def set_colors_cmd_bytes2(fg=None, bg=None):
     b += b'\x1b['
 
     if fg is not None:
-        if type(fg) is int:
-            if fg > 8:
-                b += b'1;%d' % (fg + 30 - 8)
-            else:
-                b += b'%d' % (fg + 30)
-        else:
-            b += ansi_fg_color_cmd_bytes0(*fg)
+        b += ansi_fg_color_cmd_bytes_auto(fg)
 
     if bg is not None:
         if fg is not None:
             b += b';'
-
-        if type(bg) is int:
-            b += b'%d' % (bg + 40)
-        else:
-            b += ansi_bg_color_cmd_bytes0(*bg)
+        b += ansi_bg_color_cmd_bytes_auto(bg)
 
     b += b'm'
     return b
