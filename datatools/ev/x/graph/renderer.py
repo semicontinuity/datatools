@@ -26,9 +26,11 @@ class EntitiesGraph:
             if (dst, src) in self.edges:
                 # bi-directional edge: add edge once
                 if src < dst:
-                    dot.edge(src, dst, dir='both')
+                    # dot.edge(src, dst, dir='both')
+                    dot.edge(dst, src, arrowhead='none')
             else:
-                dot.edge(src, dst)
+                # dot.edge(src, dst)
+                dot.edge(dst, src, arrowhead='none')
 
         return dot
 
@@ -54,13 +56,20 @@ class EntitiesGraph:
                     entity_ids_file_path = entity_ids_slug_folder / '.entity_ids'
 
                     if entity_ids_file_path.exists():
-                        if os.environ.get('MULTI') == '0':
-                            # skip multi-entities
-                            # print('skip', entity_ids_slug_folder, file=sys.stderr)
-                            continue
+                        multi_entity_limit = os.environ.get('MULTI')
+                        if multi_entity_limit is None:
+                            pass
 
-                        # with open(entity_ids_file_path, 'r') as file:
-                        #     entity_ids = json.load(file)
+                        multi_entity_limit = int(multi_entity_limit)
+                        with open(entity_ids_file_path, 'r') as file:
+                            entity_ids = json.load(file)
+                        if len(entity_ids) > multi_entity_limit:
+                            pass
+
+                        for entity_id in entity_ids:
+                            node_id = f"{entity_type_folder_name}#{entity_id}"
+                            node_text = f"{entity_type_folder_name}\n{entity_id}"
+                            self.nodes[node_id] = node_text
                     else:
                         node_id = f"{entity_type_folder_name}#{entity_ids_slug_folder_name}"
                         node_text = f"{entity_type_folder_name}\n{entity_ids_slug_folder_name}"
