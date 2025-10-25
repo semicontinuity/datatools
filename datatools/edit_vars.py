@@ -69,7 +69,7 @@ def add_ok_cancel_buttons(d: Dialog):
     b.finish_dialog = ACTION_CANCEL
 
 
-def fill(vars):
+def fill(vars: Dict) -> Dict[str, str] | None:
     with MyContext():
         d = Dialog(10, 5, title="Please fill")
         longest = max((len(p) for p in vars))
@@ -90,7 +90,7 @@ def fill(vars):
             return {key: entry.get_cur_line() for key, entry in entries.items()}
 
 
-def main(variables: Dict):
+def edit_vars(variables: Dict):
     filled = fill({k: v for k, v in variables.items() if v is not None})
 
     if not filled:
@@ -139,4 +139,5 @@ def variables(argv):
 
 
 if __name__ == "__main__":
-    main(variables(sys.argv))
+    edit_vars(variables(sys.argv))
+
