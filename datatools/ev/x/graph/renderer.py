@@ -12,13 +12,24 @@ RANKDIR = os.environ.get('RANKDIR')
 class EntitiesGraph:
 
     def __init__(self) -> None:
-        self.dot = Digraph('Entities', format='png', node_attr={'shape': 'box', 'fontname': 'monospace'})
-        self.dot.attr(rankdir=(RANKDIR or 'LR'))
+        self.nodes = {}
+        self.edges = set()
 
-        self.nodes = set()
+    def build_dot(self):
+        dot = Digraph('Entities', format='png', node_attr={'shape': 'box', 'fontname': 'monospace'})
+        dot.attr(rankdir=(RANKDIR or 'LR'))
+
+        for node_id, node_text in self.nodes.items():
+            dot.node(node_id, node_text)
+
+        for src, dst in self.edges:
+            if (dst, src) in self.edges:
+                pass
+            dot.edge(src, dst)
+
+        return dot
 
     def fill_nodes(self, root: Path):
-
         # Iterate through all entries in the root directory
         for entity_type_folder in root.iterdir():
             if not entity_type_folder.is_dir():
@@ -50,12 +61,9 @@ class EntitiesGraph:
                     else:
                         node_id = f"{entity_type_folder_name}#{entity_ids_slug_folder_name}"
                         node_text = f"{entity_type_folder_name}\n{entity_ids_slug_folder_name}"
-                        self.dot.node(node_id, node_text)
-                        self.nodes.add(node_id)
+                        self.nodes[node_id] = node_text
 
-
-    def make_graph(self, root: Path):
-
+    def fill_edges(self, root: Path):
         # Iterate through all entries in the root directory
         for entity_type_folder in root.iterdir():
             if not entity_type_folder.is_dir():
@@ -105,19 +113,20 @@ class EntitiesGraph:
                                             node_from = f"{entity_type_folder_name}#{entity_id}"
                                             node_to = f"{referred_entity_type}#{referred_entity_id}"
                                             if node_from in self.nodes and node_to in self.nodes:
-                                                self.dot.edge(node_from, node_to)
+                                                self.edges.add((node_from, node_to))
 
 
 def main():
     folder = Path(os.environ['PWD'])
     graph = EntitiesGraph()
     graph.fill_nodes(folder)
-    graph.make_graph(folder)
+    graph.fill_edges(folder)
+    dot = graph.build_dot()
 
     if os.environ.get('SVG'):
-        sys.stdout.buffer.write(graph.dot.pipe(format='svg'))
+        sys.stdout.buffer.write(dot.pipe(format='svg'))
     else:
-        print(graph.dot.source)
+        print(dot.source)
 
 
 if __name__ == '__main__':
