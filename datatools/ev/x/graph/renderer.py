@@ -24,8 +24,11 @@ class EntitiesGraph:
 
         for src, dst in self.edges:
             if (dst, src) in self.edges:
-                pass
-            dot.edge(src, dst)
+                # bi-directional edge: add edge once
+                if src < dst:
+                    dot.edge(src, dst, dir='both')
+            else:
+                dot.edge(src, dst)
 
         return dot
 
