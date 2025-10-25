@@ -12,7 +12,7 @@ RANKDIR = os.environ.get('RANKDIR')
 class EntitiesGraph:
 
     def __init__(self) -> None:
-        self.dot = Digraph('Entities', format='png')
+        self.dot = Digraph('Entities', format='png', node_attr={'shape': 'box', 'fontname': 'monospace'})
         self.dot.attr(rankdir=(RANKDIR or 'LR'))
 
         self.nodes = set()
@@ -45,15 +45,14 @@ class EntitiesGraph:
                             # print('skip', entity_ids_slug_folder, file=sys.stderr)
                             continue
 
-                        with open(entity_ids_file_path, 'r') as file:
-                            entity_ids = json.load(file)
+                        # with open(entity_ids_file_path, 'r') as file:
+                        #     entity_ids = json.load(file)
                     else:
-                        entity_ids = [entity_ids_slug_folder_name]
+                        node_id = f"{entity_type_folder_name}#{entity_ids_slug_folder_name}"
+                        node_text = f"{entity_type_folder_name}\n{entity_ids_slug_folder_name}"
+                        self.dot.node(node_id, node_text)
+                        self.nodes.add(node_id)
 
-                    for entity_id in entity_ids:
-                        node_id = f"{entity_type_folder_name}#{entity_id}"
-                        # dot.node(node_id, node_id)
-                        self.dot.node(node_id)
 
     def make_graph(self, root: Path):
 
@@ -103,10 +102,10 @@ class EntitiesGraph:
                                             if '/' in entity_id or '/' in referred_entity_id:
                                                 continue
 
-                                            self.dot.edge(
-                                                f"{entity_type_folder_name}#{entity_id}",
-                                                f"{referred_entity_type}#{referred_entity_id}",
-                                            )
+                                            node_from = f"{entity_type_folder_name}#{entity_id}"
+                                            node_to = f"{referred_entity_type}#{referred_entity_id}"
+                                            if node_from in self.nodes and node_to in self.nodes:
+                                                self.dot.edge(node_from, node_to)
 
 
 def main():
