@@ -1,11 +1,13 @@
-from telethon.tl.functions.channels import GetForumTopicsRequest
+from telethon import TelegramClient
+from telethon.tl.functions.messages import GetForumTopicsRequest
 from telethon.tl.types import ForumTopic
 from telethon.tl.types.messages import ForumTopics
 
 
 class ChannelTopicRepository:
+    client: TelegramClient
 
-    def __init__(self, client) -> None:
+    def __init__(self, client: TelegramClient) -> None:
         self.client = client
 
     async def get_forum_topics(self, tg_channel_id: int) -> list[ForumTopic]:

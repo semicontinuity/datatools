@@ -3,7 +3,7 @@ import sys
 
 from telethon import TelegramClient
 from telethon.tl.custom import Dialog
-from yndx.llm import Gradio
+from yndx.llm.factory import llm
 
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_data import TgData
@@ -22,6 +22,7 @@ from datatools.tg.assistant.service.topic_messages_weaver import TopicMessagesWe
 
 
 class TgModelFactory:
+    client: TelegramClient
 
     def __init__(self, cache_folder: pathlib.Path, client: TelegramClient, since: str) -> None:
         self.cache_folder = cache_folder
@@ -29,7 +30,7 @@ class TgModelFactory:
         self.channel_repository = ChannelRepository(cache_folder, client)
         self.channel_topic_repository = ChannelTopicRepository(client)
         self.message_summarizer_service = MessageSummarizerService()
-        self.topic_messages_weaver = TopicMessagesWeaver(DiscussionClassifier(Gradio()))
+        self.topic_messages_weaver = TopicMessagesWeaver(DiscussionClassifier(llm()))
         self.since = since
 
     async def make_tg_data(self) -> TgData:
