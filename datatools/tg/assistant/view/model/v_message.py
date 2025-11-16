@@ -17,7 +17,9 @@ class VMessage(VFolder):
         self.tg_message = tg_message
         self.message_lines = message_lines
         self.time = self.tg_message.date.astimezone().strftime("%b %d %H:%M")
-        self.show_message_ids = os.environ.get('MSG_IDS')
+        self.show_message_ids = os.environ.get('SHOW_MSG_IDS')
+        self.show_summarized = os.environ.get('SHOW_SUMMARIZED')
+        self.show_is_inferred_reply_to = os.environ.get('SHOW_IS_INFERRED_REPLY_TO')
         super().__init__(None)
 
     def count_unread_children(self):
@@ -36,9 +38,12 @@ class VMessage(VFolder):
 
         return [
             (self.time, Style(boldness, V_TIME)),
-            (f' {self.tg_message.id} ' if self.show_message_ids else ' ', Style()),
+            (f' <{self.tg_message.id}> ' if self.show_message_ids else '', Style()),
+            (f' ({self.tg_message.ext.summarized}) ' if self.show_summarized else '', Style()),
+            (f' [{self.tg_message.ext.is_inferred_reply_to}] ' if self.show_is_inferred_reply_to else '', Style()),
             (user, Style(MASK_UNDERLINE if self.tg_message.ext.is_inferred_reply_to else 0, hash_to_rgb(hash_code(user)))),
-            (' ', Style()), self.summary_rich_text()
+            (' ', Style()),
+            self.summary_rich_text()
         ]
 
     def summary_rich_text(self):

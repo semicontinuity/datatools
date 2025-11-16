@@ -8,6 +8,7 @@ class TgExtMessage:
 
     viewed: bool = False
     summary: str = None
+    summarized: bool = None
 
     is_reply_to: int = None
     is_inferred_reply_to: int = None

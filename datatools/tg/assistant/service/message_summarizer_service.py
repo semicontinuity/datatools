@@ -1,15 +1,17 @@
 from concurrent.futures import ThreadPoolExecutor
 
-from yndx.llm.zeliboba import Zeliboba
+
+from yndx.llm.api import LargeLanguageModel
+from yndx.llm.factory import llm
 
 from datatools.tg.assistant.model.tg_message import TgMessage
 
 
 class MessageSummarizerService:
-    llm: Zeliboba
+    llm: LargeLanguageModel
 
     def __init__(self) -> None:
-        self.llm = Zeliboba()
+        self.llm = llm()
         self.executor = ThreadPoolExecutor(max_workers=1)
 
     def work_queue_size(self) -> int:
@@ -72,7 +74,10 @@ Plarform #1005 (preprod), таймаут ("first operator is unavailable")
 """,
             user_message=tg_message.message
         )
+
         tg_message.ext.summary = r
+        tg_message.ext.summarized = True
 
     def submit(self, tg_message: TgMessage):
+        tg_message.ext.summarized = False
         self.executor.submit(self._summarize, tg_message)
