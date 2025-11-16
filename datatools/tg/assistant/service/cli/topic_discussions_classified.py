@@ -5,8 +5,8 @@ import click
 
 from datatools.tg import to_cache_folder, new_telegram_client, json_dump
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
-from datatools.tg.assistant.service import make_llm_provider
 from datatools.tg.assistant.service.discussion_classifier import DiscussionClassifier
+from yndx.llm.factory import llm
 
 
 @click.command()
@@ -54,6 +54,6 @@ async def dump_topic_discussions_classified(session_slug: str, channel_id: int, 
         discussions = channel_message_service.make_latest_topic_discussion_forest(raw_messages)
         print(f'Converted to {len(discussions)} discussions in channel {channel_id}, topic {topic_id}', file=sys.stderr)
 
-        print(json_dump(DiscussionClassifier(make_llm_provider(llm_provider)).classify(discussions)))
+        print(json_dump(DiscussionClassifier(llm(llm_provider)).classify(discussions)))
 
         channel_message_service.channel_ext_message_repository.save_cached()

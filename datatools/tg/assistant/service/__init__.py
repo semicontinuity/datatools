@@ -1,16 +1,3 @@
-from yndx.llm import Gradio
-from yndx.llm.zeliboba import Zeliboba
-
-
-def make_llm_provider(name: str):
-    if name == 'gradio':
-        return Gradio()
-    elif name == 'zeliboba':
-        return Zeliboba()
-    else:
-        raise ValueError('Unknown provider')
-
-
 def message_is_short(message: str):
     return len(message) < 40
 
