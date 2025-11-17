@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
-
+import traceback
 from yndx.llm.api import LargeLanguageModel
 from yndx.llm.factory import llm
 
@@ -21,6 +21,12 @@ class MessageSummarizerService:
         self.executor.shutdown(wait=False, cancel_futures=True)
 
     def _summarize(self, tg_message: TgMessage):
+        try:
+            return self._do_summarize(tg_message)
+        except Exception as e:
+            traceback.print_exc()
+
+    def _do_summarize(self, tg_message: TgMessage):
         r = self.llm.invoke(
             system_message="""
 Сделай заголовок для текста, наподобие темы e-mail. Без кавычек. Включай к заголовок важные детали.
