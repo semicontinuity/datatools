@@ -16,7 +16,9 @@ from datatools.jt.model.data_bundle import DataBundle
 from datatools.jv.highlighting.console import ConsoleHighlighting
 from datatools.jv.highlighting.holder import set_current_highlighting, get_current_highlighting
 from datatools.tg import to_cache_folder, new_telegram_client
+from datatools.tg.assistant.model.files.files_tg_model_factory import FilesTgModelFactory
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
+from datatools.tg.assistant.model.tg_root_objects import TgRootObjects
 from datatools.tg.assistant.view.tg_document import TgDocument
 from datatools.tg.assistant.view.tg_document_factory import TgDocumentFactory
 from datatools.tg.assistant.view.tg_grid import TgGrid
@@ -86,14 +88,14 @@ def update_footer(doc: TgDocument, model_factory: TgModelFactory):
 
 
 async def do_main(folder, client: TelegramClient, since):
-    model_factory = TgModelFactory(folder, client, since)
+    model_factory = FilesTgModelFactory(client, since, folder)
     view_factory = TgViewFactory()
     document_factory = TgDocumentFactory()
 
-    tg_data = await model_factory.make_tg_data()
+    tg_root_objects: TgRootObjects = await model_factory.make_tg_root_objects()
 
     doc: TgDocument = document_factory.make_document_for(
-        view_factory.make_root(tg_data),
+        view_factory.make_root(tg_root_objects),
         "footer"
     )
 
@@ -108,7 +110,7 @@ async def do_main(folder, client: TelegramClient, since):
         print(output)
 
     model_factory.close()
-    tg_data.save_caches()
+    tg_root_objects.close()
 
     sys.exit(exit_code)
 

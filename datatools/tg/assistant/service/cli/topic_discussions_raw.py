@@ -5,7 +5,9 @@ import click
 
 from datatools.json.util import to_jsonisable
 from datatools.tg import to_cache_folder, new_telegram_client
-from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
+from datatools.tg.assistant.model.files.tg_model_factory import TgModelFactory
+
+from datatools.tg.assistant.model.files.files_tg_model_factory import FilesTgModelFactory
 
 
 @click.command()
@@ -39,7 +41,7 @@ def topic_discussions_raw(session_slug: str, channel_id: int, topic_id: int, sin
 async def dump_topic_discussions_raw(session_slug: str, channel_id: int, topic_id: int, since: str):
     async with await new_telegram_client(session_slug) as client:
         cache_folder = to_cache_folder(session_slug)
-        model_factory = TgModelFactory(cache_folder, client, since)
+        model_factory = FilesTgModelFactory(client, since, cache_folder)
         channel_message_service = await model_factory.make_channel_message_service(channel_id)
 
         raw_messages = channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(topic_id, since)

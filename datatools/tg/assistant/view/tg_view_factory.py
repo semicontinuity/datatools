@@ -2,8 +2,8 @@ from typing import List
 
 from datatools.tg.assistant.model.tg_channel import TgChannel
 from datatools.tg.assistant.model.tg_forum import TgForum
-from datatools.tg.assistant.model.tg_data import TgData
 from datatools.tg.assistant.model.tg_message import TgMessage
+from datatools.tg.assistant.model.tg_root_objects import TgRootObjects
 from datatools.tg.assistant.model.tg_topic import TgTopic
 from datatools.tg.assistant.view.long_message_splitter import split_text_into_lines0
 from datatools.tg.assistant.view.model.v_channel import VChannel
@@ -17,10 +17,10 @@ from datatools.tg.assistant.view.model.v_topic import VTopic
 
 class TgViewFactory:
 
-    def make_root(self, tg_data: TgData) -> VElement:
+    def make_root(self, tg_root_objects: TgRootObjects) -> VElement:
         root = VRoot("telegram")
         root.set_elements(
-            [self.make_forum(f) for f in tg_data.tg_forums] + [self.make_channel(f) for f in tg_data.tg_channels]
+            [self.make_forum(f) for f in tg_root_objects.tg_forums] + [self.make_channel(f) for f in tg_root_objects.tg_channels]
         )
         root.indent_recursive()
         return root

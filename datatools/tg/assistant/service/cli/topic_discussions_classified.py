@@ -4,6 +4,7 @@ import sys
 import click
 
 from datatools.tg import to_cache_folder, new_telegram_client, json_dump
+from datatools.tg.assistant.model.files.files_tg_model_factory import FilesTgModelFactory
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
 from datatools.tg.assistant.service.discussion_classifier import DiscussionClassifier
 from yndx.llm.factory import llm
@@ -46,7 +47,7 @@ def topic_discussions_classified(session_slug: str, channel_id: int, topic_id: i
 async def dump_topic_discussions_classified(session_slug: str, channel_id: int, topic_id: int, since: str, llm_provider):
     async with await new_telegram_client(session_slug) as client:
         cache_folder = to_cache_folder(session_slug)
-        model_factory = TgModelFactory(cache_folder, client, since)
+        model_factory = FilesTgModelFactory(client, since, cache_folder)
         channel_message_service = await model_factory.make_channel_message_service(channel_id)
 
         raw_messages = channel_message_service.channel_api_message_repository.get_latest_topic_raw_messages(topic_id, since)
