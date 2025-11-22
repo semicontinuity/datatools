@@ -11,4 +11,4 @@ class TgForum:
     channel_message_service: ChannelMessageService
 
     def save_caches(self):
-        self.channel_message_service.save_caches()
+        self.channel_message_service.close()

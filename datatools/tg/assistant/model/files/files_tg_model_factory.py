@@ -40,11 +40,10 @@ class FilesTgModelFactory(TgModelFactory):
         dialogs = await self.channel_repository.get_dialogs()
         return TgRootObjects(
             tg_forums = [await self.__make_tg_forum(dialog) for dialog in dialogs if dialog.entity.forum],
-            tg_channels = [await self.__make_tg_channel(dialog) for dialog in dialogs if not dialog.entity.forum],
+            tg_channels = [await self.__make_tg_channel(dialog.id, dialog.name) for dialog in dialogs if not dialog.entity.forum],
         )
 
-    async def __make_tg_channel(self, dialog: Dialog) -> TgChannel:
-        channel_id: int = dialog.id
+    async def __make_tg_channel(self, channel_id: int, channel_name: str) -> TgChannel:
         channel_message_service = await self.make_channel_message_service(channel_id)
 
         messages = channel_message_service.channel_api_message_repository.get_latest_raw_messages(self.since)
@@ -57,7 +56,7 @@ class FilesTgModelFactory(TgModelFactory):
 
         return TgChannel(
             id=channel_id,
-            name=dialog.name,
+            name=channel_name,
             channel_message_service=channel_message_service,
             latest_raw_messages=messages,
             latest_discussions=discussion_forest

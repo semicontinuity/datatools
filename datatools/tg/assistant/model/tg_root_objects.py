@@ -14,4 +14,4 @@ class TgRootObjects:
         for c in self.tg_forums:
             c.save_caches()
         for c in self.tg_channels:
-            c.save_caches()
+            c.close()

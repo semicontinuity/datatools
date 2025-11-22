@@ -12,9 +12,10 @@ from datatools.tg.assistant.repository.channel_ext_message_repository import Cha
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 from datatools.tg.assistant.service import should_summarize
 from datatools.tg.assistant.service.message_summarizer_service import MessageSummarizerService
+from datatools.tg.assistant.util.closeable import Closeable
 
 
-class ChannelMessageService:
+class ChannelMessageService(Closeable):
     channel_ext_message_repository: ChannelExtMessageRepository
     channel_api_message_repository: ChannelApiMessageRepository
     channel_participants_repository: ChannelParticipantsRepository
@@ -35,7 +36,8 @@ class ChannelMessageService:
         self.channel_id = channel_id
         self.message_summarizer_service = message_summarizer_service
 
-    def save_caches(self):
+    # @override
+    def close(self):
         self.channel_api_message_repository.save_cached()
         self.channel_ext_message_repository.save_cached()
 
