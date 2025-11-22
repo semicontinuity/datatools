@@ -6,6 +6,7 @@ from typing import List, Dict, Union
 from datatools.json.util import to_jsonisable
 from datatools.tg.api.tg_api_message import TgApiMessage
 from datatools.tg.api.tg_api_message_service import TgApiMessageService
+from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
 from datatools.util.dataclasses import dataclass_from_dict
 
 CACHE_FILE_SIZE = 256
@@ -13,7 +14,7 @@ CACHE_FILE_SIZE = 256
 # TODO: Separate to ApiMessageService (tg comm) and repo
 
 
-class FilesChannelApiMessageRepository:
+class FilesChannelApiMessageRepository(ChannelApiMessageRepository):
     files_folder: pathlib.Path
     data: Dict[int, Dict]
     cache_max_id: int
@@ -47,7 +48,7 @@ class FilesChannelApiMessageRepository:
 
         i = 0
         while True:
-            path = self.files_folder / self.file_name(i)
+            path = self.files_folder / self.__file_name(i)
             if not path.exists():
                 break
 
@@ -62,12 +63,13 @@ class FilesChannelApiMessageRepository:
 
         self.max_id = self.cache_max_id
 
-    def save_cached(self):
+    # @override
+    def close(self):
         print(f'Saving cache for channel {self.channel_id}', file=sys.stderr)
 
         i = self.cache_max_id // CACHE_FILE_SIZE * CACHE_FILE_SIZE
         while i <= self.max_id:
-            path = self.files_folder / self.file_name(i)
+            path = self.files_folder / self.__file_name(i)
             with open(path, 'w') as file:
                 for k in range(i, i + CACHE_FILE_SIZE):
                     j = self.data.get(k)
@@ -75,13 +77,13 @@ class FilesChannelApiMessageRepository:
                         print(json.dumps(j, ensure_ascii=False), file=file)
             i += CACHE_FILE_SIZE
 
-    def file_name(self, i):
+    def __file_name(self, i):
         return "raw_%08x" % i
 
     def get_max_id(self):
         return self.max_id
 
-    def resolve_topic_id(self, m: Union[TgApiMessage, TgApiMessageService]) -> int:
+    def __resolve_topic_id(self, m: Union[TgApiMessage, TgApiMessageService]) -> int | None:
         if m is None:
             return None
         elif type(m) == TgApiMessageService:
@@ -93,16 +95,10 @@ class FilesChannelApiMessageRepository:
                 if m.reply_to.reply_to_top_id is not None:
                     return m.reply_to.reply_to_top_id
                 elif m.reply_to.reply_to_msg_id is not None:
-                    return self.resolve_topic_id(self.get_raw_message(m.reply_to.reply_to_msg_id))
+                    return self.__resolve_topic_id(self.get_raw_message(m.reply_to.reply_to_msg_id))
 
-    def get_raw_message(self, message_id: int) -> None | TgApiMessage | TgApiMessageService:
-        j = self.data.get(message_id)
-        if j is None:
-            return None
-        if j['_'] == 'Message':
-            return dataclass_from_dict(TgApiMessage, j)
-        else:
-            return dataclass_from_dict(TgApiMessageService, j)
+    def get_latest_topic_raw_messages(self, topic_id: int, since: str) -> list[TgApiMessage|TgApiMessageService]:
+        return [m for m in (self.get_latest_raw_messages(since)) if self.__resolve_topic_id(m) == topic_id]
 
     def get_latest_raw_messages(self, date_gte: str) -> List[Union[TgApiMessage, TgApiMessageService]]:
         res = []
@@ -119,5 +115,12 @@ class FilesChannelApiMessageRepository:
         res.reverse()
         return res
 
-    def get_latest_topic_raw_messages(self, topic_id: int, since: str) -> list[TgApiMessage|TgApiMessageService]:
-        return [m for m in (self.get_latest_raw_messages(since)) if self.resolve_topic_id(m) == topic_id]
+    # @override
+    def get_raw_message(self, message_id: int) -> None | TgApiMessage | TgApiMessageService:
+        j = self.data.get(message_id)
+        if j is None:
+            return None
+        if j['_'] == 'Message':
+            return dataclass_from_dict(TgApiMessage, j)
+        else:
+            return dataclass_from_dict(TgApiMessageService, j)

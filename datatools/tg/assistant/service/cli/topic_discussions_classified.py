@@ -57,4 +57,4 @@ async def dump_topic_discussions_classified(session_slug: str, channel_id: int, 
 
         print(json_dump(DiscussionClassifier(llm(llm_provider)).classify(discussions)))
 
-        channel_message_service.channel_ext_message_repository.save_cached()
+        channel_message_service.channel_ext_message_repository.close()

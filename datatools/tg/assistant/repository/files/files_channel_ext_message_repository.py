@@ -6,13 +6,14 @@ from sortedcontainers import SortedDict
 
 from datatools.json.util import to_jsonisable
 from datatools.tg.assistant.model.tg_ext_message import TgExtMessage
+from datatools.tg.assistant.util.closeable import Closeable
 from datatools.util.dataclasses import dataclass_from_dict
 
 CACHE_FILE_SIZE = 256
 CACHE_FILE_PREFIX = 'ext_'
 
 
-class FilesChannelExtMessageRepository:
+class FilesChannelExtMessageRepository(Closeable):
     files_folder: pathlib.Path
     buckets: SortedDict[int, SortedDict[int, TgExtMessage]]
     channel_id: int
@@ -49,7 +50,7 @@ class FilesChannelExtMessageRepository:
                         d: TgExtMessage = dataclass_from_dict(TgExtMessage, json.loads(line))
                         self.put_message(d)
 
-    def save_cached(self):
+    def close(self):
         print(f'Saving cache for channel {self.channel_id}', file=sys.stderr)
 
         for k, bucket in self.buckets.items():

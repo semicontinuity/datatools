@@ -40,8 +40,8 @@ class ChannelMessageService(Closeable):
 
     # @override
     def close(self):
-        self.channel_api_message_repository.save_cached()
-        self.channel_ext_message_repository.save_cached()
+        self.channel_api_message_repository.close()
+        self.channel_ext_message_repository.close()
 
     def make_latest_topic_discussion_forest(self, raw_messages: list[TgApiMessage | TgApiMessageService]) -> list[TgMessage]:
         """
