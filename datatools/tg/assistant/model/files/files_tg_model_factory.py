@@ -10,11 +10,13 @@ from datatools.tg.assistant.model.tg_forum import TgForum
 from datatools.tg.assistant.model.tg_model_factory import TgModelFactory
 from datatools.tg.assistant.model.tg_root_objects import TgRootObjects
 from datatools.tg.assistant.model.tg_topic import TgTopic
-from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
-from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
 from datatools.tg.assistant.repository.channel_repository import ChannelRepository
 from datatools.tg.assistant.repository.channel_topic_repository import ChannelTopicRepository
+from datatools.tg.assistant.repository.files.files_channel_api_message_repository import \
+    FilesChannelApiMessageRepository
+from datatools.tg.assistant.repository.files.files_channel_ext_message_repository import \
+    FilesChannelExtMessageRepository
 from datatools.tg.assistant.service.channel_message_service import ChannelMessageService
 from datatools.tg.assistant.service.discussion_classifier import DiscussionClassifier
 from datatools.tg.assistant.service.discussion_forest_flattener import flat_discussion_forest
@@ -99,10 +101,10 @@ class FilesTgModelFactory(TgModelFactory):
         channel_participants_repository = ChannelParticipantsRepository(self.client, channel_id)
         await channel_participants_repository.load()
 
-        channel_api_message_repository = ChannelApiMessageRepository(self.cache_folder, self.client, channel_id)
+        channel_api_message_repository = FilesChannelApiMessageRepository(self.cache_folder, self.client, channel_id)
         await channel_api_message_repository.load()
 
-        channel_ext_message_repository = ChannelExtMessageRepository(self.cache_folder, channel_id)
+        channel_ext_message_repository = FilesChannelExtMessageRepository(self.cache_folder, channel_id)
         channel_ext_message_repository.load_cached()
 
         return ChannelMessageService(

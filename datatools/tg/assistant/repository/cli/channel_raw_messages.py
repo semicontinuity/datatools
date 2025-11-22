@@ -3,7 +3,8 @@ import asyncio
 import click
 
 from datatools.tg import to_cache_folder, new_telegram_client
-from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
+from datatools.tg.assistant.repository.files.files_channel_api_message_repository import \
+    FilesChannelApiMessageRepository
 
 
 @click.command()
@@ -29,7 +30,7 @@ def channel_raw_messages(session_slug: str, channel_id: int, since: str):
 
 async def dump_channel_raw_messages(session_slug: str, channel_id: int, since: str):
     async with await new_telegram_client(session_slug) as client:
-        repository = ChannelApiMessageRepository(to_cache_folder(session_slug), client, channel_id)
+        repository = FilesChannelApiMessageRepository(to_cache_folder(session_slug), client, channel_id)
         await repository.load()
 
         if since:

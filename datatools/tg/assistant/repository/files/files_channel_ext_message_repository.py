@@ -12,7 +12,7 @@ CACHE_FILE_SIZE = 256
 CACHE_FILE_PREFIX = 'ext_'
 
 
-class ChannelExtMessageRepository:
+class FilesChannelExtMessageRepository:
     files_folder: pathlib.Path
     buckets: SortedDict[int, SortedDict[int, TgExtMessage]]
     channel_id: int

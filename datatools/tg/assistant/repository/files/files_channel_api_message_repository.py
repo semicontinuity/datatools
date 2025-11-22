@@ -13,7 +13,7 @@ CACHE_FILE_SIZE = 256
 # TODO: Separate to ApiMessageService (tg comm) and repo
 
 
-class ChannelApiMessageRepository:
+class FilesChannelApiMessageRepository:
     files_folder: pathlib.Path
     data: Dict[int, Dict]
     cache_max_id: int

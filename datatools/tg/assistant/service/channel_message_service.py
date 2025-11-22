@@ -7,25 +7,27 @@ from datatools.tg.api.tg_api_message import TgApiMessage
 from datatools.tg.api.tg_api_message_service import TgApiMessageService
 from datatools.tg.assistant.model.tg_ext_message import TgExtMessage
 from datatools.tg.assistant.model.tg_message import TgMessage
-from datatools.tg.assistant.repository.channel_api_message_repository import ChannelApiMessageRepository
-from datatools.tg.assistant.repository.channel_ext_message_repository import ChannelExtMessageRepository
 from datatools.tg.assistant.repository.channel_participants_repository import ChannelParticipantsRepository
+from datatools.tg.assistant.repository.files.files_channel_api_message_repository import \
+    FilesChannelApiMessageRepository
+from datatools.tg.assistant.repository.files.files_channel_ext_message_repository import \
+    FilesChannelExtMessageRepository
 from datatools.tg.assistant.service import should_summarize
 from datatools.tg.assistant.service.message_summarizer_service import MessageSummarizerService
 from datatools.tg.assistant.util.closeable import Closeable
 
 
 class ChannelMessageService(Closeable):
-    channel_ext_message_repository: ChannelExtMessageRepository
-    channel_api_message_repository: ChannelApiMessageRepository
+    channel_ext_message_repository: FilesChannelExtMessageRepository
+    channel_api_message_repository: FilesChannelApiMessageRepository
     channel_participants_repository: ChannelParticipantsRepository
     channel_id: int
     message_summarizer_service: MessageSummarizerService
 
     def __init__(
             self,
-            channel_ext_message_repository: ChannelExtMessageRepository,
-            channel_api_message_repository: ChannelApiMessageRepository,
+            channel_ext_message_repository: FilesChannelExtMessageRepository,
+            channel_api_message_repository: FilesChannelApiMessageRepository,
             channel_participants_repository: ChannelParticipantsRepository,
             channel_id: int,
             message_summarizer_service: MessageSummarizerService,
