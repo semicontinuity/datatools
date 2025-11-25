@@ -17,13 +17,13 @@ async def do_dump_channel(client, channel_id: int):
     channel = first_channel(full_channel)
 
     if channel:
-        print(channel.forum)
-        # print(
-        #     json.dumps(
-        #         to_jsonisable(channel.to_dict()),
-        #         ensure_ascii=False
-        #     )
-        # )
+        # print(channel.forum)
+        print(
+            json.dumps(
+                to_jsonisable(channel.to_dict()),
+                ensure_ascii=False
+            )
+        )
 
     # t = await client(
     #     GetForumTopicsRequest(

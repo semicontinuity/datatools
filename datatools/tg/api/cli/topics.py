@@ -2,15 +2,16 @@ import asyncio
 import json
 
 import click
-# from telethon.tl.functions.channels import GetForumTopicsRequest
 from telethon.tl.functions.messages import GetForumTopicsRequest
 
 from datatools.json.util import to_jsonisable
 from datatools.tg import new_telegram_client
 
 
-async def do_dump_topics(client, channel_id: int):
+async def do_get_topics(client, channel_id: int):
     ch = await client.get_entity(channel_id)
+    if not ch.forum:
+        return []
 
     response = await client(
         GetForumTopicsRequest(
@@ -19,22 +20,15 @@ async def do_dump_topics(client, channel_id: int):
             offset_id=0,
             offset_topic=0,
             limit=1000,
-            q=''
+            q=None,
         )
     )
-
-    for topic in response.to_dict()['topics']:
-        print(
-            json.dumps(
-                to_jsonisable(topic),
-                ensure_ascii=False
-            )
-        )
+    return response.to_dict()['topics']
 
 
-async def dump_topics(telethon_session_slug: str, channel_id: int):
+async def get_topics(telethon_session_slug: str, channel_id: int):
     async with await new_telegram_client(telethon_session_slug) as client:
-        await do_dump_topics(client, channel_id)
+        return await do_get_topics(client, channel_id)
 
 
 @click.command()
@@ -50,4 +44,12 @@ async def dump_topics(telethon_session_slug: str, channel_id: int):
     help="Channel ID",
 )
 def topics(session_slug: str, channel_id: int):
-    asyncio.run(dump_topics(session_slug, channel_id))
+    topic_list = asyncio.run(get_topics(session_slug, channel_id))
+
+    for topic in topic_list:
+        print(
+            json.dumps(
+                to_jsonisable(topic),
+                ensure_ascii=False
+            )
+        )
