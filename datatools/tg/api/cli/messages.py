@@ -31,13 +31,13 @@ async def do_dump_messages(client, channel_id: int, topic_id: Optional[int], min
 
     for message in message_list:
         if topic_id:
-            await dump_topic_messages(message)
+            await dump_topic_message(message)
 
         else:
             print(json.dumps(to_jsonisable(message.to_dict()), ensure_ascii=False))
 
 
-async def dump_topic_messages(message):
+async def dump_topic_message(message):
     if message.reply_to:
         if message.reply_to.reply_to_top_id:
             msg_topic_id = message.reply_to.reply_to_top_id
@@ -54,7 +54,7 @@ async def dump_topic_messages(message):
                     "topic": msg_topic_id,
                     # "reply_to_msg_id": message.reply_to.reply_to_msg_id if message.reply_to and message.reply_to.reply_to_msg_id else None,
                     # "reply_to_top_id": message.reply_to.reply_to_top_id if message.reply_to and message.reply_to.reply_to_top_id else None,
-                    "message": message.message,
+                    "message": message.messagez,
                 }
             ),
             ensure_ascii=False

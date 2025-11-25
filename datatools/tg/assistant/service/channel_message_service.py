@@ -114,7 +114,7 @@ class ChannelMessageService(Closeable):
             id=raw_message.id,
             ext=self.tg_ext_message_for(raw_message.id),
             date=datetime.fromisoformat(raw_message.date),
-            message=raw_message.message,
+            message=raw_message.messagez,
             replies=SortedDict()
         )
 

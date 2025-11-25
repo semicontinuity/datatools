@@ -8,6 +8,7 @@ from datatools.tg.api.cli.entity import entity
 from datatools.tg.api.cli.groups import groups
 from datatools.tg.api.cli.message import message
 from datatools.tg.api.cli.messages import messages
+from datatools.tg.api.cli.messagez import messagez
 from datatools.tg.api.cli.topics import topics
 
 
@@ -24,6 +25,7 @@ main.add_command(dialogs)
 main.add_command(entity)
 main.add_command(message)
 main.add_command(messages)
+main.add_command(messagez)
 main.add_command(topics)
 
 
