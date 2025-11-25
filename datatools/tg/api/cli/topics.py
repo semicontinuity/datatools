@@ -2,7 +2,8 @@ import asyncio
 import json
 
 import click
-from telethon.tl.functions.channels import GetForumTopicsRequest
+# from telethon.tl.functions.channels import GetForumTopicsRequest
+from telethon.tl.functions.messages import GetForumTopicsRequest
 
 from datatools.json.util import to_jsonisable
 from datatools.tg import new_telegram_client
