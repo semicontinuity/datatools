@@ -109,12 +109,12 @@ class ChannelMessageService(Closeable):
             self.channel_ext_message_repository.put_message(tg_ext_message)
         return tg_ext_message
 
-    def tg_message_for(self, raw_message):
+    def tg_message_for(self, raw_message: None | TgApiMessage | TgApiMessageService):
         tg_message = TgMessage(
             id=raw_message.id,
             ext=self.tg_ext_message_for(raw_message.id),
             date=datetime.fromisoformat(raw_message.date),
-            message=raw_message.messagez,
+            message=raw_message.message,
             replies=SortedDict()
         )
 
