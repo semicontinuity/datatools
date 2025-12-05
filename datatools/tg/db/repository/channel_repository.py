@@ -1,8 +1,8 @@
-from typing import Optional, List
 import logging
+from typing import Optional, List
 
-from datatools.tg.db.model.channel import Channel
 from datatools.tg.db.database_connection import DatabaseConnection
+from datatools.tg.db.model.channel import Channel
 
 logger = logging.getLogger(__name__)
 

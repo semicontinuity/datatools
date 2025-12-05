@@ -23,7 +23,7 @@ export DB_HOST=localhost
 export DB_PORT=5432
 export DB_USERNAME=your_username
 export DB_PASSWORD=your_password
-export DB_DATABASE=telegram_db  # optional, defaults to 'telegram_db'
+export DB_DATABASE=tg
 ```
 
 ## Database Setup

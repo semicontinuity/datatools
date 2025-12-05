@@ -5,6 +5,7 @@ from typing import Optional
 from datatools.tg.db.config.database import DatabaseConfig
 from datatools.tg.db.database_connection import DatabaseConnection
 from datatools.tg.db.repository.message_repository import MessageRepository
+from datatools.tg.db.repository.expanded_message_repository import ExpandedMessageRepository
 
 
 @click.command()
@@ -18,7 +19,12 @@ from datatools.tg.db.repository.message_repository import MessageRepository
     type=int,
     help="Limit number of messages returned"
 )
-def messages_get(channel_id: Optional[int], limit: Optional[int]):
+@click.option(
+    "--expand",
+    is_flag=True,
+    help="Include user information by joining with users table"
+)
+def messages_get(channel_id: Optional[int], limit: Optional[int], expand: bool):
     """Retrieve messages and output in JSON lines format."""
     try:
         # Get database configuration from environment
@@ -27,11 +33,14 @@ def messages_get(channel_id: Optional[int], limit: Optional[int]):
         # Create database connection
         db = DatabaseConnection(config)
         
-        # Create message repository
-        message_repo = MessageRepository(db)
-        
-        # Get messages from database
-        messages = message_repo.get_all(channel_id=channel_id, limit=limit)
+        if expand:
+            # Use expanded message repository for user joins
+            expanded_repo = ExpandedMessageRepository(db)
+            messages = expanded_repo.get_all(channel_id=channel_id, limit=limit)
+        else:
+            # Use regular message repository
+            message_repo = MessageRepository(db)
+            messages = message_repo.get_all(channel_id=channel_id, limit=limit)
         
         # Output messages as JSON lines
         for message in messages:

@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -21,7 +20,7 @@ class DatabaseConfig:
             port=int(os.environ.get('DB_PORT', 5432)),
             username=os.environ['DB_USERNAME'],
             password=os.environ['DB_PASSWORD'],
-            database=os.environ.get('DB_DATABASE', 'telegram_db')
+            database=os.environ['DB_DATABASE']
         )
     
     @property
