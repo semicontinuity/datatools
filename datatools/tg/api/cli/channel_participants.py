@@ -10,8 +10,8 @@ from datatools.tg import new_telegram_client
 @click.command()
 @click.option(
     "--session-slug",
-    required=True,
-    help="Telethon session slug",
+    required=False,
+    help="Telethon session slug (will use env var TELETHON_SESSION_SLUG if unspecified)",
 )
 @click.option(
     "--channel-id",
@@ -19,11 +19,11 @@ from datatools.tg import new_telegram_client
     required=True,
     help="Channel ID",
 )
-def channel_participants(session_slug: str, channel_id: int):
+def channel_participants(session_slug: str | None, channel_id: int):
     asyncio.run(dump_channel_participants(session_slug, channel_id))
 
 
-async def dump_channel_participants(telethon_session_slug: str, channel_id: int):
+async def dump_channel_participants(telethon_session_slug: str | None, channel_id: int):
     async with await new_telegram_client(telethon_session_slug) as client:
         await do_dump_channel_participants(client, channel_id)
 
