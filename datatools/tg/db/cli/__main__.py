@@ -2,6 +2,7 @@ import click
 import logging
 
 from datatools.tg.db.cli.channels import channels
+from datatools.tg.db.cli.messages import messages
 from datatools.tg.db.cli.setup import init, status
 
 # Set up logging
@@ -16,6 +17,7 @@ def main():
 
 
 main.add_command(channels)
+main.add_command(messages)
 main.add_command(init)
 main.add_command(status)
 

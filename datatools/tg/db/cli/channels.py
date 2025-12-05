@@ -1,6 +1,6 @@
 import click
 
-from datatools.tg.db.cli.channels_import import channels_import
+from datatools.tg.db.cli.channels_put import channels_put
 from datatools.tg.db.cli.channels_get import channels_get
 
 
@@ -10,5 +10,5 @@ def channels():
     pass
 
 
-channels.add_command(channels_import, name='put')
+channels.add_command(channels_put, name='put')
 channels.add_command(channels_get, name='get')

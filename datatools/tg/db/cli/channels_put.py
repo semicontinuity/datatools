@@ -9,7 +9,7 @@ from datatools.tg.db.repository.channel_repository import ChannelRepository
 
 
 @click.command()
-def channels_import():
+def channels_put():
     """Import channels from STDIN in JSON lines format."""
     try:
         # Get database configuration from environment
