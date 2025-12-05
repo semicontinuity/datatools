@@ -37,8 +37,8 @@ async def dump_channels(telethon_session_slug: str):
 @click.command()
 @click.option(
     "--session-slug",
-    required=True,
-    help="Telethon session slug",
+    required=False,
+    help="Telethon session slug (will use env var TELETHON_SESSION_SLUG if unspecified)",
 )
-def channels(session_slug: str):
+def channels(session_slug: str | None):
     asyncio.run(dump_channels(session_slug))

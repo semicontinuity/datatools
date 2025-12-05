@@ -19,7 +19,7 @@ async def do_get_messages(client, channel_id: int, offset_date: str | None, limi
     return result
 
 
-async def get_messages(telethon_session_slug: str, channel_id: int, offset_date: str | None, limit: int):
+async def get_messages(telethon_session_slug: str | None, channel_id: int | None, offset_date: str | None, limit: int):
     async with await new_telegram_client(telethon_session_slug) as client:
         return await do_get_messages(client, channel_id, offset_date, limit)
 
@@ -27,13 +27,13 @@ async def get_messages(telethon_session_slug: str, channel_id: int, offset_date:
 @click.command()
 @click.option(
     "--session-slug",
-    required=True,
-    help="Telethon session slug",
+    required=False,
+    help="Telethon session slug (will use env var TELETHON_SESSION_SLUG if unspecified)",
 )
 @click.option(
     "--channel-id",
     type=int,
-    required=True,
+    required=False,
     help="Channel ID",
 )
 @click.option(
@@ -47,7 +47,7 @@ async def get_messages(telethon_session_slug: str, channel_id: int, offset_date:
     default=100,
     help="Limit",
 )
-def messagez(session_slug: str, channel_id: int, offset_date: str | None, limit: int):
+def messagez(session_slug: str | None, channel_id: int | None, offset_date: str | None, limit: int):
     r = asyncio.run(get_messages(session_slug, channel_id, offset_date, limit))
 
     for message in r:
