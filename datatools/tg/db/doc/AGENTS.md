@@ -6,6 +6,7 @@
 - Update task status with brief technical summaries upon completion
 
 ## Development Process
+- This repository uses git; use git when addin/renaming/deleting files
 - Follow modular architecture with clear separation of concerns
 - Implement comprehensive error handling with user-friendly messages
 - Ensure new line at the end of each file
