@@ -1,0 +1,3 @@
+# Database dependencies for Telegram data storage
+psycopg2-binary>=2.9.0
+click>=8.0.0
