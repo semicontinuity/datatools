@@ -1,5 +1,5 @@
 from pathlib import Path
-from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH
+from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH, S_ISUID, S_ISGID, S_ISVTX
 from typing import AnyStr, Tuple, List, Callable
 
 from datatools.fstree.palette import PALETTE_ALT
@@ -54,15 +54,42 @@ class FsTreeNode(TreeNode):
 
     def text_style(self, render_state: RenderState = None):
         is_under_cursor = render_state and render_state.is_under_cursor
-        is_bold = self.st_mode & S_IXOTH
-        is_italic = self.st_mode & S_IWOTH
-        # lower 3 bits: group permissions + 1 bit read by others
-        color_idx = ((self.st_mode & S_IROTH) << 1) | ((self.st_mode & S_IRWXG) >> 3)
-        return Style(
-            attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00),
-            fg=PALETTE_ALT[color_idx] if not is_under_cursor else (0,0,0),
-            bg=PALETTE_ALT[color_idx] if is_under_cursor else None,
-        )
+        
+        # Check for override conditions first
+        if self.st_mode & S_ISVTX:  # Sticky bit set
+            color = PALETTE_ALT[2]  # Green (index 2 in PALETTE_ALT)
+            is_bold = False
+            is_italic = False
+        elif self.st_mode & S_ISGID:  # SGID bit set
+            color = PALETTE_ALT[3]  # Yellow (index 3 in PALETTE_ALT)
+            is_bold = False
+            is_italic = False
+        elif self.st_mode & S_ISUID:  # SUID bit set
+            color = PALETTE_ALT[1]  # Red (index 1 in PALETTE_ALT)
+            is_bold = False
+            is_italic = False
+        else:
+            # Default coloring based on permissions
+            is_bold = self.st_mode & S_IXOTH
+            is_italic = self.st_mode & S_IWOTH
+            # lower 3 bits: group permissions + 1 bit read by others
+            color_idx = ((self.st_mode & S_IROTH) << 1) | ((self.st_mode & S_IRWXG) >> 3)
+            color = PALETTE_ALT[color_idx]
+        
+        if is_under_cursor:
+            # When under cursor, use black text on the color background for good contrast
+            return Style(
+                attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00),
+                fg=(0, 0, 0),  # Black text
+                bg=color,      # Color background
+            )
+        else:
+            # Normal case - colored text, no background
+            return Style(
+                attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00),
+                fg=color,
+                bg=None,
+            )
 
     def line_style(self):
         return Style(fg=(64, 64, 64))
