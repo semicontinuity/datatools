@@ -55,24 +55,20 @@ class FsTreeNode(TreeNode):
     def text_style(self, render_state: RenderState = None):
         is_under_cursor = render_state and render_state.is_under_cursor
         
-        # Check for override conditions first
+        # Determine formatting attributes based on permission bits
+        is_bold = self.st_mode & S_IXOTH
+        is_italic = self.st_mode & S_IWOTH
+        
+        # Check for override conditions for color only
         if self.st_mode & S_ISVTX:  # Sticky bit set
             color = PALETTE_ALT[2]  # Green (index 2 in PALETTE_ALT)
-            is_bold = False
-            is_italic = False
         elif self.st_mode & S_ISGID:  # SGID bit set
             color = PALETTE_ALT[3]  # Yellow (index 3 in PALETTE_ALT)
-            is_bold = False
-            is_italic = False
         elif self.st_mode & S_ISUID:  # SUID bit set
             color = PALETTE_ALT[1]  # Red (index 1 in PALETTE_ALT)
-            is_bold = False
-            is_italic = False
         else:
             # Default coloring based on permissions
-            is_bold = self.st_mode & S_IXOTH
-            is_italic = self.st_mode & S_IWOTH
-            # lower 3 bits: group permissions + 1 bit read by others
+            # Values 0-7 of group permissions correspond to color 0-7
             color_idx = ((self.st_mode & S_IROTH) << 1) | ((self.st_mode & S_IRWXG) >> 3)
             color = PALETTE_ALT[color_idx]
         
