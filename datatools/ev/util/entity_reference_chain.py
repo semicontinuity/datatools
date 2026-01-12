@@ -15,6 +15,7 @@ def debug(msg, **kwargs):
 def create_ctx_reference_chain(ctx: Path, referring_path: Path, referenced_path: Path):
     for part in ctx.parts:
         referenced_path = referenced_path / part
+        debug('create_ctx_reference_chain', part=part, referenced_path=referenced_path)
         if not referenced_path.exists():
             return False
 

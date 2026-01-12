@@ -12,7 +12,7 @@ from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
 from datatools.jv.model.j_element_factory import JElementFactory
 from datatools.tui.exit_codes_v2 import EXIT_CODE_ENTER, MODIFIER_ALT, EXIT_CODE_ESCAPE, EXIT_CODE_F3, EXIT_CODE_F4
-from datatools.tui.picotui_keys import KEY_ALT_ENTER
+from datatools.tui.picotui_keys import KEY_ALT_ENTER, KEY_INSERT, KEY_ALT_INSERT
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview import compact
@@ -71,6 +71,10 @@ def handle_loop_result(document, key_code, cur_line: int) -> Tuple[int, Any]:
         return EXIT_CODE_F3, json.dumps(document.selected_value(cur_line))
     elif key_code == KEY_F4:
         return EXIT_CODE_F4, json.dumps(document.selected_value(cur_line))
+    # elif key_code == KEY_INSERT or key_code == KEY_ALT_INSERT:
+    #     j = self.cell_value_f(self.cur_line, self.cursor_column)
+    #     channel = key == KEY_ALT_INSERT
+    #     self.export_json(channel, j)
     else:
         return EXIT_CODE_ESCAPE, None
 

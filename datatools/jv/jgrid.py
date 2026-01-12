@@ -24,7 +24,7 @@ class JGrid(TreeGrid):
     def handle_edit_key(self, key):
         if key == KEY_INSERT:
             value = self.document.selected_value(self.cur_line)
-            selected_path = ''.join(self.document.selected_path(self.cur_line))
+            selected_path = '/'.join(str(p) for p in self.document.selected_path(self.cur_line))
             if type(value) is str:
                 ObjectExporter.INSTANCE.export(
                     value,

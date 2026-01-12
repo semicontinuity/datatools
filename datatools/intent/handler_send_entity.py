@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 
 from datatools.dbview.x.util.pg_query import query_from_yaml
-from datatools.ev.entity_transfer import create_ctx_reference_chain, write_entity_parts_b
+from datatools.ev.entity_transfer import write_entity_parts_b
+from datatools.ev.util.entity_reference_chain import create_ctx_reference_chain
 from datatools.intent.target_folder import default_folder
 from datatools.json.util import to_jsonisable
 
