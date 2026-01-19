@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple, AnyStr, List
 
 from datatools.tui.ansi_str import ANSI_CMD_DEFAULT_FG, ANSI_CMD_ATTR_NOT_BOLD, ANSI_CMD_ATTR_BOLD, ANSI_CMD_DEFAULT_BG, \
-    ANSI_CMD_ATTR_NOT_ITALIC, ANSI_CMD_ATTR_ITALIC, ANSI_CMD_ATTR_UNDERLINED, ANSI_CMD_ATTR_NOT_UNDERLINED
+    ANSI_CMD_ATTR_NOT_ITALIC, ANSI_CMD_ATTR_ITALIC, ANSI_CMD_ATTR_UNDERLINED, ANSI_CMD_ATTR_NOT_UNDERLINED, \
+    ANSI_CMD_ATTR_CROSSED_OUT, ANSI_CMD_ATTR_NOT_CROSSED_OUT
 from datatools.tui.buffer.abstract_buffer_writer import AbstractBufferWriter
 from datatools.tui.terminal import ansi_foreground_escape_code, ansi_background_escape_code
 
@@ -49,4 +50,6 @@ def render_styled(style: Style, text: AnyStr) -> AnyStr:
         result = ANSI_CMD_ATTR_ITALIC + result + ANSI_CMD_ATTR_NOT_ITALIC
     if style.attr & AbstractBufferWriter.MASK_UNDERLINED != 0:
         result = ANSI_CMD_ATTR_UNDERLINED + result + ANSI_CMD_ATTR_NOT_UNDERLINED
+    if style.attr & AbstractBufferWriter.MASK_CROSSED_OUT != 0:
+        result = ANSI_CMD_ATTR_CROSSED_OUT + result + ANSI_CMD_ATTR_NOT_CROSSED_OUT
     return result

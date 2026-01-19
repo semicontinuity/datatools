@@ -48,6 +48,14 @@ class FsTreeNode(TreeNode):
         except (OSError, AttributeError):
             return None
 
+    def is_deleted(self):
+        """Check if the 'user.deleted' extended attribute exists"""
+        try:
+            os.getxattr(str(self.path), 'user.deleted')
+            return True
+        except (OSError, AttributeError):
+            return False
+
     def spans(self, render_state: RenderState = None) -> List[Tuple[AnyStr, Style]]:
         result = []
         
@@ -92,6 +100,9 @@ class FsTreeNode(TreeNode):
         is_bold = self.st_mode & S_IXOTH
         is_italic = self.st_mode & S_IWOTH
         
+        # Check if folder is deleted (for strike-thru)
+        is_deleted = self.is_deleted()
+        
         # Check for override conditions for color only
         if self.st_mode & S_ISVTX:  # Sticky bit set
             color = PALETTE_ALT[2]  # Green (index 2 in PALETTE_ALT)
@@ -105,17 +116,20 @@ class FsTreeNode(TreeNode):
             color_idx = ((self.st_mode & S_IROTH) << 1) | ((self.st_mode & S_IRWXG) >> 3)
             color = PALETTE_ALT[color_idx]
         
+        # Build attribute flags
+        attr_flags = (0x01 if is_bold else 0x00) | (0x02 if is_italic else 0x00) | (0x08 if is_deleted else 0x00)
+        
         if is_under_cursor:
             # When under cursor, use black text on the color background for good contrast
             return Style(
-                attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00),
+                attr=attr_flags,
                 fg=(0, 0, 0),  # Black text
                 bg=color,      # Color background
             )
         else:
             # Normal case - colored text, no background
             return Style(
-                attr=(0x01 if is_bold else 0x00)|(0x02 if is_italic else 0x00),
+                attr=attr_flags,
                 fg=color,
                 bg=None,
             )
