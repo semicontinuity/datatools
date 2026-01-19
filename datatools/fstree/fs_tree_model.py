@@ -1,6 +1,7 @@
+import os
 from pathlib import Path
 from stat import S_IXOTH, S_IROTH, S_IRWXG, S_IWOTH, S_ISUID, S_ISGID, S_ISVTX
-from typing import AnyStr, Tuple, List, Callable
+from typing import AnyStr, Tuple, List, Callable, Optional
 
 from datatools.fstree.palette import PALETTE_ALT
 from datatools.tui.treeview.render_state import RenderState
@@ -17,11 +18,13 @@ def remove(path: Path):
         path.rmdir()
 
 
+# abstract
 class FsTreeNode(TreeNode):
 
     path: Path
     indent: int
     name: str
+    description: Optional[str]
     padding: int
 
     packed_size: int
@@ -32,25 +35,55 @@ class FsTreeNode(TreeNode):
         super().__init__(last_in_parent)
         self.path = path
         self.name = name
+        self.description = self.get_description()
         self.indent = indent
         self.padding = 0
         self.packed_size = 1
         self.st_mode = 0
 
+    def get_description(self):
+        """Get the description from the 'user.description' extended attribute"""
+        try:
+            return os.getxattr(str(self.path), 'user.description').decode('utf-8')
+        except (OSError, AttributeError):
+            return None
+
     def spans(self, render_state: RenderState = None) -> List[Tuple[AnyStr, Style]]:
-        return self.parent.indent_spans() + self.edge_spans() + [self.rich_text(render_state)]
+        result = []
+        
+        if self.parent is not None:
+            try:
+                result.extend(self.parent.indent_spans())
+            except:
+                pass
+
+        try:
+            result.extend(self.tree_structure_terminal_spans())
+        except:
+            pass
+
+        result.extend(self.node_value_spans(render_state))
+        return result
 
     def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
+        if self.parent is not None:
+            return []
+        else:
+            return []
+
+    def tree_structure_indent_spans(self) -> List[Tuple[AnyStr, Style]]:
         pass
 
-    def own_spans(self) -> List[Tuple[AnyStr, Style]]:
+    def tree_structure_terminal_spans(self) -> List[Tuple[AnyStr, Style]]:
         pass
 
-    def edge_spans(self) -> List[Tuple[AnyStr, Style]]:
-        pass
-
-    def rich_text(self, render_state: RenderState = None) -> Tuple[AnyStr, Style]:
-        return self.name, self.text_style(render_state)
+    def node_value_spans(self, render_state: RenderState = None) -> List[Tuple[AnyStr, Style]]:
+        if self.description is not None:
+            # Return the name and description as separate spans with different styles
+            description_style = Style(fg=(255, 255, 0))  # Yellow color
+            return [(self.name, self.text_style(render_state)), (' ', Style()), (self.description, description_style)]
+        else:
+            return [(self.name, self.text_style(render_state))]
 
     def text_style(self, render_state: RenderState = None):
         is_under_cursor = render_state and render_state.is_under_cursor
@@ -169,15 +202,15 @@ class FsFolder(FsTreeNode):
             return line
 
     def indent_spans(self) -> List[Tuple[AnyStr, Style]]:
-        return self.parent.indent_spans() + self.own_spans()
+        return self.parent.indent_spans() + self.tree_structure_indent_spans()
 
-    def own_spans(self) -> List[Tuple[AnyStr, Style]]:
+    def tree_structure_indent_spans(self) -> List[Tuple[AnyStr, Style]]:
         if self.parent is None or type(self.parent) is FsInvisibleRoot:
             return []
         else:
             return [('  ' if self.last_in_parent else '│ ', self.line_style())]
 
-    def edge_spans(self) -> List[Tuple[AnyStr, Style]]:
+    def tree_structure_terminal_spans(self) -> List[Tuple[AnyStr, Style]]:
         if self.parent is None or type(self.parent) is FsInvisibleRoot:
             return []
         else:

@@ -4,14 +4,14 @@ from datatools.dbview.x.util.pg_query import query_to_string
 from datatools.json.util import to_jsonisable
 from datatools.jv.jgrid import JGrid
 from datatools.tui.picotui_keys import KEY_CTRL_ALT_SHIFT_F5, KEY_SHIFT_F5, KEY_CTRL_E, KEY_CTRL_R, KEY_CTRL_Q, \
-    KEY_CTRL_X
+    KEY_CTRL_X, KEY_F5
 from datatools.util.object_exporter import ObjectExporter
 
 
 class ViewDbRowGrid(JGrid):
 
     def handle_edit_key(self, key):
-        if key == KEY_SHIFT_F5:
+        if key == KEY_F5 or key == KEY_SHIFT_F5:
             ObjectExporter.INSTANCE.export(
                 str(json.dumps(to_jsonisable(self.document.value))),
                 {
