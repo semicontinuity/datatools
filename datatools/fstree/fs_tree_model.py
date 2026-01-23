@@ -64,6 +64,14 @@ class FsTreeNode(TreeNode):
         except (OSError, AttributeError):
             return False
 
+    def is_hidden_by_attribute(self):
+        """Check if the 'user.hidden' extended attribute exists"""
+        try:
+            os.getxattr(str(self.path), 'user.hidden')
+            return True
+        except (OSError, AttributeError):
+            return False
+
     def spans(self, render_state: RenderState = None) -> List[Tuple[AnyStr, Style]]:
         result = []
         
@@ -173,10 +181,22 @@ class FsFolder(FsTreeNode):
         self.st_mode = self.path.stat().st_mode
 
         sub_paths = [
-            sub_path for sub_path in sorted(self.path.iterdir()) if sub_path.is_dir() and self.predicate(sub_path)
+            sub_path for sub_path in sorted(self.path.iterdir())
+            if sub_path.is_dir() and self.predicate(sub_path)
         ]
 
-        new_names = set(sub_path.name for sub_path in sub_paths)
+        # Filter out paths with user.hidden attribute
+        visible_sub_paths = []
+        for sub_path in sub_paths:
+            try:
+                os.getxattr(str(sub_path), 'user.hidden')
+                # Skip this path if user.hidden attribute exists
+                continue
+            except (OSError, AttributeError):
+                # Path is not hidden, include it
+                visible_sub_paths.append(sub_path)
+
+        new_names = set(sub_path.name for sub_path in visible_sub_paths)
         existing_names = set(element.name for element in self.elements)
         added_names = new_names - existing_names
         name_to_element = {element.name: element for element in self.elements}
@@ -185,14 +205,14 @@ class FsFolder(FsTreeNode):
             self.elements[len(self.elements) - 1].last_in_parent = False
 
         children = []
-        for i, sub_path in enumerate(sub_paths):
+        for i, sub_path in enumerate(visible_sub_paths):
             if sub_path.name in added_names:
                 model = FsFolder(sub_path, sub_path.name, self.indent, last_in_parent=False, predicate=self.predicate)
                 model.parent = self
             else:
                 model = name_to_element[sub_path.name]
             model.refresh()
-            model.last_in_parent = i == len(sub_paths) - 1
+            model.last_in_parent = i == len(visible_sub_paths) - 1
             children.append(model)
         self.set_elements(children)
 
