@@ -25,8 +25,8 @@ class JElement(TreeNode):
         style = self.style()
         value_field = text, style
         remaining = self.context.width - self.context.key_field_length - 7
-        ratio = self.value / self.context.total
-        block_count = int(ratio * remaining)
+        ratio = self.value / self.context.ref_amount
+        block_count = int(ratio * remaining) if self.indent else 0
         
         return [(' ' * self.indent, Style())] + \
             self.spans_for_field_label() + \
