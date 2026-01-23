@@ -56,6 +56,14 @@ class FsTreeNode(TreeNode):
         except (OSError, AttributeError):
             return False
 
+    def is_collapsed_by_attribute(self):
+        """Check if the 'user.collapsed' extended attribute exists"""
+        try:
+            os.getxattr(str(self.path), 'user.collapsed')
+            return True
+        except (OSError, AttributeError):
+            return False
+
     def spans(self, render_state: RenderState = None) -> List[Tuple[AnyStr, Style]]:
         result = []
         
@@ -157,6 +165,9 @@ class FsFolder(FsTreeNode):
         super().__init__(path, name, indent, last_in_parent)
         self.predicate = predicate
         self.elements = []
+        # Set initial collapsed state based on user.collapsed attribute
+        if self.is_collapsed_by_attribute():
+            self.collapsed = True
 
     def refresh(self):
         self.st_mode = self.path.stat().st_mode
