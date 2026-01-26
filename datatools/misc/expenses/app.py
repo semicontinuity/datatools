@@ -66,7 +66,7 @@ class ExpensesTreeReader:
                 return indent
             indent += 1
 
-    def read(self):
+    def read(self) -> ExpensesNode:
         with open(self.file_name) as file:
             root = ExpensesNode(-1, '', 0, [])
             stack = [root]

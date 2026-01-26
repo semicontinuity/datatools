@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
-
+import json
 import sys
 
 from datatools.jt.app.app_kit import Applet
 from datatools.jt.model.data_bundle import DataBundle
-from datatools.misc.expenses.app import ExpensesTreeReader, ExpensesNode
+from datatools.misc.expenses.app import ExpensesNode
 from datatools.misc.expenses.viewer.expenses_document import ExpensesDocument
 from datatools.misc.expenses.viewer.expenses_grid import ExpensesGrid
 from datatools.misc.expenses.viewer.highlighting.highlighting import Highlighting, ConsoleHighlighting
@@ -16,7 +15,25 @@ from datatools.tui.terminal import screen_size_or_default
 from datatools.tui.treeview.tree_document import TreeDocument
 from datatools.tui.treeview.tree_grid_context import TreeGridContext
 from datatools.tui.treeview.tree_grid_factory import tree_grid
-from datatools.util.object_exporter import init_object_exporter
+
+
+def main():
+    # column_names = sys.argv[1:]
+    # print(column_names)
+    # print(input_data())
+
+    Highlighting.CURRENT = ConsoleHighlighting()
+
+    expenses = expenses_tree()
+    doc = make_document(expenses)
+    exit_code, output = with_alternate_screen(lambda: loop(doc))
+
+
+def make_document(expenses: ExpensesNode):
+    model = ViewModel(expenses).build_root_model()
+    model.set_collapsed_recursive(True)
+    model.collapsed = False
+    return ExpensesDocument(model)
 
 
 def make_json_tree_applet(document: ExpensesDocument, popup: bool = False) -> Applet:
@@ -30,19 +47,11 @@ def make_json_tree_applet(document: ExpensesDocument, popup: bool = False) -> Ap
 
 def do_make_json_tree_applet(grid_context, popup, document: TreeDocument) -> Applet:
     return Applet(
-        'expenses',
+        'jtt',
         tree_grid(document, grid_context, grid_class=ExpensesGrid),
         DataBundle(None, None, None, None, None),
         popup
     )
-
-
-def make_document(expenses: ExpensesNode):
-    model = ViewModel(expenses).build_root_model()
-    model.set_collapsed_recursive(True)
-    model.collapsed = False
-    return ExpensesDocument(model)
-
 
 def loop(document: ExpensesDocument):
     g: WGridBase = make_json_tree_applet(document).g
@@ -50,14 +59,30 @@ def loop(document: ExpensesDocument):
     return EXIT_CODE_ESCAPE, None
 
 
-def main():
-    global doc
-    init_object_exporter()
-    Highlighting.CURRENT = ConsoleHighlighting()
-    expenses = ExpensesTreeReader(sys.argv[1]).read()
-    expenses.calculate_value()
-    doc = make_document(expenses)  # must consume stdin first
-    exit_code, output = with_alternate_screen(lambda: loop(doc))
+def expenses_tree() -> ExpensesNode:
+    return ExpensesNode(
+        0,
+        'key1',
+        0.0,
+        [
+            ExpensesNode(
+                2,
+                'key11',
+                1.1,
+                []
+            ),
+            ExpensesNode(
+                2,
+                'key12',
+                1.2,
+                []
+            ),
+        ]
+    )
+
+
+def input_data():
+    return json.load(sys.stdin)
 
 
 if __name__ == "__main__":
