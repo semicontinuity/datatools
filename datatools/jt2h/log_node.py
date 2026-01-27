@@ -43,7 +43,7 @@ class LogNode:
                     tr(
                         th(
                             span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")',
-                                 clazz=['regular', 'more-details'] if self.has_more_details(row) else ''),
+                                 clazz=['regular'] + (['more-details'] if self.has_more_details(row) else [])),
                             span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
                         ) if self.dynamic_columns else None,
                         (
