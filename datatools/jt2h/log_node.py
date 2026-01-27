@@ -14,6 +14,17 @@ class LogNode:
         self.dynamic_columns = dynamic_columns
         self.dynamic_rows = dynamic_rows
 
+    def has_more_details(self, row: Dict) -> bool:
+        """Check if the row has more keys than the displayed columns."""
+        if not isinstance(row, dict):
+            return False
+        
+        displayed_columns = {cr.column for cr in self.column_renderers}
+        row_keys = set(row.keys())
+        
+        # Return True if there are keys in the row that are not displayed as columns
+        return len(row_keys - displayed_columns) > 0
+
     def __str__(self) -> str:
         t = table(
             thead(
@@ -31,7 +42,8 @@ class LogNode:
                 tbody(
                     tr(
                         th(
-                            span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='regular'),
+                            span('▶', onclick='swapClass(this, "TBODY", "regular", "expanded")',
+                                 clazz=['regular', 'more-details'] if self.has_more_details(row) else ''),
                             span('▼', onclick='swapClass(this, "TBODY", "regular", "expanded")', clazz='expanded')
                         ) if self.dynamic_columns else None,
                         (
@@ -116,4 +128,5 @@ tbody.expanded span.expanded {cursor: zoom-out;}
 thead th {cursor: zoom-out;}
 
 .compact {display:none;}
+.more-details {color: blue;}
 '''
