@@ -1,12 +1,9 @@
 import asyncio
 import json
-import sys
-from dataclasses import dataclass, asdict
-from typing import Hashable
+from dataclasses import dataclass
 
 import click
 from telethon.tl.custom import Dialog
-from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.types import Channel
 
 from datatools.json.util import to_jsonisable
