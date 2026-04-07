@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+###
+# Converts JSON lines from STDIN to HTML on STDOUT
+###
 import json
 import sys
 from collections import defaultdict
@@ -16,10 +19,7 @@ from datatools.util.html.page_node import PageNode
 
 
 def data():
-    lines = [line for line in sys.stdin]
-    s = ''.join(lines)
-    j = json.loads(s)
-    return j
+    return [json.loads(line) for line in sys.stdin]
 
 
 def main():
@@ -61,7 +61,7 @@ def page_node_auto(j, script_text: str|None = LOG_NODE_JS, title_str: str = None
 
 def page_node(j, renderers, script_text: str = LOG_NODE_JS, title_str: str = None, collapsed_columns: dict[str, bool] = None):
     for r in renderers:
-        if collapsed_columns.get(r.column):
+        if collapsed_columns and collapsed_columns.get(r.column):
             r.collapsed = True
 
     return page_node_for(LogNode(j, renderers), script_text, title_str)

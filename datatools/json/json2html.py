@@ -35,7 +35,7 @@ def main():
     try:
         j = json.load(sys.stdin)
     except JSONDecodeError as ex:
-        stderr_print("Reads json. Outputs html.")
+        print(ex)
         sys.exit(1)
 
     page_title = argv[argv.index('-t') + 1] if '-t' in argv else None

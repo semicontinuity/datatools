@@ -76,13 +76,16 @@ def get_where_clauses1(table_path: str, rest: str) -> list[tuple[str, str, str]]
                 # FS structure like :field_name/field_value
                 clauses.append((field, '=', value))
 
-        elif key.startswith('='):
+        elif key.startswith('=') or key.startswith('%'):
             if i >= len(parts):
                 break
             value = parts[i]
             path.append(value)
             i += 1
-            clauses.append((key.removeprefix('='), '=', value))
+            if key.startswith('='):
+                clauses.append((key.removeprefix('='), '=', value))
+            elif key.startswith('%'):
+                clauses.append((key.removeprefix('%') + "::text", 'like', f'%{value}%'))
         elif key.startswith('+'):
             clauses.append((key.removeprefix('+'), 'is not', None))
         elif key.startswith('-'):
