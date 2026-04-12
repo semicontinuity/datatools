@@ -85,12 +85,14 @@ class Server(BaseHTTPRequestHandler):
             self.respond_with_path(404, path)
 
     def do_POST(self):
+        print('Handling POST')
+        print(str(self.headers))
         the_title = self.headers.get('X-Title')
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
         content_type = self.headers.get('Content-Type')
         mime_type = content_type.split(';')[0]
-        print('Handling POST; mime_type ' + mime_type)
+        print('mime_type ' + mime_type)
 
         match mime_type:
             case 'multipart/form-data':
