@@ -1,0 +1,24 @@
+# This is example user service definition
+
+[Unit]
+Description=intent server
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Restart=no
+Type=simple
+
+WorkingDirectory=/tmp
+
+# Wait for X11 before starting the app
+ExecStartPre=/bin/sh -c 'while [ ! -S /tmp/.X11-unix/X0 ]; do sleep 1; done'
+ExecStart=python3 -m datatools.intent.server
+
+# Put peer host address here
+Environment=KIOSK_ENDPOINT=http://192.168.1.103:7777
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin
+Environment=PYTHONPATH=%h/path/to/semicontinuity/datatools
+
+[Install]
+WantedBy=graphical-session.target
