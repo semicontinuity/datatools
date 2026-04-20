@@ -11,7 +11,8 @@ class DbElementFactory(JElementFactory):
             references: dict[str, dict],
             table_pks: list[str],
             links: dict[str, dict],
-            realm: 'RealmPg'
+            realm: 'RealmPg',
+            rich_node_factory: DbRichNodeFactory,
     ) -> JObject:
         """
         references is dict: column_name -> { "concept":"...", "concept-pk":"..." }

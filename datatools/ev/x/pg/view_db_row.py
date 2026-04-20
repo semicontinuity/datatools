@@ -1,8 +1,11 @@
 from typing import Optional
 
+from picotui.defs import KEY_F1, KEY_F2
+
 from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.pg_query import value_to_string
 from datatools.ev.app_types import EntityReference
+from datatools.ev.x.db.db_rich_node_factory import DbRichNodeFactory
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.types import DbReferrers, \
@@ -12,9 +15,9 @@ from datatools.ev.x.pg.view_db_row_grid import ViewDbRowGrid
 from datatools.jv.app import do_loop, make_document_for_model, make_tree_grid
 from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
+from datatools.jv.model.j_view_options_holder import JViewOptionsHolder
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
-from picotui.defs import KEY_F1, KEY_F2
 
 
 class ViewDbRow(ViewDb):
@@ -35,12 +38,22 @@ class ViewDbRow(ViewDb):
         j = self.db_entity_data.rows[0]
 
         factory = DbElementFactory()
+
+        rf = DbRichNodeFactory(
+            JViewOptionsHolder.infer_options(),
+            references=self.db_entity_data.references,
+            table_pks=self.db_entity_data.pks,
+            links=self.realm.get_links_of_concept(self.query.table),
+            realm=self.realm,
+        )
+
         j_object = factory.build_row_view(
             j,
             self.db_entity_data.references,
             self.db_entity_data.pks,
             self.realm.get_links_of_concept(self.query.table),
             self.realm,
+            rf,
         )
         footer = self.query.table + ' ' + ' '.join([f.column + f.op + value_to_string(f.value) for f in self.query.filter])
         self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)

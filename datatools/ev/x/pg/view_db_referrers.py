@@ -4,11 +4,13 @@ from typing import List, Optional, Dict
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
 from datatools.dbview.x.util.db_query import DbQuery
 from datatools.ev.app_types import View, EntityReference
+from datatools.ev.x.db.db_rich_node_factory import DbRichNodeFactory
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
 from datatools.jv.app import make_document, do_loop, make_tree_grid
 from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
+from datatools.jv.model.j_view_options_holder import JViewOptionsHolder
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 from datatools.util.logging import debug
@@ -29,7 +31,8 @@ class ViewDbReferrers(View):
         with self.realm.connect_to_db() as conn:
             self.doc = make_document(
                 self.make_inbound_references_models(conn),
-                'referrers of ' + self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
+                'referrers of ' + self.selector.table + ' ' + ' '.join(
+                    [w.column + w.op + w.value for w in self.selector.where])
             )
             self.g = with_alternate_screen(lambda: make_tree_grid(self.doc, screen_size_or_default(), JGrid))
 
@@ -59,12 +62,22 @@ class ViewDbReferrers(View):
     def referring_record(self, referrer: Dict, table: str):
         key = referrer['key']
         value = referrer['value']
+
+        rf = DbRichNodeFactory(
+            JViewOptionsHolder.infer_options(),
+            references={k: {'concept': table, 'concept-pk': k} for k in key},
+            table_pks=[],
+            links={},
+            realm=self.realm,
+        )
+
         return DbElementFactory().build_row_view(
-            key | value,
-            {k: {'concept': table, 'concept-pk': k} for k in key},
-            [],
-            {},
-            self.realm
+            model=(key | value),
+            references={k: {'concept': table, 'concept-pk': k} for k in key},
+            table_pks=[],
+            links={},
+            realm=self.realm,
+            rf=rf,
         )
 
     def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
@@ -92,7 +105,7 @@ class ViewDbReferrers(View):
                 raise Exception(f"expected PKs in table {foreign_table}")
 
             pk_kv, text_kv = self.realm.get_pk_and_text_values_for_selected_rows(conn, foreign_table, foreign_column,
-                                                                      selector_value, table_pks)
+                                                                                 selector_value, table_pks)
             if len(pk_kv) == 0:
                 continue
 

@@ -1,11 +1,13 @@
 from typing import List, Optional
 
 from datatools.ev.app_types import View, EntityReference
+from datatools.ev.x.db.db_rich_node_factory import DbRichNodeFactory
 from datatools.ev.x.db.element_factory import DbElementFactory
 from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
 from datatools.jv.app import make_document, do_loop, make_tree_grid
 from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
+from datatools.jv.model.j_view_options_holder import JViewOptionsHolder
 from datatools.tui.screen_helper import with_alternate_screen
 from datatools.tui.terminal import screen_size_or_default
 from datatools.util.logging import debug
@@ -25,6 +27,14 @@ class ViewChRow(View):
             self.references = {}
             self.table_pks = []
 
+            rf = DbRichNodeFactory(
+                JViewOptionsHolder.infer_options(),
+                self.references,
+                self.table_pks,
+                self.realm.links.get(self.selector.table) or {},
+                self.realm
+            )
+
             self.doc = make_document(
                 DbElementFactory().build_row_view(
                     self.get_entity_row(conn, self.selector.table, self.selector.where),
@@ -32,6 +42,7 @@ class ViewChRow(View):
                     self.table_pks,
                     self.realm.links.get(self.selector.table) or {},
                     self.realm,
+                    rf,
                 ),
                 self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
             )

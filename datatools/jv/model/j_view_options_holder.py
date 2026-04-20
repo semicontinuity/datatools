@@ -8,9 +8,13 @@ class JViewOptionsHolder:
 
     def __init__(self, options: JViewOptions = None) -> None:
         if options is None:
-            json = 'YAML' not in os.environ
-            options = JViewOptions(
-                quotes=json,
-                commas=json,
-            )
+            options = JViewOptionsHolder.infer_options()
         self.options = options
+
+    @staticmethod
+    def infer_options():
+        json = 'YAML' not in os.environ
+        return JViewOptions(
+            quotes=json,
+            commas=json,
+        )
