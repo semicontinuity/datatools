@@ -112,12 +112,12 @@ class JElementFactory:
         e = JArray(v, k)
         e.options = self.options
         e.parent = parent
-        e.set_elements(set_last_in_parent([self._build_model(v, i, e, path) for i, v in enumerate(v)]))
+        e.set_elements(set_last_in_parent([self._build_model(v, i, e, path + [k]) for i, v in enumerate(v)]))
         return e
 
     def object(self, v, k, parent: Optional[JElement], path: list[str]):
         e = JObject(v, k)
         e.parent = parent
         e.options = self.options
-        e.set_elements(set_last_in_parent(set_padding([self._build_model(v, k1, e, path) for k1, v in v.items()])))
+        e.set_elements(set_last_in_parent(set_padding([self._build_model(v, k1, e, path + [k]) for k1, v in v.items()])))
         return e

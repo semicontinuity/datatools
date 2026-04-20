@@ -78,25 +78,31 @@ class DbElementFactory(JElementFactory):
         # NB can be both in links and PKs! Print PKs first.
         views = []
         for k, v in model.items():
-            if isinstance(v, datetime.datetime) or isinstance(v, datetime.time) or isinstance(v, datetime.date):
-                debug('build_row_view', k=k, v=v)
-                views.append(self.date_time(v, k))
-            elif type(v) is str and k in links:
-                node = self.foreign_key(v, k)
-                node.foreign_table_realm_name = links[k]['realm']
-                node.foreign_table_name = links[k]['concept']
-                node.foreign_table_pk = links[k]['concept-pk']
-                views.append(node)
-            elif type(v) is str and k in table_pks:
-                views.append(self.primary_key(v, k))
-            elif type(v) is str and k in references:
-                node = self.foreign_key(v, k)
-                node.foreign_table_realm_name = realm.name
-                node.foreign_table_name = references[k]['concept']
-                node.foreign_table_pk = references[k]['concept-pk']
+            node = self.make_rich_node(k, links, realm, references, table_pks, v)
+
+            if node is not None:
                 views.append(node)
             else:
                 views.append(self.build_model(v, k))
 
         e.set_elements(set_last_in_parent(set_padding(views)))
         return e
+
+    def make_rich_node(self, k, links, realm, references, table_pks, v):
+        if isinstance(v, datetime.datetime) or isinstance(v, datetime.time) or isinstance(v, datetime.date):
+            node = self.date_time(v, k)
+        elif type(v) is str and k in links:
+            node = self.foreign_key(v, k)
+            node.foreign_table_realm_name = links[k]['realm']
+            node.foreign_table_name = links[k]['concept']
+            node.foreign_table_pk = links[k]['concept-pk']
+        elif type(v) is str and k in table_pks:
+            node = self.primary_key(v, k)
+        elif type(v) is str and k in references:
+            node = self.foreign_key(v, k)
+            node.foreign_table_realm_name = realm.name
+            node.foreign_table_name = references[k]['concept']
+            node.foreign_table_pk = references[k]['concept-pk']
+        else:
+            node = None
+        return node
