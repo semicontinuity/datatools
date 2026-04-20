@@ -54,14 +54,14 @@ class JElementFactory:
         return self.set_indent_recursive(self.build_model(v, k))
 
     def build_model(self, v, k: Optional[Hashable] = None, parent: Optional[JElement] = None) -> JValueElement:
-        return self._build_model(v, k, parent)
+        return self._build_model(v, k, parent=parent, path=[])
 
-    def _build_model(self, v, k: Optional[Hashable] = None, parent: Optional[JElement] = None) -> JValueElement:
-        model = self._build_model_impl(v, k, parent)
+    def _build_model(self, v, k: Optional[Hashable], parent: Optional[JElement], path: list[str]) -> JValueElement:
+        model = self._build_model_impl(v, k, parent, path=path)
         model.parent = parent
         return model
 
-    def _build_model_impl(self, v, k: Optional[Hashable], parent: Optional[JElement] = None) -> JValueElement:
+    def _build_model_impl(self, v, k: Optional[Hashable], parent: Optional[JElement], path: list[str]) -> JValueElement:
         if v is None:
             return self.null(k)
         elif type(v) is str:
@@ -71,9 +71,9 @@ class JElementFactory:
         elif type(v) is bool:
             return self.boolean(v, k, parent)
         elif type(v) is dict or type(v) is defaultdict:
-            return self.object(v, k, parent)
+            return self.object(v, k, parent, path)
         elif type(v) is list:
-            return self.array(v, k, parent)
+            return self.array(v, k, parent, path)
         else:
             v.set_key(k)
             return v
@@ -108,16 +108,16 @@ class JElementFactory:
         e.parent = parent
         return e
 
-    def array(self, v, k, parent: Optional[JElement] = None):
+    def array(self, v, k, parent: Optional[JElement], path: list[str]):
         e = JArray(v, k)
         e.options = self.options
         e.parent = parent
-        e.set_elements(set_last_in_parent([self.build_model(v, i, e) for i, v in enumerate(v)]))
+        e.set_elements(set_last_in_parent([self._build_model(v, i, e, path) for i, v in enumerate(v)]))
         return e
 
-    def object(self, v, k, parent: Optional[JElement] = None):
+    def object(self, v, k, parent: Optional[JElement], path: list[str]):
         e = JObject(v, k)
         e.parent = parent
         e.options = self.options
-        e.set_elements(set_last_in_parent(set_padding([self.build_model(v, k1, e) for k1, v in v.items()])))
+        e.set_elements(set_last_in_parent(set_padding([self._build_model(v, k1, e, path) for k1, v in v.items()])))
         return e
