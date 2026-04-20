@@ -1,8 +1,7 @@
-import os
 from collections import defaultdict
 from typing import List, Optional, Hashable
 
-from datatools.jv.model import JObject, JArray, JViewOptions
+from datatools.jv.model import JObject, JArray
 from datatools.jv.model.JArray import JArray
 from datatools.jv.model.JBoolean import JBoolean
 from datatools.jv.model.JComplexElement import JComplexElement
@@ -12,6 +11,7 @@ from datatools.jv.model.JNumber import JNumber
 from datatools.jv.model.JObject import JObject
 from datatools.jv.model.JString import JString
 from datatools.jv.model.JValueElement import JValueElement
+from datatools.jv.model.j_view_options_holder import JViewOptionsHolder
 
 
 def set_padding(elements: List[JValueElement]) -> List[JValueElement]:
@@ -29,17 +29,7 @@ def set_last_in_parent(elements: List[JValueElement]) -> List[JValueElement]:
     return elements
 
 
-class JElementFactory:
-    options: JViewOptions
-
-    def __init__(self, options: JViewOptions = None) -> None:
-        if options is None:
-            json = 'YAML' not in os.environ
-            options = JViewOptions(
-                quotes=json,
-                commas=json,
-            )
-        self.options = options
+class JElementFactory(JViewOptionsHolder):
 
     def set_indent_recursive(self, model: JValueElement, indent: int = 0) -> JValueElement:
         model.indent = indent
