@@ -73,11 +73,7 @@ class ViewDbReferrers(View):
 
         return DbElementFactory().build_row_view(
             model=(key | value),
-            references={k: {'concept': table, 'concept-pk': k} for k in key},
-            table_pks=[],
-            links={},
-            realm=self.realm,
-            rf=rf,
+            rich_node_factory=rf,
         )
 
     def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:

@@ -38,10 +38,6 @@ class ViewChRow(View):
             self.doc = make_document(
                 DbElementFactory().build_row_view(
                     self.get_entity_row(conn, self.selector.table, self.selector.where),
-                    self.references,
-                    self.table_pks,
-                    self.realm.links.get(self.selector.table) or {},
-                    self.realm,
                     rf,
                 ),
                 self.selector.table + ' ' + ' '.join([w.column + w.op + w.value for w in self.selector.where])
