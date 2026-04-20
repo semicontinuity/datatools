@@ -63,17 +63,28 @@ class Realms:
 
 def realm_pg(name, path: str) -> RealmPg:
     # We need a special mode to run 'y': force-var-override
-    env = {k: v for k, v in os.environ.items()}
-    env.pop('HOST', None)
-    env.pop('PORT', None)
-    env.pop('PASSWORD', None)
-    env.pop('DB_NAME', None)
-    env.pop('DB_USER', None)
-    env.pop('DB_CLUSTER_ID', None)
-    env.pop('CTX', None)
-    env.pop('CTX_DIR', None)
-    env.pop('WD', None)
-    env.pop('CWD', None)
+    debug('realm_pg', name=name, path=path)
+    # env = {k: v for k, v in os.environ.items()}
+    # env.pop('HOST', None)
+    # env.pop('PORT', None)
+    # env.pop('SCHEMA', None)
+    # env.pop('PASSWORD', None)
+    # env.pop('DB_NAME', None)
+    # env.pop('DB_USER', None)
+    # env.pop('DB_CLUSTER_ID', None)
+    # env.pop('CTX', None)
+    # env.pop('CTX_DIR', None)
+    # env.pop('WD', None)
+    # env.pop('CWD', None)
+
+    env = {
+        'CTX_DIR': os.environ['CTX_DIR'],
+        'DEVOPS_SHARE_PATH': os.environ['DEVOPS_SHARE_PATH'],
+        'DEVOPS_PATH': os.environ['DEVOPS_PATH'],
+        'PATH': os.environ['PATH'],
+        'PYTHONPATH': os.environ['PYTHONPATH'],
+        'TABLE': os.environ['TABLE'],
+    }
 
     realm_env_vars_s = exe(
         path,
@@ -86,14 +97,16 @@ def realm_pg(name, path: str) -> RealmPg:
         eq = entry.find('=')
         realm_env_vars[entry[:eq]] = entry[(eq + 1):]
 
-    def links():
+    def fetch_links():
         if os.path.exists(f := path + '/.links'):
             with open(f, 'r') as file:
                 return json.load(file)
         else:
             return {}
 
-    realm = RealmPg(name, PgDataSource(realm_env_vars), links(), )
+    links = fetch_links()
+    debug('realm_pg', links=links)
+    realm = RealmPg(name, PgDataSource(realm_env_vars), links)
     realm.realm_ctx = relpath(path, start=realm_env_vars.get('CTX_DIR'))
     realm.realm_ctx_dir = path
     return realm
@@ -137,7 +150,8 @@ def realm_ch(name, path: str) -> RealmClickhouse:
     return realm
 
 
-def infer_mounts(e):
+def infer_mounts(e: str):
+    debug("infer_mounts", e=e)
     match e:
         case 'te-testing':
             return {
@@ -167,17 +181,24 @@ def infer_mounts(e):
 
 
 def main():
-    e = os.environ['E']
+    e = os.environ.get('E')
+    if not e:
+        print('Must set E', file=sys.stderr)
+        sys.exit(1)
+
     ctx_dir = os.environ['CTX_DIR']
 
+    mounts = infer_mounts(e)
+    debug('main', mounts=mounts)
     realms = Realms(
         ctx_dir,
-        infer_mounts(e),
+        mounts,
         {
             RealmPg: resolve_pg_entity,
             RealmClickhouse: resolve_ch_entity,
         }
     )
+    debug('main', realms=realms)
     e_ref = realms.resolve(os.environ['__RESOURCE'])
     if e_ref is None:
         print('Could not resolve realm', file=sys.stderr)
