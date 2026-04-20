@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Optional, Hashable
+from typing import List, Optional, Hashable, Callable
 
 from datatools.jv.model import JObject, JArray
 from datatools.jv.model.JArray import JArray
@@ -43,15 +43,35 @@ class JElementFactory(JViewOptionsHolder):
     def build_root_model(self, v, k: Optional[Hashable] = None) -> JValueElement:
         return self.set_indent_recursive(self.build_model(v, k))
 
-    def build_model(self, v, k: Optional[Hashable] = None, parent: Optional[JElement] = None) -> JValueElement:
-        return self._build_model(v, k, parent=parent, path=[])
+    def build_model(
+            self,
+            v,
+            k: Optional[Hashable] = None,
+            parent: Optional[JElement] = None,
+            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
+    ) -> JValueElement:
+        return self._build_model(v, k, parent=parent, path=[], rich_node_factory=rich_node_factory)
 
-    def _build_model(self, v, k: Optional[Hashable], parent: Optional[JElement], path: list[str]) -> JValueElement:
-        model = self._build_model_impl(v, k, parent, path=path)
+    def _build_model(
+            self,
+            v,
+            k: Optional[Hashable],
+            parent: Optional[JElement],
+            path: list[str],
+            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement],
+    ) -> JValueElement:
+        model = self._build_model_impl(v, k, parent, path=path, rich_node_factory=rich_node_factory)
         model.parent = parent
         return model
 
-    def _build_model_impl(self, v, k: Optional[Hashable], parent: Optional[JElement], path: list[str]) -> JValueElement:
+    def _build_model_impl(
+            self,
+            v,
+            k: Optional[Hashable],
+            parent: Optional[JElement],
+            path: list[str],
+            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement],
+    ) -> JValueElement:
         if v is None:
             return self.null(k)
         elif type(v) is str:

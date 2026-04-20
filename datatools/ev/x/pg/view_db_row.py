@@ -39,21 +39,15 @@ class ViewDbRow(ViewDb):
 
         factory = DbElementFactory()
 
-        rf = DbRichNodeFactory(
-            JViewOptionsHolder.infer_options(),
-            references=self.db_entity_data.references,
-            table_pks=self.db_entity_data.pks,
-            links=self.realm.get_links_of_concept(self.query.table),
-            realm=self.realm,
-        )
-
         j_object = factory.build_row_view(
             j,
-            self.db_entity_data.references,
-            self.db_entity_data.pks,
-            self.realm.get_links_of_concept(self.query.table),
-            self.realm,
-            rf,
+            DbRichNodeFactory(
+                JViewOptionsHolder.infer_options(),
+                references=self.db_entity_data.references,
+                table_pks=self.db_entity_data.pks,
+                links=self.realm.get_links_of_concept(self.query.table),
+                realm=self.realm,
+            ),
         )
         footer = self.query.table + ' ' + ' '.join([f.column + f.op + value_to_string(f.value) for f in self.query.filter])
         self.doc = make_document_for_model(factory.set_indent_recursive(j_object), j, footer)

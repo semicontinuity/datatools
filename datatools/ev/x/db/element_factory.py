@@ -24,7 +24,7 @@ class DbElementFactory(JElementFactory):
             if node is not None:
                 views.append(node)
             else:
-                views.append(self.build_model(v, k))
+                views.append(self.build_model(v, k, rich_node_factory=rich_node_factory.make_rich_node))
 
         e.set_elements(set_last_in_parent(set_padding(views)))
         return e
