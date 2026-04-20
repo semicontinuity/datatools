@@ -12,6 +12,11 @@ from datatools.tui.rich_text import Style
 
 
 class DbRichNodeFactory(JViewOptionsHolder):
+    """
+    references is dict: column_name -> { "concept":"...", "concept-pk":"..." }
+    links is dict: column_name -> { "concept":"...", "concept-pk":"..." }
+    """
+
     references: dict[str, dict]
     table_pks: list[str]
     links: dict[str, dict]
