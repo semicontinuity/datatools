@@ -1,6 +1,6 @@
 from datatools.ev.x.db.db_rich_node_factory import DbRichNodeFactory
 from datatools.jv.model.JObject import JObject
-from datatools.jv.model.j_element_factory import JElementFactory, set_last_in_parent, set_padding
+from datatools.jv.model.j_element_factory import JElementFactory
 
 
 class DbElementFactory(JElementFactory):
@@ -10,13 +10,4 @@ class DbElementFactory(JElementFactory):
             model: dict,
             rich_node_factory: DbRichNodeFactory,
     ) -> JObject:
-        e = JObject(model, None)
-        e.options = self.options
-
-        views = []
-
-        for k, v in model.items():
-            views.append(self.build_model(v, k, rich_node_factory=rich_node_factory.make_rich_node))
-
-        e.set_elements(set_last_in_parent(set_padding(views)))
-        return e
+        return self.object(model, k=None, parent=None, path=[], rich_node_factory=rich_node_factory.make_rich_node)

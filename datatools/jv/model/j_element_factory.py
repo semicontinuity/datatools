@@ -130,14 +130,21 @@ class JElementFactory(JViewOptionsHolder):
         e.set_elements(set_last_in_parent([self._build_model(v, i, e, path + [k]) for i, v in enumerate(v)]))
         return e
 
-    def object(self, v, k, parent: Optional[JElement], path: list[str]):
+    def object(
+            self,
+            v,
+            k,
+            parent: Optional[JElement],
+            path: list[str],
+            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
+    ):
         e = JObject(v, k)
         e.parent = parent
         e.options = self.options
         e.set_elements(
             set_last_in_parent(
                 set_padding(
-                    [self._build_model(v, k1, e, path + [k]) for k1, v in v.items()]
+                    [self._build_model(v, k1, e, path + [k], rich_node_factory) for k1, v in v.items()]
                 )
             )
         )
