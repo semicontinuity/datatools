@@ -31,7 +31,11 @@ class RealmPg(Realm):
     def connect_to_db(self):
         return self.data_source.connect_to_db()
 
+    def get_links_of_concept(self, table: str):
+        return self.links.get(table) or {}
+
     def find_link_spec(self, concept: str, json_path: str):
+        """ Unused? (RealmRest-specific?) """
         concept_def = self.links[concept]
         for link in concept_def['links']:
             match = json_path == link['json_path']

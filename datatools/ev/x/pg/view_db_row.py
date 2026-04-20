@@ -39,7 +39,7 @@ class ViewDbRow(ViewDb):
             j,
             self.db_entity_data.references,
             self.db_entity_data.pks,
-            self.realm.links.get(self.query.table) or {},
+            self.realm.get_links_of_concept(self.query.table),
             self.realm,
         )
         footer = self.query.table + ' ' + ' '.join([f.column + f.op + value_to_string(f.value) for f in self.query.filter])
