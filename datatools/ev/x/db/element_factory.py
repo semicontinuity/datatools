@@ -70,7 +70,7 @@ class DbElementFactory(JElementFactory):
     ) -> JObject:
         """
         references is dict: column_name -> { "concept":"...", "concept-pk":"..." }
-        aux_references is dict: column_name -> { "concept":"...", "concept-pk":"..." }
+        links is dict: column_name -> { "concept":"...", "concept-pk":"..." }
         """
         e = JObject(model, None)
         e.options = self.options
