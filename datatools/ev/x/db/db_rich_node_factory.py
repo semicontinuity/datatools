@@ -4,6 +4,7 @@ from typing import Hashable
 from picotui.defs import KEY_ENTER
 
 from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
+from datatools.ev.x.json_path_util import JsonPathUtil
 from datatools.ev.x.pg.types import DbRowReference, DbTableRowsSelector, DbSelectorClause
 from datatools.jv.model import JViewOptions
 from datatools.jv.model.JString import JString
@@ -37,30 +38,35 @@ class DbRichNodeFactory(JViewOptionsHolder):
         self.links = links
         self.realm = realm
 
-    def make_rich_node(self, v, k: Hashable|None, path: str):
-        print('RICH?', path)
+    def matching_link(self, path: str):
+        for pattern, link in self.links.items():
+            match = JsonPathUtil.path_match(path, pattern, separator='.')
+            if match is not None:
+                return link
 
+    def make_rich_node(self, v, k: Hashable|None, path: str):
         if isinstance(v, datetime.datetime) or isinstance(v, datetime.time) or isinstance(v, datetime.date):
             node = self.date_time(v, k)
             return node
-        elif type(v) is str and path in self.links:
-            node = self.foreign_key(v, k)
-            link = self.links[path]
-            node.foreign_table_realm_name = link['realm']
-            node.foreign_table_name = link['concept']
-            node.foreign_table_pk = link['concept-pk']
-            return node
-        elif type(v) is str and k in self.table_pks:
-            node = self.primary_key(v, k)
-            return node
-        elif type(v) is str and k in self.references:
-            node = self.foreign_key(v, k)
-            node.foreign_table_realm_name = self.realm.name
-            node.foreign_table_name = self.references[k]['concept']
-            node.foreign_table_pk = self.references[k]['concept-pk']
-            return node
-        else:
-            return None
+        elif type(v) is str:
+            link = self.matching_link(path)
+            if link:
+                node = self.foreign_key(v, k)
+                node.foreign_table_realm_name = link['realm']
+                node.foreign_table_name = link['concept']
+                node.foreign_table_pk = link['concept-pk']
+                return node
+            elif k in self.table_pks:
+                node = self.primary_key(v, k)
+                return node
+            elif k in self.references:
+                node = self.foreign_key(v, k)
+                node.foreign_table_realm_name = self.realm.name
+                node.foreign_table_name = self.references[k]['concept']
+                node.foreign_table_pk = self.references[k]['concept-pk']
+                return node
+
+        return None
 
     def foreign_key(self, v, k):
         e = DbRichNodeFactory.JForeignKey(v, k)

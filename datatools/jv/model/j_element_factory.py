@@ -73,11 +73,9 @@ class JElementFactory(JViewOptionsHolder):
             rich_node_factory: Callable[[Hashable, Hashable|None, str], JValueElement],
     ) -> JValueElement:
         node_path = path + [k] if k is not None else path
-        print(path, k, node_path, v)
         if rich_node_factory is not None and k is not None:
             node = rich_node_factory(v, k, '.'.join([str(e) for e in path + [k]]))
             if node is not None:
-                print('RICH')
                 return node
 
         if v is None:
@@ -89,10 +87,8 @@ class JElementFactory(JViewOptionsHolder):
         elif type(v) is bool:
             return self.boolean(v, k, parent)
         elif type(v) is dict or type(v) is defaultdict:
-            print('OBJECT')
             return self.object(v, k, parent, node_path, rich_node_factory)
         elif type(v) is list:
-            print('ARRAY')
             return self.array(v, k, parent, node_path, rich_node_factory)
         else:
             v.set_key(k)

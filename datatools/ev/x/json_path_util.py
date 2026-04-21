@@ -1,11 +1,13 @@
 class JsonPathUtil:
 
     @staticmethod
-    def path_match(path: str, pattern: str):
-        return JsonPathUtil.path_list_match(path.split('/'), pattern.split('/'))
+    def path_match(path: str, pattern: str, separator: str) -> dict[str, str] | None:
+        """ Returns dict with path vars if matched, or None """
+        return JsonPathUtil.path_list_match(path.split(separator), pattern.split(separator))
 
     @staticmethod
-    def path_list_match(path_parts: list[str], pattern_parts: list[str]):
+    def path_list_match(path_parts: list[str], pattern_parts: list[str]) -> dict[str, str] | None:
+        """ Returns dict with path vars if matched, or None """
         if len(path_parts) != len(pattern_parts):
             return None
         path_vars = {}

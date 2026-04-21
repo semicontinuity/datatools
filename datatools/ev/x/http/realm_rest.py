@@ -30,7 +30,7 @@ class RealmRest(Realm):
         for concept_name, concept_def in self.concepts.items():
             concept_path = concept_def['path']
             concept_path_parts = urlparse(concept_path)
-            match = JsonPathUtil.path_match(path, concept_path_parts.path)
+            match = JsonPathUtil.path_match(path, concept_path_parts.path, separator='/')
             if match is not None:
                 return RestEntity(realm_name=None, concept=concept_name, variables=match)
 
