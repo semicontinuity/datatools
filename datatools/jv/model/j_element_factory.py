@@ -50,17 +50,17 @@ class JElementFactory(JViewOptionsHolder):
             parent: Optional[JElement] = None,
             rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
     ) -> JValueElement:
-        return self._build_model(v, k, parent=parent, path=[], rich_node_factory=rich_node_factory)
+        return self._build_model(v, k, parent=parent, parent_path=[], rich_node_factory=rich_node_factory)
 
     def _build_model(
             self,
             v,
             k: Optional[Hashable],
             parent: Optional[JElement],
-            path: list[str],
+            parent_path: list[Hashable],
             rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
     ) -> JValueElement:
-        model = self._build_model_impl(v, k, parent, path=path, rich_node_factory=rich_node_factory)
+        model = self._build_model_impl(v, k, parent, parent_path=parent_path, rich_node_factory=rich_node_factory)
         model.parent = parent
         return model
 
@@ -69,7 +69,7 @@ class JElementFactory(JViewOptionsHolder):
             v,
             k: Optional[Hashable],
             parent: Optional[JElement],
-            path: list[str],
+            parent_path: list[Hashable],
             rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
     ) -> JValueElement:
         if rich_node_factory is not None:
@@ -86,9 +86,9 @@ class JElementFactory(JViewOptionsHolder):
         elif type(v) is bool:
             return self.boolean(v, k, parent)
         elif type(v) is dict or type(v) is defaultdict:
-            return self.object(v, k, parent, path)
+            return self.object(v, k, parent, parent_path)
         elif type(v) is list:
-            return self.array(v, k, parent, path)
+            return self.array(v, k, parent, parent_path)
         else:
             v.set_key(k)
             return v
@@ -123,11 +123,17 @@ class JElementFactory(JViewOptionsHolder):
         e.parent = parent
         return e
 
-    def array(self, v, k, parent: Optional[JElement], path: list[str]):
+    def array(
+            self,
+            v,
+            k: Hashable | None,
+            parent: Optional[JElement],
+            parent_path: list[Hashable]
+    ):
         e = JArray(v, k)
         e.options = self.options
         e.parent = parent
-        e.set_elements(set_last_in_parent([self._build_model(v, i, e, path + [k]) for i, v in enumerate(v)]))
+        e.set_elements(set_last_in_parent([self._build_model(v, i, e, parent_path + [i]) for i, v in enumerate(v)]))
         return e
 
     def object(
@@ -135,7 +141,7 @@ class JElementFactory(JViewOptionsHolder):
             v,
             k,
             parent: Optional[JElement],
-            path: list[str],
+            parent_path: list[Hashable],
             rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
     ):
         e = JObject(v, k)
@@ -144,7 +150,7 @@ class JElementFactory(JViewOptionsHolder):
         e.set_elements(
             set_last_in_parent(
                 set_padding(
-                    [self._build_model(v, k1, e, path + [k], rich_node_factory) for k1, v in v.items()]
+                    [self._build_model(v, k1, e, parent_path + [k1], rich_node_factory) for k1, v in v.items()]
                 )
             )
         )
