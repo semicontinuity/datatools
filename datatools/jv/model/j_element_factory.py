@@ -67,13 +67,15 @@ class JElementFactory(JViewOptionsHolder):
     def _build_model_impl(
             self,
             v,
-            k: Optional[Hashable],
+            k: Hashable | None,
             parent: Optional[JElement],
             parent_path: list[Hashable],
             rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
     ) -> JValueElement:
-        if rich_node_factory is not None:
-            node = rich_node_factory(v, k)
+        if rich_node_factory is not None and k:
+            node_path = '.'.join([str(e) for e in parent_path + [k]])
+            print(node_path)
+            node = rich_node_factory(v, node_path)
             if node is not None:
                 return node
 
@@ -133,7 +135,7 @@ class JElementFactory(JViewOptionsHolder):
         e = JArray(v, k)
         e.options = self.options
         e.parent = parent
-        e.set_elements(set_last_in_parent([self._build_model(v, i, e, parent_path + [i]) for i, v in enumerate(v)]))
+        e.set_elements(set_last_in_parent([self._build_model(v, i, e, parent_path) for i, v in enumerate(v)]))
         return e
 
     def object(
@@ -150,7 +152,7 @@ class JElementFactory(JViewOptionsHolder):
         e.set_elements(
             set_last_in_parent(
                 set_padding(
-                    [self._build_model(v, k1, e, parent_path + [k1], rich_node_factory) for k1, v in v.items()]
+                    [self._build_model(v, k1, e, parent_path, rich_node_factory) for k1, v in v.items()]
                 )
             )
         )
