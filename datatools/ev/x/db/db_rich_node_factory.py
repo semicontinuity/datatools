@@ -1,4 +1,5 @@
 import datetime
+from typing import Hashable
 
 from picotui.defs import KEY_ENTER
 
@@ -36,15 +37,18 @@ class DbRichNodeFactory(JViewOptionsHolder):
         self.links = links
         self.realm = realm
 
-    def make_rich_node(self, v, k):
+    def make_rich_node(self, v, k: Hashable|None, path: str):
+        print('RICH?', path)
+
         if isinstance(v, datetime.datetime) or isinstance(v, datetime.time) or isinstance(v, datetime.date):
             node = self.date_time(v, k)
             return node
-        elif type(v) is str and k in self.links:
+        elif type(v) is str and path in self.links:
             node = self.foreign_key(v, k)
-            node.foreign_table_realm_name = self.links[k]['realm']
-            node.foreign_table_name = self.links[k]['concept']
-            node.foreign_table_pk = self.links[k]['concept-pk']
+            link = self.links[path]
+            node.foreign_table_realm_name = link['realm']
+            node.foreign_table_name = link['concept']
+            node.foreign_table_pk = link['concept-pk']
             return node
         elif type(v) is str and k in self.table_pks:
             node = self.primary_key(v, k)

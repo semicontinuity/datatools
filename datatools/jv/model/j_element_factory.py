@@ -48,19 +48,19 @@ class JElementFactory(JViewOptionsHolder):
             v,
             k: Optional[Hashable] = None,
             parent: Optional[JElement] = None,
-            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
+            rich_node_factory: Callable[[Hashable, Hashable|None, str], JValueElement] = None,
     ) -> JValueElement:
-        return self._build_model(v, k, parent=parent, parent_path=[], rich_node_factory=rich_node_factory)
+        return self._build_model(v, k, parent=parent, path=[], rich_node_factory=rich_node_factory)
 
     def _build_model(
             self,
             v,
             k: Optional[Hashable],
             parent: Optional[JElement],
-            parent_path: list[Hashable],
-            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
+            path: list[Hashable],
+            rich_node_factory: Callable[[Hashable, Hashable|None, str], JValueElement] = None,
     ) -> JValueElement:
-        model = self._build_model_impl(v, k, parent, parent_path=parent_path, rich_node_factory=rich_node_factory)
+        model = self._build_model_impl(v, k, parent, path=path, rich_node_factory=rich_node_factory)
         model.parent = parent
         return model
 
@@ -69,14 +69,15 @@ class JElementFactory(JViewOptionsHolder):
             v,
             k: Hashable | None,
             parent: Optional[JElement],
-            parent_path: list[Hashable],
-            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
+            path: list[Hashable],
+            rich_node_factory: Callable[[Hashable, Hashable|None, str], JValueElement],
     ) -> JValueElement:
-        if rich_node_factory is not None and k:
-            node_path = '.'.join([str(e) for e in parent_path + [k]])
-            print(node_path)
-            node = rich_node_factory(v, node_path)
+        node_path = path + [k] if k is not None else path
+        print(path, k, node_path, v)
+        if rich_node_factory is not None and k is not None:
+            node = rich_node_factory(v, k, '.'.join([str(e) for e in path + [k]]))
             if node is not None:
+                print('RICH')
                 return node
 
         if v is None:
@@ -88,9 +89,11 @@ class JElementFactory(JViewOptionsHolder):
         elif type(v) is bool:
             return self.boolean(v, k, parent)
         elif type(v) is dict or type(v) is defaultdict:
-            return self.object(v, k, parent, parent_path)
+            print('OBJECT')
+            return self.object(v, k, parent, node_path, rich_node_factory)
         elif type(v) is list:
-            return self.array(v, k, parent, parent_path)
+            print('ARRAY')
+            return self.array(v, k, parent, node_path, rich_node_factory)
         else:
             v.set_key(k)
             return v
@@ -130,12 +133,17 @@ class JElementFactory(JViewOptionsHolder):
             v,
             k: Hashable | None,
             parent: Optional[JElement],
-            parent_path: list[Hashable]
+            path: list[Hashable],
+            rich_node_factory: Callable[[Hashable, Hashable|None, str], JValueElement] = None,
     ):
         e = JArray(v, k)
         e.options = self.options
         e.parent = parent
-        e.set_elements(set_last_in_parent([self._build_model(v, i, e, parent_path) for i, v in enumerate(v)]))
+        e.set_elements(
+            set_last_in_parent(
+                [self._build_model(v, i, e, path, rich_node_factory) for i, v in enumerate(v)]
+            )
+        )
         return e
 
     def object(
@@ -143,8 +151,8 @@ class JElementFactory(JViewOptionsHolder):
             v,
             k,
             parent: Optional[JElement],
-            parent_path: list[Hashable],
-            rich_node_factory: Callable[[Hashable, Optional[Hashable]], JValueElement] = None,
+            path: list[Hashable],
+            rich_node_factory: Callable[[Hashable, Hashable|None, str], JValueElement] = None,
     ):
         e = JObject(v, k)
         e.parent = parent
@@ -152,7 +160,7 @@ class JElementFactory(JViewOptionsHolder):
         e.set_elements(
             set_last_in_parent(
                 set_padding(
-                    [self._build_model(v, k1, e, parent_path, rich_node_factory) for k1, v in v.items()]
+                    [self._build_model(v, k1, e, path, rich_node_factory) for k1, v in v.items()]
                 )
             )
         )

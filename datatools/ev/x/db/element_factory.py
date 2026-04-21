@@ -10,4 +10,10 @@ class DbElementFactory(JElementFactory):
             model: dict,
             rich_node_factory: DbRichNodeFactory,
     ) -> JObject:
-        return self.object(model, k=None, parent=None, parent_path=[], rich_node_factory=rich_node_factory.make_rich_node)
+        return self.object(
+            model,
+            k=None,
+            parent=None,
+            path=[],
+            rich_node_factory=rich_node_factory.make_rich_node
+        )
