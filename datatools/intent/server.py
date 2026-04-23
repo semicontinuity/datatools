@@ -15,15 +15,11 @@ from http.server import HTTPServer
 from typing import *
 
 from datatools.intent import SERVER_PORT
-from datatools.intent.handler_json import process_json
-from datatools.intent.handler_json_lines import handle_json_lines
-from datatools.intent.handler_multipart import handle_multipart
+from datatools.intent.dispatcher import dispatch
 from datatools.intent.handler_send_entity import default_folder, handler_send_entity
 from datatools.intent.target_folder import set_target_folder
-from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
-    open_in_browser, get_target_folder
+from datatools.intent.targets import get_target_folder
 from datatools.intent.response import Response
-from datatools.tui.popup_selector import choose
 
 
 class Server(BaseHTTPRequestHandler):
@@ -91,59 +87,14 @@ class Server(BaseHTTPRequestHandler):
 
     def do_POST(self):
         print('Handling POST')
-        print(str(self.headers))
-        the_title = self.headers.get('X-Title')
-        content_len = int(self.headers.get('Content-Length'))
+        headers = self.headers
+
+        print(str(headers))
+        content_len = int(headers.get('Content-Length'))
+
         post_body = self.rfile.read(content_len)
-        content_type = self.headers.get('Content-Type')
-        mime_type = content_type.split(';')[0]
-        print('mime_type ' + mime_type)
 
-        match mime_type:
-            case 'multipart/form-data':
-                handle_multipart(post_body, content_type)
-            case 'text/uri-list':
-                browse_new_tab(post_body.decode('utf-8'))
-            case 'text/plain':
-                match choose(["Copy to Clipboard", "Open in Browser"], 'Choose'):
-                    case 0:
-                        to_clipboard(post_body)
-                    case 1:
-                        browse_new_tab(
-                            write_temp_file(post_body, '.txt', the_title)
-                        )
-            case 'text/markdown':
-                match choose(["Copy to Clipboard", "Open in IDEA"], 'Choose'):
-                    case 0:
-                        to_clipboard(post_body)
-                    case 1:
-                        open_in_idea(
-                            write_temp_file(post_body, '.md', the_title)
-                        )
-            case 'text/html':
-                html_to_browser(post_body, the_title)
-            case 'image/svg+xml':
-                open_in_browser(post_body, file_suffix='.svg', title=the_title)
-            case 'application/x-basic-entity':
-                realm_ctx = self.headers.get('X-Realm-Ctx')
-                realm_ctx_dir = self.headers.get('X-Realm-Ctx-Dir')
-                handler_send_entity.send_entity(
-                    realm_ctx, realm_ctx_dir, post_body
-                )
-
-            case 'application/sql':
-                match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
-                    case 0:
-                        to_clipboard(post_body)
-                    case 1:
-                        browse_new_tab(
-                            write_temp_file(post_body, '.sql.txt', the_title)
-                        )
-            case 'application/json-lines':
-                handle_json_lines(post_body, the_title)
-
-            case 'application/json':
-                process_json(post_body, the_title)
+        dispatch(headers, post_body)
 
         print('Handling POST; responding')
         self.respond_with(Response(200, 'application/json', json.dumps({}).encode('utf-8')))
