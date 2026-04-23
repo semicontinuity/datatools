@@ -36,21 +36,14 @@ class Server(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         return
 
-    def respond(self, status, content_type, content):
-        self.send_response(status)
-        self.send_header('Content-Type', content_type)
-        self.end_headers()
-        self.wfile.write(content)
-
     def respond_with(self, response: Response):
-        self.respond(
-            status=response.status,
-            content_type=response.content_type,
-            content=response.content
-        )
+        self.send_response(response.status)
+        self.send_header('Content-Type', response.content_type)
+        self.end_headers()
+        self.wfile.write(response.content)
 
     def respond_with_path(self, status, path):
-        self.respond(status, 'text/plain', (path + '\n').encode('utf-8'))
+        self.respond_with(Response(status, 'text/plain', (path + '\n').encode('utf-8')))
 
     def do_DELETE(self):
         set_target_folder(default_folder())
@@ -64,7 +57,7 @@ class Server(BaseHTTPRequestHandler):
             self.respond_with_path(404, '')
         elif self.path == '/homepage':
             with open(os.environ['WORK_PATH'] + '/homepage.html', 'rb') as file:
-                self.respond(200, 'text/html', file.read())
+                self.respond_with(Response(200, 'text/html', file.read()))
         else:
             match self.path.split('.')[-1]:
                 case 'txt':
@@ -85,7 +78,7 @@ class Server(BaseHTTPRequestHandler):
                 data = file.read()
 
             print('Read file ' + path + ", size " + str(len(data)))
-            self.respond(200, mime_type, data)
+            self.respond_with(Response(200, mime_type, data))
 
     def do_PUT(self):
         content_len = int(self.headers.get('Content-Length'))
@@ -155,7 +148,7 @@ class Server(BaseHTTPRequestHandler):
                 self.process_json(post_body, the_title)
 
         print('Handling POST; responding')
-        self.respond(200, 'application/json', json.dumps({}).encode('utf-8'))
+        self.respond_with(Response(200, 'application/json', json.dumps({}).encode('utf-8')))
         print('Handling POST; responded')
 
     def process_json(self, post_body, the_title):
