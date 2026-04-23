@@ -150,11 +150,10 @@ class Server(BaseHTTPRequestHandler):
         print('Handling POST; responded')
 
 
-
-httpd = HTTPServer(("0.0.0.0", SERVER_PORT), Server)
-
-try:
-    httpd.serve_forever()
-except KeyboardInterrupt:
-    pass
-httpd.server_close()
+if __name__ == '__main__':
+    httpd = HTTPServer(("0.0.0.0", SERVER_PORT), Server)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    httpd.server_close()
