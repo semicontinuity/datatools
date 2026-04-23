@@ -12,12 +12,13 @@ import os
 import socketserver
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
-from typing import Tuple
+from typing import *
 
 from datatools.intent import SERVER_PORT
 from datatools.intent.handler_json_lines import handle_json_lines
 from datatools.intent.handler_multipart import handle_multipart
 from datatools.intent.handler_send_entity import default_folder, handler_send_entity
+from datatools.intent.response import Response
 from datatools.intent.target_folder import set_target_folder, get_target_folder
 from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
     open_in_browser
@@ -34,6 +35,19 @@ class Server(BaseHTTPRequestHandler):
 
     def log_message(self, fmt, *args):
         return
+
+    def respond(self, status, content_type, content):
+        self.send_response(status)
+        self.send_header('Content-Type', content_type)
+        self.end_headers()
+        self.wfile.write(content)
+
+    def respond_with(self, response: Response):
+        self.respond(
+            status=response.status,
+            content_type=response.content_type,
+            content=response.content
+        )
 
     def respond_with_path(self, status, path):
         self.respond(status, 'text/plain', (path + '\n').encode('utf-8'))
@@ -185,12 +199,6 @@ class Server(BaseHTTPRequestHandler):
                     str(to_blocks_html(data, page_title=the_title)),
                     the_title
                 )
-
-    def respond(self, status, content_type, content):
-        self.send_response(status)
-        self.send_header('Content-Type', content_type)
-        self.end_headers()
-        self.wfile.write(content)
 
 
 httpd = HTTPServer(("0.0.0.0", SERVER_PORT), Server)
