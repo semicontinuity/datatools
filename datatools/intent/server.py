@@ -15,11 +15,11 @@ from http.server import HTTPServer
 from typing import *
 
 from datatools.intent import SERVER_PORT
-from datatools.intent.dispatcher import dispatch
 from datatools.intent.handler_send_entity import default_folder, handler_send_entity
+from datatools.intent.post_request_router import route_post_request
+from datatools.intent.response import Response
 from datatools.intent.target_folder import set_target_folder
 from datatools.intent.targets import get_target_folder
-from datatools.intent.response import Response
 
 
 class Server(BaseHTTPRequestHandler):
@@ -94,7 +94,7 @@ class Server(BaseHTTPRequestHandler):
 
         post_body = self.rfile.read(content_len)
 
-        dispatch(headers, post_body)
+        route_post_request(headers, post_body)
 
         print('Handling POST; responding')
         self.respond_with(Response(200, 'application/json', json.dumps({}).encode('utf-8')))
