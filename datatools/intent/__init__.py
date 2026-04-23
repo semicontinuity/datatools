@@ -19,3 +19,7 @@ def get_local_ip():
             if any(ip.startswith(prefix) for prefix in lan_prefixes):
                 return ip
     return '127.0.0.1'
+
+
+def local_file_url(file_name: str):
+    return f'http://{get_local_ip()}:{SERVER_PORT}/{file_name}'

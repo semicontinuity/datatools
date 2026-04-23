@@ -53,26 +53,28 @@ class Server(BaseHTTPRequestHandler):
             with open(os.environ['WORK_PATH'] + '/homepage.html', 'rb') as file:
                 self.respond_with(Response(200, 'text/html', file.read()))
         else:
-            match self.path.split('.')[-1]:
-                case 'txt':
-                    mime_type = 'text/plain; charset=utf-8'
-                case 'html':
-                    mime_type = 'text/html; charset=utf-8'
-                case 'svg':
-                    mime_type = 'image/svg+xml; charset=utf-8'
-                case 'json':
-                    mime_type = 'application/json; charset=utf-8'
-                case _:
-                    mime_type = 'application/octet-stream'
+            response = self.fetch_file(self.path)
+            self.respond_with(response)
 
-            path = get_target_folder() + self.path
-            print('Reading file ' + path)
-
-            with open(path, 'rb') as file:
-                data = file.read()
-
-            print('Read file ' + path + ", size " + str(len(data)))
-            self.respond_with(Response(200, mime_type, data))
+    def fetch_file(self, url_path):
+        match url_path.split('.')[-1]:
+            case 'txt':
+                mime_type = 'text/plain; charset=utf-8'
+            case 'html':
+                mime_type = 'text/html; charset=utf-8'
+            case 'svg':
+                mime_type = 'image/svg+xml; charset=utf-8'
+            case 'json':
+                mime_type = 'application/json; charset=utf-8'
+            case _:
+                mime_type = 'application/octet-stream'
+        file_path = get_target_folder() + self.path
+        print('Reading file ' + file_path)
+        with open(file_path, 'rb') as file:
+            data = file.read()
+        print('Read file ' + file_path + ", size " + str(len(data)))
+        response = Response(200, mime_type, data)
+        return response
 
     def do_PUT(self):
         content_len = int(self.headers.get('Content-Length'))
@@ -94,6 +96,7 @@ class Server(BaseHTTPRequestHandler):
 
         post_body = self.rfile.read(content_len)
 
+        print(str(self.client_address))
         route_post_request(headers, post_body)
 
         print('Handling POST; responding')

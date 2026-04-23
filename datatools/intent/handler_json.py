@@ -1,7 +1,8 @@
 import json
-from typing import *
 
-from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, open_in_browser
+from datatools.intent import local_file_url
+from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
+    write_temp_file_name
 from datatools.json.json2html import to_blocks_html
 from datatools.jt2h.app_json_page import page_node, md_node
 from datatools.jt2h.json_node_delegate_json import JsonNodeDelegateJson
@@ -24,7 +25,9 @@ def process_json(post_body: bytes, the_title: str):
             to_clipboard(post_body)
         case 1:
             browse_new_tab(
-                write_temp_file(post_body, '.json', the_title)
+                local_file_url(
+                    write_temp_file_name(post_body, '.json', the_title)
+                )
             )
         case 2:
             open_in_idea(

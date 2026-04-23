@@ -52,9 +52,14 @@ def convert_to_filename(input_string):
 
 
 def write_temp_file(contents: bytes, suffix: str, name_base: str | None = None):
+    """ Writes contents to temp file in target folder and return file's path"""
     folder = get_target_folder()
     file_name = write_temp_file_to(folder, contents, suffix, name_base)
     return folder + '/' + file_name
+
+
+def write_temp_file_name(contents, suffix, name_base: str | None = None):
+    return write_temp_file_to(get_target_folder(), contents, suffix, name_base)
 
 
 def write_temp_file_to(folder: str, contents: bytes, suffix: str, name_base: str | None = None):
@@ -81,6 +86,7 @@ def kiosk_open_url(url) -> Response | None:
     kiosk_endpoint = os.environ.get('KIOSK_ENDPOINT')
     if kiosk_endpoint:
         try:
+            print(f'kiosk: {kiosk_endpoint} url={url}')
             return requests.request(
                 'POST',
                 '%s' % kiosk_endpoint,
