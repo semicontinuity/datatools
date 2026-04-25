@@ -1,13 +1,17 @@
+from typing import AnyStr
+import email.message
+
 from datatools.intent.handler_json import process_json
 from datatools.intent.handler_json_lines import handle_json_lines
 from datatools.intent.handler_multipart import handle_multipart
 from datatools.intent.handler_send_entity import handler_send_entity
-from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
+from datatools.intent.handler_text_plain import process_text_plain
+from datatools.intent.targets import set_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
     open_in_browser
 from datatools.tui.popup_selector import choose
 
 
-def dispatch(headers, post_body):
+def dispatch(headers: email.message.Message, post_body: AnyStr):
     content_type = headers.get('Content-Type')
     mime_type = content_type.split(';')[0]
     print('mime_type ' + mime_type)
@@ -18,17 +22,11 @@ def dispatch(headers, post_body):
         case 'text/uri-list':
             browse_new_tab(post_body.decode('utf-8'))
         case 'text/plain':
-            match choose(["Copy to Clipboard", "Open in Browser"], 'Choose'):
-                case 0:
-                    to_clipboard(post_body)
-                case 1:
-                    browse_new_tab(
-                        write_temp_file(post_body, '.txt', the_title)
-                    )
+            process_text_plain(headers, post_body)
         case 'text/markdown':
             match choose(["Copy to Clipboard", "Open in IDEA"], 'Choose'):
                 case 0:
-                    to_clipboard(post_body)
+                    set_clipboard(post_body)
                 case 1:
                     open_in_idea(
                         write_temp_file(post_body, '.md', the_title)
@@ -46,7 +44,7 @@ def dispatch(headers, post_body):
         case 'application/sql':
             match choose(["Copy to Clipboard", "Open in Browser"], 'text'):
                 case 0:
-                    to_clipboard(post_body)
+                    set_clipboard(post_body)
                 case 1:
                     browse_new_tab(
                         write_temp_file(post_body, '.sql.txt', the_title)

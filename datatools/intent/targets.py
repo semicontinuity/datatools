@@ -4,11 +4,12 @@ import re
 import subprocess
 import sys
 from datetime import datetime
+from typing import AnyStr
 
 import requests
 from requests import Response
 
-from datatools.intent import get_local_ip, SERVER_PORT
+from datatools.intent import local_file_url
 from datatools.intent.target_folder import get_target_folder
 from datatools.util.subprocess import exe
 
@@ -35,7 +36,7 @@ def open_in_idea(path: str):
     conn.close()
 
 
-def to_clipboard(s):
+def set_clipboard(s: AnyStr):
     if type(s) is str:
         s = s.encode('utf-8')
     subprocess.run(['xclip', '-selection', 'clipboard'], input=s, stdout=subprocess.DEVNULL)
@@ -92,7 +93,7 @@ def kiosk_open_url(url) -> Response | None:
                 '%s' % kiosk_endpoint,
                 headers={"Content-Type": "text/uri-list"},
                 data=url,
-                timeout=2,
+                timeout=5,
             )
         except:
             print('kiosk connection refused', kiosk_endpoint)
@@ -119,4 +120,4 @@ def html_to_browser(data: str | bytes, title: str | None = None):
 def open_in_browser(data: str | bytes, file_suffix: str, title: str | None = None):
     contents = data.encode('utf-8') if type(data) is str else data
     file_name = write_temp_file_to(get_target_folder(), contents, file_suffix, title)
-    browse_new_tab(f'http://{get_local_ip()}:{SERVER_PORT}/{file_name}')
+    browse_new_tab(local_file_url(file_name))

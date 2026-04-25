@@ -1,7 +1,7 @@
 import json
 
 from datatools.intent import local_file_url
-from datatools.intent.targets import to_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
+from datatools.intent.targets import set_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
     write_temp_file_name
 from datatools.json.json2html import to_blocks_html
 from datatools.jt2h.app_json_page import page_node, md_node
@@ -22,7 +22,7 @@ def process_json(post_body: bytes, the_title: str):
         "Convert to BLOCK HTML and Open in Browser",
     ], 'JSON'):
         case 0:
-            to_clipboard(post_body)
+            set_clipboard(post_body)
         case 1:
             browse_new_tab(
                 local_file_url(
@@ -44,9 +44,9 @@ def process_json(post_body: bytes, the_title: str):
                 the_title
             )
         case 5:
-            to_clipboard(str(md_node(data)))
+            set_clipboard(str(md_node(data)))
         case 6:
-            to_clipboard(str(md_node(data, delegate=JsonNodeDelegateJson)))
+            set_clipboard(str(md_node(data, delegate=JsonNodeDelegateJson)))
         case 7:
             html_to_browser(
                 str(to_blocks_html(data, page_title=the_title)),
