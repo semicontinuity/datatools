@@ -3,7 +3,7 @@ from typing import AnyStr
 
 from datatools.intent.action_open_in_browser import do_open_in_browser
 from datatools.intent.action_set_clipboard import do_set_clipboard
-from datatools.tui.popup_selector import choose
+from datatools.intent.actions import run_action
 
 ACTIONS = {
     'set-clipboard': {
@@ -18,7 +18,4 @@ ACTIONS = {
 
 
 def process_text_plain(headers: email.message.Message, post_body: AnyStr):
-    actions = list(ACTIONS.values())
-    choice = choose([a['text'] for a in actions], 'Choose')
-    if choice is not None:
-        actions[choice]['handler'](headers, post_body)
+    run_action(ACTIONS, headers, post_body)
