@@ -40,11 +40,17 @@ def _escape_prefix(pfx: str) -> str:
     return pfx.replace("'", "\\'")
 
 
+def wrap_with(tag: str, body: list[str], attrs: str = "") -> list[str]:
+    """Wrap body lines with <tag attrs>...</tag>."""
+    open_tag = f"<{tag}{' ' + attrs if attrs else ''}>"
+    return [open_tag, *body, f"</{tag}>"]
+
+
 def _render_legend_block(legend_lines: list[str]) -> list[str]:
     """Wrap legend lines in <LEGEND>...</LEGEND> if non-empty."""
     if not legend_lines:
         return []
-    return ["<LEGEND>", *legend_lines, "</LEGEND>"]
+    return wrap_with("LEGEND", legend_lines)
 
 
 def _value_to_str(v) -> str:
@@ -651,8 +657,6 @@ class Compressor:
         if all(not line for line in lines):
             return [], lines
 
-        table_before = len(self._token_table)
-
         text = self._replace_frequent(text, RE_COMP)
         text = self._replace_frequent(text, RE_KEYS)
 
@@ -662,53 +666,5 @@ class Compressor:
         text = self._run_tag_sequence_macro_templating(text)
 
         data_lines = self._deduplicate_lines(text)
-        table_slice = self._token_table[table_before:]
-        legend_lines, data_lines = self._serialize_tokens(table_slice, data_lines)
+        legend_lines, data_lines = self._serialize_tokens(self._token_table, data_lines)
         return legend_lines, data_lines
-
-    def compress_complete_column(
-            self,
-            key: str,
-            records: list[dict],
-    ) -> list[str]:
-        """Compress one complete column and return its output lines."""
-        values = [_value_to_str(rec[key]) for rec in records]
-        n = len(values)
-
-        # All values identical → encode as prefix + count, empty body.
-        if len(set(values)) == 1:
-            return [f"<{key} prefix='{_escape_prefix(values[0])}' n='{n}'>", f"</{key}>"]
-
-        pfx = find_common_prefix(values)
-        if pfx:
-            open_tag = f"<{key} prefix='{_escape_prefix(pfx)}'>"
-            text = "\n".join(v[len(pfx):] for v in values)
-        else:
-            open_tag = f"<{key}>"
-            text = "\n".join(values)
-
-        legend_lines, data_lines = self.compress_text(text)
-        return [open_tag, *_render_legend_block(legend_lines), *data_lines, f"</{key}>"]
-
-    def compress_incomplete_columns(
-            self,
-            incomplete_keys: list[str],
-            records: list[dict],
-    ) -> list[str]:
-        """Compress all incomplete columns together and return their output lines.
-
-        One line is emitted per record (empty string for records that have none of
-        the incomplete keys).  This preserves positional alignment so the
-        decompressor can reconstruct which values belong to which record.
-        """
-        inc_lines: list[str] = []
-        for rec in records:
-            pairs = [
-                f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
-                for k in incomplete_keys
-                if k in rec
-            ]
-            inc_lines.append(",".join(pairs))
-
-        legend_lines, data_lines = self.compress_text("\n".join(inc_lines))
-        return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]

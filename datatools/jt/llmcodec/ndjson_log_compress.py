@@ -3,8 +3,50 @@
 import json
 import sys
 
-from .compressor import Compressor
+from .compressor import Compressor, _escape_prefix, _render_legend_block, _value_to_str, wrap_with
 from .ndjson_utils import classify_keys
+from .string_utils import find_common_prefix
+
+
+def compress_complete_column(key: str, records: list[dict]) -> list[str]:
+    """Compress one complete column and return its output lines."""
+    values = [_value_to_str(rec[key]) for rec in records]
+    n = len(values)
+
+    # All values identical → encode as prefix + count, empty body.
+    if len(set(values)) == 1:
+        return wrap_with(key, [], f"prefix='{_escape_prefix(values[0])}' n='{n}'")
+
+    pfx = find_common_prefix(values)
+    if pfx:
+        attrs = f"prefix='{_escape_prefix(pfx)}'"
+        text = "\n".join(v[len(pfx):] for v in values)
+    else:
+        attrs = ""
+        text = "\n".join(values)
+
+    legend_lines, data_lines = Compressor().compress_text(text)
+    return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
+
+
+def compress_incomplete_columns(incomplete_keys: list[str], records: list[dict]) -> list[str]:
+    """Compress all incomplete columns together and return their output lines.
+
+    One line is emitted per record (empty string for records that have none of
+    the incomplete keys).  This preserves positional alignment so the
+    decompressor can reconstruct which values belong to which record.
+    """
+    inc_lines: list[str] = []
+    for rec in records:
+        pairs = [
+            f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
+            for k in incomplete_keys
+            if k in rec
+        ]
+        inc_lines.append(",".join(pairs))
+
+    legend_lines, data_lines = Compressor().compress_text("\n".join(inc_lines))
+    return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 
 def compress_ndjson(records: list[dict]) -> str:
@@ -13,17 +55,15 @@ def compress_ndjson(records: list[dict]) -> str:
         return ""
 
     ordered_complete, incomplete_keys = classify_keys(records)
-    comp = Compressor()
-    output_parts: list[str] = ["<COLUMNS>"]
+    body: list[str] = []
 
     for key in ordered_complete:
-        output_parts.extend(comp.compress_complete_column(key, records))
+        body.extend(compress_complete_column(key, records))
 
     if incomplete_keys:
-        output_parts.extend(comp.compress_incomplete_columns(incomplete_keys, records))
+        body.extend(compress_incomplete_columns(incomplete_keys, records))
 
-    output_parts.append("<COLUMNS>")
-    return "".join(line + '\n' for line in output_parts)
+    return "".join(line + '\n' for line in wrap_with("COLUMNS", body))
 
 
 def main():
