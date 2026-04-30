@@ -34,7 +34,7 @@ def find_common_prefix(values: list[str]) -> str:
     return pfx
 
 
-def build_ident_counts(text: str, pattern: re.Pattern = RE_IDENT) -> dict[str, int]:
+def pattern_counts(text: str, pattern: re.Pattern = RE_IDENT) -> dict[str, int]:
     """Count occurrences of each match of *pattern* in *text*.
 
     Only entries with count > 1 are included (single occurrences cannot be
