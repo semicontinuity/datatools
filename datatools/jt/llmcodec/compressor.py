@@ -2,12 +2,8 @@ import json
 import re
 from collections import defaultdict
 
-from datatools.jt.llmcodec.base62_utils import to_base62, base62_len
-
-# Token kind constants used in the token table.
-_KIND_VAR = "#"    # #tag#  — BPE / frequent-pattern token (normal text)
-_KIND_META = "!"   # !tag!  — BPE / frequent-pattern token (meta / cross-line)
-_KIND_MACRO = "&"  # &tag   — macro template token
+from datatools.jt.llmcodec.base62_utils import to_base62
+from datatools.jt.llmcodec.token_registry import TokenRegistry, KIND_VAR as _KIND_VAR, KIND_META as _KIND_META, KIND_MACRO as _KIND_MACRO
 
 # Tuning parameters for compression
 BPE_MAX_ITERATIONS = 100
@@ -177,51 +173,21 @@ class Compressor:
     """
 
     def __init__(self, frequent_tokens: dict[str, int]):
-        self._frequent_tokens = frequent_tokens
-        # Sequential counters for internal token IDs (used during compression).
-        self._var_idx = 0
-        self._meta_idx = 1
-        self._macro_idx = 1
-        # Token table: list of (internal_token_str, kind, expansion_str).
-        # Populated in creation order; reordered at serialisation.
-        self._token_table: list[tuple[str, str, str]] = []
-
-    # ------------------------------------------------------------------
-    # Internal token allocation
-    # ------------------------------------------------------------------
-
-    def _get_var_token(self) -> str:
-        t = f"#{to_base62(self._var_idx)}#"
-        self._var_idx += 1
-        return t
-
-    def _get_meta_token(self) -> str:
-        t = f"!{to_base62(self._meta_idx)}!"
-        self._meta_idx += 1
-        return t
-
-    def _get_macro_token(self) -> str:
-        t = f"&{to_base62(self._macro_idx)}"
-        self._macro_idx += 1
-        return t
-
-    def _register(self, token: str, kind: str, expansion: str) -> None:
-        """Record a token in the table."""
-        self._token_table.append((token, kind, expansion))
+        self._registry = TokenRegistry(frequent_tokens)
 
     def _replace_frequent_tokens(self, text: str, token_counts: dict[str, int]) -> str:
         """Replace frequent identifiers with tokens, skipping non-saving ones."""
         sorted_token_counts = sorted(token_counts.items(), key=lambda x: -x[1])
         for pat, count in sorted_token_counts:
-            token_len = base62_len(self._var_idx) + 2  # len of #XX#
+            token_len = self._registry.var_tag_len()  # len of #XX#
             # definition line: "token = pat\n"
             definition_overhead = token_len + 3 + len(pat) + 1
             savings = count * (len(pat) - token_len) - definition_overhead
             if savings <= 0:
                 continue
-            token = self._get_var_token()
+            token = self._registry.get_var_token()
             text = text.replace(pat, token)
-            self._register(token, _KIND_VAR, pat)
+            self._registry.register(token, _KIND_VAR, pat)
         return text
 
     @staticmethod
@@ -368,7 +334,7 @@ class Compressor:
 
             kind = _KIND_VAR if token.startswith("#") else _KIND_META
             display = f"'{best_str}'" if best_str.startswith(" ") or best_str.endswith(" ") else best_str
-            self._register(token, kind, display)
+            self._registry.register(token, kind, display)
 
         result_parts = []
         for i, part in enumerate(parts):
@@ -387,8 +353,8 @@ class Compressor:
             max_n=20,
             min_trim_len=4,
             requires_hash=False,
-            tag_len_fn=lambda: base62_len(self._var_idx) + 2,
-            next_token_fn=self._get_var_token,
+            tag_len_fn=self._registry.var_tag_len,
+            next_token_fn=self._registry.get_var_token,
         )
 
     def _run_bpe_meta(self, text: str) -> str:
@@ -400,8 +366,8 @@ class Compressor:
             max_n=15,
             min_trim_len=5,
             requires_hash=True,
-            tag_len_fn=lambda: base62_len(self._meta_idx) + 2,
-            next_token_fn=self._get_meta_token,
+            tag_len_fn=self._registry.meta_tag_len,
+            next_token_fn=self._registry.get_meta_token,
         )
 
     def _process_templates(
@@ -423,8 +389,8 @@ class Compressor:
                 continue
             valid = [(i, var) for i, var in matches if not templated[i]]
             if len(valid) > 1:
-                macro_tag = self._get_macro_token()
-                self._register(macro_tag, _KIND_MACRO, template)
+                macro_tag = self._registry.get_macro_token()
+                self._registry.register(macro_tag, _KIND_MACRO, template)
                 for i, var in valid:
                     lines[i] = f"{macro_tag}:{var}"
                     templated[i] = True
@@ -501,8 +467,8 @@ class Compressor:
                 continue
             count = len(compiled.findall(text))
             if calc_savings(count, len(template)) > 0 or count >= MACRO_MIN_COUNT:
-                macro_tag = self._get_macro_token()
-                self._register(macro_tag, _KIND_MACRO, template)
+                macro_tag = self._registry.get_macro_token()
+                self._registry.register(macro_tag, _KIND_MACRO, template)
                 text = compiled.sub(f"{macro_tag}:" + r"\1\2\1", text)
 
         return text
@@ -656,7 +622,7 @@ class Compressor:
         if all(not line for line in lines):
             return [], lines
 
-        text = self._replace_frequent_tokens(text, self._frequent_tokens)
+        text = self._replace_frequent_tokens(text, self._registry.frequent_tokens)
 
         text = self._run_bpe_normal(text)
         text = self._run_bpe_meta(text)
@@ -664,5 +630,5 @@ class Compressor:
         text = self._run_tag_sequence_macro_templating(text)
 
         data_lines = self._deduplicate_lines(text)
-        legend_lines, data_lines = self._serialize_tokens(self._token_table, data_lines)
+        legend_lines, data_lines = self._serialize_tokens(self._registry.token_table, data_lines)
         return legend_lines, data_lines
