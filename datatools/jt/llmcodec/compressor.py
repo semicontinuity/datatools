@@ -185,9 +185,9 @@ class Compressor:
             savings = count * (len(pat) - token_len) - definition_overhead
             if savings <= 0:
                 continue
-            token = self._registry.get_var_token()
-            text = text.replace(pat, token)
-            self._registry.register(token, _KIND_VAR, pat)
+            substitution = self._registry.get_var_substitution(pat)
+            text = text.replace(pat, substitution)
+            self._registry.register(substitution, _KIND_VAR, pat)
         return text
 
     @staticmethod
@@ -324,7 +324,8 @@ class Compressor:
                 break
 
             best_str = "".join(id_to_str[sid] for sid in best_slice)
-            token = next_token_fn()
+            display = f"'{best_str}'" if best_str.startswith(" ") or best_str.endswith(" ") else best_str
+            token = next_token_fn(display)
 
             new_id = len(id_to_str)
             id_to_str.append(token)
@@ -333,7 +334,6 @@ class Compressor:
             self._bpe_apply_merge(parts, best_slice, new_id)
 
             kind = _KIND_VAR if token.startswith("#") else _KIND_META
-            display = f"'{best_str}'" if best_str.startswith(" ") or best_str.endswith(" ") else best_str
             self._registry.register(token, kind, display)
 
         result_parts = []
@@ -354,7 +354,7 @@ class Compressor:
             min_trim_len=4,
             requires_hash=False,
             tag_len_fn=self._registry.var_tag_len,
-            next_token_fn=self._registry.get_var_token,
+            next_token_fn=self._registry.get_var_substitution,
         )
 
     def _run_bpe_meta(self, text: str) -> str:
@@ -367,7 +367,7 @@ class Compressor:
             min_trim_len=5,
             requires_hash=True,
             tag_len_fn=self._registry.meta_tag_len,
-            next_token_fn=self._registry.get_meta_token,
+            next_token_fn=self._registry.get_meta_substitution,
         )
 
     def _process_templates(
@@ -389,7 +389,7 @@ class Compressor:
                 continue
             valid = [(i, var) for i, var in matches if not templated[i]]
             if len(valid) > 1:
-                macro_tag = self._registry.get_macro_token()
+                macro_tag = self._registry.get_macro_substitution(template)
                 self._registry.register(macro_tag, _KIND_MACRO, template)
                 for i, var in valid:
                     lines[i] = f"{macro_tag}:{var}"
@@ -467,7 +467,7 @@ class Compressor:
                 continue
             count = len(compiled.findall(text))
             if calc_savings(count, len(template)) > 0 or count >= MACRO_MIN_COUNT:
-                macro_tag = self._registry.get_macro_token()
+                macro_tag = self._registry.get_macro_substitution(template)
                 self._registry.register(macro_tag, _KIND_MACRO, template)
                 text = compiled.sub(f"{macro_tag}:" + r"\1\2\1", text)
 
