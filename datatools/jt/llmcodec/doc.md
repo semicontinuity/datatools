@@ -122,23 +122,26 @@ contains comma-separated `"key":value` pairs in JSON syntax:
 
 ```
 <LEGEND>
-#ab# = some repeated substring
-!3! = another repeated substring
+~ab~ = some repeated in-line substring
+#cd# = some repeated identifier
+!3! = another repeated substring (cross-line)
 &7 = prefix_part?suffix_part
 </LEGEND>
 ```
 
-The legend maps **tokens** to their expansions.  Three token types exist:
+The legend maps **tokens** to their expansions in creation order.
+Four token types exist:
 
 | Syntax | Meaning |
 |---|---|
-| `#tag#` | BPE / frequent-pattern token (normal text) |
-| `!tag!` | BPE / frequent-pattern token (meta / cross-line text) |
+| `~tag~` | BPE token for in-line (normal) text sequences |
+| `#tag#` | Frequent-identifier token |
+| `!tag!` | BPE token for meta / cross-line text |
 | `&tag` | Macro template token |
 
 Macro templates contain exactly one `?` placeholder.  When a data line
-contains `&tag:#inner#` or `&tag:!inner!`, the decompressor expands
-`#inner#` (or `!inner!`) first, then substitutes the result for `?` in the
+contains `&tag:~inner~`, `&tag:#inner#`, or `&tag:!inner!`, the decompressor
+expands the inner token first, then substitutes the result for `?` in the
 macro template.  Both the prefix part and the suffix part (the text before
 and after `?`) must be non-empty; pure-prefix or pure-suffix templates are
 not created because they add overhead without benefit.

@@ -2,9 +2,7 @@ import json
 import re
 from collections import defaultdict
 
-from datatools.jt.llmcodec.base62_utils import to_base62
-from datatools.jt.llmcodec.token_registry import TokenRegistry, KIND_VAR as _KIND_VAR, KIND_META as _KIND_META, \
-    KIND_MACRO as _KIND_MACRO
+from datatools.jt.llmcodec.token_registry import TokenRegistry
 
 # Tuning parameters for compression
 BPE_MAX_ITERATIONS = 100
@@ -15,15 +13,7 @@ MACRO_OVERHEAD_MULT = 4
 MACRO_OVERHEAD_CONST = 5
 
 # Pre-compile static regexes for one-off passes
-RE_TAGS = re.compile(r"(#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)")
-
-# Regex matching any token (used for rename substitution).
-_RE_ANY_TOKEN_RENAME = re.compile(
-    r"&[0-9a-zA-Z]+:[#!][0-9a-zA-Z]+[#!]"
-    r"|#[0-9a-zA-Z]+#"
-    r"|![0-9a-zA-Z]+!"
-    r"|&[0-9a-zA-Z]+"
-)
+RE_TAGS = re.compile(r"(~[0-9a-zA-Z]+~|#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)")
 
 
 def wrap_with(tag: str, body: list[str], attrs: str = "") -> list[str]:
@@ -44,20 +34,6 @@ def _value_to_str(v) -> str:
     if isinstance(v, str):
         return v
     return json.dumps(v, ensure_ascii=False)
-
-
-def _apply_rename(text: str, rename: dict[str, str]) -> str:
-    """Substitute old token names with new names in text."""
-    def _sub(m: re.Match) -> str:
-        tok = m.group()
-        # &macro:tag — rename both parts independently.
-        if tok[0] == "&" and ":" in tok:
-            macro_part, tag_part = tok.split(":", 1)
-            new_macro = rename[macro_part] if macro_part in rename else macro_part
-            new_tag = rename[tag_part] if tag_part in rename else tag_part
-            return new_macro + ":" + new_tag
-        return rename[tok] if tok in rename else tok
-    return _RE_ANY_TOKEN_RENAME.sub(_sub, text)
 
 
 def calc_savings(count: int, length: int) -> int:
@@ -88,11 +64,11 @@ def _tokenize_meta(text: str) -> list[str]:
     n = len(text)
     while i < n:
         c = text[i]
-        if c == "#":
+        if c in ("~", "#"):
             j = i + 1
             while j < n and text[j].isalnum():
                 j += 1
-            if j < n and text[j] == "#":
+            if j < n and text[j] == c:
                 tokens.append(text[i:j + 1])
                 i = j + 1
                 continue
@@ -112,7 +88,7 @@ def _tokenize_meta(text: str) -> list[str]:
                 if not _is_alnum(nc):
                     break
             else:
-                if _is_alnum(nc) or nc in ("#", "!"):
+                if _is_alnum(nc) or nc in ("~", "#", "!"):
                     break
             j += 1
         tokens.append(text[i:j])
@@ -121,18 +97,19 @@ def _tokenize_meta(text: str) -> list[str]:
 
 
 def _split_normal(text: str) -> tuple[list[str], list[str]]:
-    """Split on #tag# separators, returning (parts, seps)."""
+    """Split on ~tag~ (or #tag#) separators, returning (parts, seps)."""
     parts = []
     seps = []
     i = 0
     last_end = 0
     n = len(text)
     while i < n:
-        if text[i] == "#":
+        if text[i] in ("~", "#"):
+            delim = text[i]
             j = i + 1
             while j < n and text[j].isalnum():
                 j += 1
-            if n > j > i + 1 and text[j] == "#":
+            if n > j > i + 1 and text[j] == delim:
                 parts.append(text[last_end:i])
                 seps.append(text[i:j + 1])
                 last_end = j + 1
@@ -159,10 +136,6 @@ def _split_meta(text: str) -> tuple[list[str], list[str]]:
 
 class Compressor:
     """Compress a block of text using BPE + macro templating.
-
-    Tokens are assigned sequential internal IDs during compression.  At
-    serialisation time the IDs are remapped so that the most-frequently-used
-    tokens receive the shortest names (lowest base-62 index).
 
     Parameters
     ----------
@@ -224,7 +197,7 @@ class Compressor:
                         if "\n" in s or "\r" in s:
                             valid = False
                             break
-                        if requires_hash and "#" in s:
+                        if requires_hash and ("~" in s or "#" in s or "!" in s):
                             has_hash = True
                         total_len += len(s)
                     if not valid:
@@ -319,8 +292,7 @@ class Compressor:
 
             self._bpe_apply_merge(parts, best_slice, new_id)
 
-            kind = _KIND_VAR if token.startswith("#") else _KIND_META
-            self._registry.register(token, kind, display)
+            self._registry.record(token, display)
 
         result_parts = []
         for i, part in enumerate(parts):
@@ -339,8 +311,8 @@ class Compressor:
             max_n=20,
             min_trim_len=4,
             requires_hash=False,
-            tag_len_fn=self._registry.var_tag_len,
-            next_token_fn=self._registry.get_var_substitution,
+            tag_len_fn=self._registry.inline_tag_len,
+            next_token_fn=self._registry.get_inline_substitution,
         )
 
     def _run_bpe_meta(self, text: str) -> str:
@@ -376,7 +348,7 @@ class Compressor:
             valid = [(i, var) for i, var in matches if not templated[i]]
             if len(valid) > 1:
                 macro_tag = self._registry.get_macro_substitution(template)
-                self._registry.register(macro_tag, _KIND_MACRO, template)
+                self._registry.record(macro_tag, template)
                 for i, var in valid:
                     lines[i] = f"{macro_tag}:{var}"
                     templated[i] = True
@@ -411,9 +383,9 @@ class Compressor:
     def _run_tag_sequence_macro_templating(self, text: str) -> str:
         # The lookbehind (?<![0-9a-zA-Z:]) ensures we never match a tag that
         # is already the argument of an existing &macro:tag token (where the
-        # character immediately before the opening # or ! would be ':').
+        # character immediately before the opening ~, # or ! would be ':').
         re_seq = re.compile(
-            r"(?<![0-9a-zA-Z:])(?:(?:#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)[ \t]*){2,}"
+            r"(?<![0-9a-zA-Z:])(?:(?:~[0-9a-zA-Z]+~|#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)[ \t]*){2,}"
         )
         templates: dict[str, int] = defaultdict(int)
 
@@ -444,7 +416,7 @@ class Compressor:
             re_str = (
                 r"(?<![0-9a-zA-Z:])"
                 + re.escape(parts[0])
-                + r"([#!])([0-9a-zA-Z]+)\1"
+                + r"([~#!])([0-9a-zA-Z]+)\1"
                 + re.escape(parts[1])
             )
             try:
@@ -454,7 +426,7 @@ class Compressor:
             count = len(compiled.findall(text))
             if calc_savings(count, len(template)) > 0 or count >= MACRO_MIN_COUNT:
                 macro_tag = self._registry.get_macro_substitution(template)
-                self._registry.register(macro_tag, _KIND_MACRO, template)
+                self._registry.record(macro_tag, template)
                 text = compiled.sub(f"{macro_tag}:" + r"\1\2\1", text)
 
         return text
@@ -515,85 +487,6 @@ class Compressor:
                     final_lines.append(last_nonempty)
         return final_lines
 
-    # ------------------------------------------------------------------
-    # Serialisation: frequency-ordered token names
-    # ------------------------------------------------------------------
-
-    # Regex matching any token in the working text.
-    _RE_ANY_TOKEN = re.compile(
-        r"&[0-9a-zA-Z]+:[#!][0-9a-zA-Z]+[#!]"
-        r"|#[0-9a-zA-Z]+#"
-        r"|![0-9a-zA-Z]+!"
-        r"|&[0-9a-zA-Z]+"
-    )
-
-    def _serialize_tokens(
-        self,
-        table_slice: list[tuple[str, str, str]],
-        data_lines: list[str],
-    ) -> tuple[list[str], list[str]]:
-        """Assign final token names ordered by frequency (most used → shortest).
-
-        Within each kind (#, !, &) tokens are ranked by how many times they
-        appear in the data lines plus legend values, then renumbered so the
-        most frequent gets the lowest base-62 index.
-
-        Returns (legend_lines, renamed_data_lines).
-        """
-        if not table_slice:
-            return [], data_lines
-
-        # Count occurrences in data and in legend expansion strings.
-        counts: dict[str, int] = defaultdict(int)
-        corpus = "\n".join(data_lines)
-        legend_vals = "\n".join(exp for _, _, exp in table_slice)
-        for tok in self._RE_ANY_TOKEN.findall(corpus + "\n" + legend_vals):
-            if tok[0] == "&" and ":" in tok:
-                macro_part, tag_part = tok.split(":", 1)
-                counts[macro_part] += 1
-                counts[tag_part] += 1
-            else:
-                counts[tok] += 1
-
-        # Group tokens by kind and sort by frequency descending.
-        by_kind: dict[str, list[tuple[str, str, str]]] = {
-            _KIND_VAR: [], _KIND_META: [], _KIND_MACRO: [],
-        }
-        for entry in table_slice:
-            tok, kind, exp = entry
-            by_kind[kind].append(entry)
-        for kind in by_kind:
-            by_kind[kind].sort(key=lambda e: -counts.get(e[0], 0))
-
-        # Build rename map: old internal token → new short token.
-        rename: dict[str, str] = {}
-        # var tokens start at index 0; meta and macro start at 1.
-        start = {_KIND_VAR: 0, _KIND_META: 1, _KIND_MACRO: 1}
-        delim = {_KIND_VAR: ("#", "#"), _KIND_META: ("!", "!"), _KIND_MACRO: ("&", "")}
-        for kind, entries in by_kind.items():
-            l, r = delim[kind]
-            for new_idx, (old_tok, _, _) in enumerate(entries, start[kind]):
-                new_tok = f"{l}{to_base62(new_idx)}{r}"
-                if new_tok != old_tok:
-                    rename[old_tok] = new_tok
-
-        # Build legend lines in new-name order (most frequent first per kind).
-        legend_lines: list[str] = []
-        for kind in (_KIND_VAR, _KIND_META, _KIND_MACRO):
-            l, r = delim[kind]
-            for new_idx, (old_tok, _, exp) in enumerate(by_kind[kind], start[kind]):
-                new_tok = f"{l}{to_base62(new_idx)}{r}"
-                # Also rename any tokens embedded in the expansion string.
-                if rename:
-                    exp = _apply_rename(exp, rename)
-                legend_lines.append(f"{new_tok} = {exp}")
-
-        if not rename:
-            return legend_lines, data_lines
-
-        new_data = [_apply_rename(line, rename) for line in data_lines]
-        return legend_lines, new_data
-
     def compress_text(self, text: str) -> tuple[list[str], list[str]]:
         """Compress text and return (legend_lines, data_lines).
 
@@ -616,5 +509,5 @@ class Compressor:
         text = self._run_tag_sequence_macro_templating(text)
 
         data_lines = self._deduplicate_lines(text)
-        legend_lines, data_lines = self._serialize_tokens(self._registry.token_table, data_lines)
+        legend_lines = [f"{sub} = {exp}" for sub, exp in self._registry.legend]
         return legend_lines, data_lines

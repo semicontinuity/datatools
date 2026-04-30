@@ -5,15 +5,16 @@ import json
 import re
 import sys
 
-RE_LEGEND_ENTRY = re.compile(r"^([#!&][0-9a-zA-Z]+[#!]?)\s*=\s*(.*)$")
+RE_LEGEND_ENTRY = re.compile(r"^([~#!&][0-9a-zA-Z]+[~#!]?)\s*=\s*(.*)$")
 RE_DUP = re.compile(r"^\s+\.\.\. x(\d+)$")
 RE_TOKEN = re.compile(
-    r"&[0-9a-zA-Z]+:[#!][0-9a-zA-Z]+[#!]"
+    r"&[0-9a-zA-Z]+:[~#!][0-9a-zA-Z]+[~#!]"
+    r"|~[0-9a-zA-Z]+~"
     r"|#[0-9a-zA-Z]+#"
     r"|![0-9a-zA-Z]+!"
     r"|&[0-9a-zA-Z]+"
 )
-RE_MACRO_TAG = re.compile(r"^(&[0-9a-zA-Z]+):([#!][0-9a-zA-Z]+[#!])$")
+RE_MACRO_TAG = re.compile(r"^(&[0-9a-zA-Z]+):([~#!][0-9a-zA-Z]+[~#!])$")
 
 # Matches  <tag>  or  <tag prefix='...' [n='N']>
 # prefix value uses single quotes; only \' needs escaping inside.
