@@ -3,7 +3,8 @@ import re
 from collections import defaultdict
 
 from datatools.jt.llmcodec.base62_utils import to_base62
-from datatools.jt.llmcodec.token_registry import TokenRegistry, KIND_VAR as _KIND_VAR, KIND_META as _KIND_META, KIND_MACRO as _KIND_MACRO
+from datatools.jt.llmcodec.token_registry import TokenRegistry, KIND_VAR as _KIND_VAR, KIND_META as _KIND_META, \
+    KIND_MACRO as _KIND_MACRO
 
 # Tuning parameters for compression
 BPE_MAX_ITERATIONS = 100
@@ -174,21 +175,6 @@ class Compressor:
 
     def __init__(self, frequent_tokens: dict[str, int]):
         self._registry = TokenRegistry(frequent_tokens)
-
-    def _replace_frequent_tokens(self, text: str, token_counts: dict[str, int]) -> str:
-        """Replace frequent identifiers with tokens, skipping non-saving ones."""
-        sorted_token_counts = sorted(token_counts.items(), key=lambda x: -x[1])
-        for pat, count in sorted_token_counts:
-            token_len = self._registry.var_tag_len()  # len of #XX#
-            # definition line: "token = pat\n"
-            definition_overhead = token_len + 3 + len(pat) + 1
-            savings = count * (len(pat) - token_len) - definition_overhead
-            if savings <= 0:
-                continue
-            substitution = self._registry.get_var_substitution(pat)
-            text = text.replace(pat, substitution)
-            self._registry.register(substitution, _KIND_VAR, pat)
-        return text
 
     @staticmethod
     def _bpe_tokenize_parts(
