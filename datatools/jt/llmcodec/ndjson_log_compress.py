@@ -117,8 +117,8 @@ def compress_ndjson(records: list[dict]) -> str:
     ordered_complete, incomplete_keys = classify_keys(records)
     unified_counts = _build_unified_identifier_counts(ordered_complete, incomplete_keys, records)
     vars = _build_vars(unified_counts)
-    for pat, idx in vars.items():
-        print(f"DEBUG var {idx}: {pat!r}", file=sys.stderr)
+    for pat, count in sorted(unified_counts.items(), key=lambda x: -x[1]):
+        print(f"DEBUG {count}: {pat!r}", file=sys.stderr)
     body: list[str] = []
 
     for key in ordered_complete:
