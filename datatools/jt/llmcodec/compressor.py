@@ -1,12 +1,14 @@
-#!/usr/bin/env python3
-
 import json
 import re
-import sys
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
-BASE62 = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-RADIX = 62
+from datatools.jt.llmcodec.base62_utils import to_base62, base62_len
+from .string_utils import find_common_prefix
+
+# Token kind constants used in the token table.
+_KIND_VAR = "#"    # #tag#  — BPE / frequent-pattern token (normal text)
+_KIND_META = "!"   # !tag!  — BPE / frequent-pattern token (meta / cross-line)
+_KIND_MACRO = "&"  # &tag   — macro template token
 
 # Tuning parameters for compression
 BPE_MAX_ITERATIONS = 100
@@ -18,29 +20,52 @@ MACRO_OVERHEAD_CONST = 5
 
 # Pre-compile static regexes for one-off passes
 RE_TAGS = re.compile(r"(#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)")
-RE_COMP = re.compile(r"\[[A-Za-z0-9_-]+\]")
+RE_COMP = re.compile(r"\[[A-Za-z0-9_-]+]")
 RE_KEYS = re.compile(r"\b[A-Za-z0-9_]+={1,2}")
 
 
-def to_base62(n: int) -> str:
-    if n == 0:
-        return "0"
-    res = []
-    while n > 0:
-        res.append(BASE62[n % RADIX])
-        n //= RADIX
-    res.reverse()
-    return bytes(res).decode("ascii")
+# Regex matching any token (used for rename substitution).
+_RE_ANY_TOKEN_RENAME = re.compile(
+    r"&[0-9a-zA-Z]+:[#!][0-9a-zA-Z]+[#!]"
+    r"|#[0-9a-zA-Z]+#"
+    r"|![0-9a-zA-Z]+!"
+    r"|&[0-9a-zA-Z]+"
+)
 
 
-def base62_len(n: int) -> int:
-    if n == 0:
-        return 1
-    length = 0
-    while n > 0:
-        length += 1
-        n //= RADIX
-    return length
+def _escape_prefix(pfx: str) -> str:
+    """Escape prefix for use inside a single-quoted attribute.
+    Only ' needs escaping (as \\').
+    """
+    return pfx.replace("'", "\\'")
+
+
+def _render_legend_block(legend_lines: list[str]) -> list[str]:
+    """Wrap legend lines in <LEGEND>...</LEGEND> if non-empty."""
+    if not legend_lines:
+        return []
+    return ["<LEGEND>", *legend_lines, "</LEGEND>"]
+
+
+def _value_to_str(v) -> str:
+    """Convert a JSON value to a string for compression."""
+    if isinstance(v, str):
+        return v
+    return json.dumps(v, ensure_ascii=False)
+
+
+def _apply_rename(text: str, rename: dict[str, str]) -> str:
+    """Substitute old token names with new names in text."""
+    def _sub(m: re.Match) -> str:
+        tok = m.group()
+        # &macro:tag — rename both parts independently.
+        if tok[0] == "&" and ":" in tok:
+            macro_part, tag_part = tok.split(":", 1)
+            new_macro = rename[macro_part] if macro_part in rename else macro_part
+            new_tag = rename[tag_part] if tag_part in rename else tag_part
+            return new_macro + ":" + new_tag
+        return rename[tok] if tok in rename else tok
+    return _RE_ANY_TOKEN_RENAME.sub(_sub, text)
 
 
 def calc_savings(count: int, length: int) -> int:
@@ -115,7 +140,7 @@ def _split_normal(text: str) -> tuple[list[str], list[str]]:
             j = i + 1
             while j < n and text[j].isalnum():
                 j += 1
-            if j < n and text[j] == "#" and j > i + 1:
+            if n > j > i + 1 and text[j] == "#":
                 parts.append(text[last_end:i])
                 seps.append(text[i:j + 1])
                 last_end = j + 1
@@ -138,48 +163,6 @@ def _split_meta(text: str) -> tuple[list[str], list[str]]:
             last_end = i + 1
     parts.append(text[last_end:])
     return parts, seps
-
-
-def common_prefix(strings: list[str]) -> str:
-    """Return the longest common prefix of a list of strings."""
-    if not strings:
-        return ""
-    prefix = strings[0]
-    for s in strings[1:]:
-        while not s.startswith(prefix):
-            prefix = prefix[:-1]
-            if not prefix:
-                return ""
-    return prefix
-
-
-# Regex matching any token (used for rename substitution).
-_RE_ANY_TOKEN_RENAME = re.compile(
-    r"&[0-9a-zA-Z]+:[#!][0-9a-zA-Z]+[#!]"
-    r"|#[0-9a-zA-Z]+#"
-    r"|![0-9a-zA-Z]+!"
-    r"|&[0-9a-zA-Z]+"
-)
-
-
-def _apply_rename(text: str, rename: dict[str, str]) -> str:
-    """Substitute old token names with new names in text."""
-    def _sub(m: re.Match) -> str:
-        tok = m.group()
-        # &macro:tag — rename both parts independently.
-        if tok[0] == "&" and ":" in tok:
-            macro_part, tag_part = tok.split(":", 1)
-            new_macro = rename[macro_part] if macro_part in rename else macro_part
-            new_tag = rename[tag_part] if tag_part in rename else tag_part
-            return new_macro + ":" + new_tag
-        return rename[tok] if tok in rename else tok
-    return _RE_ANY_TOKEN_RENAME.sub(_sub, text)
-
-
-# Token kind constants used in the token table.
-_KIND_VAR = "#"    # #tag#  — BPE / frequent-pattern token (normal text)
-_KIND_META = "!"   # !tag!  — BPE / frequent-pattern token (meta / cross-line)
-_KIND_MACRO = "&"  # &tag   — macro template token
 
 
 class Compressor:
@@ -238,7 +221,7 @@ class Compressor:
 
     @staticmethod
     def _bpe_tokenize_parts(
-        part_strs: list[str],
+        part_strings: list[str],
         tokenize_fn,
         id_to_str: list[str],
         str_to_id: dict[str, int],
@@ -252,7 +235,7 @@ class Compressor:
             return str_to_id[s]
 
         parts: list[list[int]] = []
-        for p in part_strs:
+        for p in part_strings:
             if not p:
                 parts.append([])
             else:
@@ -270,11 +253,11 @@ class Compressor:
         """Count valid n-gram occurrences across all parts."""
         counts: dict[tuple[int, ...], int] = defaultdict(int)
         for part in parts:
-            plen = len(part)
-            if plen < 2:
+            part_len = len(part)
+            if part_len < 2:
                 continue
-            for n in range(2, min(max_n, plen) + 1):
-                for i in range(plen - n + 1):
+            for n in range(2, min(max_n, part_len) + 1):
+                for i in range(part_len - n + 1):
                     slc = tuple(part[i:i + n])
                     has_hash = False
                     total_len = 0
@@ -314,8 +297,8 @@ class Compressor:
         for slc, count in counts.items():
             if count > 1:
                 phrase_len = sum(len(id_to_str[sid]) for sid in slc)
-                tlen = tag_len_fn()
-                savings = count * (phrase_len - tlen) - (tlen + 3 + phrase_len)
+                tag_len = tag_len_fn()
+                savings = count * (phrase_len - tag_len) - (tag_len + 3 + phrase_len)
                 if savings > best_savings:
                     best_savings = savings
                     best_slice = slc
@@ -328,16 +311,16 @@ class Compressor:
         new_id: int,
     ) -> None:
         """Replace all occurrences of best_slice in parts with new_id in-place."""
-        blen = len(best_slice)
+        best_slice_len = len(best_slice)
         for idx, part in enumerate(parts):
-            if len(part) < blen:
+            if len(part) < best_slice_len:
                 continue
             new_part = []
             i = 0
-            while i <= len(part) - blen:
-                if tuple(part[i:i + blen]) == best_slice:
+            while i <= len(part) - best_slice_len:
+                if tuple(part[i:i + best_slice_len]) == best_slice:
                     new_part.append(new_id)
-                    i += blen
+                    i += best_slice_len
                 else:
                     new_part.append(part[i])
                     i += 1
@@ -359,8 +342,8 @@ class Compressor:
         id_to_str: list[str] = []
         str_to_id: dict[str, int] = {}
 
-        part_strs, seps = split_fn(text)
-        parts = self._bpe_tokenize_parts(part_strs, tokenize_fn, id_to_str, str_to_id)
+        part_strings, seps = split_fn(text)
+        parts = self._bpe_tokenize_parts(part_strings, tokenize_fn, id_to_str, str_to_id)
 
         for _ in range(max_iter):
             counts = self._bpe_count_ngrams(parts, id_to_str, max_n, min_trim_len, requires_hash)
@@ -447,7 +430,7 @@ class Compressor:
     _PLACEHOLDER = "?"
 
     def _run_macro_templating(self, text: str) -> str:
-        lines = [l.rstrip() for l in text.split("\n")]
+        lines = [line.rstrip() for line in text.split("\n")]
         templates: dict[str, list[tuple[int, str]]] = defaultdict(list)
 
         for i, line in enumerate(lines):
@@ -665,7 +648,7 @@ class Compressor:
 
         # If every line is empty (all values == prefix), skip compression.
         lines = text.split("\n")
-        if all(not l for l in lines):
+        if all(not line for line in lines):
             return [], lines
 
         table_before = len(self._token_table)
@@ -683,167 +666,49 @@ class Compressor:
         legend_lines, data_lines = self._serialize_tokens(table_slice, data_lines)
         return legend_lines, data_lines
 
+    def compress_complete_column(
+            self,
+            key: str,
+            records: list[dict],
+    ) -> list[str]:
+        """Compress one complete column and return its output lines."""
+        values = [_value_to_str(rec[key]) for rec in records]
+        n = len(values)
 
-def _value_to_str(v) -> str:
-    """Convert a JSON value to a string for compression."""
-    if isinstance(v, str):
-        return v
-    return json.dumps(v, ensure_ascii=False)
+        # All values identical → encode as prefix + count, empty body.
+        if len(set(values)) == 1:
+            return [f"<{key} prefix='{_escape_prefix(values[0])}' n='{n}'>", f"</{key}>"]
 
+        pfx = find_common_prefix(values)
+        if pfx:
+            open_tag = f"<{key} prefix='{_escape_prefix(pfx)}'>"
+            text = "\n".join(v[len(pfx):] for v in values)
+        else:
+            open_tag = f"<{key}>"
+            text = "\n".join(values)
 
-def _find_common_prefix(values: list[str]) -> str:
-    """Find common prefix among values; return '' if no savings."""
-    if len(values) < 2:
-        return ""
-    pfx = common_prefix(values)
-    if not pfx:
-        return ""
-    # Only introduce prefix if it saves space:
-    # savings = len(pfx) * len(values) - len(pfx) - overhead(attr ~10 chars)
-    overhead = len(pfx) + 10  # prefix="..." attribute overhead
-    savings = len(pfx) * len(values) - overhead
-    if savings <= 0:
-        return ""
-    return pfx
+        legend_lines, data_lines = self.compress_text(text)
+        return [open_tag, *_render_legend_block(legend_lines), *data_lines, f"</{key}>"]
 
+    def compress_incomplete_columns(
+            self,
+            incomplete_keys: list[str],
+            records: list[dict],
+    ) -> list[str]:
+        """Compress all incomplete columns together and return their output lines.
 
-def _classify_keys(
-    records: list[dict],
-) -> tuple[list[str], list[str]]:
-    """Return (ordered_complete_keys, incomplete_keys) for the record set."""
-    total = len(records)
-    key_counts: dict[str, int] = defaultdict(int)
-    for rec in records:
-        for k in rec:
-            key_counts[k] += 1
+        One line is emitted per record (empty string for records that have none of
+        the incomplete keys).  This preserves positional alignment so the
+        decompressor can reconstruct which values belong to which record.
+        """
+        inc_lines: list[str] = []
+        for rec in records:
+            pairs = [
+                f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
+                for k in incomplete_keys
+                if k in rec
+            ]
+            inc_lines.append(",".join(pairs))
 
-    complete_set = {k for k, cnt in key_counts.items() if cnt == total}
-    # Preserve insertion order from first record
-    ordered_complete: list[str] = []
-    seen: set[str] = set()
-    for k in records[0]:
-        if k in complete_set:
-            ordered_complete.append(k)
-            seen.add(k)
-    for k in complete_set:
-        if k not in seen:
-            ordered_complete.append(k)
-
-    incomplete_keys = [k for k, cnt in key_counts.items() if cnt < total]
-    return ordered_complete, incomplete_keys
-
-
-def _render_legend_block(legend_lines: list[str]) -> list[str]:
-    """Wrap legend lines in <LEGEND>...</LEGEND> if non-empty."""
-    if not legend_lines:
-        return []
-    return ["<LEGEND>", *legend_lines, "</LEGEND>"]
-
-
-def _escape_prefix(pfx: str) -> str:
-    """Escape prefix for use inside a single-quoted attribute.
-    Only ' needs escaping (as \\').
-    """
-    return pfx.replace("'", "\\'")
-
-
-def _compress_complete_column(
-    key: str,
-    records: list[dict],
-    comp: "Compressor",
-) -> list[str]:
-    """Compress one complete column and return its output lines."""
-    values = [_value_to_str(rec[key]) for rec in records]
-    n = len(values)
-
-    # All values identical → encode as prefix + count, empty body.
-    if len(set(values)) == 1:
-        return [f"<{key} prefix='{_escape_prefix(values[0])}' n='{n}'>", f"</{key}>"]
-
-    pfx = _find_common_prefix(values)
-    if pfx:
-        open_tag = f"<{key} prefix='{_escape_prefix(pfx)}'>"
-        text = "\n".join(v[len(pfx):] for v in values)
-    else:
-        open_tag = f"<{key}>"
-        text = "\n".join(values)
-
-    legend_lines, data_lines = comp.compress_text(text)
-    return [open_tag, *_render_legend_block(legend_lines), *data_lines, f"</{key}>"]
-
-
-def _compress_incomplete_columns(
-    incomplete_keys: list[str],
-    records: list[dict],
-    comp: "Compressor",
-) -> list[str]:
-    """Compress all incomplete columns together and return their output lines.
-
-    One line is emitted per record (empty string for records that have none of
-    the incomplete keys).  This preserves positional alignment so the
-    decompressor can reconstruct which values belong to which record.
-    """
-    inc_lines: list[str] = []
-    for rec in records:
-        pairs = [
-            f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
-            for k in incomplete_keys
-            if k in rec
-        ]
-        inc_lines.append(",".join(pairs))
-
-    legend_lines, data_lines = comp.compress_text("\n".join(inc_lines))
-    return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
-
-
-def compress_ndjson(records: list[dict]) -> str:
-    """Compress a list of NDJSON records into the column-based format."""
-    if not records:
-        return ""
-
-    ordered_complete, incomplete_keys = _classify_keys(records)
-    comp = Compressor()
-    output_parts: list[str] = ["<COLUMNS>"]
-
-    for key in ordered_complete:
-        output_parts.extend(_compress_complete_column(key, records, comp))
-
-    if incomplete_keys:
-        output_parts.extend(_compress_incomplete_columns(incomplete_keys, records, comp))
-
-    output_parts.append("<COLUMNS>")
-    return "\n".join(output_parts)
-
-
-def main():
-    raw = sys.stdin.read()
-    records: list[dict] = []
-    errors: list[str] = []
-
-    for lineno, line in enumerate(raw.splitlines(), 1):
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError as e:
-            errors.append(f"Line {lineno}: {e}")
-            continue
-        if not isinstance(obj, dict):
-            errors.append(f"Line {lineno}: expected JSON object, got {type(obj).__name__}")
-            continue
-        records.append(obj)
-
-    if errors:
-        for err in errors:
-            print(f"ERROR: {err}", file=sys.stderr)
-        sys.exit(1)
-
-    if not records:
-        sys.exit(0)
-
-    print(compress_ndjson(records))
-
-
-if __name__ == "__main__":
-    main()
+        legend_lines, data_lines = self.compress_text("\n".join(inc_lines))
+        return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
