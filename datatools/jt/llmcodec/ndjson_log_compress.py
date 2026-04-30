@@ -4,6 +4,7 @@ import json
 import sys
 
 from .compressor import Compressor, _render_legend_block, _value_to_str, wrap_with
+from .ndjson_log_prepare import parse_ndjson
 from .ndjson_utils import classify_keys
 from .string_utils import find_common_prefix, identifier_counts
 
@@ -76,22 +77,7 @@ def compress_ndjson(records: list[dict]) -> str:
 
 def main():
     data = sys.stdin.read()
-    records: list[dict] = []
-    errors: list[str] = []
-
-    for lineno, line in enumerate(data.splitlines(), 1):
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError as e:
-            errors.append(f"Line {lineno}: {e}")
-            continue
-        if not isinstance(obj, dict):
-            errors.append(f"Line {lineno}: expected JSON object, got {type(obj).__name__}")
-            continue
-        records.append(obj)
+    records, errors = parse_ndjson(data)
 
     if errors:
         for err in errors:

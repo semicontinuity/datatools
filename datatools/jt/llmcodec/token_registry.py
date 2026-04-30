@@ -34,6 +34,7 @@ class TokenRegistry:
 
     def __init__(self, frequent_tokens: dict[str, int]) -> None:
         self.frequent_tokens = frequent_tokens
+
         # pat -> index dicts for each token kind.
         self._vars: dict[str, int] = {}
         self._inlines: dict[str, int] = {}

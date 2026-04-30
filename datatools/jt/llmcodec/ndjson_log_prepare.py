@@ -9,6 +9,30 @@ import sys
 from collections import defaultdict
 
 
+def parse_ndjson(text: str) -> tuple[list[dict], list[str]]:
+    """Parse NDJSON text and return (records, errors).
+
+    Each non-empty line must be a JSON object.  Parse errors and non-object
+    lines are collected in *errors* rather than raising.
+    """
+    records: list[dict] = []
+    errors: list[str] = []
+    for lineno, line in enumerate(text.splitlines(), 1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError as e:
+            errors.append(f"Line {lineno}: {e}")
+            continue
+        if not isinstance(obj, dict):
+            errors.append(f"Line {lineno}: expected JSON object, got {type(obj).__name__}")
+            continue
+        records.append(obj)
+    return records, errors
+
+
 def _classify_keys(records: list[dict]) -> tuple[list[str], list[str]]:
     """Return (ordered_complete_keys, ordered_incomplete_keys).
 
@@ -79,22 +103,7 @@ def prepare_ndjson(records: list[dict]) -> list[dict]:
 
 def main() -> None:
     raw = sys.stdin.read()
-    records: list[dict] = []
-    errors: list[str] = []
-
-    for lineno, line in enumerate(raw.splitlines(), 1):
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError as e:
-            errors.append(f"Line {lineno}: {e}")
-            continue
-        if not isinstance(obj, dict):
-            errors.append(f"Line {lineno}: expected JSON object, got {type(obj).__name__}")
-            continue
-        records.append(obj)
+    records, errors = parse_ndjson(raw)
 
     if errors:
         for err in errors:
