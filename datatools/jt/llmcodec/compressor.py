@@ -622,7 +622,7 @@ class Compressor:
         if all(not line for line in lines):
             return [], lines
 
-        text = self._replace_frequent_tokens(text, self._registry.frequent_tokens)
+        text = self._registry.replace_frequent_tokens(text)
 
         text = self._run_bpe_normal(text)
         text = self._run_bpe_meta(text)
