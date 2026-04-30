@@ -34,13 +34,20 @@ def find_common_prefix(values: list[str]) -> str:
     return pfx
 
 
-def identifier_counts(text: str, pattern: re.Pattern = RE_IDENT) -> dict[str, int]:
+def identifier_counts(
+    text: str,
+    pattern: re.Pattern = RE_IDENT,
+    counts: dict[str, int] | None = None,
+) -> dict[str, int]:
     """Count occurrences of each match of *pattern* in *text*.
 
-    Only entries with count > 1 are included (single occurrences cannot be
-    compressed).
+    If *counts* is provided, tallies are accumulated into it and it is returned
+    as-is (no filtering).  Otherwise a new dict is created and only entries
+    with count > 1 are returned.
     """
-    counts: dict[str, int] = defaultdict(int)
+    if counts is None:
+        counts = {}
     for m in pattern.finditer(text):
-        counts[m.group()] += 1
-    return {p: c for p, c in counts.items() if c > 1}
+        key = m.group()
+        counts[key] = counts.get(key, 0) + 1
+    return counts

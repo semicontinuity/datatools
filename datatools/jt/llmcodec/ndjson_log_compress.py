@@ -16,7 +16,11 @@ def _escape_prefix(pfx: str) -> str:
     return pfx.replace("'", "\\'")
 
 
-def compress_complete_column(key: str, records: list[dict]) -> list[str]:
+def compress_complete_column(
+    key: str,
+    records: list[dict],
+    vars: dict[str, int],
+) -> list[str]:
     """Compress one complete column and return its output lines."""
     values = [_value_to_str(rec[key]) for rec in records]
     n = len(values)
@@ -33,11 +37,16 @@ def compress_complete_column(key: str, records: list[dict]) -> list[str]:
         attrs = ""
         text = "\n".join(values)
 
-    legend_lines, data_lines = Compressor(identifier_counts(text)).compress_text(text)
+    col_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
+    legend_lines, data_lines = Compressor(col_counts, vars).compress_text(text)
     return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
 
 
-def compress_incomplete_columns(incomplete_keys: list[str], records: list[dict]) -> list[str]:
+def compress_incomplete_columns(
+    incomplete_keys: list[str],
+    records: list[dict],
+    vars: dict[str, int],
+) -> list[str]:
     """Compress all incomplete columns together and return their output lines.
 
     One line is emitted per record (empty string for records that have none of
@@ -54,8 +63,50 @@ def compress_incomplete_columns(incomplete_keys: list[str], records: list[dict])
         inc_lines.append(",".join(pairs))
 
     joined = "\n".join(inc_lines)
-    legend_lines, data_lines = Compressor(identifier_counts(joined)).compress_text(joined)
+    col_counts = {p: c for p, c in identifier_counts(joined).items() if c > 1}
+    legend_lines, data_lines = Compressor(col_counts, vars).compress_text(joined)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
+
+
+def _build_unified_identifier_counts(
+    ordered_complete: list[str],
+    incomplete_keys: list[str],
+    records: list[dict],
+) -> dict[str, int]:
+    """Build a unified identifier_counts dict across all columns."""
+    counts: dict[str, int] = {}
+
+    for key in ordered_complete:
+        values = [_value_to_str(rec[key]) for rec in records]
+        if len(set(values)) == 1:
+            continue
+        pfx = find_common_prefix(values)
+        if pfx:
+            for v in values:
+                identifier_counts(v[len(pfx):], counts=counts)
+        else:
+            for v in values:
+                identifier_counts(v, counts=counts)
+
+    if incomplete_keys:
+        for rec in records:
+            pairs = [
+                f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
+                for k in incomplete_keys
+                if k in rec
+            ]
+            identifier_counts(",".join(pairs), counts=counts)
+
+    return counts
+
+
+def _build_vars(ident_counts: dict[str, int]) -> dict[str, int]:
+    """Build a pat→index mapping sorted by descending frequency (count > 1 only)."""
+    sorted_tokens = sorted(
+        (k for k, c in ident_counts.items() if c > 1),
+        key=lambda k: -ident_counts[k],
+    )
+    return {pat: idx for idx, pat in enumerate(sorted_tokens)}
 
 
 def compress_ndjson(records: list[dict]) -> str:
@@ -64,13 +115,17 @@ def compress_ndjson(records: list[dict]) -> str:
         return ""
 
     ordered_complete, incomplete_keys = classify_keys(records)
+    unified_counts = _build_unified_identifier_counts(ordered_complete, incomplete_keys, records)
+    vars = _build_vars(unified_counts)
+    for pat, idx in vars.items():
+        print(f"DEBUG var {idx}: {pat!r}", file=sys.stderr)
     body: list[str] = []
 
     for key in ordered_complete:
-        body.extend(compress_complete_column(key, records))
+        body.extend(compress_complete_column(key, records, vars))
 
     if incomplete_keys:
-        body.extend(compress_incomplete_columns(incomplete_keys, records))
+        body.extend(compress_incomplete_columns(incomplete_keys, records, vars))
 
     return "".join(line + '\n' for line in wrap_with("COLUMNS", body))
 

@@ -32,16 +32,16 @@ class TokenRegistry:
         Pass ``None`` (or omit) to skip that pass.
     """
 
-    def __init__(self, frequent_tokens: dict[str, int]) -> None:
+    def __init__(self, frequent_tokens: dict[str, int], vars: dict[str, int] | None = None) -> None:
         self.frequent_tokens = frequent_tokens
 
         # pat -> index dicts for each token kind.
-        self._vars: dict[str, int] = {}
+        self._vars: dict[str, int] = dict(vars) if vars is not None else {}
+        self._var_idx = len(self._vars)
         self._inlines: dict[str, int] = {}
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}
         # Sequential counters for internal token IDs (used during compression).
-        self._var_idx = 0
         self._inline_idx = 0
         self._meta_idx = 1
         self._macro_idx = 1
