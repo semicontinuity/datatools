@@ -1,9 +1,9 @@
 import json
 import re
+import sys
 from collections import defaultdict
 
 from datatools.jt.llmcodec.base62_utils import to_base62, base62_len
-from .string_utils import find_common_prefix
 
 # Token kind constants used in the token table.
 _KIND_VAR = "#"    # #tag#  — BPE / frequent-pattern token (normal text)
@@ -20,9 +20,7 @@ MACRO_OVERHEAD_CONST = 5
 
 # Pre-compile static regexes for one-off passes
 RE_TAGS = re.compile(r"(#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)")
-RE_COMP = re.compile(r"\[[A-Za-z0-9_-]+]")
-RE_KEYS = re.compile(r"\b[A-Za-z0-9_]+={1,2}")
-
+RE_IDENT = re.compile(r"[A-Za-z0-9_-]+")
 
 # Regex matching any token (used for rename substitution).
 _RE_ANY_TOKEN_RENAME = re.compile(
@@ -219,9 +217,20 @@ class Compressor:
             ((p, c) for p, c in counts.items() if c > 1),
             key=lambda x: -x[1],
         )
-        for pat, _ in sorted_pats:
+        for pat, count in sorted_pats:
+            token_len = base62_len(self._var_idx) + 2  # len of #XX#
+            # definition line: "token = pat\n"
+            definition_overhead = token_len + 3 + len(pat) + 1
+            savings = count * (len(pat) - token_len) - definition_overhead
+            if savings <= 0:
+                continue
             token = self._get_var_token()
-            text = text.replace(pat, token)
+
+            new_text = text.replace(pat, token)
+            if new_text != text:
+                print('Replaced', pat, token, file=sys.stderr)
+            text = new_text
+
             self._register(token, _KIND_VAR, pat)
         return text
 
@@ -657,8 +666,7 @@ class Compressor:
         if all(not line for line in lines):
             return [], lines
 
-        text = self._replace_frequent(text, RE_COMP)
-        text = self._replace_frequent(text, RE_KEYS)
+        text = self._replace_frequent(text, RE_IDENT)
 
         text = self._run_bpe_normal(text)
         text = self._run_bpe_meta(text)
