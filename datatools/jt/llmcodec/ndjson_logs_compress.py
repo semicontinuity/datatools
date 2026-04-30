@@ -6,7 +6,7 @@ to a sibling data.jsonl.compact file using ndjson_log_prepare + ndjson_log_compr
 import os
 import sys
 
-from datatools.jt.llmcodec.ndjson_log_compress import compress_ndjson
+from datatools.jt.llmcodec.ndjson_log_compress import _analyze_ndjson, compress_ndjson
 from datatools.jt.llmcodec.ndjson_log_prepare import parse_ndjson, prepare_ndjson
 
 
@@ -31,7 +31,7 @@ def compress_file(src: str) -> None:
         return
 
     prepared = prepare_ndjson(records)
-    compressed = compress_ndjson(prepared)
+    compressed = compress_ndjson(_analyze_ndjson(prepared))
 
     with open(dst, "w", encoding="utf-8") as fh:
         fh.write(compressed)

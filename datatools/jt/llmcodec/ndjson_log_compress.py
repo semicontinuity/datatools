@@ -130,12 +130,8 @@ def _analyze_ndjson(records: list[dict]) -> NDJson:
     )
 
 
-def compress_ndjson(records: list[dict]) -> str:
+def compress_ndjson(ndjson: NDJson) -> str:
     """Compress a list of NDJSON records into the column-based format."""
-    if not records:
-        return ""
-
-    ndjson = _analyze_ndjson(records)
     body: list[str] = []
 
     for key in ndjson.ordered_complete:
@@ -159,7 +155,7 @@ def main():
     if not records:
         sys.exit(0)
 
-    print(compress_ndjson(records))
+    print(compress_ndjson(_analyze_ndjson(records)))
 
 
 if __name__ == "__main__":
