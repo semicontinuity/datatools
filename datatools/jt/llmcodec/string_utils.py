@@ -1,8 +1,6 @@
 import re
-from collections import defaultdict
 
-
-RE_IDENT = re.compile(r"[A-Za-z0-9_-]+")
+RE_IDENT = re.compile(r"[A-Za-z0-9_.-]+")
 
 
 def common_prefix(strings: list[str]) -> str:
