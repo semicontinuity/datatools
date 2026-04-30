@@ -3,9 +3,16 @@
 import json
 import sys
 
-from .compressor import Compressor, _escape_prefix, _render_legend_block, _value_to_str, wrap_with
+from .compressor import Compressor, _render_legend_block, _value_to_str, wrap_with
 from .ndjson_utils import classify_keys
-from .string_utils import find_common_prefix
+from .string_utils import find_common_prefix, build_ident_counts
+
+
+def _escape_prefix(pfx: str) -> str:
+    """Escape prefix for use inside a single-quoted attribute.
+    Only ' needs escaping (as \\').
+    """
+    return pfx.replace("'", "\\'")
 
 
 def compress_complete_column(key: str, records: list[dict]) -> list[str]:
@@ -25,7 +32,7 @@ def compress_complete_column(key: str, records: list[dict]) -> list[str]:
         attrs = ""
         text = "\n".join(values)
 
-    legend_lines, data_lines = Compressor().compress_text(text)
+    legend_lines, data_lines = Compressor(build_ident_counts(text)).compress_text(text)
     return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
 
 
@@ -45,7 +52,8 @@ def compress_incomplete_columns(incomplete_keys: list[str], records: list[dict])
         ]
         inc_lines.append(",".join(pairs))
 
-    legend_lines, data_lines = Compressor().compress_text("\n".join(inc_lines))
+    joined = "\n".join(inc_lines)
+    legend_lines, data_lines = Compressor(build_ident_counts(joined)).compress_text(joined)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 

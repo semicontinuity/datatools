@@ -1,3 +1,10 @@
+import re
+from collections import defaultdict
+
+
+RE_IDENT = re.compile(r"[A-Za-z0-9_-]+")
+
+
 def common_prefix(strings: list[str]) -> str:
     """Return the longest common prefix of a list of strings."""
     if not strings:
@@ -25,3 +32,15 @@ def find_common_prefix(values: list[str]) -> str:
     if savings <= 0:
         return ""
     return pfx
+
+
+def build_ident_counts(text: str, pattern: re.Pattern = RE_IDENT) -> dict[str, int]:
+    """Count occurrences of each match of *pattern* in *text*.
+
+    Only entries with count > 1 are included (single occurrences cannot be
+    compressed).
+    """
+    counts: dict[str, int] = defaultdict(int)
+    for m in pattern.finditer(text):
+        counts[m.group()] += 1
+    return {p: c for p, c in counts.items() if c > 1}

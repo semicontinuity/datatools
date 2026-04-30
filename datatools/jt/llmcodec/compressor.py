@@ -1,6 +1,5 @@
 import json
 import re
-import sys
 from collections import defaultdict
 
 from datatools.jt.llmcodec.base62_utils import to_base62, base62_len
@@ -20,7 +19,6 @@ MACRO_OVERHEAD_CONST = 5
 
 # Pre-compile static regexes for one-off passes
 RE_TAGS = re.compile(r"(#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)")
-RE_IDENT = re.compile(r"[A-Za-z0-9_-]+")
 
 # Regex matching any token (used for rename substitution).
 _RE_ANY_TOKEN_RENAME = re.compile(
@@ -29,13 +27,6 @@ _RE_ANY_TOKEN_RENAME = re.compile(
     r"|![0-9a-zA-Z]+!"
     r"|&[0-9a-zA-Z]+"
 )
-
-
-def _escape_prefix(pfx: str) -> str:
-    """Escape prefix for use inside a single-quoted attribute.
-    Only ' needs escaping (as \\').
-    """
-    return pfx.replace("'", "\\'")
 
 
 def wrap_with(tag: str, body: list[str], attrs: str = "") -> list[str]:
@@ -175,9 +166,18 @@ class Compressor:
     Tokens are assigned sequential internal IDs during compression.  At
     serialisation time the IDs are remapped so that the most-frequently-used
     tokens receive the shortest names (lowest base-62 index).
+
+    Parameters
+    ----------
+    frequent_tokens:
+        Pre-computed frequency dictionary for identifier-like tokens (as
+        returned by :func:`build_ident_counts`).  When provided, the
+        compressor will substitute frequent identifiers before running BPE.
+        Pass ``None`` (or omit) to skip that pass.
     """
 
-    def __init__(self):
+    def __init__(self, frequent_tokens: dict[str, int]):
+        self._frequent_tokens = frequent_tokens
         # Sequential counters for internal token IDs (used during compression).
         self._var_idx = 0
         self._meta_idx = 1
@@ -209,15 +209,10 @@ class Compressor:
         """Record a token in the table."""
         self._token_table.append((token, kind, expansion))
 
-    def _replace_frequent(self, text: str, pattern: re.Pattern) -> str:
-        counts: dict[str, int] = defaultdict(int)
-        for m in pattern.finditer(text):
-            counts[m.group()] += 1
-        sorted_pats = sorted(
-            ((p, c) for p, c in counts.items() if c > 1),
-            key=lambda x: -x[1],
-        )
-        for pat, count in sorted_pats:
+    def _replace_frequent_tokens(self, text: str, token_counts: dict[str, int]) -> str:
+        """Replace frequent identifiers with tokens, skipping non-saving ones."""
+        sorted_token_counts = sorted(token_counts.items(), key=lambda x: -x[1])
+        for pat, count in sorted_token_counts:
             token_len = base62_len(self._var_idx) + 2  # len of #XX#
             # definition line: "token = pat\n"
             definition_overhead = token_len + 3 + len(pat) + 1
@@ -225,12 +220,7 @@ class Compressor:
             if savings <= 0:
                 continue
             token = self._get_var_token()
-
-            new_text = text.replace(pat, token)
-            if new_text != text:
-                print('Replaced', pat, token, file=sys.stderr)
-            text = new_text
-
+            text = text.replace(pat, token)
             self._register(token, _KIND_VAR, pat)
         return text
 
@@ -666,7 +656,7 @@ class Compressor:
         if all(not line for line in lines):
             return [], lines
 
-        text = self._replace_frequent(text, RE_IDENT)
+        text = self._replace_frequent_tokens(text, self._frequent_tokens)
 
         text = self._run_bpe_normal(text)
         text = self._run_bpe_meta(text)
