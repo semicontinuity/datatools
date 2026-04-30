@@ -91,8 +91,10 @@ class TokenRegistry:
 
     def replace_frequent_tokens(self, text: str) -> str:
         """Replace frequent identifiers with tokens, skipping non-saving ones."""
-        sorted_token_counts = sorted(self.frequent_tokens.items(), key=lambda x: -x[1])
-        for pat, count in sorted_token_counts:
+        for pat in self._vars:
+            if pat not in self.frequent_tokens:
+                continue
+            count = self.frequent_tokens[pat]
             token_len = self.var_tag_len()  # len of #XX#
             # definition line: "token = pat\n"
             definition_overhead = token_len + 3 + len(pat) + 1

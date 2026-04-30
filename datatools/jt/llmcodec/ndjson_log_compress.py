@@ -2,11 +2,21 @@
 
 import json
 import sys
+from dataclasses import dataclass
 
 from .compressor import Compressor, _render_legend_block, _value_to_str, wrap_with
 from .ndjson_log_prepare import parse_ndjson
 from .ndjson_utils import classify_keys
 from .string_utils import find_common_prefix, identifier_counts
+
+
+@dataclass
+class NDJson:
+    records: list[dict]
+    ordered_complete: list[str]
+    incomplete_keys: list[str]
+    unified_counts: dict[str, int]
+    vars: dict[str, int]
 
 
 def _escape_prefix(pfx: str) -> str:
@@ -18,11 +28,10 @@ def _escape_prefix(pfx: str) -> str:
 
 def compress_complete_column(
     key: str,
-    records: list[dict],
-    vars: dict[str, int],
+    ndjson: NDJson,
 ) -> list[str]:
     """Compress one complete column and return its output lines."""
-    values = [_value_to_str(rec[key]) for rec in records]
+    values = [_value_to_str(rec[key]) for rec in ndjson.records]
     n = len(values)
 
     # All values identical → encode as prefix + count, empty body.
@@ -38,14 +47,12 @@ def compress_complete_column(
         text = "\n".join(values)
 
     col_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, vars).compress_text(text)
+    legend_lines, data_lines = Compressor(col_counts, ndjson.vars).compress_text(text)
     return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
 
 
 def compress_incomplete_columns(
-    incomplete_keys: list[str],
-    records: list[dict],
-    vars: dict[str, int],
+    ndjson: NDJson,
 ) -> list[str]:
     """Compress all incomplete columns together and return their output lines.
 
@@ -54,17 +61,17 @@ def compress_incomplete_columns(
     decompressor can reconstruct which values belong to which record.
     """
     inc_lines: list[str] = []
-    for rec in records:
+    for rec in ndjson.records:
         pairs = [
             f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
-            for k in incomplete_keys
+            for k in ndjson.incomplete_keys
             if k in rec
         ]
         inc_lines.append(",".join(pairs))
 
     joined = "\n".join(inc_lines)
     col_counts = {p: c for p, c in identifier_counts(joined).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, vars).compress_text(joined)
+    legend_lines, data_lines = Compressor(col_counts, ndjson.vars).compress_text(joined)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 
@@ -109,23 +116,33 @@ def _build_vars(ident_counts: dict[str, int]) -> dict[str, int]:
     return {pat: idx for idx, pat in enumerate(sorted_tokens)}
 
 
+def _analyze_ndjson(records: list[dict]) -> NDJson:
+    """Build the NDJson for a list of records."""
+    ordered_complete, incomplete_keys = classify_keys(records)
+    unified_counts = _build_unified_identifier_counts(ordered_complete, incomplete_keys, records)
+    vars = _build_vars(unified_counts)
+    return NDJson(
+        records=records,
+        ordered_complete=ordered_complete,
+        incomplete_keys=incomplete_keys,
+        unified_counts=unified_counts,
+        vars=vars,
+    )
+
+
 def compress_ndjson(records: list[dict]) -> str:
     """Compress a list of NDJSON records into the column-based format."""
     if not records:
         return ""
 
-    ordered_complete, incomplete_keys = classify_keys(records)
-    unified_counts = _build_unified_identifier_counts(ordered_complete, incomplete_keys, records)
-    vars = _build_vars(unified_counts)
-    for pat, count in sorted(unified_counts.items(), key=lambda x: -x[1]):
-        print(f"DEBUG {count}: {pat!r}", file=sys.stderr)
+    ndjson = _analyze_ndjson(records)
     body: list[str] = []
 
-    for key in ordered_complete:
-        body.extend(compress_complete_column(key, records, vars))
+    for key in ndjson.ordered_complete:
+        body.extend(compress_complete_column(key, ndjson))
 
-    if incomplete_keys:
-        body.extend(compress_incomplete_columns(incomplete_keys, records, vars))
+    if ndjson.incomplete_keys:
+        body.extend(compress_incomplete_columns(ndjson))
 
     return "".join(line + '\n' for line in wrap_with("COLUMNS", body))
 
