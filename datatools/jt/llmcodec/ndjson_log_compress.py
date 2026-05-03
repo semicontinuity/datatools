@@ -3,6 +3,7 @@
 import json
 import sys
 
+from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
 from datatools.jt.llmcodec.ndjson import NDJson, make_ndjson
 from datatools.jt.llmcodec.token_registry import TokenRegistry
 from .compressor import Compressor, _render_legend_block, section
@@ -78,17 +79,15 @@ def extract_incomplete_columns_text(ndjson):
     return "\n".join(incomplete_columns_lines)
 
 
-def compress_ndjson(ndjson: NDJson) -> str:
+def compress_ndjson(ndjson: NDJson, global_registry: "GlobalTokenRegistry") -> str:
     """Compress a list of NDJSON records into the column-based format.
 
-    A single shared ident dict is used across all columns so that #N# always
-    refers to the same string regardless of which column it appears in.
-    Per-column inline/meta/macro tokens are independent (each column has its
-    own legend section).
+    ``global_registry.ident_index`` (built by :meth:`GlobalTokenRegistry.init`)
+    is used as the shared ident dict so that ``#N#`` tokens are consistent
+    across all columns and files.  Per-column inline/meta/macro tokens are
+    independent (each column has its own legend section).
     """
-    # Shared ident dict: mutated in-place as columns are compressed so every
-    # column sees the same pat→index assignments.
-    shared_idents: dict[str, int] = dict(ndjson.ident_counts)
+    shared_idents: dict[str, int] = global_registry.ident_index
 
     body: list[str] = []
     for key in ndjson.complete_column_keys:
@@ -112,7 +111,10 @@ def main():
     if not records:
         sys.exit(0)
 
-    print(compress_ndjson(make_ndjson(records)))
+    global_registry = GlobalTokenRegistry()
+    ndjson = make_ndjson(records, global_registry)
+    global_registry.init()
+    print(compress_ndjson(ndjson, global_registry))
 
 
 if __name__ == "__main__":

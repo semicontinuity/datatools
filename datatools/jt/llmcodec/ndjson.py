@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 
+from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
 from datatools.jt.llmcodec.ndjson_utils import classify_keys
 from datatools.jt.llmcodec.string_utils import value_to_str, find_common_prefix, identifier_counts
 
@@ -13,20 +14,26 @@ class NDJson:
     ident_counts: dict[str, int]
 
 
-def make_ndjson(records: list[dict]) -> NDJson:
-    """Build the NDJson for a list of records."""
+def make_ndjson(records: list[dict], global_registry: GlobalTokenRegistry) -> NDJson:
+    """Build the NDJson for a list of records.
+
+    Identifier occurrences are counted directly into
+    ``global_registry.ident_counts`` so that frequencies accumulate across
+    multiple calls.  The resulting NDJson receives a :func:`_select_frequent`
+    view of the global table at the time of this call.
+    """
     complete_column_keys, incomplete_column_keys = classify_keys(records)
+    _build_ident_counts(
+        complete_column_keys,
+        incomplete_column_keys,
+        records,
+        counts=global_registry.ident_counts,
+    )
     return NDJson(
         records=records,
         complete_column_keys=complete_column_keys,
         incomplete_column_keys=incomplete_column_keys,
-        ident_counts=_select_frequent(
-            _build_ident_counts(
-                complete_column_keys,
-                incomplete_column_keys,
-                records
-            )
-        ),
+        ident_counts=_select_frequent(global_registry.ident_counts),
     )
 
 
@@ -43,10 +50,9 @@ def _build_ident_counts(
     complete_column_keys: list[str],
     incomplete_column_keys: list[str],
     records: list[dict],
-) -> dict[str, int]:
-    """Build a identifier counts dict across all columns."""
-    counts: dict[str, int] = {}
-
+    counts: dict[str, int],
+) -> None:
+    """Accumulate identifier counts across all columns into *counts*."""
     for key in complete_column_keys:
         values = [value_to_str(rec[key]) for rec in records]
         if len(set(values)) == 1:
@@ -67,5 +73,3 @@ def _build_ident_counts(
                 if k in rec
             ]
             identifier_counts(",".join(pairs), counts=counts)
-
-    return counts
