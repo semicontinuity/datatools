@@ -16,34 +16,12 @@ MACRO_OVERHEAD_CONST = 5
 RE_TAGS = re.compile(r"(~[0-9a-zA-Z]+~|#[0-9a-zA-Z]+#|![0-9a-zA-Z]+!)")
 
 
-def section(tag: str, body: list[str], attrs: str = "") -> list[str]:
-    """Wrap body lines with <tag attrs>...</tag>."""
-    open_tag = f"<{tag}{' ' + attrs if attrs else ''}>"
-    return [open_tag, *body, f"</{tag}>"]
-
-
-def _render_legend_block(legend_lines: list[str]) -> list[str]:
-    """Wrap legend lines in <LEGEND>...</LEGEND> if non-empty."""
-    if not legend_lines:
-        return []
-    return section("LEGEND", legend_lines)
-
-
 def calc_savings(count: int, length: int) -> int:
     return (count - 1) * length - MACRO_OVERHEAD_MULT * count - MACRO_OVERHEAD_CONST
 
 
 class Compressor:
-    """Compress a block of text using BPE + macro templating.
-
-    Parameters
-    ----------
-    frequent_tokens:
-        Pre-computed frequency dictionary for identifier-like tokens (as
-        returned by :func:`build_ident_counts`).  When provided, the
-        compressor will substitute frequent identifiers before running BPE.
-        Pass ``None`` (or omit) to skip that pass.
-    """
+    """Compress a block of text using BPE + macro templating."""
 
     _registry: TokenRegistry
 

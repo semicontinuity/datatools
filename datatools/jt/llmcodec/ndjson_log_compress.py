@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 
-import json
 import sys
 
 from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
 from datatools.jt.llmcodec.ndjson import NDJson, analyze_ndjson
 from datatools.jt.llmcodec.token_registry import TokenRegistry
-from .compressor import Compressor, _render_legend_block, section
+from .compressor import Compressor
 from .ndjson_log_prepare import parse_ndjson
-from .string_utils import find_common_prefix, value_to_str
 
 
-def _escape_prefix(pfx: str) -> str:
-    """Escape prefix for use inside a single-quoted attribute.
-    Only ' needs escaping (as \\').
-    """
-    return pfx.replace("'", "\\'")
+def _section(tag: str, body: list[str], attrs: str = "") -> list[str]:
+    """Wrap body lines with <tag attrs>...</tag>."""
+    open_tag = f"<{tag}{' ' + attrs if attrs else ''}>"
+    return [open_tag, *body, f"</{tag}>"]
+
+
+def _render_legend_block(legend_lines: list[str]) -> list[str]:
+    """Wrap legend lines in <LEGEND>...</LEGEND> if non-empty."""
+    if not legend_lines:
+        return []
+    return _section("LEGEND", legend_lines)
 
 
 def compress_complete_column(
@@ -24,30 +28,14 @@ def compress_complete_column(
     global_registry: "GlobalTokenRegistry"
 ) -> list[str]:
     """Compress one complete column and return its output lines."""
-    attrs, text = extract_column_text(key, ndjson)
+    attrs, text = ndjson.extract_column_text(key)
     if text is None:
-        return section(tag=key, body=[], attrs=attrs)
+        return _section(tag=key, body=[], attrs=attrs)
 
     registry = TokenRegistry(global_registry)
     registry.populate_frequent_idents_from_text(text)
     legend_lines, data_lines = Compressor(registry).compress_text(text)
-    return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
-
-
-def extract_column_text(key, ndjson: NDJson):
-    values = [value_to_str(rec[key]) for rec in ndjson.records]
-    n = len(values)
-    # All values identical → encode as prefix + count, empty body.
-    if len(set(values)) == 1:
-        return f"prefix='{_escape_prefix(values[0])}' n='{n}'", None
-    pfx = find_common_prefix(values)
-    if pfx:
-        attrs = f"prefix='{_escape_prefix(pfx)}'"
-        text = "\n".join(v[len(pfx):] for v in values)
-    else:
-        attrs = ""
-        text = "\n".join(values)
-    return attrs, text
+    return _section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
 
 
 def compress_incomplete_columns(
@@ -60,23 +48,11 @@ def compress_incomplete_columns(
     the incomplete keys).  This preserves positional alignment so the
     decompressor can reconstruct which values belong to which record.
     """
-    incomplete_columns_text = extract_incomplete_columns_text(ndjson)
+    incomplete_columns_text = ndjson.extract_incomplete_columns_text()
     registry = TokenRegistry(global_registry)
     registry.populate_frequent_idents_from_text(incomplete_columns_text)
     legend_lines, data_lines = Compressor(registry).compress_text(incomplete_columns_text)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
-
-
-def extract_incomplete_columns_text(ndjson):
-    incomplete_columns_lines: list[str] = []
-    for rec in ndjson.records:
-        pairs = [
-            f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
-            for k in ndjson.incomplete_column_keys
-            if k in rec
-        ]
-        incomplete_columns_lines.append(",".join(pairs))
-    return "\n".join(incomplete_columns_lines)
 
 
 def compress_ndjson(ndjson: NDJson, global_registry: "GlobalTokenRegistry") -> str:
@@ -96,7 +72,7 @@ def compress_ndjson(ndjson: NDJson, global_registry: "GlobalTokenRegistry") -> s
     if ndjson.incomplete_column_keys:
         body.extend(compress_incomplete_columns(ndjson, global_registry))
 
-    return "".join(line + '\n' for line in section("COLUMNS", body))
+    return "".join(line + '\n' for line in _section("COLUMNS", body))
 
 
 def main():
