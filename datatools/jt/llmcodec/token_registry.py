@@ -18,7 +18,7 @@ def _macro_substitution(idx: int) -> str:
 
 
 class TokenRegistry:
-    """Holds token tables for identss, meta, and macro tokens.
+    """Holds token tables for idents, meta, and macro tokens.
 
     Manages pat→index mappings and the legend
     (list of ``(substitution_str, expansion_str)`` pairs in creation order).
@@ -26,18 +26,17 @@ class TokenRegistry:
     Parameters
     ----------
     frequent_tokens:
-        Pre-computed frequency dictionary for identifier-like tokens (as
-        returned by :func:`build_ident_counts`).  When provided, the
-        compressor will substitute frequent identifiers before running BPE.
-        Pass ``None`` (or omit) to skip that pass.
+        ident -> count
+    idents_dict:
+        ident -> index (inverted array)
     """
 
-    def __init__(self, frequent_tokens: dict[str, int], idents: dict[str, int] | None = None) -> None:
+    def __init__(self, frequent_tokens: dict[str, int], idents_dict: dict[str, int]) -> None:
         self.frequent_tokens = frequent_tokens
 
         # pat -> index dicts for each token kind.
-        self.idents: dict[str, int] = dict(idents) if idents is not None else {}
-        self._ident_idx = len(self.idents)
+        self.idents_dict: dict[str, int] = dict(idents_dict) if idents_dict is not None else {}
+        self._ident_idx = len(self.idents_dict)
         self._inlines: dict[str, int] = {}
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}
@@ -50,10 +49,10 @@ class TokenRegistry:
 
     def get_ident_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a frequent-identifier pattern."""
-        if pat not in self.idents:
-            self.idents[pat] = self._ident_idx
+        if pat not in self.idents_dict:
+            self.idents_dict[pat] = self._ident_idx
             self._ident_idx += 1
-        return _ident_substitution(self.idents[pat])
+        return _ident_substitution(self.idents_dict[pat])
 
     def get_inline_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for an in-line BPE pattern."""
@@ -91,7 +90,7 @@ class TokenRegistry:
 
     def replace_frequent_tokens(self, text: str) -> str:
         """Replace frequent identifiers with tokens, skipping non-saving ones."""
-        for pat in self.idents:
+        for pat in self.idents_dict:
             if pat not in self.frequent_tokens:
                 continue
             count = self.frequent_tokens[pat]

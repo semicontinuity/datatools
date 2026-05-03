@@ -26,8 +26,8 @@ def compress_complete_column(
     if text is None:
         return section(tag=key, body=[], attrs=attrs)
 
-    ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(text)
+    frequent_ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
+    legend_lines, data_lines = Compressor(TokenRegistry(frequent_ident_counts, ndjson.ident_counts)).compress_text(text)
     return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
 
 
@@ -57,8 +57,8 @@ def compress_incomplete_columns(
     decompressor can reconstruct which values belong to which record.
     """
     incomplete_columns_text = extract_incomplete_columns_text(ndjson)
-    ident_counts = {p: c for p, c in identifier_counts(incomplete_columns_text).items() if c > 1}
-    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(incomplete_columns_text)
+    frequent_ident_counts = {p: c for p, c in identifier_counts(incomplete_columns_text).items() if c > 1}
+    legend_lines, data_lines = Compressor(TokenRegistry(frequent_ident_counts, ndjson.ident_counts)).compress_text(incomplete_columns_text)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 
