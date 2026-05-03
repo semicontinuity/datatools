@@ -37,7 +37,7 @@ def compress_complete_column(
         text = "\n".join(values)
 
     col_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, ndjson.idents).compress_text(text)
+    legend_lines, data_lines = Compressor(col_counts, ndjson.ident_counts).compress_text(text)
     return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
 
 
@@ -54,14 +54,14 @@ def compress_incomplete_columns(
     for rec in ndjson.records:
         pairs = [
             f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
-            for k in ndjson.incomplete_keys
+            for k in ndjson.incomplete_column_keys
             if k in rec
         ]
         inc_lines.append(",".join(pairs))
 
     joined = "\n".join(inc_lines)
     col_counts = {p: c for p, c in identifier_counts(joined).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, ndjson.idents).compress_text(joined)
+    legend_lines, data_lines = Compressor(col_counts, ndjson.ident_counts).compress_text(joined)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 
@@ -69,10 +69,10 @@ def compress_ndjson(ndjson: NDJson) -> str:
     """Compress a list of NDJSON records into the column-based format."""
     body: list[str] = []
 
-    for key in ndjson.ordered_complete:
+    for key in ndjson.complete_column_keys:
         body.extend(compress_complete_column(key, ndjson))
 
-    if ndjson.incomplete_keys:
+    if ndjson.incomplete_column_keys:
         body.extend(compress_incomplete_columns(ndjson))
 
     return "".join(line + '\n' for line in wrap_with("COLUMNS", body))

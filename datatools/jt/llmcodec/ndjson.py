@@ -8,27 +8,29 @@ from datatools.jt.llmcodec.string_utils import value_to_str, find_common_prefix,
 @dataclass
 class NDJson:
     records: list[dict]
-    ordered_complete: list[str]
-    incomplete_keys: list[str]
-    unified_counts: dict[str, int]
-    idents: dict[str, int]
+    complete_column_keys: list[str]
+    incomplete_column_keys: list[str]
+    ident_counts: dict[str, int]
 
 
 def make_ndjson(records: list[dict]) -> NDJson:
     """Build the NDJson for a list of records."""
-    ordered_complete, incomplete_keys = classify_keys(records)
-    unified_counts = _build_unified_identifier_counts(ordered_complete, incomplete_keys, records)
-    idents = _build_idents(unified_counts)
+    complete_column_keys, incomplete_column_keys = classify_keys(records)
     return NDJson(
         records=records,
-        ordered_complete=ordered_complete,
-        incomplete_keys=incomplete_keys,
-        unified_counts=unified_counts,
-        idents=idents,
+        complete_column_keys=complete_column_keys,
+        incomplete_column_keys=incomplete_column_keys,
+        ident_counts=_build_ident_counts(
+            _build_unified_identifier_counts(
+                complete_column_keys,
+                incomplete_column_keys,
+                records
+            )
+        ),
     )
 
 
-def _build_idents(ident_counts: dict[str, int]) -> dict[str, int]:
+def _build_ident_counts(ident_counts: dict[str, int]) -> dict[str, int]:
     """Build a pat→index mapping sorted by descending frequency (count > 1 only)."""
     sorted_tokens = sorted(
         (k for k, c in ident_counts.items() if c > 1),
