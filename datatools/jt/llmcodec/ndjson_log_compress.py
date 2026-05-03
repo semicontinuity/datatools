@@ -4,6 +4,7 @@ import json
 import sys
 
 from datatools.jt.llmcodec.ndjson import NDJson, make_ndjson
+from datatools.jt.llmcodec.token_registry import TokenRegistry
 from .compressor import Compressor, _render_legend_block, wrap_with
 from .ndjson_log_prepare import parse_ndjson
 from .string_utils import find_common_prefix, identifier_counts, value_to_str
@@ -36,8 +37,8 @@ def compress_complete_column(
         attrs = ""
         text = "\n".join(values)
 
-    col_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, ndjson.ident_counts).compress_text(text)
+    ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
+    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(text)
     return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
 
 
@@ -60,8 +61,8 @@ def compress_incomplete_columns(
         inc_lines.append(",".join(pairs))
 
     joined = "\n".join(inc_lines)
-    col_counts = {p: c for p, c in identifier_counts(joined).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, ndjson.ident_counts).compress_text(joined)
+    ident_counts = {p: c for p, c in identifier_counts(joined).items() if c > 1}
+    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(joined)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 

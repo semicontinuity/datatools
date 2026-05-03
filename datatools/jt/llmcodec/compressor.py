@@ -139,8 +139,10 @@ class Compressor:
         Pass ``None`` (or omit) to skip that pass.
     """
 
-    def __init__(self, frequent_tokens: dict[str, int], idents: dict[str, int] | None = None):
-        self._registry = TokenRegistry(frequent_tokens, idents)
+    _registry: TokenRegistry
+
+    def __init__(self, registry: TokenRegistry):
+        self._registry = registry
 
     @staticmethod
     def _bpe_tokenize_parts(
