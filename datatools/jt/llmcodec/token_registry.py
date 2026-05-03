@@ -39,13 +39,13 @@ class TokenRegistry:
         # Legend: list of (substitution_str, expansion_str) in creation order.
         self.legend: list[tuple[str, str]] = []
 
-    def get_ident_substitution(self, pat: str) -> str:
-        """Return (allocating if needed) the substitution token for a frequent-identifier pattern."""
+    def get_ident_substitution(self, pat: str) -> str | None:
+        """Return (if present in index) the substitution token for a frequent-identifier pattern."""
         idents_dict = self.global_registry.ident_index
-        if pat not in idents_dict:
-            idents_dict[pat] = len(idents_dict)
-        idx = idents_dict[pat]
-        return f"#{to_base62(idx)}#"
+        idx = idents_dict.get(pat)
+        if idx is not None:
+            return f"#{to_base62(idx)}#"
+        return None
 
     def get_inline_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for an in-line BPE pattern."""
@@ -86,10 +86,12 @@ class TokenRegistry:
 
     def replace_frequent_idents(self, text: str) -> str:
         """Replace frequent identifiers with their substitution tokens."""
-        for pat in self.frequent_idents:
-            substitution = self.get_ident_substitution(pat)
-            text = text.replace(pat, substitution)
-            self.add_legend(substitution, pat)
+        for ident in self.frequent_idents:
+            substitution = self.get_ident_substitution(ident)
+            if substitution is None:
+                continue
+            text = text.replace(ident, substitution)
+            self.add_legend(substitution, ident)
         return text
 
     def add_legend(self, substitution: str, expansion: str) -> None:
