@@ -3,10 +3,6 @@ from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
 from datatools.jt.llmcodec.string_utils import identifier_counts
 
 
-def _macro_substitution(idx: int) -> str:
-    return f"&{to_base62(idx)}"
-
-
 class TokenRegistry:
     """Holds token tables for idents, meta, and macro tokens.
 
@@ -15,11 +11,10 @@ class TokenRegistry:
 
     Parameters
     ----------
-    frequent_tokens:
-        ident -> count
     global_registry:
         contains:
             ident -> index (inverted array)
+            shared inline/meta/macro token tables
     """
     frequent_idents: dict[str, int]
 
@@ -28,42 +23,27 @@ class TokenRegistry:
         global_registry: "GlobalTokenRegistry",
     ) -> None:
         self.global_registry = global_registry
-
-        self._inlines: dict[str, int] = {}
-        self._metas: dict[str, int] = {}
-        self._macros: dict[str, int] = {}
-        # Sequential counters for internal token IDs (used during compression).
         # Legend: list of (substitution_str, expansion_str) in creation order.
         self.legend: list[tuple[str, str]] = []
 
     def get_ident_substitution(self, pat: str) -> str | None:
         """Return (if present in index) the substitution token for a frequent-identifier pattern."""
-        idents_dict = self.global_registry.ident_index
-        idx = idents_dict.get(pat)
+        idx = self.global_registry.ident_index.get(pat)
         if idx is not None:
             return f"#{to_base62(idx)}#"
         return None
 
     def get_inline_substitution(self, pat: str) -> str:
-        """Return (allocating if needed) the substitution token for an in-line BPE pattern."""
-        if pat not in self._inlines:
-            self._inlines[pat] = len(self._inlines)
-        idx = self._inlines[pat]
-        return f"~{to_base62(idx)}~"
+        """Delegate to global_registry."""
+        return self.global_registry.get_inline_substitution(pat)
 
     def get_meta_substitution(self, pat: str) -> str:
-        """Return (allocating if needed) the substitution token for a meta pattern."""
-        if pat not in self._metas:
-            self._metas[pat] = len(self._metas)
-        idx = self._metas[pat]
-        return f"!{to_base62(idx)}!"
+        """Delegate to global_registry."""
+        return self.global_registry.get_meta_substitution(pat)
 
     def get_macro_substitution(self, pat: str) -> str:
-        """Return (allocating if needed) the substitution token for a macro pattern."""
-        if pat not in self._macros:
-            self._macros[pat] = len(self._macros)
-        idx = self._macros[pat]
-        return f"&{to_base62(idx)}"
+        """Delegate to global_registry."""
+        return self.global_registry.get_macro_substitution(pat)
 
     def populate_frequent_idents_from_text(self, text: str) -> None:
         """Compute frequent_tokens from *text*, keeping only tokens with positive savings, sorted by ident index."""
@@ -96,7 +76,7 @@ class TokenRegistry:
         return base62_len(len(self.global_registry.ident_index)) + 2  # #XX#
 
     def inline_tag_len(self) -> int:
-        return base62_len(len(self._inlines)) + 2  # ~XX~
+        return self.global_registry.inline_tag_len()
 
     def meta_tag_len(self) -> int:
-        return base62_len(len(self._metas)) + 2
+        return self.global_registry.meta_tag_len()

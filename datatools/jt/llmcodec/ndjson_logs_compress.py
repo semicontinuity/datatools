@@ -7,7 +7,7 @@ import os
 import sys
 
 from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
-from datatools.jt.llmcodec.ndjson import NDJson, make_ndjson
+from datatools.jt.llmcodec.ndjson import NDJson, analyze_ndjson
 from datatools.jt.llmcodec.ndjson_log_compress import compress_ndjson
 from datatools.jt.llmcodec.ndjson_log_prepare import parse_ndjson, prepare_ndjson
 
@@ -31,7 +31,7 @@ def _load_ndjson(src: str, global_registry: GlobalTokenRegistry) -> NDJson | Non
     if not prepared:
         return None
 
-    return make_ndjson(prepared, global_registry)
+    return analyze_ndjson(prepared, global_registry)
 
 
 def main() -> None:

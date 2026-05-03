@@ -11,10 +11,9 @@ class NDJson:
     records: list[dict]
     complete_column_keys: list[str]
     incomplete_column_keys: list[str]
-    ident_counts: dict[str, int]
 
 
-def make_ndjson(records: list[dict], global_registry: GlobalTokenRegistry) -> NDJson:
+def analyze_ndjson(records: list[dict], global_registry: GlobalTokenRegistry) -> NDJson:
     """Build the NDJson for a list of records.
 
     Identifier occurrences are counted directly into
@@ -33,17 +32,7 @@ def make_ndjson(records: list[dict], global_registry: GlobalTokenRegistry) -> ND
         records=records,
         complete_column_keys=complete_column_keys,
         incomplete_column_keys=incomplete_column_keys,
-        ident_counts=_select_frequent(global_registry.ident_counts),
     )
-
-
-def _select_frequent(ident_counts: dict[str, int]) -> dict[str, int]:
-    """Build a pat→index mapping sorted by descending frequency (count > 1 only)."""
-    sorted_tokens = sorted(
-        (k for k, c in ident_counts.items() if c > 1),
-        key=lambda k: -ident_counts[k],
-    )
-    return {pat: idx for idx, pat in enumerate(sorted_tokens)}
 
 
 def _build_ident_counts(

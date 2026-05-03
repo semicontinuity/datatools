@@ -4,7 +4,7 @@ import json
 import sys
 
 from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
-from datatools.jt.llmcodec.ndjson import NDJson, make_ndjson
+from datatools.jt.llmcodec.ndjson import NDJson, analyze_ndjson
 from datatools.jt.llmcodec.token_registry import TokenRegistry
 from .compressor import Compressor, _render_legend_block, section
 from .ndjson_log_prepare import parse_ndjson
@@ -34,7 +34,7 @@ def compress_complete_column(
     return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
 
 
-def extract_column_text(key, ndjson):
+def extract_column_text(key, ndjson: NDJson):
     values = [value_to_str(rec[key]) for rec in ndjson.records]
     n = len(values)
     # All values identical → encode as prefix + count, empty body.
@@ -112,7 +112,7 @@ def main():
         sys.exit(0)
 
     global_registry = GlobalTokenRegistry()
-    ndjson = make_ndjson(records, global_registry)
+    ndjson = analyze_ndjson(records, global_registry)
     global_registry.init()
     print(compress_ndjson(ndjson, global_registry))
 
