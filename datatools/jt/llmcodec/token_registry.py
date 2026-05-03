@@ -3,18 +3,6 @@ from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
 from datatools.jt.llmcodec.string_utils import identifier_counts
 
 
-def _ident_substitution(idx: int) -> str:
-    return f"#{to_base62(idx)}#"
-
-
-def _inline_substitution(idx: int) -> str:
-    return f"~{to_base62(idx)}~"
-
-
-def _meta_substitution(idx: int) -> str:
-    return f"!{to_base62(idx)}!"
-
-
 def _macro_substitution(idx: int) -> str:
     return f"&{to_base62(idx)}"
 
@@ -33,19 +21,14 @@ class TokenRegistry:
         contains:
             ident -> index (inverted array)
     """
+    frequent_idents: dict[str, int]
 
     def __init__(
         self,
         global_registry: "GlobalTokenRegistry",
-        frequent_tokens: dict[str, int] | None = None,
     ) -> None:
-        self.frequent_tokens = frequent_tokens or {}
+        self.global_registry = global_registry
 
-        # pat -> index dicts for each token kind.
-        # When shared_idents=True the dict is used by reference so that ident
-        # assignments made in one TokenRegistry are visible in all others that
-        # share the same dict object.
-        self.idents_dict: dict[str, int] = global_registry.ident_index
         self._inlines: dict[str, int] = {}
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}
@@ -58,33 +41,38 @@ class TokenRegistry:
 
     def get_ident_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a frequent-identifier pattern."""
-        if pat not in self.idents_dict:
-            self.idents_dict[pat] = len(self.idents_dict)
-        return _ident_substitution(self.idents_dict[pat])
+        idents_dict = self.global_registry.ident_index
+        if pat not in idents_dict:
+            idents_dict[pat] = len(idents_dict)
+        idx = idents_dict[pat]
+        return f"#{to_base62(idx)}#"
 
     def get_inline_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for an in-line BPE pattern."""
         if pat not in self._inlines:
             self._inlines[pat] = self._inline_idx
             self._inline_idx += 1
-        return _inline_substitution(self._inlines[pat])
+        idx = self._inlines[pat]
+        return f"~{to_base62(idx)}~"
 
     def get_meta_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a meta pattern."""
         if pat not in self._metas:
             self._metas[pat] = self._meta_idx
             self._meta_idx += 1
-        return _meta_substitution(self._metas[pat])
+        idx = self._metas[pat]
+        return f"!{to_base62(idx)}!"
 
     def get_macro_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a macro pattern."""
         if pat not in self._macros:
             self._macros[pat] = self._macro_idx
             self._macro_idx += 1
-        return _macro_substitution(self._macros[pat])
+        idx = self._macros[pat]
+        return f"&{to_base62(idx)}"
 
-    def populate_idents_from_text(self, text: str) -> None:
-        """Compute frequent_tokens from *text*, keeping only tokens with positive savings."""
+    def populate_frequent_idents_from_text(self, text: str) -> None:
+        """Compute frequent_tokens from *text*, keeping only tokens with positive savings, sorted by ident index."""
         token_len = self.ident_tag_len()
         result = {}
         for p, c in identifier_counts(text).items():
@@ -93,25 +81,26 @@ class TokenRegistry:
             definition_overhead = token_len + 3 + len(p) + 1
             if c * (len(p) - token_len) - definition_overhead > 0:
                 result[p] = c
-        self.frequent_tokens = result
 
-    def record(self, substitution: str, expansion: str) -> None:
+        self.frequent_idents = {p: c for p, c in sorted(result.items(), key=lambda kv: self.global_registry.ident_index[kv[0]])}
+
+    def replace_frequent_idents(self, text: str) -> str:
+        """Replace frequent identifiers with their substitution tokens."""
+        for pat in self.frequent_idents:
+            substitution = self.get_ident_substitution(pat)
+            text = text.replace(pat, substitution)
+            self.add_legend(substitution, pat)
+        return text
+
+    def add_legend(self, substitution: str, expansion: str) -> None:
         """Record a token in the legend."""
         self.legend.append((substitution, expansion))
 
     def ident_tag_len(self) -> int:
-        return base62_len(len(self.idents_dict)) + 2  # #XX#
+        return base62_len(len(self.global_registry.ident_index)) + 2  # #XX#
 
     def inline_tag_len(self) -> int:
         return base62_len(self._inline_idx) + 2  # ~XX~
 
     def meta_tag_len(self) -> int:
         return base62_len(self._meta_idx) + 2
-
-    def replace_frequent_tokens(self, text: str) -> str:
-        """Replace frequent identifiers with their substitution tokens."""
-        for pat in sorted(self.frequent_tokens, key=lambda p: self.idents_dict[p]):
-            substitution = self.get_ident_substitution(pat)
-            text = text.replace(pat, substitution)
-            self.record(substitution, pat)
-        return text

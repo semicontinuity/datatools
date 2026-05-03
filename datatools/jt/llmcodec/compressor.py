@@ -287,7 +287,7 @@ class Compressor:
 
             self._bpe_apply_merge(parts, best_slice, new_id)
 
-            self._registry.record(token, display)
+            self._registry.add_legend(token, display)
 
         result_parts = []
         for i, part in enumerate(parts):
@@ -343,7 +343,7 @@ class Compressor:
             valid = [(i, ident) for i, ident in matches if not templated[i]]
             if len(valid) > 1:
                 macro_tag = self._registry.get_macro_substitution(template)
-                self._registry.record(macro_tag, template)
+                self._registry.add_legend(macro_tag, template)
                 for i, ident in valid:
                     lines[i] = f"{macro_tag}:{ident}"
                     templated[i] = True
@@ -421,7 +421,7 @@ class Compressor:
             count = len(compiled.findall(text))
             if calc_savings(count, len(template)) > 0 or count >= MACRO_MIN_COUNT:
                 macro_tag = self._registry.get_macro_substitution(template)
-                self._registry.record(macro_tag, template)
+                self._registry.add_legend(macro_tag, template)
                 text = compiled.sub(f"{macro_tag}:" + r"\1\2\1", text)
 
         return text
@@ -496,7 +496,7 @@ class Compressor:
         if all(not line for line in lines):
             return [], lines
 
-        text = self._registry.replace_frequent_tokens(text)
+        text = self._registry.replace_frequent_idents(text)
 
         text = self._run_bpe_normal(text)
         text = self._run_bpe_meta(text)

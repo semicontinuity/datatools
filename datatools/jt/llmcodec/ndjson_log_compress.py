@@ -29,7 +29,7 @@ def compress_complete_column(
         return section(tag=key, body=[], attrs=attrs)
 
     registry = TokenRegistry(global_registry)
-    registry.populate_idents_from_text(text)
+    registry.populate_frequent_idents_from_text(text)
     legend_lines, data_lines = Compressor(registry).compress_text(text)
     return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
 
@@ -62,7 +62,7 @@ def compress_incomplete_columns(
     """
     incomplete_columns_text = extract_incomplete_columns_text(ndjson)
     registry = TokenRegistry(global_registry)
-    registry.populate_idents_from_text(incomplete_columns_text)
+    registry.populate_frequent_idents_from_text(incomplete_columns_text)
     legend_lines, data_lines = Compressor(registry).compress_text(incomplete_columns_text)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
