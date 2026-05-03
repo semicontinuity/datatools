@@ -29,13 +29,6 @@ def _render_legend_block(legend_lines: list[str]) -> list[str]:
     return wrap_with("LEGEND", legend_lines)
 
 
-def _value_to_str(v) -> str:
-    """Convert a JSON value to a string for compression."""
-    if isinstance(v, str):
-        return v
-    return json.dumps(v, ensure_ascii=False)
-
-
 def calc_savings(count: int, length: int) -> int:
     return (count - 1) * length - MACRO_OVERHEAD_MULT * count - MACRO_OVERHEAD_CONST
 

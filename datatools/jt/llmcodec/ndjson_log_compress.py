@@ -2,21 +2,11 @@
 
 import json
 import sys
-from dataclasses import dataclass
 
-from .compressor import Compressor, _render_legend_block, _value_to_str, wrap_with
+from datatools.jt.llmcodec.ndjson import NDJson, make_ndjson
+from .compressor import Compressor, _render_legend_block, wrap_with
 from .ndjson_log_prepare import parse_ndjson
-from .ndjson_utils import classify_keys
-from .string_utils import find_common_prefix, identifier_counts
-
-
-@dataclass
-class NDJson:
-    records: list[dict]
-    ordered_complete: list[str]
-    incomplete_keys: list[str]
-    unified_counts: dict[str, int]
-    idents: dict[str, int]
+from .string_utils import find_common_prefix, identifier_counts, value_to_str
 
 
 def _escape_prefix(pfx: str) -> str:
@@ -31,7 +21,7 @@ def compress_complete_column(
     ndjson: NDJson,
 ) -> list[str]:
     """Compress one complete column and return its output lines."""
-    values = [_value_to_str(rec[key]) for rec in ndjson.records]
+    values = [value_to_str(rec[key]) for rec in ndjson.records]
     n = len(values)
 
     # All values identical → encode as prefix + count, empty body.
@@ -75,61 +65,6 @@ def compress_incomplete_columns(
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 
-def _build_unified_identifier_counts(
-    ordered_complete: list[str],
-    incomplete_keys: list[str],
-    records: list[dict],
-) -> dict[str, int]:
-    """Build a unified identifier_counts dict across all columns."""
-    counts: dict[str, int] = {}
-
-    for key in ordered_complete:
-        values = [_value_to_str(rec[key]) for rec in records]
-        if len(set(values)) == 1:
-            continue
-        pfx = find_common_prefix(values)
-        if pfx:
-            for v in values:
-                identifier_counts(v[len(pfx):], counts=counts)
-        else:
-            for v in values:
-                identifier_counts(v, counts=counts)
-
-    if incomplete_keys:
-        for rec in records:
-            pairs = [
-                f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
-                for k in incomplete_keys
-                if k in rec
-            ]
-            identifier_counts(",".join(pairs), counts=counts)
-
-    return counts
-
-
-def _build_idents(ident_counts: dict[str, int]) -> dict[str, int]:
-    """Build a pat→index mapping sorted by descending frequency (count > 1 only)."""
-    sorted_tokens = sorted(
-        (k for k, c in ident_counts.items() if c > 1),
-        key=lambda k: -ident_counts[k],
-    )
-    return {pat: idx for idx, pat in enumerate(sorted_tokens)}
-
-
-def _analyze_ndjson(records: list[dict]) -> NDJson:
-    """Build the NDJson for a list of records."""
-    ordered_complete, incomplete_keys = classify_keys(records)
-    unified_counts = _build_unified_identifier_counts(ordered_complete, incomplete_keys, records)
-    idents = _build_idents(unified_counts)
-    return NDJson(
-        records=records,
-        ordered_complete=ordered_complete,
-        incomplete_keys=incomplete_keys,
-        unified_counts=unified_counts,
-        idents=idents,
-    )
-
-
 def compress_ndjson(ndjson: NDJson) -> str:
     """Compress a list of NDJSON records into the column-based format."""
     body: list[str] = []
@@ -155,7 +90,7 @@ def main():
     if not records:
         sys.exit(0)
 
-    print(compress_ndjson(_analyze_ndjson(records)))
+    print(compress_ndjson(make_ndjson(records)))
 
 
 if __name__ == "__main__":

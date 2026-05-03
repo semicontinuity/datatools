@@ -1,3 +1,4 @@
+import json
 import re
 
 RE_IDENT = re.compile(r"[A-Za-z0-9_.-]+")
@@ -49,3 +50,10 @@ def identifier_counts(
         key = m.group()
         counts[key] = counts.get(key, 0) + 1
     return counts
+
+
+def value_to_str(v) -> str:
+    """Convert a JSON value to a string for compression."""
+    if isinstance(v, str):
+        return v
+    return json.dumps(v, ensure_ascii=False)
