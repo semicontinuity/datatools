@@ -20,6 +20,7 @@ def _escape_prefix(pfx: str) -> str:
 def compress_complete_column(
     key: str,
     ndjson: NDJson,
+    shared_idents: dict,
 ) -> list[str]:
     """Compress one complete column and return its output lines."""
     attrs, text = extract_column_text(key, ndjson)
@@ -27,7 +28,8 @@ def compress_complete_column(
         return section(tag=key, body=[], attrs=attrs)
 
     frequent_ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    legend_lines, data_lines = Compressor(TokenRegistry(frequent_ident_counts, ndjson.ident_counts)).compress_text(text)
+    registry = TokenRegistry(frequent_ident_counts, shared_idents, shared_idents=True)
+    legend_lines, data_lines = Compressor(registry).compress_text(text)
     return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
 
 
@@ -36,7 +38,7 @@ def extract_column_text(key, ndjson):
     n = len(values)
     # All values identical → encode as prefix + count, empty body.
     if len(set(values)) == 1:
-        return None, f"prefix='{_escape_prefix(values[0])}' n='{n}'"
+        return f"prefix='{_escape_prefix(values[0])}' n='{n}'", None
     pfx = find_common_prefix(values)
     if pfx:
         attrs = f"prefix='{_escape_prefix(pfx)}'"
@@ -49,6 +51,7 @@ def extract_column_text(key, ndjson):
 
 def compress_incomplete_columns(
     ndjson: NDJson,
+    shared_idents: dict,
 ) -> list[str]:
     """Compress all incomplete columns together and return their output lines.
 
@@ -58,7 +61,8 @@ def compress_incomplete_columns(
     """
     incomplete_columns_text = extract_incomplete_columns_text(ndjson)
     frequent_ident_counts = {p: c for p, c in identifier_counts(incomplete_columns_text).items() if c > 1}
-    legend_lines, data_lines = Compressor(TokenRegistry(frequent_ident_counts, ndjson.ident_counts)).compress_text(incomplete_columns_text)
+    registry = TokenRegistry(frequent_ident_counts, shared_idents, shared_idents=True)
+    legend_lines, data_lines = Compressor(registry).compress_text(incomplete_columns_text)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 
@@ -75,14 +79,23 @@ def extract_incomplete_columns_text(ndjson):
 
 
 def compress_ndjson(ndjson: NDJson) -> str:
-    """Compress a list of NDJSON records into the column-based format."""
-    body: list[str] = []
+    """Compress a list of NDJSON records into the column-based format.
 
+    A single shared ident dict is used across all columns so that #N# always
+    refers to the same string regardless of which column it appears in.
+    Per-column inline/meta/macro tokens are independent (each column has its
+    own legend section).
+    """
+    # Shared ident dict: mutated in-place as columns are compressed so every
+    # column sees the same pat→index assignments.
+    shared_idents: dict[str, int] = dict(ndjson.ident_counts)
+
+    body: list[str] = []
     for key in ndjson.complete_column_keys:
-        body.extend(compress_complete_column(key, ndjson))
+        body.extend(compress_complete_column(key, ndjson, shared_idents))
 
     if ndjson.incomplete_column_keys:
-        body.extend(compress_incomplete_columns(ndjson))
+        body.extend(compress_incomplete_columns(ndjson, shared_idents))
 
     return "".join(line + '\n' for line in section("COLUMNS", body))
 

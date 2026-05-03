@@ -31,12 +31,23 @@ class TokenRegistry:
         ident -> index (inverted array)
     """
 
-    def __init__(self, frequent_tokens: dict[str, int], idents_dict: dict[str, int]) -> None:
+    def __init__(
+        self,
+        frequent_tokens: dict[str, int],
+        idents_dict: dict[str, int],
+        *,
+        shared_idents: bool = False,
+    ) -> None:
         self.frequent_tokens = frequent_tokens
 
         # pat -> index dicts for each token kind.
-        self.idents_dict: dict[str, int] = dict(idents_dict) if idents_dict is not None else {}
-        self._ident_idx = len(self.idents_dict)
+        # When shared_idents=True the dict is used by reference so that ident
+        # assignments made in one TokenRegistry are visible in all others that
+        # share the same dict object.
+        if shared_idents:
+            self.idents_dict: dict[str, int] = idents_dict if idents_dict is not None else {}
+        else:
+            self.idents_dict: dict[str, int] = dict(idents_dict) if idents_dict is not None else {}
         self._inlines: dict[str, int] = {}
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}
@@ -50,8 +61,7 @@ class TokenRegistry:
     def get_ident_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a frequent-identifier pattern."""
         if pat not in self.idents_dict:
-            self.idents_dict[pat] = self._ident_idx
-            self._ident_idx += 1
+            self.idents_dict[pat] = len(self.idents_dict)
         return _ident_substitution(self.idents_dict[pat])
 
     def get_inline_substitution(self, pat: str) -> str:
@@ -80,7 +90,7 @@ class TokenRegistry:
         self.legend.append((substitution, expansion))
 
     def ident_tag_len(self) -> int:
-        return base62_len(self._ident_idx) + 2  # #XX#
+        return base62_len(len(self.idents_dict)) + 2  # #XX#
 
     def inline_tag_len(self) -> int:
         return base62_len(self._inline_idx) + 2  # ~XX~
