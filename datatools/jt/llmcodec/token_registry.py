@@ -1,4 +1,5 @@
 from datatools.jt.llmcodec.base62_utils import to_base62, base62_len
+from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
 
 
 def _ident_substitution(idx: int) -> str:
@@ -34,7 +35,7 @@ class TokenRegistry:
     def __init__(
         self,
         frequent_tokens: dict[str, int],
-        idents_dict: dict[str, int],
+        global_registry: "GlobalTokenRegistry"
     ) -> None:
         self.frequent_tokens = frequent_tokens
 
@@ -42,7 +43,7 @@ class TokenRegistry:
         # When shared_idents=True the dict is used by reference so that ident
         # assignments made in one TokenRegistry are visible in all others that
         # share the same dict object.
-        self.idents_dict: dict[str, int] = idents_dict
+        self.idents_dict: dict[str, int] = global_registry.ident_index
         self._inlines: dict[str, int] = {}
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}
