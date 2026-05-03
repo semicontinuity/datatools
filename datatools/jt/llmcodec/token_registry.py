@@ -33,9 +33,6 @@ class TokenRegistry:
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}
         # Sequential counters for internal token IDs (used during compression).
-        self._inline_idx = 0
-        self._meta_idx = 1
-        self._macro_idx = 1
         # Legend: list of (substitution_str, expansion_str) in creation order.
         self.legend: list[tuple[str, str]] = []
 
@@ -50,24 +47,21 @@ class TokenRegistry:
     def get_inline_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for an in-line BPE pattern."""
         if pat not in self._inlines:
-            self._inlines[pat] = self._inline_idx
-            self._inline_idx += 1
+            self._inlines[pat] = len(self._inlines)
         idx = self._inlines[pat]
         return f"~{to_base62(idx)}~"
 
     def get_meta_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a meta pattern."""
         if pat not in self._metas:
-            self._metas[pat] = self._meta_idx
-            self._meta_idx += 1
+            self._metas[pat] = len(self._metas)
         idx = self._metas[pat]
         return f"!{to_base62(idx)}!"
 
     def get_macro_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a macro pattern."""
         if pat not in self._macros:
-            self._macros[pat] = self._macro_idx
-            self._macro_idx += 1
+            self._macros[pat] = len(self._macros)
         idx = self._macros[pat]
         return f"&{to_base62(idx)}"
 
@@ -102,7 +96,7 @@ class TokenRegistry:
         return base62_len(len(self.global_registry.ident_index)) + 2  # #XX#
 
     def inline_tag_len(self) -> int:
-        return base62_len(self._inline_idx) + 2  # ~XX~
+        return base62_len(len(self._inlines)) + 2  # ~XX~
 
     def meta_tag_len(self) -> int:
-        return base62_len(self._meta_idx) + 2
+        return base62_len(len(self._metas)) + 2
