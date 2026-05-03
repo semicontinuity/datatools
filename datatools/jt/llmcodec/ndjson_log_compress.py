@@ -5,7 +5,7 @@ import sys
 
 from datatools.jt.llmcodec.ndjson import NDJson, make_ndjson
 from datatools.jt.llmcodec.token_registry import TokenRegistry
-from .compressor import Compressor, _render_legend_block, wrap_with
+from .compressor import Compressor, _render_legend_block, section
 from .ndjson_log_prepare import parse_ndjson
 from .string_utils import find_common_prefix, identifier_counts, value_to_str
 
@@ -22,13 +22,21 @@ def compress_complete_column(
     ndjson: NDJson,
 ) -> list[str]:
     """Compress one complete column and return its output lines."""
+    attrs, text = extract_column_text(key, ndjson)
+    if text is None:
+        return section(tag=key, body=[], attrs=attrs)
+
+    ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
+    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(text)
+    return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
+
+
+def extract_column_text(key, ndjson):
     values = [value_to_str(rec[key]) for rec in ndjson.records]
     n = len(values)
-
     # All values identical → encode as prefix + count, empty body.
     if len(set(values)) == 1:
-        return wrap_with(key, [], f"prefix='{_escape_prefix(values[0])}' n='{n}'")
-
+        return None, f"prefix='{_escape_prefix(values[0])}' n='{n}'"
     pfx = find_common_prefix(values)
     if pfx:
         attrs = f"prefix='{_escape_prefix(pfx)}'"
@@ -36,10 +44,7 @@ def compress_complete_column(
     else:
         attrs = ""
         text = "\n".join(values)
-
-    ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(text)
-    return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
+    return attrs, text
 
 
 def compress_incomplete_columns(
@@ -51,19 +56,22 @@ def compress_incomplete_columns(
     the incomplete keys).  This preserves positional alignment so the
     decompressor can reconstruct which values belong to which record.
     """
-    inc_lines: list[str] = []
+    incomplete_columns_text = extract_incomplete_columns_text(ndjson)
+    ident_counts = {p: c for p, c in identifier_counts(incomplete_columns_text).items() if c > 1}
+    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(incomplete_columns_text)
+    return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
+
+
+def extract_incomplete_columns_text(ndjson):
+    incomplete_columns_lines: list[str] = []
     for rec in ndjson.records:
         pairs = [
             f'"{k}":{json.dumps(rec[k], ensure_ascii=False)}'
             for k in ndjson.incomplete_column_keys
             if k in rec
         ]
-        inc_lines.append(",".join(pairs))
-
-    joined = "\n".join(inc_lines)
-    ident_counts = {p: c for p, c in identifier_counts(joined).items() if c > 1}
-    legend_lines, data_lines = Compressor(TokenRegistry(ident_counts, ndjson.ident_counts)).compress_text(joined)
-    return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
+        incomplete_columns_lines.append(",".join(pairs))
+    return "\n".join(incomplete_columns_lines)
 
 
 def compress_ndjson(ndjson: NDJson) -> str:
@@ -76,7 +84,7 @@ def compress_ndjson(ndjson: NDJson) -> str:
     if ndjson.incomplete_column_keys:
         body.extend(compress_incomplete_columns(ndjson))
 
-    return "".join(line + '\n' for line in wrap_with("COLUMNS", body))
+    return "".join(line + '\n' for line in section("COLUMNS", body))
 
 
 def main():
