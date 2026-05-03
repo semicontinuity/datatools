@@ -35,8 +35,6 @@ class TokenRegistry:
         self,
         frequent_tokens: dict[str, int],
         idents_dict: dict[str, int],
-        *,
-        shared_idents: bool = False,
     ) -> None:
         self.frequent_tokens = frequent_tokens
 
@@ -44,10 +42,7 @@ class TokenRegistry:
         # When shared_idents=True the dict is used by reference so that ident
         # assignments made in one TokenRegistry are visible in all others that
         # share the same dict object.
-        if shared_idents:
-            self.idents_dict: dict[str, int] = idents_dict if idents_dict is not None else {}
-        else:
-            self.idents_dict: dict[str, int] = dict(idents_dict) if idents_dict is not None else {}
+        self.idents_dict: dict[str, int] = idents_dict
         self._inlines: dict[str, int] = {}
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}

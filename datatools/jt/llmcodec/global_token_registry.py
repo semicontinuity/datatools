@@ -1,4 +1,5 @@
 from datatools.jt.llmcodec.base62_utils import base62_len
+from datatools.jt.llmcodec.util import debug
 
 
 def _ident_tag_len(idx: int) -> int:
@@ -54,4 +55,4 @@ class GlobalTokenRegistry:
             if savings > 0:
                 index[pat] = idx
         self.ident_index = index
-        print(f'Created frequent ident index with size {len(index)}')
+        debug(f'Created frequent ident index with size {len(index)}')

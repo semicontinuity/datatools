@@ -21,7 +21,7 @@ def _escape_prefix(pfx: str) -> str:
 def compress_complete_column(
     key: str,
     ndjson: NDJson,
-    shared_idents: dict,
+    global_registry: "GlobalTokenRegistry"
 ) -> list[str]:
     """Compress one complete column and return its output lines."""
     attrs, text = extract_column_text(key, ndjson)
@@ -29,7 +29,7 @@ def compress_complete_column(
         return section(tag=key, body=[], attrs=attrs)
 
     frequent_ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    registry = TokenRegistry(frequent_ident_counts, shared_idents, shared_idents=True)
+    registry = TokenRegistry(frequent_ident_counts, global_registry.ident_index)
     legend_lines, data_lines = Compressor(registry).compress_text(text)
     return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
 
@@ -52,7 +52,7 @@ def extract_column_text(key, ndjson):
 
 def compress_incomplete_columns(
     ndjson: NDJson,
-    shared_idents: dict,
+    global_registry: "GlobalTokenRegistry"
 ) -> list[str]:
     """Compress all incomplete columns together and return their output lines.
 
@@ -62,7 +62,7 @@ def compress_incomplete_columns(
     """
     incomplete_columns_text = extract_incomplete_columns_text(ndjson)
     frequent_ident_counts = {p: c for p, c in identifier_counts(incomplete_columns_text).items() if c > 1}
-    registry = TokenRegistry(frequent_ident_counts, shared_idents, shared_idents=True)
+    registry = TokenRegistry(frequent_ident_counts, global_registry.ident_index)
     legend_lines, data_lines = Compressor(registry).compress_text(incomplete_columns_text)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
@@ -91,10 +91,10 @@ def compress_ndjson(ndjson: NDJson, global_registry: "GlobalTokenRegistry") -> s
 
     body: list[str] = []
     for key in ndjson.complete_column_keys:
-        body.extend(compress_complete_column(key, ndjson, shared_idents))
+        body.extend(compress_complete_column(key, ndjson, global_registry))
 
     if ndjson.incomplete_column_keys:
-        body.extend(compress_incomplete_columns(ndjson, shared_idents))
+        body.extend(compress_incomplete_columns(ndjson, global_registry))
 
     return "".join(line + '\n' for line in section("COLUMNS", body))
 
