@@ -1,5 +1,6 @@
 from datatools.jt.llmcodec.base62_utils import to_base62, base62_len
 from datatools.jt.llmcodec.global_token_registry import GlobalTokenRegistry
+from datatools.jt.llmcodec.string_utils import identifier_counts
 
 
 def _ident_substitution(idx: int) -> str:
@@ -28,16 +29,17 @@ class TokenRegistry:
     ----------
     frequent_tokens:
         ident -> count
-    idents_dict:
-        ident -> index (inverted array)
+    global_registry:
+        contains:
+            ident -> index (inverted array)
     """
 
     def __init__(
         self,
-        frequent_tokens: dict[str, int],
-        global_registry: "GlobalTokenRegistry"
+        global_registry: "GlobalTokenRegistry",
+        frequent_tokens: dict[str, int] | None = None,
     ) -> None:
-        self.frequent_tokens = frequent_tokens
+        self.frequent_tokens = frequent_tokens or {}
 
         # pat -> index dicts for each token kind.
         # When shared_idents=True the dict is used by reference so that ident
@@ -81,6 +83,18 @@ class TokenRegistry:
             self._macro_idx += 1
         return _macro_substitution(self._macros[pat])
 
+    def populate_idents_from_text(self, text: str) -> None:
+        """Compute frequent_tokens from *text*, keeping only tokens with positive savings."""
+        token_len = self.ident_tag_len()
+        result = {}
+        for p, c in identifier_counts(text).items():
+            if c <= 1:
+                continue
+            definition_overhead = token_len + 3 + len(p) + 1
+            if c * (len(p) - token_len) - definition_overhead > 0:
+                result[p] = c
+        self.frequent_tokens = result
+
     def record(self, substitution: str, expansion: str) -> None:
         """Record a token in the legend."""
         self.legend.append((substitution, expansion))
@@ -95,17 +109,8 @@ class TokenRegistry:
         return base62_len(self._meta_idx) + 2
 
     def replace_frequent_tokens(self, text: str) -> str:
-        """Replace frequent identifiers with tokens, skipping non-saving ones."""
-        for pat in self.idents_dict:
-            if pat not in self.frequent_tokens:
-                continue
-            count = self.frequent_tokens[pat]
-            token_len = self.ident_tag_len()  # len of #XX#
-            # definition line: "token = pat\n"
-            definition_overhead = token_len + 3 + len(pat) + 1
-            savings = count * (len(pat) - token_len) - definition_overhead
-            if savings <= 0:
-                continue
+        """Replace frequent identifiers with their substitution tokens."""
+        for pat in sorted(self.frequent_tokens, key=lambda p: self.idents_dict[p]):
             substitution = self.get_ident_substitution(pat)
             text = text.replace(pat, substitution)
             self.record(substitution, pat)

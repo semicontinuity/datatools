@@ -8,7 +8,7 @@ from datatools.jt.llmcodec.ndjson import NDJson, make_ndjson
 from datatools.jt.llmcodec.token_registry import TokenRegistry
 from .compressor import Compressor, _render_legend_block, section
 from .ndjson_log_prepare import parse_ndjson
-from .string_utils import find_common_prefix, identifier_counts, value_to_str
+from .string_utils import find_common_prefix, value_to_str
 
 
 def _escape_prefix(pfx: str) -> str:
@@ -28,8 +28,8 @@ def compress_complete_column(
     if text is None:
         return section(tag=key, body=[], attrs=attrs)
 
-    frequent_ident_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    registry = TokenRegistry(frequent_ident_counts, global_registry)
+    registry = TokenRegistry(global_registry)
+    registry.populate_idents_from_text(text)
     legend_lines, data_lines = Compressor(registry).compress_text(text)
     return section(tag=key, body=[*_render_legend_block(legend_lines), *data_lines], attrs=attrs)
 
@@ -61,8 +61,8 @@ def compress_incomplete_columns(
     decompressor can reconstruct which values belong to which record.
     """
     incomplete_columns_text = extract_incomplete_columns_text(ndjson)
-    frequent_ident_counts = {p: c for p, c in identifier_counts(incomplete_columns_text).items() if c > 1}
-    registry = TokenRegistry(frequent_ident_counts, global_registry)
+    registry = TokenRegistry(global_registry)
+    registry.populate_idents_from_text(incomplete_columns_text)
     legend_lines, data_lines = Compressor(registry).compress_text(incomplete_columns_text)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
