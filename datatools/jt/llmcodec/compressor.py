@@ -1,7 +1,7 @@
-import json
 import re
 from collections import defaultdict
 
+from datatools.jt.llmcodec.string_utils import tokenize_normal, split_normal, tokenize_meta, split_meta
 from datatools.jt.llmcodec.token_registry import TokenRegistry
 
 # Tuning parameters for compression
@@ -31,100 +31,6 @@ def _render_legend_block(legend_lines: list[str]) -> list[str]:
 
 def calc_savings(count: int, length: int) -> int:
     return (count - 1) * length - MACRO_OVERHEAD_MULT * count - MACRO_OVERHEAD_CONST
-
-
-def _is_alnum(c: str) -> bool:
-    return c.isalnum() or c == "_"
-
-
-def _tokenize_normal(text: str) -> list[str]:
-    tokens = []
-    i = 0
-    n = len(text)
-    while i < n:
-        is_alnum = _is_alnum(text[i])
-        j = i + 1
-        while j < n and _is_alnum(text[j]) == is_alnum:
-            j += 1
-        tokens.append(text[i:j])
-        i = j
-    return tokens
-
-
-def _tokenize_meta(text: str) -> list[str]:
-    tokens = []
-    i = 0
-    n = len(text)
-    while i < n:
-        c = text[i]
-        if c in ("~", "#"):
-            j = i + 1
-            while j < n and text[j].isalnum():
-                j += 1
-            if j < n and text[j] == c:
-                tokens.append(text[i:j + 1])
-                i = j + 1
-                continue
-        elif c == "!":
-            j = i + 1
-            while j < n and text[j].isalnum():
-                j += 1
-            if j < n and text[j] == "!":
-                tokens.append(text[i:j + 1])
-                i = j + 1
-                continue
-        is_alnum = _is_alnum(c)
-        j = i + 1
-        while j < n:
-            nc = text[j]
-            if is_alnum:
-                if not _is_alnum(nc):
-                    break
-            else:
-                if _is_alnum(nc) or nc in ("~", "#", "!"):
-                    break
-            j += 1
-        tokens.append(text[i:j])
-        i = j
-    return tokens
-
-
-def _split_normal(text: str) -> tuple[list[str], list[str]]:
-    """Split on ~tag~ (or #tag#) separators, returning (parts, seps)."""
-    parts = []
-    seps = []
-    i = 0
-    last_end = 0
-    n = len(text)
-    while i < n:
-        if text[i] in ("~", "#"):
-            delim = text[i]
-            j = i + 1
-            while j < n and text[j].isalnum():
-                j += 1
-            if n > j > i + 1 and text[j] == delim:
-                parts.append(text[last_end:i])
-                seps.append(text[i:j + 1])
-                last_end = j + 1
-                i = j + 1
-                continue
-        i += 1
-    parts.append(text[last_end:])
-    return parts, seps
-
-
-def _split_meta(text: str) -> tuple[list[str], list[str]]:
-    """Split on newlines."""
-    parts = []
-    seps = []
-    last_end = 0
-    for i, c in enumerate(text):
-        if c == "\n":
-            parts.append(text[last_end:i])
-            seps.append("\n")
-            last_end = i + 1
-    parts.append(text[last_end:])
-    return parts, seps
 
 
 class Compressor:
@@ -301,8 +207,8 @@ class Compressor:
         return self._run_bpe(
             text,
             BPE_MAX_ITERATIONS,
-            _tokenize_normal,
-            _split_normal,
+            tokenize_normal,
+            split_normal,
             max_n=20,
             min_trim_len=4,
             requires_hash=False,
@@ -314,8 +220,8 @@ class Compressor:
         return self._run_bpe(
             text,
             BPE_MAX_ITERATIONS,
-            _tokenize_meta,
-            _split_meta,
+            tokenize_meta,
+            split_meta,
             max_n=15,
             min_trim_len=5,
             requires_hash=True,

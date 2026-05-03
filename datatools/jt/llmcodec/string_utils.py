@@ -57,3 +57,97 @@ def value_to_str(v) -> str:
     if isinstance(v, str):
         return v
     return json.dumps(v, ensure_ascii=False)
+
+
+def tokenize_normal(text: str) -> list[str]:
+    tokens = []
+    i = 0
+    n = len(text)
+    while i < n:
+        is_alnum = _is_alnum(text[i])
+        j = i + 1
+        while j < n and _is_alnum(text[j]) == is_alnum:
+            j += 1
+        tokens.append(text[i:j])
+        i = j
+    return tokens
+
+
+def tokenize_meta(text: str) -> list[str]:
+    tokens = []
+    i = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c in ("~", "#"):
+            j = i + 1
+            while j < n and text[j].isalnum():
+                j += 1
+            if j < n and text[j] == c:
+                tokens.append(text[i:j + 1])
+                i = j + 1
+                continue
+        elif c == "!":
+            j = i + 1
+            while j < n and text[j].isalnum():
+                j += 1
+            if j < n and text[j] == "!":
+                tokens.append(text[i:j + 1])
+                i = j + 1
+                continue
+        is_alnum = _is_alnum(c)
+        j = i + 1
+        while j < n:
+            nc = text[j]
+            if is_alnum:
+                if not _is_alnum(nc):
+                    break
+            else:
+                if _is_alnum(nc) or nc in ("~", "#", "!"):
+                    break
+            j += 1
+        tokens.append(text[i:j])
+        i = j
+    return tokens
+
+
+def split_normal(text: str) -> tuple[list[str], list[str]]:
+    """Split on ~tag~ (or #tag#) separators, returning (parts, seps)."""
+    parts = []
+    seps = []
+    i = 0
+    last_end = 0
+    n = len(text)
+    while i < n:
+        if text[i] in ("~", "#"):
+            delim = text[i]
+            j = i + 1
+            while j < n and text[j].isalnum():
+                j += 1
+            if n > j > i + 1 and text[j] == delim:
+                parts.append(text[last_end:i])
+                seps.append(text[i:j + 1])
+                last_end = j + 1
+                i = j + 1
+                continue
+        i += 1
+    parts.append(text[last_end:])
+    return parts, seps
+
+
+def split_meta(text: str) -> tuple[list[str], list[str]]:
+    """Split on newlines."""
+    parts = []
+    seps = []
+    last_end = 0
+    for i, c in enumerate(text):
+        if c == "\n":
+            parts.append(text[last_end:i])
+            seps.append("\n")
+            last_end = i + 1
+    parts.append(text[last_end:])
+    return parts, seps
+
+
+def _is_alnum(c: str) -> bool:
+    return c.isalnum() or c == "_"
