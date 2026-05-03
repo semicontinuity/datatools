@@ -146,8 +146,8 @@ class Compressor:
         Pass ``None`` (or omit) to skip that pass.
     """
 
-    def __init__(self, frequent_tokens: dict[str, int], vars: dict[str, int] | None = None):
-        self._registry = TokenRegistry(frequent_tokens, vars)
+    def __init__(self, frequent_tokens: dict[str, int], idents: dict[str, int] | None = None):
+        self._registry = TokenRegistry(frequent_tokens, idents)
 
     @staticmethod
     def _bpe_tokenize_parts(
@@ -345,17 +345,17 @@ class Compressor:
             matches = templates.get(template)
             if not matches:
                 continue
-            valid = [(i, var) for i, var in matches if not templated[i]]
+            valid = [(i, ident) for i, ident in matches if not templated[i]]
             if len(valid) > 1:
                 macro_tag = self._registry.get_macro_substitution(template)
                 self._registry.record(macro_tag, template)
-                for i, var in valid:
-                    lines[i] = f"{macro_tag}:{var}"
+                for i, ident in valid:
+                    lines[i] = f"{macro_tag}:{ident}"
                     templated[i] = True
 
     # Placeholder used in macro templates.
     # '?' cannot appear in valid JSON values (it is not a special JSON char)
-    # and is visually clear as a "variable slot" marker.
+    # and is visually clear as a "identifier slot" marker.
     _PLACEHOLDER = "?"
 
     def _run_macro_templating(self, text: str) -> str:

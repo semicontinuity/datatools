@@ -1,7 +1,7 @@
 from datatools.jt.llmcodec.base62_utils import to_base62, base62_len
 
 
-def _var_substitution(idx: int) -> str:
+def _ident_substitution(idx: int) -> str:
     return f"#{to_base62(idx)}#"
 
 
@@ -18,7 +18,7 @@ def _macro_substitution(idx: int) -> str:
 
 
 class TokenRegistry:
-    """Holds token tables for vars, meta, and macro tokens.
+    """Holds token tables for identss, meta, and macro tokens.
 
     Manages pat→index mappings and the legend
     (list of ``(substitution_str, expansion_str)`` pairs in creation order).
@@ -32,12 +32,12 @@ class TokenRegistry:
         Pass ``None`` (or omit) to skip that pass.
     """
 
-    def __init__(self, frequent_tokens: dict[str, int], vars: dict[str, int] | None = None) -> None:
+    def __init__(self, frequent_tokens: dict[str, int], idents: dict[str, int] | None = None) -> None:
         self.frequent_tokens = frequent_tokens
 
         # pat -> index dicts for each token kind.
-        self._vars: dict[str, int] = dict(vars) if vars is not None else {}
-        self._var_idx = len(self._vars)
+        self.idents: dict[str, int] = dict(idents) if idents is not None else {}
+        self._ident_idx = len(self.idents)
         self._inlines: dict[str, int] = {}
         self._metas: dict[str, int] = {}
         self._macros: dict[str, int] = {}
@@ -48,12 +48,12 @@ class TokenRegistry:
         # Legend: list of (substitution_str, expansion_str) in creation order.
         self.legend: list[tuple[str, str]] = []
 
-    def get_var_substitution(self, pat: str) -> str:
+    def get_ident_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for a frequent-identifier pattern."""
-        if pat not in self._vars:
-            self._vars[pat] = self._var_idx
-            self._var_idx += 1
-        return _var_substitution(self._vars[pat])
+        if pat not in self.idents:
+            self.idents[pat] = self._ident_idx
+            self._ident_idx += 1
+        return _ident_substitution(self.idents[pat])
 
     def get_inline_substitution(self, pat: str) -> str:
         """Return (allocating if needed) the substitution token for an in-line BPE pattern."""
@@ -80,8 +80,8 @@ class TokenRegistry:
         """Record a token in the legend."""
         self.legend.append((substitution, expansion))
 
-    def var_tag_len(self) -> int:
-        return base62_len(self._var_idx) + 2  # #XX#
+    def ident_tag_len(self) -> int:
+        return base62_len(self._ident_idx) + 2  # #XX#
 
     def inline_tag_len(self) -> int:
         return base62_len(self._inline_idx) + 2  # ~XX~
@@ -91,17 +91,17 @@ class TokenRegistry:
 
     def replace_frequent_tokens(self, text: str) -> str:
         """Replace frequent identifiers with tokens, skipping non-saving ones."""
-        for pat in self._vars:
+        for pat in self.idents:
             if pat not in self.frequent_tokens:
                 continue
             count = self.frequent_tokens[pat]
-            token_len = self.var_tag_len()  # len of #XX#
+            token_len = self.ident_tag_len()  # len of #XX#
             # definition line: "token = pat\n"
             definition_overhead = token_len + 3 + len(pat) + 1
             savings = count * (len(pat) - token_len) - definition_overhead
             if savings <= 0:
                 continue
-            substitution = self.get_var_substitution(pat)
+            substitution = self.get_ident_substitution(pat)
             text = text.replace(pat, substitution)
             self.record(substitution, pat)
         return text

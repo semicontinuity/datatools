@@ -16,7 +16,7 @@ class NDJson:
     ordered_complete: list[str]
     incomplete_keys: list[str]
     unified_counts: dict[str, int]
-    vars: dict[str, int]
+    idents: dict[str, int]
 
 
 def _escape_prefix(pfx: str) -> str:
@@ -47,7 +47,7 @@ def compress_complete_column(
         text = "\n".join(values)
 
     col_counts = {p: c for p, c in identifier_counts(text).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, ndjson.vars).compress_text(text)
+    legend_lines, data_lines = Compressor(col_counts, ndjson.idents).compress_text(text)
     return wrap_with(key, [*_render_legend_block(legend_lines), *data_lines], attrs)
 
 
@@ -71,7 +71,7 @@ def compress_incomplete_columns(
 
     joined = "\n".join(inc_lines)
     col_counts = {p: c for p, c in identifier_counts(joined).items() if c > 1}
-    legend_lines, data_lines = Compressor(col_counts, ndjson.vars).compress_text(joined)
+    legend_lines, data_lines = Compressor(col_counts, ndjson.idents).compress_text(joined)
     return ["<>", *_render_legend_block(legend_lines), *data_lines, "</>"]
 
 
@@ -107,7 +107,7 @@ def _build_unified_identifier_counts(
     return counts
 
 
-def _build_vars(ident_counts: dict[str, int]) -> dict[str, int]:
+def _build_idents(ident_counts: dict[str, int]) -> dict[str, int]:
     """Build a pat→index mapping sorted by descending frequency (count > 1 only)."""
     sorted_tokens = sorted(
         (k for k, c in ident_counts.items() if c > 1),
@@ -120,13 +120,13 @@ def _analyze_ndjson(records: list[dict]) -> NDJson:
     """Build the NDJson for a list of records."""
     ordered_complete, incomplete_keys = classify_keys(records)
     unified_counts = _build_unified_identifier_counts(ordered_complete, incomplete_keys, records)
-    vars = _build_vars(unified_counts)
+    idents = _build_idents(unified_counts)
     return NDJson(
         records=records,
         ordered_complete=ordered_complete,
         incomplete_keys=incomplete_keys,
         unified_counts=unified_counts,
-        vars=vars,
+        idents=idents,
     )
 
 
