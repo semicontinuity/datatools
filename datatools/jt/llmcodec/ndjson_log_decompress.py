@@ -110,7 +110,7 @@ def _parse_inc_pair(pair: str) -> tuple[str, object]:
 
 
 def _strip_columns_markers(lines: list[str]) -> list[str]:
-    """Remove leading and trailing <COLUMNS> marker lines."""
+    """Remove leading and trailing <COLUMNS> / </COLUMNS> marker lines."""
     start = 0
     end = len(lines) - 1
     while start <= end and RE_COLUMNS_MARKER.match(lines[start]):
@@ -118,6 +118,41 @@ def _strip_columns_markers(lines: list[str]) -> list[str]:
     while end >= start and RE_COLUMNS_MARKER.match(lines[end]):
         end -= 1
     return lines[start:end + 1]
+
+
+RE_COLUMNS_OPEN = re.compile(r'^<COLUMNS>\s*$')
+RE_COLUMNS_CLOSE = re.compile(r'^</COLUMNS>\s*$')
+
+
+def _split_global_legend_and_columns(lines: list[str]) -> tuple[list[str], list[str]]:
+    """Split top-level lines into (global_legend_lines, column_inner_lines).
+
+    Handles an optional <LEGEND>...</LEGEND> block before <COLUMNS>...</COLUMNS>.
+    Also handles the legacy format where there is no outer <COLUMNS> wrapper.
+    """
+    i = 0
+    n = len(lines)
+    global_legend_lines: list[str] = []
+
+    # Consume optional top-level <LEGEND>...</LEGEND>
+    if i < n and RE_LEGEND_OPEN.match(lines[i]):
+        i += 1
+        while i < n and not RE_LEGEND_CLOSE.match(lines[i]):
+            global_legend_lines.append(lines[i])
+            i += 1
+        i += 1  # skip </LEGEND>
+
+    # Consume <COLUMNS>...</COLUMNS> wrapper if present
+    if i < n and RE_COLUMNS_OPEN.match(lines[i]):
+        i += 1
+        inner: list[str] = []
+        while i < n and not RE_COLUMNS_CLOSE.match(lines[i]):
+            inner.append(lines[i])
+            i += 1
+        return global_legend_lines, inner
+
+    # Legacy: no <COLUMNS> wrapper — treat remaining lines as inner
+    return global_legend_lines, lines[i:]
 
 
 def _read_legend_block(lines: list[str], i: int, n: int) -> tuple[list[str], int]:
@@ -134,7 +169,8 @@ def _read_legend_block(lines: list[str], i: int, n: int) -> tuple[list[str], int
 
 
 def _parse_complete_column(
-    lines: list[str], i: int, n: int, key: str, pfx: str, count: int | None
+    lines: list[str], i: int, n: int, key: str, pfx: str, count: int | None,
+    base_table: dict[str, str],
 ) -> tuple[tuple[str, list[str]], int]:
     """Parse a complete column block starting after its open tag.
     Returns ((key, expanded_values), new_i).
@@ -153,13 +189,14 @@ def _parse_complete_column(
         expanded = [pfx] * count
         return (key, expanded), i
 
-    table = _parse_legend(legend_lines)
+    table = {**base_table, **_parse_legend(legend_lines)}
     expanded = _expand_lines(data_lines, table, pfx)
     return (key, expanded), i
 
 
 def _parse_incomplete_section(
-    lines: list[str], i: int, n: int
+    lines: list[str], i: int, n: int,
+    base_table: dict[str, str],
 ) -> tuple[list[str], int]:
     """Parse a <> ... </> block starting after the <> tag.
     Returns (expanded_lines, new_i).
@@ -170,13 +207,14 @@ def _parse_incomplete_section(
         data_lines.append(lines[i])
         i += 1
     i += 1  # skip </>
-    table = _parse_legend(legend_lines)
+    table = {**base_table, **_parse_legend(legend_lines)}
     expanded = _expand_lines(data_lines, table, "")
     return expanded, i
 
 
 def _parse_column_blocks(
     lines: list[str],
+    base_table: dict[str, str],
 ) -> tuple[list[tuple[str, list[str]]], list[str]]:
     """Parse all column blocks from inner lines.
     Returns (complete_columns, incomplete_lines).
@@ -197,11 +235,11 @@ def _parse_column_blocks(
             pfx = _unescape_prefix(pfx_raw) if pfx_raw is not None else ""
             count_raw = open_m.group(3)
             count = int(count_raw) if count_raw is not None else None
-            col, i = _parse_complete_column(lines, i + 1, n, key, pfx, count)
+            col, i = _parse_complete_column(lines, i + 1, n, key, pfx, count, base_table)
             complete.append(col)
             continue
         if RE_OPEN_INC.match(line):
-            incomplete, i = _parse_incomplete_section(lines, i + 1, n)
+            incomplete, i = _parse_incomplete_section(lines, i + 1, n, base_table)
             continue
         i += 1
 
@@ -231,9 +269,13 @@ def _assemble_records(
 
 
 def decompress_ndjson(text: str) -> list[dict]:
-    """Parse <COLUMNS>...</COLUMNS> format and return list of dicts."""
-    lines = _strip_columns_markers(text.splitlines())
-    complete, incomplete = _parse_column_blocks(lines)
+    """Parse compressed format and return list of dicts.
+
+    Supports an optional top-level <LEGEND> block before <COLUMNS>.
+    """
+    global_legend_lines, inner_lines = _split_global_legend_and_columns(text.splitlines())
+    base_table = _parse_legend(global_legend_lines)
+    complete, incomplete = _parse_column_blocks(inner_lines, base_table)
     return _assemble_records(complete, incomplete)
 
 
