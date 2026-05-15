@@ -33,12 +33,14 @@ class ViewModel(TreeNodeContext):
         if len(node.items) == 0:
             n = JLeaf(node.value, text, node.indent, last_in_parent)
             n.context = self
+            n.expenses_node = node
             return n
         else:
             folder = JFolder(node.value, text, node.indent, last_in_parent)
             folder.set_elements(self.build_array_items_models(node.items, folder))
             folder.context = self
             folder.start.context = self
+            folder.expenses_node = node
             return folder
 
     def build_array_items_models(self, v: List, parent: JValueElement) -> List[JValueElement]:
