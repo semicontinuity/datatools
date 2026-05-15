@@ -27,6 +27,7 @@
 #     Expense 3         300
 #
 ########################################################################################################################
+import os
 import re
 import sys
 from dataclasses import dataclass
@@ -106,16 +107,21 @@ class ExpensesTreeWriter:
     def __init__(self, file: IO):
         self.file = file
 
-    def write(self, root: ExpensesNode):
-        key_area_size = (root.max_indent_and_key_length() + TAB_SIZE) // TAB_SIZE * TAB_SIZE
-        self.__write(root, key_area_size)
+    def write(self, root: ExpensesNode, indent_offset: int = 0):
+        key_area_size = (self.__max_width(root, indent_offset) + TAB_SIZE) // TAB_SIZE * TAB_SIZE
+        self.__write(root, key_area_size, indent_offset)
 
-    def __write(self, node: ExpensesNode, key_area_size: int):
-        key_area_chars = ' ' * node.indent + node.key
+    def __max_width(self, node: ExpensesNode, indent_offset: int) -> int:
+        own = node.indent - indent_offset + len(node.key)
+        children = max((self.__max_width(item, indent_offset) for item in node.items), default=0)
+        return max(own, children)
+
+    def __write(self, node: ExpensesNode, key_area_size: int, indent_offset: int):
+        key_area_chars = ' ' * (node.indent - indent_offset) + node.key
         n_tabs = (key_area_size - len(key_area_chars) + TAB_SIZE - 1) // TAB_SIZE
         self.file.write(key_area_chars + '\t' * n_tabs + f'{node.value:10.2f}\n')
         for item in node.items:
-            self.__write(item, key_area_size)
+            self.__write(item, key_area_size, indent_offset)
 
 
 def recalculate(file_name, output_file_name):
@@ -129,9 +135,32 @@ def recalculate(file_name, output_file_name):
             ExpensesTreeWriter(file).write(expenses)
 
 
+def split(file_name):
+    expenses = ExpensesTreeReader(file_name).read()
+    expenses.calculate_value()
+
+    folder = os.path.join(os.path.dirname(os.path.abspath(file_name)), expenses.key)
+    os.makedirs(folder, exist_ok=True)
+
+    for sub_root in expenses.items:
+        out_path = os.path.join(folder, sub_root.key + '.txt')
+        with open(out_path, 'w') as f:
+            ExpensesTreeWriter(f).write(sub_root, indent_offset=sub_root.indent)
+
+
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Usage: app.py <recalc> <file> [output file name or '-' for stdout]", file=sys.stderr)
+    if len(sys.argv) < 2:
+        print("Usage: app.py <recalc|split> <file> [output file name or '-' for stdout]", file=sys.stderr)
         sys.exit(1)
 
-    recalculate(sys.argv[2], sys.argv[2] if len(sys.argv) == 3 else sys.argv[3])
+    command = sys.argv[1]
+    if command == 'split':
+        if len(sys.argv) < 3:
+            print("Usage: app.py split <file>", file=sys.stderr)
+            sys.exit(1)
+        split(sys.argv[2])
+    else:
+        if len(sys.argv) < 3:
+            print("Usage: app.py recalc <file> [output file name or '-' for stdout]", file=sys.stderr)
+            sys.exit(1)
+        recalculate(sys.argv[2], sys.argv[2] if len(sys.argv) == 3 else sys.argv[3])

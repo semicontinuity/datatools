@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 
 from datatools.jt.app.app_kit import Applet
@@ -50,12 +51,34 @@ def loop(document: ExpensesDocument):
     return EXIT_CODE_ESCAPE, None
 
 
+def shift_indent(node: ExpensesNode, delta: int) -> ExpensesNode:
+    node.indent += delta
+    for child in node.items:
+        shift_indent(child, delta)
+    return node
+
+
+def read_folder(folder: str) -> ExpensesNode:
+    import glob
+    files = sorted(glob.glob(os.path.join(folder, '*.txt')))
+    sub_roots = [ExpensesTreeReader(f).read() for f in files]
+    for sr in sub_roots:
+        sr.calculate_value()
+        shift_indent(sr, 2)
+    total = sum(sr.value for sr in sub_roots)
+    return ExpensesNode(0, os.path.basename(folder), total, sub_roots)
+
+
 def main():
     global doc
     init_object_exporter()
     Highlighting.CURRENT = ConsoleHighlighting()
-    expenses = ExpensesTreeReader(sys.argv[1]).read()
-    expenses.calculate_value()
+    path = sys.argv[1]
+    if os.path.isdir(path):
+        expenses = read_folder(path)
+    else:
+        expenses = ExpensesTreeReader(path).read()
+        expenses.calculate_value()
     doc = make_document(expenses)  # must consume stdin first
     exit_code, output = with_alternate_screen(lambda: loop(doc))
 
