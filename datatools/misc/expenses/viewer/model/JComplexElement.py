@@ -45,7 +45,7 @@ class JComplexElement(Generic[V], JValueElement[V]):
         depth = 0
         while True:
             hh = self.compacted_size(depth)
-            if hh > height * 1.5:
+            if hh > height:
                 depth -= 1
                 break
             if hh == h:

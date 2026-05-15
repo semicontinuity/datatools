@@ -57,6 +57,8 @@ class ExpensesGrid(TreeGrid):
     def _navigate_into(self):
         row = self.document.rows[self.cur_line]
         element = row.get_value_element()
+        if element is self.document.root:
+            return True
         node = getattr(element, 'expenses_node', None)
         if node is None or not node.items:
             return True
@@ -66,7 +68,7 @@ class ExpensesGrid(TreeGrid):
         self.document = self._make_document(node)
         self.document.footer = self._breadcrumb()
         self.document.layout()
-        self.document.optimize_layout(self.height)
+        self.document.optimize_layout(self.rows_view_height)
         self.document.layout()
         self.cur_line = 0
         self.top_line = 0
