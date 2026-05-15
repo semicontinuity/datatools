@@ -1,3 +1,4 @@
+import os
 from typing import AnyStr
 import email.message
 
@@ -9,6 +10,18 @@ from datatools.intent.handler_text_plain import process_text_plain
 from datatools.intent.targets import set_clipboard, write_temp_file, browse_new_tab, open_in_idea, html_to_browser, \
     open_in_browser
 from datatools.tui.popup_selector import choose
+
+
+def _name_base(headers: email.message.Message, suffix: str) -> str | None:
+    cd = headers.get('Content-Disposition', '')
+    if cd:
+        msg = email.message.Message()
+        msg['Content-Disposition'] = cd
+        filename = msg.get_param('filename', header='content-disposition')
+        if filename:
+            name, ext = os.path.splitext(filename)
+            return name if ext.lower() == suffix.lower() else filename
+    return headers.get('X-Title')
 
 
 def dispatch(headers: email.message.Message, post_body: AnyStr):
@@ -53,3 +66,19 @@ def dispatch(headers: email.message.Message, post_body: AnyStr):
             handle_json_lines(post_body, the_title)
         case 'application/json':
             process_json(post_body, the_title)
+        case 'image/jpeg':
+            import subprocess
+            match choose(["Save", "Open"], 'Choose'):
+                case 0:
+                    write_temp_file(post_body, '.jpg', _name_base(headers, '.jpg'))
+                case 1:
+                    path = write_temp_file(post_body, '.jpg', _name_base(headers, '.jpg'))
+                    subprocess.Popen(['xdg-open', path])
+        case 'image/png':
+            import subprocess
+            match choose(["Save", "Open"], 'Choose'):
+                case 0:
+                    write_temp_file(post_body, '.png', _name_base(headers, '.png'))
+                case 1:
+                    path = write_temp_file(post_body, '.png', _name_base(headers, '.png'))
+                    subprocess.Popen(['xdg-open', path])
