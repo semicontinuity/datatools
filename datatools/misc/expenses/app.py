@@ -135,6 +135,12 @@ def recalculate(file_name, output_file_name):
             ExpensesTreeWriter(file).write(expenses)
 
 
+def recalculate_folder(folder):
+    import glob
+    for file_name in sorted(glob.glob(os.path.join(folder, '*.txt'))):
+        recalculate(file_name, file_name)
+
+
 def split(file_name):
     expenses = ExpensesTreeReader(file_name).read()
     expenses.calculate_value()
@@ -161,6 +167,9 @@ if __name__ == '__main__':
         split(sys.argv[2])
     else:
         if len(sys.argv) < 3:
-            print("Usage: app.py recalc <file> [output file name or '-' for stdout]", file=sys.stderr)
+            print("Usage: app.py recalc <file|folder> [output file name or '-' for stdout]", file=sys.stderr)
             sys.exit(1)
-        recalculate(sys.argv[2], sys.argv[2] if len(sys.argv) == 3 else sys.argv[3])
+        if os.path.isdir(sys.argv[2]):
+            recalculate_folder(sys.argv[2])
+        else:
+            recalculate(sys.argv[2], sys.argv[2] if len(sys.argv) == 3 else sys.argv[3])
