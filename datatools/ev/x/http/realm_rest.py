@@ -56,6 +56,9 @@ class RealmRest(Realm):
             match = JsonPathUtil.path_list_match(json_path.split('.'), link['json_path'].split('.'))
             if match is not None:
                 return link['concept'], link['value'], link.get('values')
+            # else:
+            #     if link['json_path'] == '_embedded.leads.*._embedded.contacts.*.id':
+            #         print(f"NO MATCH {json_path} {link['json_path']}", file=sys.stderr)
 
     def get_path_variables(self, concept: str):
         return JsonPathUtil.extract_path_variables(self.concepts[concept]['path'])

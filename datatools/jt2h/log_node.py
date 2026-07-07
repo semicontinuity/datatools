@@ -101,6 +101,7 @@ class LogNode:
 
     CSS_CORE = '''
 thead {border: solid 1px darkgray;}
+span.tooltip {display: none;}
 table {border-collapse: collapse; padding: 0; white-space: nowrap;}
 table {background: white;}
 th {border-top: solid 1px darkgrey; border-bottom: solid 1px darkgrey; background: #DDD; padding-left: 0.5ex; padding-right: 0.5ex;}
