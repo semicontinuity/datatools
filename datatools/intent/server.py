@@ -16,7 +16,9 @@ from typing import *
 
 from datatools.intent import SERVER_PORT
 from datatools.intent.handler_send_entity import default_folder, handler_send_entity
-from datatools.intent.post_request_router import route_post_request
+from datatools.intent.dispatcher import dispatch
+from datatools.intent.kiosk_scanner import start_discovery_thread
+from datatools.intent.post_request_router import post_request_destination, route_post_request
 from datatools.intent.response import Response
 from datatools.intent.target_folder import set_target_folder
 from datatools.intent.targets import get_target_folder
@@ -97,14 +99,21 @@ class Server(BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
 
         print(str(self.client_address))
-        route_post_request(headers, post_body)
+        response = None
+        dest = post_request_destination(headers)
+        if dest is not None:
+            response = route_post_request(dest, self.path, headers, post_body)
+        if response is None:
+            dispatch(headers, post_body)
+            response = Response(200, 'application/json', json.dumps({}).encode('utf-8'))
 
         print('Handling POST; responding')
-        self.respond_with(Response(200, 'application/json', json.dumps({}).encode('utf-8')))
+        self.respond_with(response)
         print('Handling POST; responded')
 
 
 if __name__ == '__main__':
+    start_discovery_thread()
     httpd = HTTPServer(("0.0.0.0", SERVER_PORT), Server)
     try:
         httpd.serve_forever()
