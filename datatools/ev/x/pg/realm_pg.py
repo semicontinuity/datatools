@@ -7,7 +7,7 @@ from datatools.dbview.util.pg import execute_sql, describe_table, get_table_pks
 from datatools.dbview.util.pg import get_table_foreign_keys_outbound
 from datatools.dbview.x.util.db_query import DbQuery
 from datatools.dbview.x.util.pg import make_result_set_metadata
-from datatools.dbview.x.util.pg_query import query_to_string
+from datatools.dbview.x.util.pg_query import query_to_string, value_to_string
 from datatools.ev.app_types import EntityReference, View, Realm
 from datatools.ev.x.pg.db_entity_data import DbEntityData
 from datatools.ev.x.pg.pg_data_source import PgDataSource
@@ -54,20 +54,20 @@ class RealmPg(Realm):
         elif isinstance(e_ref, DbReferringTables):
             return ViewDbReferringTables(self, e_ref.selector, e_ref.query)
 
-    def get_selector_value(self, conn, inbound_relation, table, where):
+    def get_selector_value(self, conn, inbound_relation, table, filter):
         this_column = inbound_relation['foreign_column_name']
-        where_column, where_op, where_value = where[0].column, where[0].op, where[0].value
-        if where_op != '=':
+        filter_column, filter_op, filter_value = filter[0].column, filter[0].op, filter[0].value
+        if filter_op != '=':
             raise Exception('WHERE clause must be PK equality')
-        if this_column != where_column:
-            sql = f"SELECT {this_column} from {table} where {where_column} {where_op} {where_value}"
+        if this_column != filter_column:
+            sql = f"SELECT {this_column} from {table} where {filter_column} {filter_op} {value_to_string(filter_value)}"
             debug(sql)
             rows = self.execute_sql_query(conn, sql)
             if len(rows) != 1:
                 raise Exception(f'illegal state: expected 1 row, but was {len(rows)}')
             selector_value = "'" + rows[0][this_column] + "'"
         else:
-            selector_value = where_value
+            selector_value = value_to_string(filter_value)
         return selector_value
 
     def get_pk_and_text_values_for_selected_rows(

@@ -2,11 +2,12 @@ from collections import defaultdict
 from typing import List, Optional, Dict
 
 from datatools.dbview.util.pg import get_table_foreign_keys_inbound, get_table_pks
-from datatools.dbview.x.util.db_query import DbQuery
+from datatools.dbview.x.util.db_query import DbQuery, DbQueryFilterClause
+from datatools.dbview.x.util.pg_query import value_to_string
 from datatools.ev.app_types import View, EntityReference
 from datatools.ev.x.db.db_rich_node_factory import DbRichNodeFactory
 from datatools.ev.x.db.element_factory import DbElementFactory
-from datatools.ev.x.pg.types import DbSelectorClause, DbTableRowsSelector
+from datatools.ev.x.pg.types import DbTableRowsSelector
 from datatools.jv.app import make_document, do_loop, make_tree_grid
 from datatools.jv.jdocument import JDocument
 from datatools.jv.jgrid import JGrid
@@ -31,8 +32,8 @@ class ViewDbReferrers(View):
         with self.realm.connect_to_db() as conn:
             self.doc = make_document(
                 self.make_inbound_references_models(conn),
-                'referrers of ' + self.selector.table + ' ' + ' '.join(
-                    [w.column + w.op + w.value for w in self.selector.where])
+                'referrers of ' + self.query.table + ' ' + ' '.join(
+                    [w.column + w.op + value_to_string(w.value) for w in self.query.filter])
             )
             self.g = with_alternate_screen(lambda: make_tree_grid(self.doc, screen_size_or_default(), JGrid))
 
@@ -45,9 +46,9 @@ class ViewDbReferrers(View):
         return loop_result
 
     def make_inbound_references_models(self, conn):
-        inbound_relations = get_table_foreign_keys_inbound(conn, self.selector.table)
+        inbound_relations = get_table_foreign_keys_inbound(conn, self.query.table)
         return self.referring_tables(
-            self.make_referring_rows_model(conn, self.selector.table, self.selector.where, inbound_relations)
+            self.make_referring_rows_model(conn, self.query.table, self.query.filter, inbound_relations)
         )
 
     def referring_tables(self, referrers: Dict):
@@ -76,13 +77,13 @@ class ViewDbReferrers(View):
             rich_node_factory=rf,
         )
 
-    def make_referring_rows_model(self, conn, table: str, where: List[DbSelectorClause], inbound_relations) -> Dict:
-        debug('make_referring_rows_model', table=table, where=where)
+    def make_referring_rows_model(self, conn, table: str, filter: List[DbQueryFilterClause], inbound_relations) -> Dict:
+        debug('make_referring_rows_model', table=table, filter=filter)
 
-        if not where:
-            raise Exception('WHERE clause is required')
-        if len(where) != 1:
-            raise Exception('WHERE clauses must contain 1 clause')
+        if not filter:
+            raise Exception(f'WHERE clause (filter) is required, table={table}')
+        if len(filter) != 1:
+            raise Exception(f'WHERE clauses (filter) must contain 1 clause, table={table}')
 
         result = defaultdict(lambda: defaultdict(list))
 
@@ -91,7 +92,7 @@ class ViewDbReferrers(View):
             if table != this_table:
                 raise Exception('illegal state')
 
-            selector_value = self.realm.get_selector_value(conn, inbound_relation, table, where)
+            selector_value = self.realm.get_selector_value(conn, inbound_relation, table, filter)
 
             foreign_table = inbound_relation['table_name']
             foreign_column = inbound_relation['column_name']
