@@ -22,15 +22,15 @@ def query_to_string(query: DbQuery, table: str = None) -> str:
 
     filter_str = query_filter_to_string(query.filter)
 
-    return f"""select
+    return f'''select
 
 {selectors_str}
    
-from {table} __{table}
+from "{table}" __{table}
 
 {"where" if filter_str else ""}
 {filter_str}    
-"""
+'''
 
 
 def query_selectors_to_string(selectors, table):
