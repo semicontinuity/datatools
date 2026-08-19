@@ -1,0 +1,4 @@
+#!/bin/bash
+export PRODUCES_ENTP=1
+python3 -m tests.entp.writer
+sleep 1

@@ -1,0 +1,4 @@
+#!/bin/bash
+export CONSUMES_ENTP=1
+python3 -m tests.entp.reader
+sleep 1
