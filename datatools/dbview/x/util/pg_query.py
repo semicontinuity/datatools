@@ -48,7 +48,7 @@ def selector_to_string(selector: DbQuerySelector, table: str) -> str:
         foreign_table = resolve.table
         foreign_key = resolve.column or column
         alias = resolve.alias or foreign_table
-        return f"(select {resolve.select} as {alias} from {foreign_table} where {foreign_key} = __{table}.{column})"
+        return f'(select {resolve.select} as {alias} from "{foreign_table}" where {foreign_key} = __{table}.{column})'
     else:
         return column
 

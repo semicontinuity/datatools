@@ -60,7 +60,7 @@ class RealmPg(Realm):
         if filter_op != '=':
             raise Exception('WHERE clause must be PK equality')
         if this_column != filter_column:
-            sql = f"SELECT {this_column} from {table} where {filter_column} {filter_op} {value_to_string(filter_value)}"
+            sql = f'SELECT {this_column} from "{table}" where {filter_column} {filter_op} {value_to_string(filter_value)}'
             debug(sql)
             rows = self.execute_sql_query(conn, sql)
             if len(rows) != 1:
@@ -78,7 +78,7 @@ class RealmPg(Realm):
 
         columns = table_pks + text_columns
 
-        sql = f"SELECT {', '.join(columns)} from {table} where {selector_column_name}={selector_column_value} limit {limit}"
+        sql = f'SELECT {", ".join(columns)} from "{table}" where {selector_column_name}={selector_column_value} limit {limit}'
         debug(sql)
         rows = self.execute_sql_query(conn, sql)
         return [{k: to_jsonisable(v) for k, v in row.items() if k in table_pks} for row in rows], [
