@@ -9,6 +9,7 @@ from typing import Dict, List, Callable, Any
 from datatools.ev.app_support import run_app
 from datatools.ev.app_types import EntityReference
 from datatools.ev.app_types import Realm
+from datatools.ev.x.ch.clickhouse_connection_settings import ClickhouseConnectionSettings
 from datatools.ev.x.ch.entity_resolver import resolve_ch_entity
 from datatools.ev.x.ch.realm_clickhouse import RealmClickhouse
 from datatools.ev.x.pg.entity_resolver import resolve_pg_entity
@@ -142,9 +143,18 @@ def realm_ch(name, path: str) -> RealmClickhouse:
         else:
             return {}
 
-    realm = RealmClickhouse(name=name, hostname=realm_env_vars['YC_CH_HOST'],
-                                 database=realm_env_vars['YC_CH_DATABASE'], user=realm_env_vars['YC_CH_USER'],
-                                 password=realm_env_vars['YC_CH_PASSWORD'], links=links())
+    realm = RealmClickhouse(
+        name=name,
+        connection_settings=ClickhouseConnectionSettings(
+            hostname=realm_env_vars['YC_CH_HOST'],
+            port=8443,
+            secure=True,
+            database=realm_env_vars['YC_CH_DATABASE'],
+            user=realm_env_vars['YC_CH_USER'],
+            password=realm_env_vars['YC_CH_PASSWORD'],
+        ),
+        links=links()
+    )
     realm.realm_ctx = relpath(path, start=realm_env_vars.get('CTX_DIR'))
     realm.realm_ctx_dir = path
     return realm

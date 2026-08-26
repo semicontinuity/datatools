@@ -7,6 +7,7 @@ SERVER_PORT. A background daemon thread periodically scans nearby IP addresses
 connections on SERVER_PORT. The first responder (lowest IP) becomes the kiosk.
 """
 
+import logging
 import socket
 import threading
 import time
@@ -21,6 +22,7 @@ PROBE_TIMEOUT_SECONDS = 3
 
 _lock = threading.Lock()
 _kiosk_ip: str | None = None
+logger = logging.getLogger(__name__)
 
 
 def get_kiosk_ip() -> str | None:
@@ -77,7 +79,9 @@ def scan_for_kiosk() -> str | None:
 
 
 def _discovery_tick():
+    logger.info('kiosk search started')
     found = scan_for_kiosk()
+    logger.info('kiosk search finished: found ip=%s', found)
     _set_kiosk_ip(found)
     if found:
         print(f'kiosk discovered at {found}')
