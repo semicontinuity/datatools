@@ -1,7 +1,7 @@
 import os
 import select
 import sys
-from queue import Queue
+from queue import Queue, Empty
 from threading import Thread, Event
 
 from picotui.defs import KEYMAP as _KEYMAP, KEY_SHIFT_TAB
@@ -31,6 +31,7 @@ class TreeGrid(WGridBase, Thread):
         self.document = document
         self.event_queue = Queue()
         self.total_lines = 0
+        self.pending_resize = None
 
     def layout(self):
         self.total_lines = self.document.height
@@ -222,21 +223,35 @@ class TreeGrid(WGridBase, Thread):
     def request_redraw(self):
         self.event_queue.put(...)
 
+    def handle_resize(self):
+        resize = self.pending_resize
+        self.pending_resize = None
+        if resize is not None:
+            resize()
+
     def loop(self):
+        self.handle_resize()
         self.redraw()
         input_reader = InputEventReader(self.event_queue)
         input_reader.start()
-        while True:
-            key = self.event_queue.get()
-            if key is ...:
-                self.redraw()
-                continue
+        try:
+            while True:
+                try:
+                    key = self.event_queue.get(timeout=0.1)
+                except Empty:
+                    self.handle_resize()
+                    continue
+                self.handle_resize()
+                if key is ...:
+                    self.redraw()
+                    continue
 
-            res = self.handle_input(key)
+                res = self.handle_input(key)
 
-            if res is not None and res is not True:
-                input_reader.stop()
-                return res
+                if res is not None and res is not True:
+                    return res
+        finally:
+            input_reader.stop()
 
     def mark(self):
         pass

@@ -1,11 +1,10 @@
 import json
+import os
 import signal
 import sys
 from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import List, Callable, Optional, Any
-
-from picotui.screen import Screen
 
 from datatools.json.util import to_jsonisable
 from datatools.jt.app.ng.jt_ng_grid_factory import do_make_grid
@@ -32,6 +31,7 @@ from datatools.tui.picotui_patch import get_screen_size, patch_picotui
 from datatools.tui.picotui_util import with_raw_term, screen_unprepare, screen_prepare
 from datatools.tui.terminal import with_raw_terminal
 from datatools.tui.tui_fd import infer_fd_tui
+from datatools.tui.treeview.tree_grid import TreeGrid
 from datatools.util.dataclasses import dataclass_from_dict
 from datatools.util.logging import debug
 from datatools.util.meta_io import metadata_or_default, presentation_or_default, state_or_default, write_state_or_pass
@@ -62,9 +62,30 @@ class Applet:
         signal.signal(signal.SIGWINCH, self.handle_sigwinch)
 
     def handle_sigwinch(self, signalNumber, frame):
-        screen_size = Screen.screen_size()  # not very stable, sometimes duplicate 'x1b[8' is read
-        self.g.width = screen_size[0]
-        self.g.height = screen_size[1]
+        if isinstance(self.g, TreeGrid):
+            # Coalesce signals without reading input or interrupting a redraw.
+            self.g.pending_resize = self.resize
+        else:
+            self.resize()
+
+    def resize(self):
+        try:
+            width, height = os.get_terminal_size(infer_fd_tui())
+        except OSError:
+            return
+        if width <= 0 or height <= 0:
+            return
+        self.g.width = max(1, width - self.g.x)
+        self.g.set_height(max(1, height - self.g.y))
+        if isinstance(self.g, TreeGrid):
+            self.g.dynamic_helper.screen_height = height
+        visible_rows = max(1, self.g.rows_view_height)
+        self.g.top_line = max(0, min(self.g.top_line, self.g.total_lines - visible_rows, self.g.cur_line))
+        if self.g.cur_line >= self.g.top_line + visible_rows:
+            self.g.top_line = self.g.cur_line - visible_rows + 1
+        if isinstance(self.g, TreeGrid):
+            self.g.x_shift = max(0, min(self.g.x_shift, self.g.document.width - self.g.width))
+            self.g.clear()
         self.g.redraw()
 
     def redraw(self):

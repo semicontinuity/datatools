@@ -1,10 +1,12 @@
 import json
+import os
 from typing import Optional
 
 from datatools.json.util import to_jsonisable
 from datatools.tui.picotui_keys import KEY_INSERT, KEY_SHIFT_F5
 from datatools.tui.treeview.tree_document import TreeDocument
 from datatools.tui.treeview.tree_grid import TreeGrid
+from datatools.tui.tui_fd import infer_fd_tui
 from datatools.util.object_exporter import ObjectExporter
 
 
@@ -14,6 +16,47 @@ class JGrid(TreeGrid):
     def __init__(self, x: int, y: int, width, height, document: TreeDocument, interactive=True):
         super().__init__(x, y, width, height, document, interactive)
         self.search_str = ""
+        self._terminal_size = None
+
+    def handle_resize(self):
+        super().handle_resize()
+        if not self.interactive:
+            return
+        try:
+            width, height = os.get_terminal_size(infer_fd_tui())
+        except OSError:
+            return
+        if width <= 0 or height <= 0 or (width, height) == self._terminal_size:
+            return
+        self._terminal_size = width, height
+
+        self.width = max(1, width - self.x)
+        available_height = max(1, height - self.y)
+        # Keep one content row even when the terminal cannot also fit the footer.
+        self.y_bottom_offset = int(bool(self.document.footer) and available_height > 1)
+        self.dynamic_helper.screen_height = height
+        self.set_height(min(available_height, self.total_lines + self.y_bottom_offset))
+        self.top_line = max(0, min(self.top_line, self.total_lines - self.rows_view_height))
+        self.top_line = max(0, min(self.top_line, self.cur_line))
+        if self.cur_line >= self.top_line + self.rows_view_height:
+            self.top_line = self.cur_line - self.rows_view_height + 1
+        self.x_shift = max(0, min(self.x_shift, self.document.width - self.width))
+
+        self.attr_reset()
+        self.clear_box(self.x, self.y, self.width, available_height)
+        self.redraw()
+
+    def redraw_footer(self):
+        if self.y_bottom_offset:
+            super().redraw_footer()
+
+    def cell_cursor_place(self):
+        if self.interactive and 0 <= self.cur_line < self.total_lines:
+            cursor_x = self.document.rows[self.cur_line].indent - self.x_shift
+            cursor_y = self.cur_line - self.top_line
+            if 0 <= cursor_x < self.width and 0 <= cursor_y < self.rows_view_height:
+                self.goto(self.x + cursor_x, self.y + cursor_y)
+                self.cursor(True)
 
     def handle_cursor_keys(self, key):
         result = super().handle_cursor_keys(key)
